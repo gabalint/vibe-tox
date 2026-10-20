@@ -111,8 +111,10 @@ jobs:
         run: rustup show active-toolchain
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
-      # Run every test binary so one CI run reports all failures on each OS.
-      - run: cargo test --workspace --locked --no-fail-fast
+      # Run every test binary so one CI run reports all failures on each OS. Windows skips
+      # doc tests: rustdoc links them against a stub msvcrt.lib that Tauri's build script
+      # leaves in lis-desktop's build output (LNK4003). Linux and macOS run them.
+      - run: cargo test --workspace --locked --no-fail-fast ${{ runner.os == 'Windows' && '--lib --bins --tests' || '' }}
       # NFR-12: an exit export produced by the scenario test reads with the independent
       # standard-library verifier (scripts/verify_exit_export.py).
       - name: Exit export passes the independent verifier

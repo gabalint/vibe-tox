@@ -92,10 +92,20 @@ fn folder_of(instrument: &Instrument) -> FileSource {
     FileSource::Folder(instrument.result_folder.clone().unwrap_or_default())
 }
 
-/// An enabled result-file instrument watching `/synthetic/<code>`.
+/// An absolute synthetic folder on this platform; nothing is created there.
+fn synthetic(name: &str) -> String {
+    let root = if cfg!(windows) {
+        r"C:\synthetic"
+    } else {
+        "/synthetic"
+    };
+    format!("{root}{}{name}", std::path::MAIN_SEPARATOR)
+}
+
+/// An enabled result-file instrument watching the synthetic folder named `code`.
 fn watched(db: &Database, code: &str) -> Instrument {
     let instrument = register(db, code, ConnectionSettings::ResultFile {}, true);
-    set_folder(db, &instrument, Some(&format!("/synthetic/{code}"))).unwrap()
+    set_folder(db, &instrument, Some(&synthetic(code))).unwrap()
 }
 
 fn tcp_settings(port: u16) -> ConnectionSettings {
@@ -316,7 +326,7 @@ fn files_need_an_enabled_result_file_instrument() {
         &t.db,
         facts(
             manual.id,
-            FileSource::Folder("/synthetic/LCMS-1".to_owned()),
+            FileSource::Folder(synthetic("LCMS-1")),
             "a.csv",
             0,
         ),
@@ -456,10 +466,13 @@ fn a_digest_that_is_not_the_artifact_is_refused() {
 fn a_watched_folder_belongs_to_one_result_file_instrument() {
     let t = TestDatabase::open(&[SCHEMA]).unwrap();
     let first = watched(&t.db, "LCMS-1");
-    assert_eq!(first.result_folder.as_deref(), Some("/synthetic/LCMS-1"));
+    assert_eq!(
+        first.result_folder.as_deref(),
+        Some(synthetic("LCMS-1").as_str())
+    );
     let second = register(&t.db, "LCMS-2", ConnectionSettings::ResultFile {}, true);
     assert!(matches!(
-        set_folder(&t.db, &second, Some("/synthetic/LCMS-1")),
+        set_folder(&t.db, &second, Some(synthetic("LCMS-1").as_str())),
         Err(InterfaceError::ResultFolderInUse)
     ));
     assert!(matches!(
@@ -468,7 +481,7 @@ fn a_watched_folder_belongs_to_one_result_file_instrument() {
     ));
     let astm = register(&t.db, "ASTM-1", tcp_settings(4001), true);
     assert!(matches!(
-        set_folder(&t.db, &astm, Some("/synthetic/astm")),
+        set_folder(&t.db, &astm, Some(synthetic("astm").as_str())),
         Err(InterfaceError::TransportMismatch)
     ));
     let stale = Instrument {
@@ -483,7 +496,7 @@ fn a_watched_folder_belongs_to_one_result_file_instrument() {
         instrument_id: second.id,
         expected_revision: second.revision,
         folder: Some(WatchedFolder {
-            path: "/synthetic/LCMS-2".to_owned(),
+            path: synthetic("LCMS-2"),
             present: Vec::new(),
         }),
     };
@@ -497,7 +510,7 @@ fn a_watched_folder_belongs_to_one_result_file_instrument() {
 
     let cleared = set_folder(&t.db, &first, None).unwrap();
     assert_eq!(cleared.result_folder, None);
-    let moved = set_folder(&t.db, &second, Some("/synthetic/LCMS-1")).unwrap();
+    let moved = set_folder(&t.db, &second, Some(synthetic("LCMS-1").as_str())).unwrap();
     assert_eq!(moved.revision, second.revision + 1);
     assert_eq!(
         count(
@@ -640,28 +653,28 @@ fn files_present_when_a_folder_is_chosen_are_not_picked_up() {
     let instrument = choose_folder(
         &t.db,
         &registered,
-        Some("/synthetic/LCMS-1"),
+        Some(synthetic("LCMS-1").as_str()),
         vec![present("old-1.csv", len), present("old-2.csv", len)],
     )
     .unwrap();
     assert!(at_selection(
         &t.db,
         instrument.id,
-        "/synthetic/LCMS-1",
+        &synthetic("LCMS-1"),
         "old-1.csv",
         len
     ));
     assert!(!at_selection(
         &t.db,
         instrument.id,
-        "/synthetic/LCMS-1",
+        &synthetic("LCMS-1"),
         "old-1.csv",
         len + 1
     ));
     assert!(!at_selection(
         &t.db,
         instrument.id,
-        "/synthetic/other",
+        &synthetic("other"),
         "old-1.csv",
         len
     ));
@@ -696,7 +709,7 @@ fn files_present_when_a_folder_is_chosen_are_not_picked_up() {
     let again = choose_folder(
         &t.db,
         &instrument,
-        Some("/synthetic/LCMS-1"),
+        Some(synthetic("LCMS-1").as_str()),
         vec![present("old-1.csv", len), present("old-3.csv", len)],
     )
     .unwrap();
@@ -727,7 +740,7 @@ fn a_folder_moved_to_another_instrument_is_not_imported_again() {
     let moved = choose_folder(
         &t.db,
         &second,
-        Some("/synthetic/LCMS-1"),
+        Some(synthetic("LCMS-1").as_str()),
         vec![present("batch-001.csv", len)],
     )
     .unwrap();
@@ -750,7 +763,7 @@ fn a_pickup_from_a_folder_no_longer_watched_is_refused() {
     let t = TestDatabase::open(&[SCHEMA]).unwrap();
     let instrument = watched(&t.db, "LCMS-1");
     let listed = folder_of(&instrument);
-    let moved = set_folder(&t.db, &instrument, Some("/synthetic/elsewhere")).unwrap();
+    let moved = set_folder(&t.db, &instrument, Some(synthetic("elsewhere").as_str())).unwrap();
     let offer = |db: &Database| stored(db, facts(moved.id, listed.clone(), "a.csv", 0), EXPORT);
     assert!(matches!(
         receive(&t.db, Principal::instrument(moved.id), offer(&t.db)),

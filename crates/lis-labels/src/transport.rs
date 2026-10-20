@@ -296,17 +296,18 @@ fn stop(child: &mut Child) -> io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use std::ffi::OsStr;
     use std::io::Read;
     use std::net::{Ipv4Addr, Ipv6Addr, TcpListener};
 
     use super::*;
 
-    /// Sends to a loopback test printer under the test destination policy.
+    /// Sends to a loopback test printer under the test destination policy. The connect
+    /// timeout outlasts Windows, which retries a refused loopback connection for about
+    /// two seconds before reporting the refusal.
     fn print_local(port: u16, write_timeout: Duration, label: &[u8]) -> Result<(), PrintError> {
         let transport = Transport::Tcp {
             address: SocketAddr::new(Ipv4Addr::LOCALHOST.into(), port),
-            connect_timeout: Duration::from_secs(2),
+            connect_timeout: Duration::from_secs(5),
             write_timeout,
         };
         transport.print(label, PrinterDestinations::LabNetworkAndLoopback)
@@ -357,6 +358,9 @@ mod tests {
         );
     }
 
+    // Windows loopback accepted the whole 64 MiB write into its buffers, so a stalled
+    // reader cannot be simulated this way there.
+    #[cfg(unix)]
     #[test]
     fn tcp_print_times_out_when_printer_stops_reading() {
         let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).expect("bind");
@@ -527,8 +531,11 @@ mod tests {
         }
     }
 
+    #[cfg(unix)]
     #[test]
     fn cups_command_is_lp_by_absolute_path_raw_without_a_shell() {
+        use std::ffi::OsStr;
+
         assert!(LP_PATHS.iter().all(|path| Path::new(path).is_absolute()));
         let lp = Path::new(LP_PATHS[0]);
         let command = lp_command(lp, &QueueName::new("lab-labels").expect("valid"));

@@ -1,1 +1,4 @@
+# Check out text with LF on every OS: templates compiled into the application and their
+# pinned digests must be byte-identical on Windows. Exact-byte fixtures opt out locally.
+* text=auto eol=lf
 *.pdf binary
