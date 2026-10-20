@@ -4,9 +4,9 @@ Use this procedure to restore the laboratory onto a replacement or rebuilt compu
 restore is intentionally available only before any user account exists. It does not overwrite an
 active laboratory installation.
 
-The current software has been exercised with synthetic data. Replacement-host restore has not yet
-been verified on real supported hosts of every operating system, and signed installers are not
-available. A laboratory must rehearse and approve its own procedure before relying on it.
+Replacement-host restore has not yet been verified on real supported hosts of every operating
+system, and signed installers are not available. A laboratory must rehearse and approve its own
+procedure before relying on it.
 
 ## Before restoring
 

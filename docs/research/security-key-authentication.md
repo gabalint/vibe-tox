@@ -1,6 +1,6 @@
 # Security key authentication for the dedicated LIS workstation
 
-Sources checked **2026-10-14** and **2026-10-15**. Scope: US clinical toxicology; local, offline-capable application; synthetic data. [ADR 0019](../architecture/decisions/0019-security-key-authentication.md) records the accepted credential policy and its implementation boundaries; this document retains the regulatory and technical evidence behind it. Platform credentials such as Windows Hello remain outside this scope. Hardware qualification and laboratory operating policy remain [Q-42](../planning/open-questions.md); source inspection and synthetic tests do not establish support for a particular device or host.
+Sources checked **2026-10-14** and **2026-10-15**. Scope: US clinical toxicology; local, offline-capable application. [ADR 0019](../architecture/decisions/0019-security-key-authentication.md) records the accepted credential policy and its implementation boundaries; this document retains the regulatory and technical evidence behind it. Platform credentials such as Windows Hello remain outside this scope. Hardware qualification and laboratory operating policy remain [Q-42](../planning/open-questions.md); source inspection and synthetic tests do not establish support for a particular device or host.
 
 ## Laboratory touch-only policy
 
@@ -152,7 +152,7 @@ The key signs an authentication assertion; it is not a patient-report signing ce
 
 ## OpenSSL applicability review — 2026-10-15
 
-The synthetic implementation locks `openssl` 0.10.81, `openssl-sys` 0.9.117 and vendored `openssl-src` 300.6.1+3.6.3. This embeds **OpenSSL 3.6.3**, which predates the August and September security updates; the September 29 release is 3.6.5. The published stack is retained for synthetic implementation, with a patched, reviewed build required before production qualification ([G2-09](../quality/open-items-g1-g2.md)). No advisory suppression or claim that 3.6.3 is fully patched follows from this review. [OpenSSL release notes, ENG-286](https://openssl-library.org/news/openssl-3.6-notes/)
+The implementation locks `openssl` 0.10.81, `openssl-sys` 0.9.117 and vendored `openssl-src` 300.6.1+3.6.3. This embeds **OpenSSL 3.6.3**, which predates the August and September security updates; the September 29 release is 3.6.5. The published stack is retained for synthetic implementation, with a patched, reviewed build required before production qualification ([G2-09](../quality/open-items-g1-g2.md)). No advisory suppression or claim that 3.6.3 is fully patched follows from this review. [OpenSSL release notes, ENG-286](https://openssl-library.org/news/openssl-3.6-notes/)
 
 The following is a scoped **static reachability inference**, based on the locked package sources, not an exploit test or a general vulnerability clearance. The [September 29 advisory](https://openssl-library.org/news/secadv/20260929.txt) and [CRLDP fix](https://github.com/openssl/openssl/commit/8e0efc7549b7ff8246d40e585e3fd604f728473f) provide the upstream conditions.
 

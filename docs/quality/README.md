@@ -30,7 +30,7 @@ Local working evidence is not the laboratory's validation record or the project'
 release evidence system. Required release evidence must remain retrievable under
 the accountable owner's retention and integrity controls; preserve the exact
 version, configuration, inputs, commands, outcomes, deviations and approval.
-Synthetic fixtures and executable checks needed to reproduce behavior belong
+Fixtures and executable checks needed to reproduce behavior belong
 beside the maintained code and test tools.
 
 Use the [quality-gate policy](../../.ai/skills/quality-gate/SKILL.md) to select checks

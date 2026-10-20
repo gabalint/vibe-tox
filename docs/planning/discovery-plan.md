@@ -45,7 +45,7 @@ Apply these criteria before investing discovery effort in a candidate laboratory
 | Has outside ordering clinics, if the pilot is to test the client portal | External-clinic workflows need a partner that actually uses them | Clinic count, EHRs, order channels (Q-05) |
 | Counsel-reviewed integrity profile | Drug-testing enforcement concentrates on order design and client arrangements. A partner's practices can create reputational and legal exposure for the project | Compliance program summary, payer audit history, client types, and counsel's go/no-go. The project does not judge legality (Q-27) |
 | Assigned time for validation, update acceptance and support | The lab must accept every release before use; an open-source pilot without assigned validation and support cannot progress to laboratory use | Named owners, available time, support model, who signs update acceptance (Q-12, Q-34) |
-| Willingness to share non-sensitive results publicly | Open-source credibility depends on publishable synthetic case packs and lessons | Agreement on what synthetic artifacts and findings may be published (Q-11/19) |
+| Willingness to share non-sensitive results publicly | Open-source credibility depends on publishable synthetic case packs and lessons | Agreement on what artifacts and findings may be published (Q-11/19) |
 
 
 ## Lab discovery case pack
@@ -105,7 +105,7 @@ Request permitted versions or descriptions of specimen acceptance/rejection SOPs
 - Does the lab offer medication-consistency comments? Who authored the analyte–medication relationships, and how are unexpected results communicated to clinicians?
 - Can a partial report be issued while required components remain unresolved? What does each recipient do with a late final, correction, withdrawal or wrong-person notice?
 
-## Synthetic workflow scenarios
+## Workflow scenarios
 
 Use the [validation scenarios](../quality/validation-plan.md) to walk through routine and exceptional work: individualized orders, reflex authority, failed QC, partial panels, amendments, duplicate imports, wrong-client access, canceled work, historical export and restored archives. Add power loss during release, replacement-computer restore, update rollback, offline queued orders, destination changes and corrections already viewed by recipients. Record the expected safety outcome and the responsible laboratory role.
 

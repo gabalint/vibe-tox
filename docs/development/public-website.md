@@ -6,9 +6,10 @@ repository [gabalint/vibe-tox](https://github.com/gabalint/vibe-tox); see
 [publication](#publication).
 
 The website summarizes the [license](../architecture/decisions/0017-gplv3-license.md) and links the
-[development disclaimer](../governance/development-disclaimer.md). The video carries its own
-synthetic-data and clinical-validation notices, and the page carries a vibe-coded disclaimer; keep
-these notices current. Signed releases, hosted services and clinical readiness still require their
+[development disclaimer](../governance/development-disclaimer.md). The page states the development
+status once in the hero and once in its vibe-coded disclaimer, and labels the recording and its
+stills as demo data; the video carries its own notices. Keep these current without repeating them
+in other sections. Signed releases, hosted services and clinical readiness still require their
 own approvals (Q-11, Q-19 in the [decision queue](../planning/open-questions.md)). The Kokoro and
 soundfont notices in [media credits](../../website/media/credits.txt) retain their own terms.
 
@@ -38,9 +39,9 @@ The website inherits the application's blue/neutral palette and system typograph
 from `ui/src/styles/tokens.css`, with larger type and spacing for reading. It uses
 native tables and a video player, clear focus indicators, and responsive layouts.
 The hero's workflow illustration describes real stages; it is not an application
-screenshot. The workflow section shows six stills cropped from the supplied recording,
-so they carry its limits: the real React interface with a mocked engine and synthetic
-data. The note beneath them says so; keep it with the stills. The build-from-source
+screenshot. The workflow section shows six stills cropped from the supplied recording
+described below; the note beneath them labels them as demo data from a mocked engine.
+Keep it with the stills. The build-from-source
 commands follow the [developer guide](README.md#build-and-run); update both together.
 No analytics, contact form, account, clinical interface, or JavaScript runtime is used.
 

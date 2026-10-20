@@ -1,6 +1,6 @@
 # Installation and first start
 
-Status: operator instructions for the current application built on synthetic data. Signed
+Status: operator instructions for the current application. Signed
 installers are not available yet. The publisher, signing route and release channel remain open
 under [Q-19 and Q-34](../planning/open-questions.md#decision-and-discovery-queue). Do not treat a
 developer build as an approved clinical release.

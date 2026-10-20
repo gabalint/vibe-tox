@@ -117,7 +117,7 @@ Accept after all of the following:
 - a tenant threat model and negative isolation tests on every data path: API, workers, exports, backups, logs and support tools;
 - per-lab export, deletion and restore are rehearsed;
 - the device enrollment and revocation drill passes;
-- a synthetic offline-queue and correction-propagation scenario passes;
+- an offline-queue and correction-propagation scenario passes;
 - a named service provider with BAAs from its hosting, storage and delivery subcontractors.
 
 Revisit:

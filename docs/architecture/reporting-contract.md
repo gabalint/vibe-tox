@@ -28,7 +28,7 @@ Printed wording is owned by `lis-reporting/src/display.rs`. Lexical quantities a
 | Quantity/censored value | Exact lexical value and comparator, with the method unit; do not round or convert through floating point. |
 | Not performed, invalid, indeterminate or missing disposition | Explicit **Not performed**, **Invalid**, **Indeterminate** or **No result** wording rather than a negative assertion. |
 | Method limits | Print only limits actually defined by the frozen method. A defined cutoff of `50` with `ng/mL` prints **Cutoff 50 ng/mL**; an absent limit is **None defined**, not an invented threshold. |
-| Validity analyte | Show its measured value/unit and approved validity outcome. A synthetic `120.0 mg/dL` observation with no method limits and category `Synthetic SYN-VALID` retains those exact values; the category is not a clinical cutoff. |
+| Validity analyte | Show its measured value/unit and approved validity outcome. A `120.0 mg/dL` observation with no method limits and category `Synthetic SYN-VALID` retains those exact values; the category is not a clinical cutoff. |
 | Validity action | `hold`/`recollect` block release; `qualifier` is printed; `comment` prints the category label. |
 
 ## Release protocol

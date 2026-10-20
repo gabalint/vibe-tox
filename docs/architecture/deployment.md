@@ -1,6 +1,6 @@
 # Deployment and operational architecture
 
-The local application is implemented for synthetic-data development and evaluation; production deployment is not authorized or qualified. See the [operator guide](../operations/README.md), [packaging guide](../development/packaging.md) and [implementation plan](../planning/implementation-plan.md) for current behavior and verification limits. Hosted services remain proposals.
+The local application is implemented for development and evaluation; production deployment is not authorized or qualified. See the [operator guide](../operations/README.md), [packaging guide](../development/packaging.md) and [implementation plan](../planning/implementation-plan.md) for current behavior and verification limits. Hosted services remain proposals.
 
 This document covers the **host computer**, which runs the LIS and keeps the laboratory's system of record ([ADR 0009](decisions/0009-single-computer-local-lis.md)), and the separately proposed **hosted services environment** ([ADR 0010](decisions/0010-optional-cloud-services.md)).
 
@@ -103,7 +103,7 @@ Losing every copy of the installation key makes encrypted backups unusable. Keep
 Proposed (WF-18, REG-048). The same runbook applies after theft, disk failure, ransomware or a failed rollback.
 
 1. **Declare and fence.** Declare the incident and stop automated delivery. Preserve logs and source payloads. For any future hosted link, revoke the old device certificate before a replacement connects (REQ-SVC-001); no hosted gateway is currently implemented. For ransomware, reinstall the OS or use different hardware; never restore onto the infected installation.
-2. **Install.** For a qualified release, install the same verified signed version on a computer meeting the baseline. Current synthetic development uses the matching development build. Enable full-disk encryption before restoring data.
+2. **Install.** For a qualified release, install the same verified signed version on a computer meeting the baseline. Current development uses the matching development build. Enable full-disk encryption before restoring data.
 3. **Restore.** Enter the recovery kit, choose the newest trustworthy snapshot (from an immutable copy if credentials may be compromised), restore it and the artifact store, and verify chain heads against the off-host anchors.
 4. **External links (future).** An accepted hosted service must re-enroll the replacement device and fence the old certificate (WF-19). Current local recovery follows the [restore guide](../operations/restore-and-recovery.md).
 5. **Reconcile.** Classify pending, sent, acknowledged and outcome-unknown messages. Compare the restored state with analyzer retention, physical worksheets, cloud-side delivery logs and portal order states, and released reports already held by recipients. Do not replay outboxes blindly or send an older revision after a recipient accepted its correction. Do not reuse an accession or barcode issued during the lost interval.

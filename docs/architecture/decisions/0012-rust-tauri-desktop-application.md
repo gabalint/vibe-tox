@@ -3,7 +3,7 @@
 Status: **accepted in part**.
 
 - **Accepted by the project owner, 2026-10-12:** a Rust engine in a Tauri 2 desktop application with a TypeScript UI.
-- **Implemented on synthetic data:** the local components below, under [ADR 0013](0013-implementation-scope.md). Implementation does not accept the remaining component/operating proposals or establish platform qualification.
+- **Implemented:** the local components below, under [ADR 0013](0013-implementation-scope.md). Implementation does not accept the remaining component/operating proposals or establish platform qualification.
 - **Proposed:** production packaging, signed updates, host qualification and future components. These require technical-maintainer review and the evidence below.
 
 Decision owner for components: technical maintainer. Supporting evidence is in [desktop application stack research](../../research/desktop-application-stack.md), [ENG-130–136, ENG-144 and ENG-146](../../research/sources-engineering.md#desktop-application-stack-sources-2026-10-12) and [single-computer technology research](../../research/single-pc-technology.md). The [library policy](../../governance/library-policy.md), workspace manifests and lockfiles identify the current dependencies; this ADR does not duplicate their version inventory.

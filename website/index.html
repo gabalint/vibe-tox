@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#0b5cad">
     <meta property="og:site_name" content="Vibe Toxicology LIS">
     <meta property="og:title" content="Vibe Toxicology LIS — Your laboratory, on your computer">
-    <meta property="og:description" content="From order to report, with your laboratory in control. Explore the project and watch the presentation. Development preview; synthetic data only.">
+    <meta property="og:description" content="From order to report, with your laboratory in control. Explore the project and watch the presentation.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://gabalint.github.io/vibe-tox/">
     <meta property="og:image" content="https://gabalint.github.io/vibe-tox/media/vibe-tox-overview-poster.jpg">
@@ -50,7 +50,7 @@
             <li>No server to run</li>
             <li>Backup and export included</li>
           </ul>
-          <p class="development-note"><strong>In development.</strong> Built and tested on synthetic data. Not clinically validated or ready for patient reporting.</p>
+          <p class="development-note"><strong>In development.</strong> Not clinically validated or ready for patient reporting.</p>
         </div>
         <aside class="workflow-preview" aria-label="A connected laboratory workflow">
           <div class="preview-heading"><span>One laboratory</span><span>One system of record</span></div>
@@ -72,9 +72,8 @@
               <track src="media/vibe-tox-overview.en.vtt" kind="captions" srclang="en" label="English" default>
               Your browser cannot play this video. <a href="media/vibe-tox-overview.mp4">Download the presentation</a> or <a href="media/transcript.txt">read the transcript</a>.
             </video>
-            <figcaption id="video-description"><span>2:01 walkthrough · Narration and music · English captions</span><span><a href="media/transcript.txt">Read the transcript</a><a href="media/vibe-tox-overview.mp4" download>Download video</a><a href="media/credits.txt">Media credits</a></span></figcaption>
+            <figcaption id="video-description"><span>2:01 walkthrough · Demo data · Narration and music · English captions</span><span><a href="media/transcript.txt">Read the transcript</a><a href="media/vibe-tox-overview.mp4" download>Download video</a><a href="media/credits.txt">Media credits</a></span></figcaption>
           </figure>
-          <p class="license-note">Recorded with synthetic demo data and simulated laboratory activity. See the <a href="#disclaimer">development disclaimer</a>.</p>
         </div>
       </section>
 
@@ -82,7 +81,7 @@
         <div class="section-heading"><h2 id="workflow-title">Follow the work.<br>Keep the history.</h2><p>Each stage of the laboratory’s work is connected, with identity, quality control, and authorization checks along the way.</p></div>
         <ol class="screens">
           <li>
-            <a class="screen-shot" href="media/screens/orders-1600.webp"><img src="media/screens/orders-960.webp" srcset="media/screens/orders-960.webp 960w, media/screens/orders-1600.webp 1600w" sizes="(max-width: 720px) 100vw, 580px" width="960" height="505" loading="lazy" decoding="async" alt="Orders screen listing synthetic clinic orders with client, test count, received time and status."></a>
+            <a class="screen-shot" href="media/screens/orders-1600.webp"><img src="media/screens/orders-960.webp" srcset="media/screens/orders-960.webp 960w, media/screens/orders-1600.webp 1600w" sizes="(max-width: 720px) 100vw, 580px" width="960" height="505" loading="lazy" decoding="async" alt="Orders screen listing clinic orders with client, test count, received time and status."></a>
             <p class="screen-step">Order &amp; accession</p>
             <h3>Orders, as the clinic sent them</h3>
             <p>Tests, diagnoses and supporting evidence are recorded exactly as supplied, never filled in. Receiving a specimen creates the accession and prints its barcode label.</p>
@@ -94,7 +93,7 @@
             <p>Worklists gather waiting specimens for each method. Results arrive from ASTM and Olympus AU400/AU640 analyzers and from LC-MS/MS result files, and quality control is recorded.</p>
           </li>
           <li>
-            <a class="screen-shot" href="media/screens/result-review-1600.webp"><img src="media/screens/result-review-960.webp" srcset="media/screens/result-review-960.webp 960w, media/screens/result-review-1600.webp 1600w" sizes="(max-width: 720px) 100vw, 580px" width="960" height="505" loading="lazy" decoding="async" alt="Results for a synthetic accession with analyte values, cutoff classifications, methods and the evidence for the selected result."></a>
+            <a class="screen-shot" href="media/screens/result-review-1600.webp"><img src="media/screens/result-review-960.webp" srcset="media/screens/result-review-960.webp 960w, media/screens/result-review-1600.webp 1600w" sizes="(max-width: 720px) 100vw, 580px" width="960" height="505" loading="lazy" decoding="async" alt="Results for an accession with analyte values, cutoff classifications, methods and the evidence for the selected result."></a>
             <p class="screen-step">Review</p>
             <h3>Every result technically reviewed</h3>
             <p>Results appear with their method, classification and provenance. A failed QC or an identity question holds the result, and each approval records who reviewed it and when.</p>
@@ -106,7 +105,7 @@
             <p>Release rechecks every hold at the moment an authorized person releases the PDF report. A correction creates a new revision and keeps the earlier one.</p>
           </li>
           <li>
-            <a class="screen-shot" href="media/screens/delivery-1600.webp"><img src="media/screens/delivery-960.webp" srcset="media/screens/delivery-960.webp 960w, media/screens/delivery-1600.webp 1600w" sizes="(max-width: 720px) 100vw, 580px" width="960" height="505" loading="lazy" decoding="async" alt="Delivery list of synthetic reports with handoff status, destination and last attempt, including unknown and failed outcomes."></a>
+            <a class="screen-shot" href="media/screens/delivery-1600.webp"><img src="media/screens/delivery-960.webp" srcset="media/screens/delivery-960.webp 960w, media/screens/delivery-1600.webp 1600w" sizes="(max-width: 720px) 100vw, 580px" width="960" height="505" loading="lazy" decoding="async" alt="Delivery list of reports with handoff status, destination and last attempt, including unknown and failed outcomes."></a>
             <p class="screen-step">Deliver &amp; bill</p>
             <h3>Handoffs with their evidence</h3>
             <p>Each fax, email, mail, courier or pickup is logged with the evidence available, never a bare “delivered”. Billable services derive from the work performed, not from positive results.</p>
@@ -118,7 +117,7 @@
             <p>Every change and every view of sensitive data is recorded and attributed to a personal account. The trail can verify its own chain.</p>
           </li>
         </ol>
-        <p class="license-note">Screens from the presentation recording: the application’s interface with a mocked engine and synthetic demo data. Select a screen to open it at full size.</p>
+        <p class="license-note">Screens from the presentation recording, with demo data and a mocked engine. Select a screen to open it at full size.</p>
       </section>
 
       <section class="ownership-section" aria-labelledby="ownership-title">
@@ -134,7 +133,7 @@
       </section>
 
       <section class="start-section wrap" id="get-started" aria-labelledby="start-title">
-        <div class="section-heading"><h2 id="start-title">Run it from source.</h2><p>No installers are published yet. Developers and evaluators can build the development application from source. Use synthetic data only.</p></div>
+        <div class="section-heading"><h2 id="start-title">Run it from source.</h2><p>No installers are published yet. Developers and evaluators can build the development application from source.</p></div>
         <div class="start-layout">
           <div>
             <h3>You will need</h3>
@@ -162,7 +161,7 @@ npm run tauri dev</code></pre>
             <caption>Project status · October 2026</caption>
             <thead><tr><th scope="col">Available in development</th><th scope="col">Still ahead</th></tr></thead>
             <tbody>
-              <tr><td>Order-to-report workflow on synthetic data</td><td>Validation with a partner laboratory</td></tr>
+              <tr><td>Order-to-report workflow</td><td>Validation with a partner laboratory</td></tr>
               <tr><td>Local backup, restore, and export tools</td><td>Signed installers and production verification</td></tr>
               <tr><td>A development build running on macOS; Windows and Linux are targets</td><td>Decisions on additional workstations and optional hosted services</td></tr>
               <tr><td>GPL-3.0-only source and project documentation</td><td>Trademark and remaining project governance decisions</td></tr>

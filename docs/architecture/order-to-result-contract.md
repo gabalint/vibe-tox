@@ -76,7 +76,7 @@ These are independent acceptance expectations for duplicate, correction and part
 
 ## Verification and boundaries
 
-The synthetic journey covers order → accession → label → durable import → QC → review, including duplicate, partial and reprocessed exports. Tests must exercise the real migrations, authorization, audit transaction, decimal parser, dependencies and gate functions. UI IPC and transport can use synthetic harnesses; expected clinical outcomes come from this contract and the [validation plan](../quality/validation-plan.md), not from the code under test.
+The test journey covers order → accession → label → durable import → QC → review, including duplicate, partial and reprocessed exports. Tests must exercise the real migrations, authorization, audit transaction, decimal parser, dependencies and gate functions. UI IPC and transport can use synthetic harnesses; expected clinical outcomes come from this contract and the [validation plan](../quality/validation-plan.md), not from the code under test.
 
 Unimplemented capabilities retain their requirement and release-gate status: partner-defined automatic reflex/interpretive rules, per-method competency, retention/disposition schedules, record merge, and separately scoped portals or external exchange. The [laboratory policy inputs](../quality/laboratory-policy-inputs.md#order-to-result) retain unresolved laboratory choices rather than treating synthetic defaults as approval.
 

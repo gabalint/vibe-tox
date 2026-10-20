@@ -1,6 +1,6 @@
 # Security policy
 
-The application is in development on synthetic data. There are no supported software releases, operated production services, or published response commitments yet. Code-level security rules are in [security, audit and logging standards](docs/governance/security-audit-logging.md).
+The application is in development. There are no supported software releases, operated production services, or published response commitments yet. Code-level security rules are in [security, audit and logging standards](docs/governance/security-audit-logging.md).
 
 ## Reporting a vulnerability
 
@@ -12,7 +12,7 @@ Responsible response roles and response-time commitments are not yet established
 
 ## Scope
 
-The application runs on a laboratory-controlled computer. Its security boundaries include per-person application accounts and permissions, imported files and analyzer traffic, the desktop renderer's access to the engine, recovery integrity, and protection against accidental disclosure in logs and exports. Please describe the affected boundary and use synthetic data in a reproduction.
+The application runs on a laboratory-controlled computer. Its security boundaries include per-person application accounts and permissions, imported files and analyzer traffic, the desktop renderer's access to the engine, recovery integrity, and protection against accidental disclosure in logs and exports. Please describe the affected boundary.
 
 The computer's owner or operating-system administrator can inspect and change the process and its files. The application does not claim to prevent that authority or make a locally editable database tamper-proof. This limitation does not remove the need to enforce application permissions or safely handle external input. Host security and physical access remain laboratory responsibilities.
 

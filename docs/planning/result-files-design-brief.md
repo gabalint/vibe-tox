@@ -1,6 +1,6 @@
 # Result-file intake contract
 
-Status: **implemented on synthetic data** for approved long and wide delimited exports, manual loading and watched folders. This contract covers REQ-INT-005/009, REQ-ANA-002/003 and REQ-RES-001. [Operator instructions](../operations/result-files.md) explain setup and recovery; [LC-MS/MS export research](../research/lcms-result-exports.md) retains vendor-specific evidence and source qualifications. Actual laboratory exports require template acceptance and side-by-side validation.
+Status: **implemented** for approved long and wide delimited exports, manual loading and watched folders. This contract covers REQ-INT-005/009, REQ-ANA-002/003 and REQ-RES-001. [Operator instructions](../operations/result-files.md) explain setup and recovery; [LC-MS/MS export research](../research/lcms-result-exports.md) retains vendor-specific evidence and source qualifications. Actual laboratory exports require template acceptance and side-by-side validation.
 
 ## 1. Workflow and supported scope
 
@@ -86,6 +86,6 @@ Exact structs, migrations and command signatures live with their owning source; 
 
 ## 10. Verification and remaining limits
 
-Synthetic cases must cover exact headers/preambles, quoted delimiters, encoding/field limits, long/two-row-wide layouts, role/unit/dilution conflicts, empty and mapped words, duplicate/reprocessed files, partial output, retained unordered measurements, stale folders, baseline files, interrupted intake and authorization/audit. Preserve real parser/import/storage/gate behavior in these tests.
+Test cases must cover exact headers/preambles, quoted delimiters, encoding/field limits, long/two-row-wide layouts, role/unit/dilution conflicts, empty and mapped words, duplicate/reprocessed files, partial output, retained unordered measurements, stale folders, baseline files, interrupted intake and authorization/audit. Preserve real parser/import/storage/gate behavior in these tests.
 
 Actual export fixtures, analyzer software/version behavior, folder-share semantics, upstream approval/certification mapping and laboratory policy remain Q-04/Q-25/Q-40/Q-41. No clinical validation follows from passing synthetic parser cases.

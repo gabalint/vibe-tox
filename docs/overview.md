@@ -69,8 +69,8 @@ local LIS remains responsible for clinical records.
 
 ### Where it stands (October 2026)
 
-The order-to-report workflow and the backup, restore and export tools are built and tested on
-synthetic data, and a development build runs on macOS. Still to come: validation with a partner
+The order-to-report workflow and the backup, restore and export tools are built and tested,
+and a development build runs on macOS. Still to come: validation with a partner
 laboratory and signed installers. Extra workstations on the lab network and optional hosted
 services need their own scope decisions. Each laboratory must validate the application and
 approve its own procedures before clinical use.

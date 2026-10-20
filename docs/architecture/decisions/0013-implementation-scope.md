@@ -9,7 +9,7 @@ Plan: [implementation plan](../../planning/implementation-plan.md).
 
 ## Context
 
-The authorized application scope is a synthetic single-computer application with explicit requirements, contracts and verification. M0–M5 components are integrated; current scope and remaining gaps are maintained in the [implementation plan](../../planning/implementation-plan.md#status). Implementation does not establish clinical validation or production readiness.
+The authorized application scope is a single-computer application with explicit requirements, contracts and verification. M0–M5 components are integrated; current scope and remaining gaps are maintained in the [implementation plan](../../planning/implementation-plan.md#status). Implementation does not establish clinical validation or production readiness.
 
 ## Decision
 

@@ -90,7 +90,7 @@ Suppress a lint only locally, with a reason. In Rust use `#[expect(clippy::lint_
 
 ## Tests
 
-- **Levels.** Pure unit tests sit in-module (`#[cfg(test)]`). Module integration tests in `tests/` use a real SQLite file with production pragmas. Engine scenario tests run synthetic end-to-end journeys. UI component tests use Vitest and Testing Library. Never mock the database.
+- **Levels.** Pure unit tests sit in-module (`#[cfg(test)]`). Module integration tests in `tests/` use a real SQLite file with production pragmas. Engine scenario tests run end-to-end journeys. UI component tests use Vitest and Testing Library. Never mock the database.
 - **Expected clinical outcomes** come from specifications or human-authored fixtures, not from the implementation under test ([engineering standards](engineering-standards.md#ai-assisted-development-controls)).
 - **Every safety guard has a negative test** showing that the guarded action is refused. Examples: release blocked by a QC hold, acknowledgement withheld before durable receipt, a command refused without its capability. Name tests for behavior, such as `release_fails_when_qc_hold_commits_first`.
 - **Property tests** (`proptest`) cover codecs, decimal parsing and state machines; parsers must not panic on arbitrary bytes.

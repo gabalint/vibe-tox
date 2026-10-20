@@ -1,6 +1,6 @@
 # Billing evidence and handoff
 
-Procedure draft for the synthetic-data implementation, 2026-10-14. The laboratory and its billing owner must approve the operating policy, responsibilities, applicable payer rules and disclosure process before real-data use. This implements the controlled manual records boundary of REQ-BIL-006; it does not submit claims or determine coverage.
+Procedure draft, 2026-10-14. The laboratory and its billing owner must approve the operating policy, responsibilities, applicable payer rules and disclosure process before real-data use. This implements the controlled manual records boundary of REQ-BIL-006; it does not submit claims or determine coverage.
 
 ## Where information belongs
 

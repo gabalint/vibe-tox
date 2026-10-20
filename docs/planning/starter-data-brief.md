@@ -1,6 +1,6 @@
 # Standard Catalog, catalog review and demo-data contract
 
-Status: **implemented on synthetic data** under REQ-OPS-014–016. Bundled clinical content remains unreviewed until its named clinical review is recorded (Q-02/Q-39). Application configuration approval follows ADR 0018 and the configured separation-of-duties policy; loading or approving records does not establish laboratory validation.
+Status: **implemented** under REQ-OPS-014–016. Bundled clinical content remains unreviewed until its named clinical review is recorded (Q-02/Q-39). Application configuration approval follows ADR 0018 and the configured separation-of-duties policy; loading or approving records does not establish laboratory validation.
 
 ## Decisions
 

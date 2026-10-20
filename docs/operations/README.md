@@ -1,7 +1,7 @@
 # Laboratory operator guide
 
 These guides describe how laboratory staff operate the implemented application. It is
-development software built on synthetic data; see the
+development software; see the
 [development disclaimer](../governance/development-disclaimer.md). A laboratory must approve its
 intended use, procedures, configuration and each release before clinical use.
 

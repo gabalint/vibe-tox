@@ -2,8 +2,7 @@
 
 This is the short contributor path for the Rust/Tauri/React application. Read
 [AGENTS.md](../../AGENTS.md), the [implementation plan](../planning/implementation-plan.md) and
-[CONTRIBUTING.md](../../CONTRIBUTING.md) before changing anything. Code and tests use synthetic data
-only; see the [development disclaimer](../governance/development-disclaimer.md).
+[CONTRIBUTING.md](../../CONTRIBUTING.md) before changing anything.
 
 The separate [website and video](public-website.md) are static files; they do not run the
 desktop application.

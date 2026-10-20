@@ -66,7 +66,7 @@ Running the LIS on one laboratory computer gives the laboratory portable records
 
 The proposed operating rules are accepted when the technical maintainer and project owner approve them after the [required verification](0012-rust-tauri-desktop-application.md#acceptance-evidence). Milestone tests and platform qualification must demonstrate:
 
-- the application receiving a synthetic ASTM session while at its sign-in screen;
+- the application receiving an ASTM session while at its sign-in screen;
 - a power cut during a write without losing committed work;
 - release rechecking gates inside one write transaction, in both commit orders;
 - a label printed while nobody is signed in to the app;

@@ -76,7 +76,7 @@ Further consequences of the single-computer scope:
 Before acceptance, the following evidence is needed:
 
 - a design-partner inventory of partner profiles, the clinics' EHRs and any engine the lab already runs (Q-05)
-- a synthetic conformance corpus for both canonical profiles, including partial, corrected, censored, duplicate, conflicting and out-of-order messages
+- a conformance corpus for both canonical profiles, including partial, corrected, censored, duplicate, conflicting and out-of-order messages
 - a demonstration that an edge-mediated route (engine or cloud endpoint) preserves original payloads in host storage, IDs and end-to-end receipt states through edge restart and replay
 - a demonstration that an LIS application rejection reaches the partner through each edge
 - for the cloud endpoint: an offline-host day with commit-only acknowledgements, followed by catch-up in which the LIS decisions reach the partner; device revocation fencing; negative tenant-isolation tests on the endpoint's message store

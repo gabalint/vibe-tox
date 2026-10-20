@@ -5,7 +5,7 @@ description: Diagnose gaps in toxicology laboratory workflows, state transitions
 
 # Lab workflow diagnostics
 
-Read [workflows](../../../docs/requirements/workflows.md), [functional requirements](../../../docs/requirements/functional-requirements.md) and [domain model](../../../docs/architecture/domain-model.md). Select the affected program and follow one synthetic accession through relevant states.
+Read [workflows](../../../docs/requirements/workflows.md), [functional requirements](../../../docs/requirements/functional-requirements.md) and [domain model](../../../docs/architecture/domain-model.md). Select the affected program and follow one accession through relevant states.
 
 Check actor qualification, patient/specimen/aliquot identity, versioned configuration, QC state, allowed transitions, retained evidence and correction behavior. Separate presumptive/definitive from qualitative/quantitative; distinguish missing, not performed, invalid, below a limit and a true numerical value.
 

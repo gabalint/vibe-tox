@@ -1,6 +1,6 @@
 # Integration architecture and contract boundaries
 
-Status: local ASTM, result-file and [AU400/AU640](au-protocol.md) interfaces are implemented and tested on synthetic data. Partner-exchange and hosted-service contracts are proposals ([ADR 0007](decisions/0007-integration-edge-and-interface-engines.md), [ADR 0010](decisions/0010-optional-cloud-services.md)). Source IDs resolve in [the domain](../research/sources-domain.md) and [engineering](../research/sources-engineering.md) registers.
+Status: local ASTM, result-file and [AU400/AU640](au-protocol.md) interfaces are implemented and tested. Partner-exchange and hosted-service contracts are proposals ([ADR 0007](decisions/0007-integration-edge-and-interface-engines.md), [ADR 0010](decisions/0010-optional-cloud-services.md)). Source IDs resolve in [the domain](../research/sources-domain.md) and [engineering](../research/sources-engineering.md) registers.
 
 The laboratory's host computer is the system of record. Integrations terminate either on that host (lab-run) or at optional hosted services (under a BAA), which relay to the host over an outbound-only link. Local drivers and listeners run inside the desktop application while it is open; any future connector follows the same lifecycle ([ADR 0009](decisions/0009-single-computer-local-lis.md)).
 
@@ -378,7 +378,7 @@ A cancellation message is a request until the authoritative order workflow accep
 
 ## Per-partner readiness evidence
 
-Before an interface is called supported, obtain its actual guide and software version; secure access/contract/licensing terms; laboratory-approved mapping; synthetic normal, duplicate, conflict, censored, missing, partial, corrected, cancelled and out-of-order fixtures; restart/outage/replay and unknown-outcome evidence; recipient rendering comparison; runbook and named ownership. Include recipient revocation and wrong-person correction. For the cloud endpoint, also show the partner's handling of commit-only acknowledgement and a later application rejection, and an offline-host day followed by catch-up. Synthetic file and message fixtures support development and demos; none is a production-ready partner contract.
+Before an interface is called supported, obtain its actual guide and software version; secure access/contract/licensing terms; laboratory-approved mapping; normal, duplicate, conflict, censored, missing, partial, corrected, cancelled and out-of-order fixtures; restart/outage/replay and unknown-outcome evidence; recipient rendering comparison; runbook and named ownership. Include recipient revocation and wrong-person correction. For the cloud endpoint, also show the partner's handling of commit-only acknowledgement and a later application rejection, and an offline-host day followed by catch-up. Synthetic file and message fixtures support development and demos; none is a production-ready partner contract.
 
 The readiness record per EHR (extends REQ-INT-001) names the partner's program, LOI/LRI edition, supported messages, acknowledgement mode and tolerance, correction semantics, route (lab-run or hosted endpoint), who is charged and the measured onboarding time. Public evidence leaves most of this unknown ([cloud-services research §4.2](../research/cloud-services.md#partner-onboarding-and-interface-qualification), Q-05):
 

@@ -51,7 +51,7 @@ and applicability limits, not implementation authority.
 | [Result-file contract](planning/result-files-design-brief.md) | Approved import templates, supported file shapes and intake limits |
 | [Incremental backup proposal](planning/backup-incremental-design-brief.md) | Proposed extension to current full-copy folder backups |
 
-Stage gates from synthetic development to clinical use are in the
+Stage gates from development to clinical use are in the
 [validation plan](quality/validation-plan.md#stage-gates).
 
 ## Engineering and evidence

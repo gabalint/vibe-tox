@@ -68,7 +68,7 @@ Consequences:
 
 ## Acceptance evidence and revisit
 
-Before acceptance, the following must be demonstrated on synthetic data:
+Before acceptance, the following must be demonstrated:
 
 - detection of altered, deleted, inserted and reordered audit rows, including chain recomputation by an administrator editing the SQLite file
 - detection of a replaced report artifact file

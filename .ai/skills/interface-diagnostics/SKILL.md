@@ -13,4 +13,4 @@ Walk through duplicate payload, same-ID/different-payload conflict, partial batc
 
 Use vendor-supported exports and permitted synthetic samples. Do not assume S3 compatibility, HL7, FHIR, CSV or ASTM naming proves conformance to a partner's actual profile. Do not interpret proprietary raw instrument data or claim a connector is supported without version-specific evidence.
 
-Return a conceptual contract and synthetic acceptance scenarios linked to requirement IDs. Writing adapter code or sending a real message requires implementation/task authorization; this skill produces documentation.
+Return a conceptual contract and acceptance scenarios linked to requirement IDs. Writing adapter code or sending a real message requires implementation/task authorization; this skill produces documentation.

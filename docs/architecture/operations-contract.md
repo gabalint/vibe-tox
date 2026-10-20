@@ -108,7 +108,7 @@ An unaccepted version raises a banner/work item; the current application does no
 | Restore apply interrupted | Resume safely without replacing already verified files incorrectly or losing the required reconciliation gate. |
 | Sensitive operation refused | No partial state or key export; authorization/authentication refusal and PHI-free diagnostics follow shared security contracts. |
 
-Use real encryption, file I/O, migrations, digests, chain/anchor verification, restore apply, audit, authentication and outbound gates in synthetic tests. OS facts, native dialogs and inhibitor acquisition may use explicit test doubles. Expected outcomes derive from this contract and the [validation plan](../quality/validation-plan.md).
+Use real encryption, file I/O, migrations, digests, chain/anchor verification, restore apply, audit, authentication and outbound gates in tests. OS facts, native dialogs and inhibitor acquisition may use explicit test doubles. Expected outcomes derive from this contract and the [validation plan](../quality/validation-plan.md).
 
 ## Real-host qualification
 

@@ -1,6 +1,6 @@
 # Laboratory policy and qualification inputs
 
-These stable input IDs identify decisions and acceptance evidence still needed from a laboratory. Implemented defaults are software behavior on synthetic data, not approved clinical policy. [Open questions](../planning/open-questions.md) name decision owners; [G1/G2](open-items-g1-g2.md) tracks readiness. IDs remain stable where an accepted ADR governs the implementation choice.
+These stable input IDs identify decisions and acceptance evidence still needed from a laboratory. Implemented defaults are software behavior, not approved clinical policy. [Open questions](../planning/open-questions.md) name decision owners; [G1/G2](open-items-g1-g2.md) tracks readiness. IDs remain stable where an accepted ADR governs the implementation choice.
 
 ## Order to result
 
