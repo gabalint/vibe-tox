@@ -238,6 +238,15 @@ def check_migrations(root, conn, manifest, report):
         report.ok("every migration source matches its checksum")
 
 
+def comparable_columns(kind, columns):
+    """SQLite infers a view column's type from the view's query, and versions disagree
+    (3.45 and 3.53 do for compound queries), so only a table's declared types compare.
+    The view's CREATE statement is still compared exactly."""
+    if kind != "view" or not isinstance(columns, list):
+        return columns
+    return [{**column, "type": None} if isinstance(column, dict) else column for column in columns]
+
+
 def check_schema_files(root, conn, manifest, report):
     """The schema SQL and both dictionaries describe this database, not another one."""
     expected_schema = ";\n\n".join(
@@ -316,7 +325,8 @@ def check_schema_files(root, conn, manifest, report):
         ]
         if (
             entry["name"] != name or entry["kind"] != kind or entry["ddl"] != ddl
-            or entry["columns"] != columns or entry["foreignKeys"] != foreign_keys
+            or comparable_columns(kind, entry["columns"]) != comparable_columns(kind, columns)
+            or entry["foreignKeys"] != foreign_keys
             or entry["indexes"] != indexes or entry["triggers"] != triggers
         ):
             bad += 1
