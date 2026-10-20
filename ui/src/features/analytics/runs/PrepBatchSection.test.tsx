@@ -105,7 +105,7 @@ describe("PrepBatchSection (REQ-ANA-001, REQ-ANA-004)", { timeout: WALKTHROUGH_T
     expect(create).toHaveBeenCalledWith({ input: { methodVersionId: METHOD_VERSION_ID } });
     expect(within(batch).getAllByText(BATCH_ID).length).toBeGreaterThan(0);
 
-    await user.click(within(batch).getByRole("button", { name: "Record step" }));
+    await user.click(await within(batch).findByRole("button", { name: "Record step" }));
     const dialog = await screen.findByRole("dialog", { name: "Record preparation step" });
     await user.type(within(dialog).getByRole("textbox", { name: /Step code/ }), "EXTRACT");
     await chooseWithKeyboard(

@@ -394,23 +394,31 @@ describe("NewOrderPage (REQ-ORD-001, REQ-ORD-005, REQ-ORD-007)", {
     expect(screen.getByRole("group", { name: /SYN-T10 Synthetic panel 10$/ })).toBeTruthy();
   });
 
-  it("finds tests across a 1,000-test catalog and uses the same keyboard picker for reflex scope", async () => {
-    const { user } = renderPage({ list_active_orderables: () => LARGE_CATALOG });
-    const find = await screen.findByRole("combobox", { name: /Find tests/ });
-    expect(screen.queryByRole("checkbox", { name: /SYN-SCR/ })).toBeNull();
-    await user.type(find, "SYN-SCR");
-    await user.keyboard("{ArrowDown}{Enter}{Escape}");
-    await chooseWithKeyboard(user, /Reflex testing for SYN-SCR/, "Authorized");
-    await user.type(
-      screen.getByRole("combobox", { name: "Find reflex tests for SYN-SCR Synthetic drug screen" }),
-      "SYN-CNF",
-    );
-    await user.keyboard("{ArrowDown}{Enter}{Escape}");
-    const chosen = screen.getByRole("list", {
-      name: "Chosen reflex tests for SYN-SCR Synthetic drug screen",
-    });
-    expect(within(chosen).getByText(/SYN-CNF/)).toBeTruthy();
-  });
+  // jsdom re-renders the 1,000-row list on each keystroke: about 20 s on a developer computer
+  // and close to 40 s on a loaded CI runner, beyond the walkthrough limit.
+  it(
+    "finds tests across a 1,000-test catalog and uses the same keyboard picker for reflex scope",
+    async () => {
+      const { user } = renderPage({ list_active_orderables: () => LARGE_CATALOG });
+      const find = await screen.findByRole("combobox", { name: /Find tests/ });
+      expect(screen.queryByRole("checkbox", { name: /SYN-SCR/ })).toBeNull();
+      await user.type(find, "SYN-SCR");
+      await user.keyboard("{ArrowDown}{Enter}{Escape}");
+      await chooseWithKeyboard(user, /Reflex testing for SYN-SCR/, "Authorized");
+      await user.type(
+        screen.getByRole("combobox", {
+          name: "Find reflex tests for SYN-SCR Synthetic drug screen",
+        }),
+        "SYN-CNF",
+      );
+      await user.keyboard("{ArrowDown}{Enter}{Escape}");
+      const chosen = screen.getByRole("list", {
+        name: "Chosen reflex tests for SYN-SCR Synthetic drug screen",
+      });
+      expect(within(chosen).getByText(/SYN-CNF/)).toBeTruthy();
+    },
+    3 * WALKTHROUGH_TIMEOUT_MS,
+  );
 
   it("asks before leaving typed input", async () => {
     const { user } = renderPage();

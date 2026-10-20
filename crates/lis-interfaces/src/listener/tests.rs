@@ -1,7 +1,7 @@
 use std::io::{Read, Write};
 use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::str::FromStr;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -24,7 +24,7 @@ use crate::model::{
 use crate::peer_rejections::{MAX_TRACKED_PEERS, RejectionTally};
 use crate::queries::{get_receipt, list_instruments, list_receipt_frames};
 use crate::reconcile_receipts;
-use crate::session::{Session, StreamContext, assembled_message, run_stream};
+use crate::session::{Session, assembled_message};
 use crate::{
     AbortCode, InstrumentTransport, InterfaceError, Receipt, ReceiptId, ReceiptState, SCHEMA,
 };
@@ -851,7 +851,11 @@ fn timer_expiry_aborts_receiving_receipt() {
 #[cfg(unix)]
 #[test]
 fn serial_pseudoterminal_completes_same_durable_flow() {
+    use std::sync::atomic::Ordering;
+
     use serialport::{SerialPort, TTYPort};
+
+    use crate::session::{StreamContext, run_stream};
 
     let fixture = Fixture::open();
     let instrument = fixture.register(serial_settings("synthetic-pty"), true);
@@ -892,12 +896,6 @@ fn serial_pseudoterminal_completes_same_durable_flow() {
     assert!(complete.peer.is_none());
     stop.store(true, Ordering::Release);
     assert!(worker.join().expect("listener joins").is_ok());
-}
-
-#[cfg(windows)]
-#[test]
-fn serial_pseudoterminal_is_skipped_because_windows_has_no_tty_pair() {
-    assert!(cfg!(windows));
 }
 
 fn register_on(database: &Database, connection: ConnectionSettings, enabled: bool) -> Instrument {
