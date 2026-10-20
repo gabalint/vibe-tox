@@ -23,6 +23,12 @@ ignore = [
   { id = "RUSTSEC-2026-0192", reason = "ttf-parser is Typst 0.15.1's font parser; fonts are bundled, never user-supplied" },
   # Unmaintained proc-macro in the GTK3 bindings that Tauri uses on Linux (build time only).
   { id = "RUSTSEC-2024-0370", reason = "proc-macro-error via glib/gtk3 macros in Tauri's Linux stack; compile-time only" },
+  # zbus 5's D-Bus name and wire-format crates, merged into zbus 6.0.0 (2026-10-16). Linux-only,
+  # via keepawake, secret-service (keyring) and tauri-plugin-single-instance, whose latest
+  # releases still require zbus 5 (checked 2026-10-20). Revisit when they move to zbus 6.
+  { id = "RUSTSEC-2026-0370", reason = "zvariant via zbus 5 in keepawake, keyring and single-instance; awaiting zbus 6 upstream" },
+  { id = "RUSTSEC-2026-0371", reason = "zbus_names via zbus 5 in keepawake, keyring and single-instance; awaiting zbus 6 upstream" },
+  { id = "RUSTSEC-2026-0372", reason = "zvariant_derive via zbus 5 in keepawake, keyring and single-instance; awaiting zbus 6 upstream" },
 ]
 
 [licenses]
