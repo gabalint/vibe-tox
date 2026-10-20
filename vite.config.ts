@@ -22,6 +22,10 @@ export default defineConfig({
     // Vitest 5's persistent transform cache reused an empty inventory during verification.
     fsModuleCache: false,
     environment: "jsdom",
+    // GitHub's runners are several times slower than a developer computer under a full
+    // parallel run; a 1 s local test exceeded the 5 s default there. Longer walkthrough
+    // budgets set in test files still apply.
+    testTimeout: 20_000,
     include: ["src/**/*.test.{ts,tsx}"],
     setupFiles: ["src/lib/test/setup.ts"],
     restoreMocks: true,
