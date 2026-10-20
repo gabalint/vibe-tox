@@ -23,7 +23,7 @@
 //! deletes the tombstone, so a demo is never opened half-deleted.
 
 use std::fs;
-use std::io;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
@@ -146,8 +146,13 @@ impl Folders {
             fs::create_dir_all(parent)?;
         }
         let partial = self.choice.with_extension("installation-new");
-        fs::write(&partial, format!("{}\n", choice.as_str()))?;
-        fs::File::open(&partial)?.sync_all()?;
+        {
+            // Sync through the writing handle: Windows refuses to flush a read-only one,
+            // and the handle must be closed before the rename.
+            let mut file = fs::File::create(&partial)?;
+            file.write_all(format!("{}\n", choice.as_str()).as_bytes())?;
+            file.sync_all()?;
+        }
         fs::rename(&partial, &self.choice)
     }
 
