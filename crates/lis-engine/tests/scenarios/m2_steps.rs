@@ -83,8 +83,10 @@ fn frames(artifact: &[u8]) -> Vec<Vec<u8>> {
 /// enquiry and for every frame.
 fn send(port: u16, artifact: &[u8]) {
     let mut stream = TcpStream::connect((Ipv4Addr::LOCALHOST, port)).unwrap();
+    // A guard against a hung listener, not a timing assertion: a loaded Windows CI
+    // runner once took longer than 5 s to acknowledge the enquiry.
     stream
-        .set_read_timeout(Some(Duration::from_secs(5)))
+        .set_read_timeout(Some(Duration::from_secs(30)))
         .unwrap();
     let mut reply = [0_u8; 1];
     stream.write_all(&[ENQ]).unwrap();
