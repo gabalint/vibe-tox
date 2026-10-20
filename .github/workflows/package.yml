@@ -1,16 +1,24 @@
+# Builds unsigned desktop bundles. The default "artifacts" channel keeps them as workflow
+# artifacts. "nightly" (from develop) and "release" (from main) also run the full CI gate
+# and publish a GitHub release; see docs/development/releases.md.
 name: package
+run-name: package ${{ inputs.channel }} from ${{ github.ref_name }}
 
 on:
   workflow_dispatch:
-  push:
-    tags: ["**"]
+    inputs:
+      channel:
+        description: "artifacts: workflow artifacts only; nightly: rolling prerelease from develop; release: main's manifest version"
+        type: choice
+        options: [artifacts, nightly, release]
+        default: artifacts
 
 permissions:
   contents: read
 
 concurrency:
-  group: package-${{ github.ref }}
-  cancel-in-progress: true
+  group: package-${{ inputs.channel }}-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
@@ -19,8 +27,55 @@ env:
   CARGO_TARGET_DIR: ${{ github.workspace }}/target/packaging-ci
 
 jobs:
+  prepare:
+    name: version
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Release tags decide which versions are still unreleased.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Select the version for this channel
+        id: version
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          case "$CHANNEL" in
+            artifacts)
+              version="$(python3 scripts/release_version.py show)" ;;
+            nightly)
+              if [[ "$GITHUB_REF" != refs/heads/develop ]]; then
+                echo "::error::Nightly builds are published only from develop"
+                exit 1
+              fi
+              version="$(python3 scripts/release_version.py nightly --date "$(date -u +%Y%m%d)" --run "$RUN_NUMBER")" ;;
+            release)
+              if [[ "$GITHUB_REF" != refs/heads/main ]]; then
+                echo "::error::Releases are published only from main"
+                exit 1
+              fi
+              version="$(python3 scripts/release_version.py release)" ;;
+          esac
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Channel \`$CHANNEL\`, version \`$version\`, commit \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+
+  gate:
+    name: quality gate
+    if: inputs.channel != 'artifacts'
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
   build:
     name: unsigned bundle (${{ matrix.name }})
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -83,6 +138,17 @@ jobs:
         with:
           workspaces: ". -> target/packaging-ci"
       - run: npm ci
+      # After the caches are keyed, so a nightly stamp does not create a new cache entry.
+      - uses: actions/setup-python@v7
+        if: inputs.channel == 'nightly'
+        with:
+          python-version: "3.11"
+      - name: Stamp the nightly version
+        if: inputs.channel == 'nightly'
+        shell: bash
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: python scripts/release_version.py set "$VERSION"
       - name: Build unsigned bundles
         run: npx tauri build --bundles ${{ matrix.bundles }} -- --locked
       - name: Check macOS executable has no dynamic OpenSSL dependency
@@ -120,3 +186,96 @@ jobs:
           path: ${{ matrix.artifact-path }}
           if-no-files-found: error
           retention-days: 14
+
+  publish:
+    name: publish ${{ inputs.channel }}
+    needs: [prepare, gate, build]
+    if: inputs.channel != 'artifacts'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      CHANNEL: ${{ inputs.channel }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: bundles
+      - name: Name installers and write checksums
+        run: |
+          mkdir release
+          stage() {
+            mapfile -t found < <(find bundles -type f -name "$1")
+            if [[ ${#found[@]} -ne 1 ]]; then
+              echo "::error::Expected one $1 bundle, found ${#found[@]}"
+              exit 1
+            fi
+            cp "${found[0]}" "release/vibe-tox-lis_${VERSION}_$2"
+          }
+          stage '*_x64-setup.exe' windows-x64-setup.exe
+          stage '*_aarch64.dmg' macos-arm64.dmg
+          stage '*_amd64.deb' linux-amd64.deb
+          stage '*_amd64.AppImage' linux-amd64.AppImage
+          (cd release && sha256sum -- * > SHA256SUMS.txt)
+          cat release/SHA256SUMS.txt
+      - name: Write release notes
+        run: |
+          source_url="$GITHUB_SERVER_URL/$GH_REPO/blob/$GITHUB_SHA"
+          {
+            if [[ "$CHANNEL" == nightly ]]; then
+              echo "Nightly build \`$VERSION\` of \`develop\` at $GITHUB_SHA. Each newer nightly replaces this prerelease."
+              previous="$(gh release view nightly --json targetCommitish --jq .targetCommitish 2>/dev/null || true)"
+              if [[ -n "$previous" && "$previous" != "$GITHUB_SHA" ]]; then
+                echo
+                echo "Changes since the previous nightly: $GITHUB_SERVER_URL/$GH_REPO/compare/$previous...$GITHUB_SHA"
+              fi
+            else
+              echo "Vibe Tox LIS \`$VERSION\` from \`main\` at $GITHUB_SHA."
+            fi
+            cat <<EOF
+
+          > [!WARNING]
+          > Development build for evaluation with synthetic data only. It is not validated for clinical use, is not a supported release, and its installers are unsigned. Read the [development disclaimer]($source_url/docs/governance/development-disclaimer.md) before use.
+
+          | System | Download |
+          | --- | --- |
+          | Windows x64 | \`vibe-tox-lis_${VERSION}_windows-x64-setup.exe\` (installs for the current user) |
+          | macOS 15 or later, Apple silicon | \`vibe-tox-lis_${VERSION}_macos-arm64.dmg\` |
+          | Linux x64 | \`vibe-tox-lis_${VERSION}_linux-amd64.deb\` or the portable \`vibe-tox-lis_${VERSION}_linux-amd64.AppImage\` |
+
+          Because the installers are unsigned, Windows SmartScreen warns before installation and macOS blocks the first launch until you choose **Open Anyway** in System Settings → Privacy & Security. Compare each download with \`SHA256SUMS.txt\`.
+
+          Built by [workflow run $GITHUB_RUN_ID]($GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID) after the full quality gate. The source code archives on this page hold the tagged source; [packaging]($source_url/docs/development/packaging.md) describes the build. Licensed under GPL-3.0-only.
+          EOF
+          } > notes.md
+          cat notes.md
+      - name: Publish the release
+        run: |
+          if [[ "$CHANNEL" == nightly ]]; then
+            if gh release view nightly > /dev/null 2>&1; then
+              gh release delete nightly --cleanup-tag --yes
+            elif gh api "repos/$GH_REPO/git/ref/tags/nightly" > /dev/null 2>&1; then
+              gh api -X DELETE "repos/$GH_REPO/git/refs/tags/nightly"
+            fi
+            gh release create nightly release/* --target "$GITHUB_SHA" --prerelease --latest=false \
+              --title "Vibe Tox LIS $VERSION" --notes-file notes.md
+            tag=nightly
+          else
+            tag="v$VERSION"
+            # A failed earlier attempt can leave an unpublished draft; drafts have no tag yet.
+            gh api --paginate "repos/$GH_REPO/releases" \
+              --jq ".[] | select(.draft and .tag_name == \"$tag\") | .id" |
+              while read -r id; do gh api -X DELETE "repos/$GH_REPO/releases/$id"; done
+            # Draft first, so the release becomes visible only with every asset attached.
+            gh release create "$tag" release/* --draft --target "$GITHUB_SHA" \
+              --title "Vibe Tox LIS $VERSION" --notes-file notes.md --generate-notes
+            gh release edit "$tag" --draft=false --latest
+          fi
+          assets="$(gh release view "$tag" --json assets --jq '.assets | length')"
+          if [[ "$assets" != 5 ]]; then
+            echo "::error::$tag has $assets assets; expected 4 installers and SHA256SUMS.txt"
+            exit 1
+          fi
+          echo "Published [$tag]($GITHUB_SERVER_URL/$GH_REPO/releases/tag/$tag)" >> "$GITHUB_STEP_SUMMARY"

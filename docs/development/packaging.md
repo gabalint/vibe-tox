@@ -1,9 +1,9 @@
 # Packaging the desktop application
 
-Status: M5 developer configuration for unsigned test bundles. These artifacts are not a
-production release and are not validated for clinical use. Code signing, notarization and the
-updater remain blocked on the publisher and release-channel decision in
-[Q-19 and Q-34](../planning/open-questions.md).
+Status: M5 developer configuration for unsigned bundles. They are published as development
+builds ([branches and releases](releases.md)). They are not a production release and are not
+validated for clinical use. Code signing, notarization and the updater remain blocked on the
+publisher and supported-release decisions in [Q-19 and Q-34](../planning/open-questions.md).
 
 ## Configured bundles
 
@@ -53,10 +53,11 @@ installation test; local macOS checks do not qualify Windows or Linux packages.
 
 Set `CARGO_TARGET_DIR` to an absolute path so Tauri’s Cargo invocation under `src-tauri`
 and artifact collection use the same directory. Reuse the usual warm cache; use the assigned
-worker directory when other workers are building. See [build storage](local-build-storage.md). The tag/manual
+worker directory when other workers are building. See [build storage](local-build-storage.md). The manually dispatched
 `.github/workflows/package.yml` matrix uses separate Windows, macOS and Ubuntu 22.04 runners,
-sets an absolute workspace target directory, builds with the lockfile, caches npm and Rust inputs, and uploads the unsigned outputs for 14 days. It intentionally does not
-publish a GitHub release. Tauri's [GitHub Actions guide](https://v2.tauri.app/distribute/pipelines/github/)
+sets an absolute workspace target directory, builds with the lockfile, caches npm and Rust inputs, and uploads the unsigned outputs for 14 days. Its `nightly` and `release`
+channels also run the full CI gate and publish a GitHub release; see
+[branches and releases](releases.md#package-workflow). Tauri's [GitHub Actions guide](https://v2.tauri.app/distribute/pipelines/github/)
 is the upstream basis for the runner matrix and Linux packages (checked 2026-10-13).
 
 ## Release readiness
@@ -105,8 +106,8 @@ with applicable third-party licenses and notices. Review libraries, bundled font
 media and installer/runtime components in the actual artifact for compatibility
 and distribution obligations. Patient data, credentials and operational backups
 are not release source material. License selection alone does not produce or
-qualify this full release package, and a public source repository does not by itself
-authorize a software release (Q-19, Q-34).
+qualify this full release package. The [development builds](releases.md) published on
+GitHub do not meet these requirements and are not supported releases (Q-19, Q-34).
 
 The Windows offline installer supplies the Evergreen WebView2 installer when it is missing; it does
 not freeze WebView2. Windows continues to patch the runtime. A fixed runtime would add roughly 180

@@ -4,8 +4,17 @@
 
 **Public repository — user instruction, 2026-10-20.** `gabalint/vibe-tox` is
 public and the presentation website is published through GitHub Pages from
-`website/`. Publication does not authorize software releases, signing, cloud
+`website/`. Publication does not authorize signing, supported releases, cloud
 implementation or clinical use; those keep their own gates (Q-19, Q-34).
+
+**Development releases — user instruction, 2026-10-20.** `develop` is the default
+integration branch and `main` the release branch. The package workflow publishes
+unsigned builds on GitHub Releases after the full quality gate: a rolling `nightly`
+prerelease from `develop` and a `vX.Y.Z` release for each new version on `main`
+([branches and releases](docs/development/releases.md)). A scheduled local agent
+runs them with the [release-automation skill](.ai/skills/release-automation/SKILL.md).
+These are development builds for evaluation with synthetic data. They do not
+authorize signing, clinical use or support commitments.
 
 **Open-source preparation — user instruction, 2026-10-20.** Retain GPL-3.0-only
 and keep the free clinical toxicology LIS scope explicit. Keep project pricing,

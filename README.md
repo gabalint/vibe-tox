@@ -22,7 +22,10 @@ record what remains before laboratory use.
 
 ## Run from source
 
-No installers are published yet. Install Rust through
+Unsigned development installers for Windows, macOS and Linux are on the
+[releases page](https://github.com/gabalint/vibe-tox/releases): a `nightly` prerelease
+of `develop` and versioned releases from `main`
+([branches and releases](docs/development/releases.md)). To run from source, install Rust through
 [rustup](https://rustup.rs/) (the repository pins its toolchain), Node.js 24 with npm,
 and the [Tauri 2 prerequisites](https://v2.tauri.app/start/prerequisites/) for your
 operating system. Then, from a clone of the repository:

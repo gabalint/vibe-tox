@@ -42,6 +42,10 @@ Own assigned `docs/help/*.json` topics, with disjoint topic ownership when deleg
 
 Run the workspace quality gate on a snapshot of finished workers' changes, following the [coordination policy](../docs/planning/implementation-plan.md#fleet-and-coordination). Fix only integration glue that no single worker owns: cross-crate wiring, the named shared registration files and lint fallout. Report a failure inside a worker's owned paths to the coordinator with the failing command and output, and never weaken a test or assertion to make it pass. Report each run with the snapshot's contents, the commands and their results.
 
+## Release agent
+
+Run the scheduled nightly and versioned GitHub releases with the [release-automation skill](skills/release-automation/SKILL.md): dispatch and verify the package workflow, retry one infrastructure failure and report. Never change code, versions, branches, tags, settings or signing. Report gate failures and unreleased `main` commits for a person to act on.
+
 ## Delegation and handoff contract
 
 For each assignment specify question, assumed jurisdiction/program, owned files, allowed actions, source/date expectations and stopping condition. Return findings with direct sources, changed paths, proposal status, conflicting evidence and unresolved questions. The coordinator checks IDs and links across handoffs and integrates differences explicitly. When several agents append to the same ledger or ID series in parallel, reserve disjoint ID ranges up front. Before a parallel pass, check whether another session is already editing the repository and agree file ownership with it. A useful stopping condition is a decision-ready baseline with named unknowns, not a claim that all toxicology knowledge has been collected.

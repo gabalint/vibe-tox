@@ -82,7 +82,7 @@ ARM64 Windows and ARM64 Linux hosts are out of scope until Q-29 changes.
 
 ## Repository and contribution conventions
 
-Use a documented default branch and reviewed pull requests once the repository is published. Preserve accepted ADRs and stable requirement IDs. Store reusable protocols and synthetic fixtures in the project; keep sensitive laboratory or service-provider evidence in its authorized repository/system. Supply module ownership and review assignments when maintainers are named; do not create fictitious CODEOWNERS or contacts.
+Use the documented default branch, `develop` ([branches and releases](../development/releases.md)), and reviewed pull requests. Preserve accepted ADRs and stable requirement IDs. Store reusable protocols and synthetic fixtures in the project; keep sensitive laboratory or service-provider evidence in its authorized repository/system. Supply module ownership and review assignments when maintainers are named; do not create fictitious CODEOWNERS or contacts.
 
 Contributors disclose material AI assistance and retain responsibility for sources, test outcomes and submitted rights. Do not paste restricted manuals or copied incompatible code into a contribution. A proposed DCO sign-off process concerns origin and submission rights, not a clinical approval or warranty. [DCO 1.1](https://developercertificate.org/)
 

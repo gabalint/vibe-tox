@@ -59,7 +59,7 @@ Useful narrower commands:
 | `npm run dev` | Run only the Vite UI development server |
 | `npm run build` | Type-check and build the bundled UI |
 | `npm run tauri dev` | Build and run the desktop application in development |
-| `npm run tauri build` | Build the desktop application and configured unsigned bundles for the current OS; see the [packaging guide](packaging.md) |
+| `npm run tauri build` | Build the desktop application and configured unsigned bundles for the current OS; see the [packaging guide](packaging.md) and [branches and releases](releases.md) |
 | `cargo test -p <crate> --locked` | Test one Rust crate and regenerate its `ts-rs` bindings |
 
 Do not use real patient data, requisitions, analyzer exports, credentials or licensed manuals. The
@@ -141,7 +141,7 @@ clinical validity. Report what ran on the final change and what remains unverifi
 ### CI selection and the required check
 
 The [`ci` workflow](../../.github/workflows/ci.yml) always starts selection on pushes to
-`main` and pull requests, without workflow-level path filters. A manual `workflow_dispatch`
+`develop` and `main` and on pull requests, without workflow-level path filters. A manual `workflow_dispatch`
 run selects the full gate. Selection publishes its reasons in the run summary. Pull-request
 runs compare the base commit with GitHub's checked-out merge commit, so classification and
 tests use the same proposed merged tree; pushes compare the event's previous and current
@@ -158,7 +158,9 @@ check pending, as described in GitHub's
 [required-check guidance](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks#handling-skipped-but-required-checks)
 and [`needs` semantics](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idneeds)
 (ENG-276). Repository administrators can require `quality-gate`; editing this workflow does
-not itself change branch protection. CI does not deploy; the separate
+not itself change branch protection. CI does not deploy. The
+[package workflow](releases.md#package-workflow) calls it as the full gate before
+publishing nightly and versioned builds, and the separate
 [Pages workflow](public-website.md#publication) publishes only `website/`.
 
 The governing rules are the

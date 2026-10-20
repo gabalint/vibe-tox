@@ -20,7 +20,8 @@ or `.github/workflows/pages.yml` on `main` trigger publication, and
 `workflow_dispatch` supports a manual deployment. The workflow uploads the already
 prepared static files, so neither the Rust engine nor the desktop UI must build to
 publish the presentation. Permissions are limited to reading source and deploying
-Pages with an OIDC token. Every merged website change is public within minutes;
+Pages with an OIDC token. A website change on `develop` goes live when it reaches
+`main` ([branches](releases.md#branches)), and is then public within minutes;
 review it in the local preview first. This guide does not attest to a current
 remote-state check.
 

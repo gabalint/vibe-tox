@@ -3,15 +3,19 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [develop, main]
   pull_request:
   workflow_dispatch:
+  # The package workflow calls this file as its full release gate.
+  workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # A called workflow sees its caller's github.workflow, which keeps the release gate
+  # from cancelling (or being cancelled by) push CI on the same branch.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:

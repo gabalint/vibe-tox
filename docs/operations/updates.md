@@ -6,7 +6,8 @@ Tauri updater wait for the publisher and release-channel decisions in
 [Q-19 and Q-34](../planning/open-questions.md#decision-and-discovery-queue).
 
 The current workflow is therefore a controlled record around a separately installed package. It
-does not make an unsigned developer build safe for clinical use.
+does not make an unsigned developer build safe for clinical use. The installers on the project's
+GitHub releases page are such unsigned development builds ([branches and releases](../development/releases.md)).
 
 ## Before approving
 

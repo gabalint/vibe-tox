@@ -32,6 +32,8 @@ class ClassificationTests(unittest.TestCase):
             "crates/example/template.md": {"rust", "help", "docs"},
             "ui/src/generated/Order.ts": {"rust", "ui", "help"},
             ".github/workflows/ci.yml": {"tooling"},
+            ".github/workflows/package.yml": {"tooling"},
+            "scripts/release_version.py": {"tooling"},
             ".github/ISSUE_TEMPLATE/bug-report.yml": {"docs"},
             "scripts/select_checks.py": {"tooling"},
             "Cargo.lock": set(CHECKS),

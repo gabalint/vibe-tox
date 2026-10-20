@@ -7,6 +7,7 @@
 | What does the application do? | [At a glance](overview.md), then [scope and boundaries](project-scope.md) |
 | How do I operate a development installation? | [Laboratory operator guide](operations/README.md) and the [built-in help](help/README.md) |
 | How do I build, test or contribute? | [Developer guide](development/README.md), [contribution guidance](../CONTRIBUTING.md) and [implementation status](planning/implementation-plan.md#status) |
+| Where are installers published? | [Branches and releases](development/releases.md) |
 | What prevents clinical or supported use? | [Quality guidance](quality/README.md), [open gate items](quality/open-items-g1-g2.md) and [validation plan](quality/validation-plan.md) |
 | What license and governance apply? | [GPL decision](architecture/decisions/0017-gplv3-license.md), [project governance](governance/open-source-strategy.md) and [development disclaimer](governance/development-disclaimer.md) |
 

@@ -12,7 +12,8 @@ CHECKS = ("docs", "licenses", "website", "tooling", "rust", "ui", "help", "polic
 TOOLING = {
     "scripts/select_checks.py", "scripts/test_select_checks.py",
     "scripts/check_repository_metadata.py", "scripts/test_repository_metadata.py",
-    ".github/workflows/ci.yml", ".gitignore",
+    "scripts/release_version.py", "scripts/test_release_version.py",
+    ".github/workflows/ci.yml", ".github/workflows/package.yml", ".gitignore",
 }
 EMBEDDED = {
     "docs/architecture/backup-and-export-formats.md",
