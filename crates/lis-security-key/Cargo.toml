@@ -1,0 +1,29 @@
+[package]
+name = "lis-security-key"
+description = "Native FIDO2 hardware ceremonies for the desktop shell"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+ciborium = { workspace = true }
+secrecy = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+url = { workspace = true }
+webauthn-rs-proto = { workspace = true }
+
+[target.'cfg(any(target_os = "macos", target_os = "linux"))'.dependencies]
+async-trait = { workspace = true }
+webauthn-authenticator-rs = { workspace = true, features = ["usb"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+webauthn-authenticator-rs = { workspace = true, features = ["win10"] }
+
+[lints]
+workspace = true

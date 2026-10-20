@@ -1,0 +1,48 @@
+{
+  "name": "vibe-tox-lis",
+  "private": true,
+  "version": "0.1.0",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "tauri": "tauri",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "tsc",
+    "test": "vitest run",
+    "knip": "knip",
+    "dup": "jscpd",
+    "lines": "node scripts/check-file-length.mjs",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run knip && npm run dup && npm run lines"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "5.104.2",
+    "@tanstack/react-table": "9.3.1",
+    "@tanstack/react-virtual": "3.14.17",
+    "@tauri-apps/api": "2.12.3",
+    "lucide-react": "1.55.0",
+    "react": "19.3.0",
+    "react-aria-components": "1.22.1",
+    "react-dom": "19.3.0",
+    "react-hook-form": "7.90.0",
+    "react-router": "8.4.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@tauri-apps/cli": "2.12.2",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.7",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "axe-core": "4.14.0",
+    "jscpd": "5.4.1",
+    "jsdom": "30.1.2",
+    "knip": "6.41.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.4"
+  }
+}

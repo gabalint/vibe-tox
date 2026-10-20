@@ -1,0 +1,29 @@
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-4);
+}
+
+.summary {
+  color: var(--color-text-muted);
+}
+
+.findings {
+  margin: var(--space-2) 0;
+  padding-left: var(--space-5);
+  list-style: disc;
+}
+
+.headerLink {
+  align-self: center;
+  white-space: nowrap;
+}
+
+/* A reason in the grid: at most two lines, ending in "…"; the event's panel shows all of it. */
+.reason {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}

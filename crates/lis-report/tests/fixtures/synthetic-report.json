@@ -1,0 +1,65 @@
+{
+  "report": {
+    "id": "RPT-SYN-0001",
+    "status": "final",
+    "revision": "1",
+    "amendment": null
+  },
+  "laboratory": {
+    "name": "Synthetic Toxicology Laboratory",
+    "address_lines": ["100 Example Way", "Testville, ST 00000"],
+    "clia_id": "00D0000000",
+    "director": "Dr. Example Director, PhD",
+    "phone": "555-0100"
+  },
+  "subject": {
+    "name": "SYNTHETIC, Patient Alpha",
+    "birth_date": "1980-01-01",
+    "identifiers": [
+      { "type": "MRN", "value": "SYN-MRN-0001", "authority": "Synthetic Clinic A" }
+    ]
+  },
+  "specimen": {
+    "accession": "ACC-SYN-0001",
+    "specimen_id": "SPC-SYN-0001",
+    "matrix": "Urine",
+    "collected_at": "2026-10-10 08:15 -05:00",
+    "received_at": null
+  },
+  "ordering_practitioner": {
+    "name": "Dr. Synthetic Orderer",
+    "npi": "0000000000",
+    "organization": "Synthetic Clinic A"
+  },
+  "medications": [
+    { "name": "Synthetic medication A", "source": "Order requisition", "as_of": "2026-10-09" }
+  ],
+  "result_groups": [
+    {
+      "name": "Opioids",
+      "rows": [
+        {
+          "analyte": "Synthetic analyte 1",
+          "result": "Not detected",
+          "units": "",
+          "cutoff": "300 ng/mL",
+          "method_certainty": "presumptive",
+          "flags": []
+        },
+        {
+          "analyte": "Synthetic analyte 2",
+          "result": "125.0",
+          "units": "ng/mL",
+          "cutoff": "50 ng/mL",
+          "method_certainty": "definitive",
+          "flags": ["Synthetic flag"]
+        }
+      ]
+    }
+  ],
+  "validity": { "outcome": "Valid specimen", "notes": ["Synthetic validity note"] },
+  "comments": [
+    { "text": "Synthetic interpretive comment.", "source": "Synthetic rule SR-1 v1, approved by Example Director" }
+  ],
+  "signatory": { "name": "Dr. Example Director, PhD", "title": "Laboratory director" }
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "billing",
+  "description": "Billing class mapping, service derivation and handoff commands (REQ-BIL-001/002/005).",
+  "windows": ["main"],
+  "permissions": [
+    "allow-list-class-mapping-versions",
+    "allow-get-class-mapping-version",
+    "allow-draft-class-mapping-version",
+    "allow-update-class-mapping-draft",
+    "allow-approve-class-mapping-version",
+    "allow-confirm-class-mapping-version",
+    "allow-retire-class-mapping-version",
+    "allow-list-billing-work",
+    "allow-derive-services",
+    "allow-get-service-derivation",
+    "allow-approve-service-derivation",
+    "allow-create-billing-handoff",
+    "allow-get-billing-handoff",
+    "allow-export-billing-handoff",
+    "allow-record-handoff-outcome"
+  ]
+}

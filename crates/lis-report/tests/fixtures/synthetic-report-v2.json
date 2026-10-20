@@ -1,0 +1,75 @@
+{
+  "report": {
+    "number": "RPT-SYN-0002",
+    "revision": "1",
+    "completeness": "final",
+    "relationship": "initial",
+    "supersedes": null,
+    "amendmentReason": null,
+    "issuedAt": "2026-10-12 09:30 CDT"
+  },
+  "laboratory": {
+    "name": "Synthetic Toxicology Laboratory",
+    "addressLines": ["100 Example Way", "Testville, ST 00000"],
+    "cliaId": "00D0000000",
+    "director": "Dr. Example Director, PhD",
+    "phone": "555-0100"
+  },
+  "subject": {
+    "name": "SYNTHETIC, PATIENT ONE",
+    "birthDate": "1980-01-01",
+    "sex": null,
+    "identifiers": [
+      { "type": "MRN", "value": "SYN-MRN-0001", "authority": "Synthetic Clinic A" }
+    ]
+  },
+  "order": {
+    "practitioner": { "name": "Dr. Synthetic Orderer", "npi": "0000000000" },
+    "client": "Synthetic Clinic A",
+    "location": "Synthetic Clinic A, North site",
+    "placerOrder": null
+  },
+  "specimen": {
+    "accession": "ACC-SYN-0002",
+    "matrix": "Urine",
+    "containerLabels": ["ACC-SYN-0002-01"],
+    "collected": "2026-10-10 08:15 CDT",
+    "received": null,
+    "conditionNotes": ["Synthetic condition note"],
+    "collectionObservations": [
+      { "code": "Synthetic temperature check", "value": "In range", "observedBy": "Synthetic Collector" }
+    ]
+  },
+  "medications": [
+    { "name": "Synthetic medication A", "source": "Order requisition", "asOf": null }
+  ],
+  "resultGroups": [
+    {
+      "name": "Synthetic opioid confirmation",
+      "method": "Synthetic LC-MS/MS method v3",
+      "certainty": "Definitive",
+      "role": "Confirmation",
+      "rows": [
+        {
+          "analyte": "Synthetic analyte 1",
+          "result": "<0.50",
+          "units": "ng/mL",
+          "limits": "Cutoff 50 ng/mL; LOQ 5 ng/mL",
+          "comparison": "Does not meet cutoff"
+        },
+        {
+          "analyte": "Synthetic analyte 2",
+          "result": "125.0",
+          "units": "ng/mL",
+          "limits": "Cutoff 50 ng/mL",
+          "comparison": "Meets cutoff"
+        }
+      ]
+    }
+  ],
+  "otherTests": [
+    { "name": "Synthetic reflex test", "status": "not_activated", "note": "Synthetic condition not met" }
+  ],
+  "validity": { "outcome": "Valid specimen", "notes": ["Synthetic validity note"] },
+  "releasedBy": { "name": "Dr. Example Director, PhD" }
+}

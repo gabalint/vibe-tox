@@ -1,0 +1,378 @@
+{
+  "id": "new-order",
+  "title": "Entering a new order",
+  "summary": "Choose the patient and capture the ordering source’s request before acceptance and receipt.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/orders/new"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "New order begins with patient selection. Search existing patients or use Register patient if a new record is needed. Once a patient is chosen, the identity banner remains visible above the order form.",
+        "The form uses configured clients, practitioners and approved tests or panels. For a long catalog, search and add several choices, then complete their required decisions directly below the picker. After saving, review the order record and explicitly accept the request before proceeding to specimen receipt when that action is available."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Confirm the selected patient against the supplied identifying information before entering the request. Use Change patient if you selected the wrong record.",
+        "Enter requested tests, source order identifiers, diagnoses, medication details and evidence only as supplied. Missing information needs clarification through your laboratory’s process; it should not be invented to complete a form. Review the saved order to make sure it represents the request."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "If no clients or practitioners are available, a configuration administrator must register them. If no tests can be ordered, the catalog needs approved tests. Read field errors and correct the supplied entry; a failed save leaves the entered values available for correction."
+      ]
+    },
+    {
+      "title": "Corrected collection outside standing validity",
+      "paragraphs": [
+        "An accepted order keeps its original standing-authority basis and reserved use. If corrected collection evidence is outside that authority’s validity period, testing and release remain blocked even after a quality review or later addition of a requisition. Correct an inaccurate date only from source evidence, or cancel the affected work when appropriate. The LIS does not silently replace the accepted order’s standing basis or release its reserved use."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/accessioning/orders/NewOrderPage.tsx",
+    "ui/src/features/accessioning/orders/OrderForm.tsx",
+    "ui/src/features/accessioning/orders/RequisitionFields.tsx",
+    "ui/src/features/accessioning/orders/EvidenceFields.tsx",
+    "ui/src/features/accessioning/orders/DiagnosisList.tsx",
+    "ui/src/features/accessioning/orders/MedicationList.tsx",
+    "ui/src/features/accessioning/orders/PocResultList.tsx",
+    "ui/src/features/accessioning/orders/TestSelection.tsx",
+    "ui/src/features/accessioning/orders/TestChecklist.tsx",
+    "ui/src/features/accessioning/orders/orderValues.ts",
+    "ui/src/features/accessioning/orders/labels.ts",
+    "ui/src/features/accessioning/patients/PatientDirectory.tsx",
+    "ui/src/features/accessioning/patients/PatientSearch.tsx",
+    "ui/src/features/accessioning/patients/SearchResults.tsx",
+    "crates/lis-orders/src/commands/validation.rs",
+    "crates/lis-orders/src/commands/order_support.rs",
+    "ui/src/components/FormDialog/FormDialog.tsx",
+    "crates/lis-identity/src/search.rs",
+    "ui/src/components/RecordPicker/RecordPicker.tsx",
+    "ui/src/components/RecordPicker/RecordPicker.test.tsx",
+    "ui/src/features/accessioning/orders/references.ts",
+    "ui/src/features/accessioning/orders/TestSelection.test.tsx",
+    "ui/src/features/accessioning/orders/StandingOrders.tsx",
+    "crates/lis-orders/src/standing_authority.rs"
+  ],
+  "pages": [
+    {
+      "title": "New order",
+      "routes": ["/orders/new"],
+      "purpose": "Choose the correct patient and record the ordering source’s exact request and evidence.",
+      "access": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
+      "fields": [
+        {
+          "name": "Find by name or identifier",
+          "meaning": "Narrows the patient directory to records to compare.",
+          "values": "Literal name or active-identifier prefix, up to 402 characters. Names ignore case; identifiers are case-sensitive.",
+          "rules": "Optional; clearing it browses all patients. Searches also include former names, while result rows show current demographics. Search text stays in this session rather than being stored in a patient record."
+        },
+        {
+          "name": "Find by identifier: Identifier / Assigning authority / Identifier type",
+          "meaning": "Looks up an identifier within the namespace of the organization that assigned it.",
+          "values": "Exact source values; Identifier type may be a source code such as MR.",
+          "rules": "All three required for this detailed search; each up to 64 characters. Values are compared exactly after surrounding spaces are removed."
+        },
+        {
+          "name": "Find by name: Family name / Given names / Birth date",
+          "meaning": "Searches name prefixes, optionally restricted by birth date.",
+          "values": "Family-name prefix when used alone; complete family name plus a given-name prefix when both are entered; optional real birth date in YYYY-MM-DD format.",
+          "rules": "Family name is required for detailed name search; names up to 200 characters. A similar name is a candidate, not identity confirmation."
+        },
+        {
+          "name": "Name / Birth date / Administrative sex / Identifiers / Identity",
+          "meaning": "Patient facts shown for comparison before opening or selecting a record.",
+          "values": "Read-only supplied demographics, active identifiers and identity-hold indicators.",
+          "rules": "Compare at least the supplied independent identifiers for your task. Unknown data is shown explicitly; the list does not resolve a hold."
+        },
+        {
+          "name": "Patients count",
+          "meaning": "Number of records in the current result page.",
+          "values": "Up to 25 visible patients per page.",
+          "rules": "The displayed range is a page count, not a claim that all matching records are shown."
+        },
+        {
+          "name": "Selected patient / Change patient",
+          "meaning": "The person for whom the request is being recorded.",
+          "values": "Read-only identity banner after choosing a patient.",
+          "rules": "Confirm identity before entry. Changing patient leaves the current form; heed any unsaved-change confirmation."
+        },
+        {
+          "name": "Client",
+          "meaning": "The configured ordering organization.",
+          "values": "Configured client name or code searched in the picker.",
+          "rules": "Required; no initial selection. Changing client clears Client location."
+        },
+        {
+          "name": "Client location",
+          "meaning": "The ordering client’s location to which results are directed when supplied.",
+          "values": "Locations configured for the selected client.",
+          "rules": "Optional; disabled until a client is chosen. A location belonging to another client is rejected."
+        },
+        {
+          "name": "Ordering practitioner",
+          "meaning": "The practitioner who ordered the tests.",
+          "values": "Configured practitioner identified by name/NPI.",
+          "rules": "Required; no initial selection. Missing practitioners need configuration before the order can be saved."
+        },
+        {
+          "name": "Received as",
+          "meaning": "How the laboratory received the request.",
+          "values": "Paper requisition; Fax.",
+          "rules": "Required; not an electronic order interface."
+        },
+        {
+          "name": "Billing responsibility",
+          "meaning": "Payment arrangement as supplied on the request.",
+          "values": "Third party (insurance); Patient (self-pay); Client (ordering clinic); Not supplied.",
+          "rules": "Required explicit choice. This initial fact does not substitute for confirming the detailed order billing selection."
+        },
+        {
+          "name": "Template use",
+          "meaning": "Whether a clinic template supplied the requested tests.",
+          "values": "No template; Clinic template.",
+          "rules": "Required. Selecting a template never selects tests automatically."
+        },
+        {
+          "name": "Template name",
+          "meaning": "Name of the clinic template actually used.",
+          "values": "Source text, up to 1000 characters.",
+          "rules": "Required only for Clinic template."
+        },
+        {
+          "name": "Confirmed for this patient",
+          "meaning": "Whether the practitioner confirmed the template’s tests for this person.",
+          "values": "Yes; No.",
+          "rules": "Required when Clinic template is selected. Record the source answer; do not assume confirmation."
+        },
+        {
+          "name": "Clinic order number / Issued by",
+          "meaning": "Identifier assigned by the clinic and the clinic or system that numbered it.",
+          "values": "Source text, up to 1000 characters each.",
+          "rules": "Both supplied together or both blank. Expand Clinic order number and source references to enter them."
+        },
+        {
+          "name": "Source document reference",
+          "meaning": "Reference to the source requisition.",
+          "values": "Text, up to 1000 characters.",
+          "rules": "Optional; it is a reference, not a document-upload control."
+        },
+        {
+          "name": "Facility setting",
+          "meaning": "Setting supplied with the order.",
+          "values": "Source text, up to 1000 characters.",
+          "rules": "Optional; no suggested setting."
+        },
+        {
+          "name": "Tests ordered",
+          "meaning": "Approved configured tests and panels actually requested by the source.",
+          "values": "Current approved catalog choices identified by code, name, test or panel kind and required specimen types.",
+          "rules": "Choose at least one; none is preselected. Up to 15 choices use checkboxes; longer catalogs use Find tests. Each version can appear once. Chosen tests stay below the selection control with their own sequence role, reflex permission and Remove action. Removing a test also removes its unsaved sequence and reflex choices."
+        },
+        {
+          "name": "Find tests / Find reflex tests for …",
+          "meaning": "Finds choices in a long catalog without displaying a long checklist.",
+          "values": "Part of a configured code, name or required specimen-type code; Test or Panel also matches the displayed kind.",
+          "rules": "Shown when more than 15 choices are available. Type to narrow the popup, then choose an option or use Arrow Down and Enter. The search clears after a choice so you can find another; Escape closes the popup. Free text is not an ordered test. Searching does not remove chosen tests. Scroll the popup or narrow the search to reach other choices. Ctrl+A (Command+A on macOS) selects the search text for replacement. Enter in the search does not save the form."
+        },
+        {
+          "name": "Show — tests or reflex scope",
+          "meaning": "Limits the long catalog to configured tests, panels or both. Each reflex scope has its own filter.",
+          "values": "Tests and panels; Tests only; Panels only. Initially Tests and panels.",
+          "rules": "Shown beside the search for more than 15 choices. This is a browsing preference, not a requested test. Changing it preserves all chosen tests and their entered details."
+        },
+        {
+          "name": "Chosen tests / selected count",
+          "meaning": "The complete unsaved selection, including choices that are outside the current search or Show filter.",
+          "values": "Selected test code/name and count; No tests chosen yet before selection. Long reflex scopes also keep a separate Chosen reflex tests list.",
+          "rules": "Review this list against the requisition. Complete sequence role and reflex permission for each ordered item; choosing a panel does not independently select or substitute its component tests."
+        },
+        {
+          "name": "Testing sequence role for …",
+          "meaning": "The test’s explicit place in the requested sequence.",
+          "values": "First-line test; Confirmation.",
+          "rules": "Required for every selected test; initially blank. Shown beside that test’s reflex permission when space permits. Never inferred from a method’s certainty or a panel name."
+        },
+        {
+          "name": "Reflex testing for …",
+          "meaning": "Whether the source permits reflex work from this test.",
+          "values": "Authorized; Not authorized; Not stated.",
+          "rules": "Required for each selected test; initially blank. Authorized reveals that test’s reflex scope."
+        },
+        {
+          "name": "Reflex tests authorized",
+          "meaning": "The explicitly permitted scope of reflex testing.",
+          "values": "Other currently approved configured tests or panels; short lists use checkboxes and long lists use Find reflex tests for … with the Show filter.",
+          "rules": "Shown only when reflex testing is Authorized. Choose only the supplied permitted scope. Selected scope stays visible when searched or filtered and can be removed individually. This records permission; it does not order or perform those reflex tests immediately."
+        },
+        {
+          "name": "Authority to test",
+          "meaning": "The evidence of the source’s authority or intent to order.",
+          "values": "Handwritten signature; Electronic signature; Documented intent to order; Not supplied.",
+          "rules": "Required explicit choice. Missing authority can lead to a clarification hold at acceptance."
+        },
+        {
+          "name": "Authority document reference",
+          "meaning": "Where the authority evidence can be located.",
+          "values": "Source text, up to 1000 characters.",
+          "rules": "Optional in this editor. Do not claim a signature that was not supplied."
+        },
+        {
+          "name": "Diagnoses: Code / Code system / Code system version / Source document",
+          "meaning": "Each diagnosis exactly as supplied, together with its coding context and provenance.",
+          "values": "Code and system text, optional system version, source reference; up to 1000 characters per text field.",
+          "rules": "Diagnosis rows are optional. In each added row, Code, Code system and Source document are required; system version is optional."
+        },
+        {
+          "name": "Pre-printed on the laboratory's form",
+          "meaning": "Whether the diagnosis was already printed on the laboratory form.",
+          "values": "Yes; No.",
+          "rules": "Required in each added diagnosis row. It distinguishes supplied evidence from a patient-specific diagnosis decision."
+        },
+        {
+          "name": "Medication as written / Code / Code system",
+          "meaning": "The supplied medication statement and optional coded representation.",
+          "values": "Source text, up to 1000 characters for each field.",
+          "rules": "Medication rows are optional. Medication as written is required; code and code system must be supplied together or both blank."
+        },
+        {
+          "name": "Medications: Reported by / Reporter's name",
+          "meaning": "Source category and named reporter for the medication statement.",
+          "values": "Reported by: Ordering clinic; Patient; Other. Reporter’s name: source text up to 1000 characters.",
+          "rules": "Source category required per row; name optional."
+        },
+        {
+          "name": "Provided on / List current as of",
+          "meaning": "When the medication information was supplied and the date it describes.",
+          "values": "Dates entered as YYYY-MM-DD.",
+          "rules": "Optional. A missing as-of date remains unknown; the list is not assumed current."
+        },
+        {
+          "name": "Point-of-care results: Device or test / Drug / Result as written / Reported by",
+          "meaning": "Attributed external point-of-care observations supplied with the request.",
+          "values": "Source text, up to 1000 characters per field.",
+          "rules": "Rows are optional; each of these fields is required in an added row. Result text is preserved as written and never becomes a laboratory result."
+        },
+        {
+          "name": "Performed at, as written",
+          "meaning": "Collection or performance timing stated for an external point-of-care result.",
+          "values": "Free source text, up to 1000 characters.",
+          "rules": "Optional; retain uncertainty rather than invent a timestamp."
+        },
+        {
+          "name": "Patient-specific standing order",
+          "meaning": "Optional supplied authority selected for the displayed patient and ordering practitioner.",
+          "values": "Blank by default; choices show source reference, inclusive collection dates and accepted uses/limit.",
+          "rules": "Changing practitioner clears the selection. Does not select tests or replace source evidence. Expired-at-intake authority may still apply to an earlier valid collection; unknown/outside dates block testing/release. Exhausted authority cannot accept a new use."
+        }
+      ],
+      "actions": [
+        {
+          "name": "More filters / Find by identifier / Find by name",
+          "does": "Opens detailed criteria and runs the corresponding patient search.",
+          "availableWhen": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
+          "result": "Shows the first page of results for the supplied criteria."
+        },
+        {
+          "name": "Show all patients / Clear search",
+          "does": "Removes the current search criteria.",
+          "availableWhen": "A search is active.",
+          "result": "Returns to the first page of the directory."
+        },
+        {
+          "name": "Previous / Next",
+          "does": "Moves through patient directory pages.",
+          "availableWhen": "Previous after the first page; Next when another page exists; unavailable during refresh.",
+          "result": "Shows the preceding or following 25 patients."
+        },
+        {
+          "name": "Open or select a patient row",
+          "does": "Opens the patient record, or chooses the patient when this directory is in New order.",
+          "availableWhen": "A patient row is present; click or press Enter.",
+          "result": "The chosen patient is shown with an identity banner before further work."
+        },
+        {
+          "name": "Register patient",
+          "does": "Starts the two-step registration process.",
+          "availableWhen": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
+          "result": "Enter source details and review matches before saving."
+        },
+        {
+          "name": "Change patient",
+          "does": "Returns to patient selection.",
+          "availableWhen": "A patient is selected.",
+          "result": "Choose and verify the replacement patient before continuing; any unsaved-order warning must be addressed."
+        },
+        {
+          "name": "Add diagnosis / Add medication / Add point-of-care result / Remove …",
+          "does": "Adds or removes an evidence row in the unsaved request.",
+          "availableWhen": "During order entry.",
+          "result": "Only the submitted rows are saved; each added row must satisfy its required fields."
+        },
+        {
+          "name": "Remove — chosen test or reflex scope",
+          "does": "Removes an ordered test and its own sequence/reflex fields, or removes one test from an authorized reflex scope.",
+          "availableWhen": "The corresponding test is selected; ordered tests have Remove beside their details, and long reflex scopes have Remove beside each chosen scope item.",
+          "result": "Updates the unsaved request. Other selected tests and their details remain. Searching or changing Show alone never removes a choice. Focus returns to the selection control."
+        },
+        {
+          "name": "Save order",
+          "does": "Records the request and supplied evidence.",
+          "availableWhen": "Order-entry authority, a patient selected and required fields valid.",
+          "result": "Opens the saved order in Received, not yet accepted state."
+        },
+        {
+          "name": "Review and receive specimens",
+          "does": "Saves the request and enters the review-to-receiving flow.",
+          "availableWhen": "Accessioning authority in addition to order-entry authority.",
+          "result": "Opens the saved order for explicit acceptance; it does not automatically accept the request or receive material."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes the current unsaved editor or pending action dialog.",
+          "availableWhen": "While the form is not saving.",
+          "result": "Leaves order entry; the full-page unsaved-changes guard asks before discarding a changed order."
+        }
+      ],
+      "restrictions": [
+        "All request choices begin blank; no tests, diagnoses or medical-necessity statements are prepopulated.",
+        "Order text is limited to 1000 characters per field and must not contain control characters. Clinical cutoffs and interpretations are not entered here.",
+        "Saving a request, accepting it and receiving specimens are separate decisions.",
+        "No standing-order creation or cancellation editor is provided by this form.",
+        "Practice templates do not independently authorize patient testing. Select only supplied standing authority and enter requested scope independently. Retired clients, locations and practitioners are excluded from new-order choices; historical orders retain them."
+      ],
+      "workflow": [
+        "Select or register the patient, then verify the identity banner.",
+        "Choose the ordering source and record the request. For a long catalog, use Find tests and Show to add only the requested tests or panels; you can type the next code immediately after choosing an item.",
+        "Review Chosen tests against the source. Set each test’s explicit sequence role and reflex permission, choose any authorized reflex scope, and add source evidence where supplied.",
+        "Save order or Review and receive specimens, then review the saved request before acceptance."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A save fails or a field is rejected.",
+          "recovery": "Read the message and correct the indicated value. The open form retains entered values after failure; success is shown only after the application accepts the save. Cancel abandons an unsaved dialog."
+        },
+        {
+          "problem": "No clients, practitioners or tests are available.",
+          "recovery": "Have configuration staff register the missing ordering source or approve the necessary catalog test. Do not substitute another client, practitioner or test."
+        },
+        {
+          "problem": "Clinic order number is rejected.",
+          "recovery": "Supply both the clinic’s number and its issuing authority, or leave both blank when absent."
+        },
+        {
+          "problem": "Medication code is rejected.",
+          "recovery": "Supply its code system as well, or leave both coding fields blank and retain the source text."
+        },
+        {
+          "problem": "No matches in Find tests or a reflex search.",
+          "recovery": "Clear or shorten the search and set Show to Tests and panels. Search the configured code, name or specimen-type code; synonyms are not added automatically. Existing choices remain below the picker. If the exact requested item is still absent, obtain catalog clarification rather than substituting another test."
+        }
+      ]
+    }
+  ]
+}

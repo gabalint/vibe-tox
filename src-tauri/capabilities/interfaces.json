@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "interfaces",
+  "description": "The interfaces commands the main window may call (NFR-31).",
+  "windows": ["main"],
+  "permissions": [
+    "allow-list-instruments",
+    "allow-register-instrument",
+    "allow-update-instrument-connection",
+    "allow-set-instrument-enabled"
+  ]
+}

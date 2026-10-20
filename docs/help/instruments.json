@@ -1,0 +1,342 @@
+{
+  "id": "instruments",
+  "title": "Instruments",
+  "summary": "Configure analyzer connections and result-file intake for registered instruments.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/configuration/instruments"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Register analyzer creates an instrument connection. Open its panel to inspect the connection, enabled state and listener or folder status. Network connections use an allowed-address list; result-file instruments can use manual loading or a chosen watched folder.",
+        "Connection changes restart the affected listeners, and the outcome appears in the panel. A watched folder belongs to its instrument. Files already present when it is selected are not automatically loaded, while later eligible files are read while the application is open."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Use the laboratory’s approved connection details. Confirm instrument identity and the intended source before enabling intake. Keep one instrument’s exports in its dedicated folder and preserve the files as produced.",
+        "Connection setup is separate from service readiness and result-source approval in Bench setup. The application must remain open for listeners and folder intake to operate, including when nobody is signed in."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Inspect the returned listener or folder status after a change. A saved setting does not prove a working connection or successfully processed results. Check Result imports for processing outcomes and Bench setup for missing source approval."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Analyzer connections and watched result folders",
+      "routes": ["/configuration/instruments"],
+      "purpose": "Register analyzers, match their actual communication settings, and control automatic receipt of result messages or result files.",
+      "access": "Manage configuration is required to register, edit, enable or disable an analyzer and choose or clear a result folder. Registration does not approve the analyzer for clinical service or supply source mappings.",
+      "fields": [
+        {
+          "name": "Find analyzers",
+          "meaning": "Locate an existing connection before registering another.",
+          "values": "Text matching analyzer code or name; blank shows all.",
+          "rules": "Optional directory filter. Open a row to see its settings and available actions."
+        },
+        {
+          "name": "Code",
+          "meaning": "Permanent identifier for this analyzer in receipts and configuration.",
+          "values": "Letters, digits, period, underscore or hyphen.",
+          "rules": "Required at registration; 1–64 characters and unique. This screen does not rename a saved analyzer code."
+        },
+        {
+          "name": "Name",
+          "meaning": "Readable analyzer label for laboratory staff.",
+          "values": "Laboratory-assigned text without control characters.",
+          "rules": "Required at registration; at most 128 bytes and not whitespace only."
+        },
+        {
+          "name": "Connection",
+          "meaning": "Select the supported transport and message profile.",
+          "values": "Network (ASTM over TCP/IP); Serial port (ASTM); AU400 / AU640 — network bridge; AU400 / AU640 — serial port; Result files.",
+          "rules": "Required. New connections start empty; Edit connection starts from the saved values. Changing away from Result files removes its watched-folder association."
+        },
+        {
+          "name": "Listening / Folder pickup",
+          "meaning": "Choose whether automatic receipt starts for this connection.",
+          "values": "Listen for this analyzer or Keep disabled for now for message transports; Pick up files once a folder is chosen or Keep disabled for now for result files.",
+          "rules": "Required on registration. Enabled result-file pickup also requires a chosen readable folder. The saved Listening value is configuration, not proof that a listener successfully started."
+        },
+        {
+          "name": "Listen on address",
+          "meaning": "Local laboratory-computer IP address on which the LIS accepts analyzer or bridge connections.",
+          "values": "One IPv4 or IPv6 loopback, private/unique-local, or link-local address.",
+          "rules": "Required for network connections. Wildcard and public addresses are refused. Use an address assigned to this computer; a valid-looking address can still fail to bind."
+        },
+        {
+          "name": "Port",
+          "meaning": "Local network port used by this analyzer listener.",
+          "values": "Whole number from 1 to 65535.",
+          "rules": "Required for network connections. A configured listener endpoint cannot be shared by another analyzer; another program using the port can also prevent startup."
+        },
+        {
+          "name": "Analyzer addresses allowed to connect",
+          "meaning": "Restrict which source IP addresses may open this listener.",
+          "values": "One or more allowed IPv4 or IPv6 loopback, private/unique-local, or link-local addresses, separated by commas or whitespace.",
+          "rules": "Required for network connections; duplicate addresses are refused. For an AU network bridge use the bridge’s source address. This list is a network restriction, not cryptographic proof of analyzer identity."
+        },
+        {
+          "name": "Serial port",
+          "meaning": "Operating-system device connected to the analyzer.",
+          "values": "An actual local serial device, such as COM3 or /dev/ttyUSB0.",
+          "rules": "Required for serial connections; nonblank, no control characters, at most 1024 bytes. Another analyzer cannot use the same configured device."
+        },
+        {
+          "name": "Baud rate",
+          "meaning": "Serial transmission speed that must match the analyzer or bridge.",
+          "values": "ASTM: whole number from 1 to 4,000,000. AU400 / AU640: 2400, 4800 or 9600.",
+          "rules": "Required for serial connections. A permitted number does not prove the local adapter supports that rate."
+        },
+        {
+          "name": "Data bits",
+          "meaning": "Number of data bits per serial character.",
+          "values": "ASTM: 5, 6, 7 or 8. AU400 / AU640: 7 or 8.",
+          "rules": "Required for serial connections; match the actual device configuration."
+        },
+        {
+          "name": "Parity",
+          "meaning": "Serial parity check used by the device.",
+          "values": "None; Odd; Even.",
+          "rules": "Required for serial connections; do not infer it from the cable or analyzer name."
+        },
+        {
+          "name": "Stop bits",
+          "meaning": "Serial stop-bit count.",
+          "values": "1 or 2.",
+          "rules": "Required for serial connections."
+        },
+        {
+          "name": "Transmission class",
+          "meaning": "AU framing acknowledgement behavior.",
+          "values": "Class A — no acknowledgements; Class B — ACK / NAK.",
+          "rules": "Required for AU connections; copy the authorized online parameter sheet. The LIS acknowledges Class B receipt only after durable receipt."
+        },
+        {
+          "name": "Start code (hex)",
+          "meaning": "AU control byte or pair that begins a frame.",
+          "values": "One or two hexadecimal bytes from 01 through 1F, excluding 06 and 15; separate two bytes with whitespace.",
+          "rules": "Required for AU connections. Enter the analyzer’s configured sequence, for example 02 only when that is its actual setting."
+        },
+        {
+          "name": "End code (hex)",
+          "meaning": "AU control byte or pair that ends a frame.",
+          "values": "One or two hexadecimal bytes from 01 through 1F, excluding 06 and 15.",
+          "rules": "Required for AU connections. ETB intermediate endings take effect only when the configured end is the single byte 03."
+        },
+        {
+          "name": "BCC checksum used",
+          "meaning": "Whether each AU frame contains the one-byte XOR block-check character.",
+          "values": "Yes or No.",
+          "rules": "Required for AU connections. Match the parameter sheet; the application does not guess this value."
+        },
+        {
+          "name": "ETB block endings used",
+          "meaning": "Whether intermediate AU blocks use ETB before the final block.",
+          "values": "Yes or No.",
+          "rules": "Required for AU connections. Applies only with the single-byte ETX end code 03."
+        },
+        {
+          "name": "Maximum block length",
+          "meaning": "Maximum complete AU wire-frame size.",
+          "values": "256, 512 or 1024 bytes.",
+          "rules": "Required for AU connections; includes start/end control bytes and any checksum."
+        },
+        {
+          "name": "Frame receive timeout (ms)",
+          "meaning": "Maximum wait while receiving the current AU frame.",
+          "values": "100–9900 milliseconds, in steps of 100.",
+          "rules": "Required for AU connections; match the analyzer’s timing settings."
+        },
+        {
+          "name": "Next block timeout (ms)",
+          "meaning": "Maximum wait for the next AU block in a multi-block message.",
+          "values": "100–9900 milliseconds, in steps of 100.",
+          "rules": "Required for AU connections; match the analyzer’s timing settings."
+        },
+        {
+          "name": "Instrument unit number sent",
+          "meaning": "Whether incoming AU result headers contain a two-digit unit number.",
+          "values": "Yes or No.",
+          "rules": "Required for AU connections; describes the incoming format rather than assigning a new analyzer identity."
+        },
+        {
+          "name": "Rack number width",
+          "meaning": "Width of the incoming AU rack field.",
+          "values": "Not sent; 4 digits; 5 digits.",
+          "rules": "Required for AU connections. Cup position is present when a rack number is sent and absent when it is not sent."
+        },
+        {
+          "name": "Sample ID width",
+          "meaning": "Width of the AU specimen barcode field.",
+          "values": "Whole number from 1 to 20 characters.",
+          "rules": "Required for AU connections. Match the actual message width; a zero-width sample identifier is unsupported."
+        },
+        {
+          "name": "Result field width",
+          "meaning": "Width of an AU raw result value.",
+          "values": "6 or 9 characters.",
+          "rules": "Required for AU connections. This is field length, not decimal precision; the two flag characters are separate."
+        },
+        {
+          "name": "Sex field sent",
+          "meaning": "Whether normal AU patient messages include the one-character sex field.",
+          "values": "Yes or No.",
+          "rules": "Required for AU connections. This configures parsing; it does not infer a patient’s sex."
+        },
+        {
+          "name": "Age field sent",
+          "meaning": "Whether normal AU patient messages include the three-character age field.",
+          "values": "Yes or No.",
+          "rules": "Required for AU connections."
+        },
+        {
+          "name": "Month field sent",
+          "meaning": "Whether normal AU patient messages include the two-character month field.",
+          "values": "Yes or No.",
+          "rules": "Required for AU connections."
+        },
+        {
+          "name": "Patient information 1–6 width",
+          "meaning": "Exact width of each of the six optional AU patient-information fields.",
+          "values": "Six independent whole numbers, each from 0 to 20 characters.",
+          "rules": "All six values are required for AU connections. Enter 0 separately for each field not sent. The LIS preserves these as incoming fields; this setting does not assign clinical meaning."
+        },
+        {
+          "name": "Watched folder",
+          "meaning": "Dedicated local folder from which this analyzer’s result files are automatically received.",
+          "values": "An existing readable directory chosen with the operating system’s folder dialog; No folder chosen when unset.",
+          "rules": "Available only for Result files. A folder can belong to only one analyzer. The saved absolute path is read-only here; use Choose folder or Change folder."
+        },
+        {
+          "name": "Folder pickup status",
+          "meaning": "Current observation of automatic file pickup.",
+          "values": "Checking; Status unavailable; Disabled; Watching; Error or a detailed failure message.",
+          "rules": "Read-only. Warnings report files waiting more than five minutes and oversized files. Status depends on the running app; the saved enabled switch alone does not prove successful pickup."
+        },
+        {
+          "name": "Files already in the folder",
+          "meaning": "Count of files found when the folder was chosen.",
+          "values": "Nonnegative count in the folder-selection result.",
+          "rules": "Read-only. Those existing files form the starting baseline and are not loaded automatically. Load any intended existing file explicitly through Result imports."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Register analyzer",
+          "does": "Open the connection form and save a new analyzer.",
+          "availableWhen": "Manage configuration; unique Code, Name and all required settings for the chosen connection.",
+          "result": "Creates the versioned connection. Message listeners are restarted; the result reports whether restart succeeded. Result-file connections need a folder for automatic pickup."
+        },
+        {
+          "name": "Open row / Previous / Next / Close",
+          "does": "Inspect saved connection settings and move through analyzers.",
+          "availableWhen": "A row is listed.",
+          "result": "The analyzer panel opens without changing connection or service status."
+        },
+        {
+          "name": "Edit connection / Save connection",
+          "does": "Replace the selected analyzer’s communication settings.",
+          "availableWhen": "Manage configuration and the current saved revision.",
+          "result": "The new revision is saved and message listeners are restarted. Review the feedback for startup failure before relying on receipt."
+        },
+        {
+          "name": "Enable listening / Disable listening",
+          "does": "Start or stop automatic message receipt for a configured analyzer.",
+          "availableWhen": "Manage configuration; the enable-confirmation dialog is accepted.",
+          "result": "Saves the enabled state and restarts all analyzer listeners. An analyzer sending during the restart may need to resend."
+        },
+        {
+          "name": "Enable folder pickup / Disable folder pickup",
+          "does": "Control automatic receipt of new files from a chosen folder.",
+          "availableWhen": "Manage configuration and a Result files connection.",
+          "result": "Saves the enabled state. Disabling automatic pickup does not prevent authorized manual loading through Result imports."
+        },
+        {
+          "name": "Choose folder / Change folder",
+          "does": "Select a dedicated directory and establish its existing-file baseline.",
+          "availableWhen": "Manage configuration, Result files connection, readable folder not assigned to another analyzer.",
+          "result": "Automatic pickup considers new files after they stop changing. Existing files are counted but not automatically loaded; close the result notice after reviewing it."
+        },
+        {
+          "name": "Clear folder",
+          "does": "Remove the watched-folder association.",
+          "availableWhen": "Manage configuration and a currently chosen folder.",
+          "result": "Automatic pickup stops for that folder; saved receipts and imports remain. This action does not delete the files."
+        },
+        {
+          "name": "Cancel",
+          "does": "Close an unsaved registration, connection or enable dialog.",
+          "availableWhen": "A dialog is open and no save is underway.",
+          "result": "Keeps the existing saved connection. A native folder-picker cancellation selects no replacement."
+        }
+      ],
+      "restrictions": [
+        "Connection registration, source mappings, method approval, and instrument service readiness are separate. Review the relevant Bench setup and Result imports guidance before expecting received data to be usable.",
+        "AU support here covers result reception. Automatic test requisition (TRI) lookup is unavailable. Copy all format settings from the laboratory’s authorized analyzer configuration; do not invent a profile.",
+        "Automatic folder pickup operates only while the application is open, including its sign-in screen. It never moves or deletes source files.",
+        "A receipt or transport acknowledgement is not proof that a result was matched, imported or accepted. Follow the receipt and import status through Result imports.",
+        "Saving connection or enabled-state changes restarts analyzer listeners. Coordinate with laboratory operations so interrupted transmissions can be reconciled. Choosing or clearing a folder is picked up by the folder watcher without requiring that listener restart.",
+        "This screen retains analyzer records; it has no delete or rename workflow. Configuration changes require the latest revision."
+      ],
+      "workflow": [
+        "Search for the analyzer and inspect any existing configuration before registering another.",
+        "Choose the exact supported transport and enter the device’s actual address, serial and, when applicable, AU format settings.",
+        "Save and check both the saved configuration and listener-startup feedback.",
+        "For result files, choose a dedicated folder and review the existing-file count. Load intended baseline files manually through Result imports.",
+        "Complete the laboratory’s required source mappings and service-readiness checks, then inspect receipts/imports to establish that the intended synthetic or authorized validation input followed the expected path."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Connection or code is already in use",
+          "recovery": "Inspect the registered analyzers and correct the intended Code, network endpoint or serial device. Do not create a near-duplicate analyzer merely to bypass the conflict."
+        },
+        {
+          "problem": "Settings saved but a listener could not start",
+          "recovery": "Read the restart feedback, verify the local IP, port/device ownership and operating-system access, then correct the connection. Reconcile any transmissions that occurred during the interruption."
+        },
+        {
+          "problem": "An AU message is rejected or remains incomplete",
+          "recovery": "Compare every framing, timing and field-width setting with the authorized analyzer parameter sheet. Inspect the durable receipt/import failure; do not change clinical values to make the message parse."
+        },
+        {
+          "problem": "Files are not appearing in Result imports",
+          "recovery": "Check that the app is open, pickup is enabled, the folder is readable and the file is new and no longer changing. Existing files at folder selection need manual loading; waiting or oversized warnings need investigation."
+        },
+        {
+          "problem": "Folder is already watched by another analyzer",
+          "recovery": "Choose the correct analyzer’s configuration or select a dedicated folder. Two analyzer identities cannot watch the same directory."
+        },
+        {
+          "problem": "Save reports that the analyzer changed",
+          "recovery": "Reload the record and review its latest settings before repeating the edit or enable action."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/configuration/instruments/InstrumentsPage.tsx",
+    "ui/src/features/configuration/instruments/InstrumentDialogs.tsx",
+    "ui/src/features/configuration/instruments/ConnectionFields.tsx",
+    "ui/src/features/configuration/instruments/AuFields.tsx",
+    "ui/src/features/configuration/instruments/EnableInstrumentDialog.tsx",
+    "ui/src/features/configuration/instruments/FolderDialogs.tsx",
+    "ui/src/features/configuration/instruments/FolderStatus.tsx",
+    "ui/src/features/configuration/instruments/InstrumentPanel.tsx",
+    "ui/src/features/configuration/instruments/InstrumentActions.tsx",
+    "ui/src/features/configuration/instruments/connectionValues.ts",
+    "ui/src/features/configuration/instruments/auValues.ts",
+    "crates/lis-interfaces/src/instrument_commands.rs",
+    "crates/lis-interfaces/src/validation.rs",
+    "crates/lis-interfaces/src/model/connection.rs",
+    "crates/lis-interfaces/src/model/serial.rs",
+    "crates/lis-interfaces/src/model/au.rs",
+    "crates/lis-interfaces/src/model/files.rs",
+    "crates/lis-au/src/config.rs"
+  ]
+}

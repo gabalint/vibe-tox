@@ -1,0 +1,462 @@
+{
+  "id": "result-file-templates",
+  "title": "Result file templates",
+  "summary": "Describe an instrument export, inspect its mapping and check a sample before source approval.",
+  "reviewedOn": "2026-10-14",
+  "routes": [
+    "/bench/setup/instruments/:instrumentId/file-template",
+    "/bench/setup/instruments/:instrumentId/sources/:registrationId"
+  ],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "New file template records the source software and export layout. Open a sample export, choose its encoding, delimiter and header, then map the sample, analyte, value and other supplied fields. Check the preview before saving a draft.",
+        "A saved source page shows the template and provides Check with a file. This check previews interpretation without storing results. Approve source activates the template when the required authority and separation-of-duties conditions are met."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Describe the export exactly as produced. Verify units, dilution handling, sample-type words and analyte mappings against the laboratory’s approved configuration. Value-word meanings must come from an approved laboratory decision.",
+        "Compare the same batch in the source software and the preview. A template check cannot establish that each label belongs to an open run; that is checked during import. Keep the original export unchanged."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Different headers require the export or its approved template to be corrected. Unexpected blank values or unmapped words need investigation. Do not change a mapping merely to make a sample file pass; confirm what the source actually means."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/analytics/fileTemplates/FileTemplatePage.tsx",
+    "ui/src/features/analytics/fileTemplates/TemplateForm.tsx",
+    "ui/src/features/analytics/fileTemplates/SoftwareSection.tsx",
+    "ui/src/features/analytics/fileTemplates/SampleSection.tsx",
+    "ui/src/features/analytics/fileTemplates/SamplePreview.tsx",
+    "ui/src/features/analytics/fileTemplates/ShapeSection.tsx",
+    "ui/src/features/analytics/fileTemplates/ColumnsSection.tsx",
+    "ui/src/features/analytics/fileTemplates/AnalytesSection.tsx",
+    "ui/src/features/analytics/fileTemplates/WordsSection.tsx",
+    "ui/src/features/analytics/fileTemplates/CheckSection.tsx",
+    "ui/src/features/analytics/fileTemplates/LayoutCheckResult.tsx",
+    "ui/src/features/analytics/fileTemplates/FileSourcePage.tsx",
+    "ui/src/features/analytics/fileTemplates/TemplateFacts.tsx",
+    "ui/src/features/analytics/fileTemplates/templateLabels.ts",
+    "ui/src/features/analytics/fileTemplates/templateValues.ts",
+    "ui/src/features/analytics/bench/ApproveSource.tsx",
+    "crates/lis-analytical/src/file_layout/validate.rs",
+    "crates/lis-analytical/src/commands/file_sources.rs",
+    "crates/lis-analytical/src/commands/readiness.rs",
+    "ui/src/components/SelfApprovalConfirm/SelfApprovalConfirm.tsx"
+  ],
+  "pages": [
+    {
+      "title": "New file template",
+      "routes": ["/bench/setup/instruments/:instrumentId/file-template"],
+      "purpose": "Describe a result-file export precisely, map its fields and check a sample before saving a source draft.",
+      "access": "Requires configuration-management authority and an instrument configured for Result files.",
+      "fields": [
+        {
+          "name": "Software name",
+          "meaning": "Declares which software produces this export.",
+          "values": "Product name from the source installation.",
+          "rules": "Required, trimmed 1–200 characters. This declaration is displayed with imports; it is not verified from file contents."
+        },
+        {
+          "name": "Software version",
+          "meaning": "Identifies the declared source version.",
+          "values": "Installed version text.",
+          "rules": "Required, trimmed 1–200 characters."
+        },
+        {
+          "name": "Reports final (dilution-corrected) concentrations",
+          "meaning": "Declares whether the exported numeric values already incorporate dilution.",
+          "values": "Yes or No.",
+          "rules": "Required; no default. Do not select Yes unless the source actually reports final concentrations."
+        },
+        {
+          "name": "Sample export / First lines as written",
+          "meaning": "Provides the file used to inspect headers and mapping.",
+          "values": "A file selected in the operating-system dialog; the first five raw lines and first 50 parsed lines are previewed.",
+          "rules": "The sample is held temporarily for checking; only the template/header is saved. Opening a sample imports no results."
+        },
+        {
+          "name": "Encoding",
+          "meaning": "Specifies how bytes become text.",
+          "values": "UTF-8 or Windows-1252.",
+          "rules": "Required; no default unless the file’s byte-order mark determines it, when shown read-only."
+        },
+        {
+          "name": "Delimiter",
+          "meaning": "Separates fields in each row.",
+          "values": "Comma, Tab or Semicolon.",
+          "rules": "Required; no default."
+        },
+        {
+          "name": "Spaces around values",
+          "meaning": "Determines whether surrounding field spaces are retained.",
+          "values": "Remove spaces around each value; Keep values exactly as written.",
+          "rules": "Required; no default. The same setting controls matching of names and words."
+        },
+        {
+          "name": "Header line",
+          "meaning": "Selects the actual header among the sample’s first lines.",
+          "values": "One of the first 50 parsed lines, selected by field or row.",
+          "rules": "Required. Incoming exports must have matching header text within their first 50 lines."
+        },
+        {
+          "name": "Header rows",
+          "meaning": "Describes a simple or grouped header.",
+          "values": "One line; Two lines: group labels, then field names.",
+          "rules": "Required. Two lines must have equal numbers of columns; headers cannot contain embedded line breaks."
+        },
+        {
+          "name": "Shape",
+          "meaning": "Defines where analyte values occur.",
+          "values": "Long: one row per sample and analyte; Wide: one row per sample, a column or column group per analyte.",
+          "rules": "Required; no default."
+        },
+        {
+          "name": "Analyte column / Value column",
+          "meaning": "Identifies the analyte name and result columns in a long file.",
+          "values": "Columns from the selected header, with positions and sample values.",
+          "rules": "Both required for Long; each column can have only one role."
+        },
+        {
+          "name": "Analyte columns",
+          "meaning": "Chooses the value columns in a wide file with one header line.",
+          "values": "Checklist of header columns.",
+          "rules": "At least one required. Only selected columns are read as analytes."
+        },
+        {
+          "name": "Value field",
+          "meaning": "Chooses the result field repeated under each analyte group.",
+          "values": "Field names found in the second header line, such as the actual final-concentration field.",
+          "rules": "Required for a two-line Wide layout; all chosen groups must read this same field."
+        },
+        {
+          "name": "Analyte groups read",
+          "meaning": "Selects analyte groups to include.",
+          "values": "Groups that contain the chosen Value field.",
+          "rules": "All qualifying groups start selected when the value field changes; retain at least one. Groups without the field produce no rows."
+        },
+        {
+          "name": "Sample label column",
+          "meaning": "Identifies the LIS container label or control/calibrator lot sample label.",
+          "values": "A selected header column.",
+          "rules": "Required; cannot share another role."
+        },
+        {
+          "name": "Sample type column",
+          "meaning": "Identifies the source’s patient/QC classification word.",
+          "values": "A header column or Not in the file.",
+          "rules": "Optional. If selected, map its words below; they must agree with actual run roles at import."
+        },
+        {
+          "name": "Flags column",
+          "meaning": "Preserves source flags alongside evidence.",
+          "values": "A header column or Not in the file.",
+          "rules": "Optional; no acceptance decision is inferred."
+        },
+        {
+          "name": "Operator column",
+          "meaning": "Preserves the operator text supplied by the export.",
+          "values": "A header column or Not in the file.",
+          "rules": "Optional; does not impersonate or replace the signed-in LIS user."
+        },
+        {
+          "name": "Acquisition time column",
+          "meaning": "Preserves when the source says acquisition occurred.",
+          "values": "A header column or Not in the file.",
+          "rules": "Optional source metadata."
+        },
+        {
+          "name": "Dilution factor column",
+          "meaning": "Compares the export’s dilution with the recorded analytical attempt.",
+          "values": "A header column or Not in the file.",
+          "rules": "Optional; present values must match the recorded dilution. This does not apply a numeric correction."
+        },
+        {
+          "name": "End of data",
+          "meaning": "Determines whether a footer should be excluded.",
+          "values": "At the end of the file; At the first blank line (the export has a footer).",
+          "rules": "Required; no default. Choose the actual export behavior."
+        },
+        {
+          "name": "Analytes: Catalog analyte",
+          "meaning": "Maps each source analyte name or selected wide column to its catalog identity.",
+          "values": "Configured analytes, searchable by name/code.",
+          "rules": "At least one source mapping required; every chosen wide analyte column must be mapped. Source names are unique, at most 64 characters, without surrounding spaces."
+        },
+        {
+          "name": "Analytes: Not a result",
+          "meaning": "Counts a long-file name without creating a patient result.",
+          "values": "Unchecked or checked per source name.",
+          "rules": "Long files only. A name cannot both map to a catalog analyte and be Not a result. Unmapped names otherwise quarantine."
+        },
+        {
+          "name": "Words: Sample types",
+          "meaning": "Maps each distinct source word to its material role.",
+          "values": "Not mapped, Patient, Control, Calibrator or Blank.",
+          "rules": "One choice per word when a sample-type column exists. No role is inferred from an unmapped word."
+        },
+        {
+          "name": "Words: Value words",
+          "meaning": "Defines the approved meaning of a nonnumeric source value.",
+          "values": "Not mapped; Below the limit of quantitation; Below the limit of detection; Not performed.",
+          "rules": "Map only laboratory-approved meanings. Positive numbers and positive comparator bounds cannot be redefined as words. Empty values always quarantine."
+        },
+        {
+          "name": "Words: Empty values / row counts",
+          "meaning": "Shows how many sample cells are empty or contain each word.",
+          "values": "Nonnegative counts.",
+          "rules": "Read-only. A zero or negative text needs an explicitly approved word mapping if it is a source sentinel; it is not imported as a positive measurement."
+        },
+        {
+          "name": "Units column",
+          "meaning": "Selects each row’s unit source.",
+          "values": "Header column or Not in the file.",
+          "rules": "Optional; units must match the applicable method exactly at import."
+        },
+        {
+          "name": "Declared unit",
+          "meaning": "Declares the unit when the file has no unit column.",
+          "values": "Exact method unit text, or blank for a unitless method.",
+          "rules": "At most 64 characters without surrounding spaces. Cannot be combined with a Units column; that choice makes this read-only as None."
+        },
+        {
+          "name": "Check: row counts",
+          "meaning": "Reconciles how the template reads the sample.",
+          "values": "Rows read, Numbers, Censored values, Mapped words, unmapped words, empty values, zero/negative values, malformed values, unmapped analytes, not-result rows, unmapped sample types and malformed record counts.",
+          "rules": "Read-only diagnostic counts; they do not establish run association or clinical acceptability."
+        },
+        {
+          "name": "Check: Reference / Sample label",
+          "meaning": "Identifies the source row and sample for comparison with the original export.",
+          "values": "Original row reference and sample label, or Empty.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Check: Analyte as written / File’s header text / Catalog analyte",
+          "meaning": "Compares file identity with the catalog mapping.",
+          "values": "Source analyte name, wide-file header text, mapped analyte, Not a result or Not mapped, quarantined.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Check: Value as written / Value reads as",
+          "meaning": "Shows original value text and its interpretation.",
+          "values": "Number, Censored value, mapped-word meaning, or a stated quarantine reason.",
+          "rules": "Read-only; compare numeric precision and comparator with the source."
+        },
+        {
+          "name": "Check: Sample type",
+          "meaning": "Shows the source word and mapped role.",
+          "values": "Patient, Control, Calibrator, Blank, not mapped or None.",
+          "rules": "Read-only; the actual run position still determines its role."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open a sample export / Open another sample",
+          "does": "Loads a sample for preview through the system file dialog.",
+          "availableWhen": "Authoring page is open.",
+          "result": "Displays its raw and parsed lines. Cancelling opens nothing."
+        },
+        {
+          "name": "Choose a preview row",
+          "does": "Selects that line as the header.",
+          "availableWhen": "The sample has been parsed with an encoding and delimiter.",
+          "result": "Updates header and column choices."
+        },
+        {
+          "name": "Check the sample",
+          "does": "Applies the current template and mappings to the sample.",
+          "availableWhen": "The template has sufficient structure and a sample is open.",
+          "result": "Shows counts and per-row interpretation without storing results. A later template change marks the check out of date."
+        },
+        {
+          "name": "Save draft",
+          "does": "Validates and records this template as a draft source.",
+          "availableWhen": "All structural choices and required mappings are valid.",
+          "result": "Returns to the instrument; imports use it only after approval."
+        },
+        {
+          "name": "Cancel",
+          "does": "Returns to the instrument.",
+          "availableWhen": "No save is in progress.",
+          "result": "Unsaved input triggers a leave confirmation; accepting it discards the draft form."
+        }
+      ],
+      "restrictions": [
+        "No more than 20 MiB per file, 50,000 rows, 512 columns or 4 KiB per field can be read.",
+        "Each header column has exactly one role. The template matches names and order; renamed, moved, added or removed columns require review.",
+        "A sample check does not prove that labels match open runs, units match the chosen method, or work was ordered. Those checks occur at import.",
+        "The page has no field for clinical cutoffs; mapped below-limit words use the applicable approved method limits. Word-derived results on dilution work are restricted and must be investigated if refused."
+      ],
+      "workflow": [
+        "Enter the declared software identity and dilution behavior.",
+        "Open a representative export; select encoding, delimiter, whitespace handling, header, shape and each column role.",
+        "Map analytes and approved source words, then define units.",
+        "Check the sample and compare every row category with the source export. Recheck after any change, save the draft and proceed to source approval."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No rows can be read.",
+          "recovery": "Check encoding and delimiter, exact header position and file limits. A changed export needs a reviewed new template."
+        },
+        {
+          "problem": "A column is rejected as duplicate.",
+          "recovery": "Assign each column only one meaning; separate the sample-label, analyte, value and optional metadata columns."
+        },
+        {
+          "problem": "The check shows unmapped words, empty values or wrong analytes.",
+          "recovery": "Verify the source meaning and laboratory-approved mapping. Do not assign a clinical meaning just to suppress quarantine."
+        }
+      ]
+    },
+    {
+      "title": "Saved file template",
+      "routes": ["/bench/setup/instruments/:instrumentId/sources/:registrationId"],
+      "purpose": "Inspect a saved source version, compare its interpretation with another file and approve a reviewed draft.",
+      "access": "Requires access to bench configuration. Approval requires configuration-approval authority and the current separation-of-duties policy.",
+      "fields": [
+        {
+          "name": "Source identity / State",
+          "meaning": "Identifies the declared software name/version and source lifecycle.",
+          "values": "Draft, awaiting approval; Active; Retired.",
+          "rules": "Read-only; review the instrument breadcrumb to ensure this is the intended source."
+        },
+        {
+          "name": "Reports final concentrations",
+          "meaning": "Shows the saved dilution declaration.",
+          "values": "Yes or No.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Encoding without a byte-order mark / Delimiter / Spaces / End of data",
+          "meaning": "Shows the saved text-reading choices.",
+          "values": "UTF-8 or Windows-1252; Comma, Tab or Semicolon; remove or keep spaces; end of file or first blank line.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Header lines",
+          "meaning": "Displays the exact approved header signature.",
+          "values": "One or two lines of column text in order.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Shape / Analyte column / Value column / Analyte value columns",
+          "meaning": "Shows how the template finds results.",
+          "values": "Long column roles or selected Wide value-column mappings.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Sample label column / Sample type column / Flags column / Operator column / Acquisition time column / Dilution factor column",
+          "meaning": "Shows the saved metadata roles.",
+          "values": "Header positions/names or None for an optional role.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Units column / Declared unit",
+          "meaning": "Explains the source of units.",
+          "values": "A header role, a single declared unit, or None.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Analytes / Not results",
+          "meaning": "Lists source-code-to-catalog mappings and names counted outside results.",
+          "values": "Saved mappings and not-result names.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Sample types / Value words / Empty values",
+          "meaning": "Shows word meanings and the mandatory empty-value rule.",
+          "values": "Mapped sample roles and below-LOQ, below-LOD or Not performed meanings; Empty values are Always quarantined.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Check: row counts",
+          "meaning": "Reconciles how the template reads the sample.",
+          "values": "Rows read, Numbers, Censored values, Mapped words, unmapped words, empty values, zero/negative values, malformed values, unmapped analytes, not-result rows, unmapped sample types and malformed record counts.",
+          "rules": "Read-only diagnostic counts; they do not establish run association or clinical acceptability."
+        },
+        {
+          "name": "Check: Reference / Sample label",
+          "meaning": "Identifies the source row and sample for comparison with the original export.",
+          "values": "Original row reference and sample label, or Empty.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Check: Analyte as written / File’s header text / Catalog analyte",
+          "meaning": "Compares file identity with the catalog mapping.",
+          "values": "Source analyte name, wide-file header text, mapped analyte, Not a result or Not mapped, quarantined.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Check: Value as written / Value reads as",
+          "meaning": "Shows original value text and its interpretation.",
+          "values": "Number, Censored value, mapped-word meaning, or a stated quarantine reason.",
+          "rules": "Read-only; compare numeric precision and comparator with the source."
+        },
+        {
+          "name": "Check: Sample type",
+          "meaning": "Shows the source word and mapped role.",
+          "values": "Patient, Control, Calibrator, Blank, not mapped or None.",
+          "rules": "Read-only; the actual run position still determines its role."
+        },
+        {
+          "name": "Source approval: Confirm self-approval",
+          "meaning": "Records an explicit acknowledgment when the source author approves their own draft.",
+          "values": "I confirm that no second person reviewed this.",
+          "rules": "Appears only when the laboratory separation-of-duties policy permits self-approval and requests confirmation; initially unchecked. It does not override a requirement for another approver."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Check with a file / Check with another file",
+          "does": "Selects a file and reads it using the saved template.",
+          "availableWhen": "The saved source includes a file layout.",
+          "result": "Shows temporary per-row interpretation; no receipt or result is imported."
+        },
+        {
+          "name": "Approve source",
+          "does": "Activates the draft after the confirmation.",
+          "availableWhen": "Draft source allows approval; authorized approver meets the laboratory separation-of-duties policy.",
+          "result": "Retires the previous active source. If the author is permitted to approve, explicit self-approval confirmation is still required."
+        },
+        {
+          "name": "Instrument breadcrumb",
+          "does": "Returns to the source list in Bench setup.",
+          "availableWhen": "The page is open.",
+          "result": "Shows the instrument’s current readiness and source history."
+        }
+      ],
+      "restrictions": [
+        "The saved template is read-only. To change its mapping, draft a new file template from the instrument.",
+        "Checking a file neither activates the draft nor imports results. The application does not certify source qualification from a successful preview.",
+        "An active or retired source is not a draft awaiting approval. Earlier imports retain which source version they used."
+      ],
+      "workflow": [
+        "Compare Text and header, Columns, Analytes and words against the intended export settings.",
+        "Use Check with a file and reconcile counts, names, values, units and sample roles against the source.",
+        "Approve only after the required laboratory review, then verify the active source on the instrument."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "File template not found.",
+          "recovery": "Return to the instrument in Bench setup and open the source again."
+        },
+        {
+          "problem": "Approve source is unavailable.",
+          "recovery": "Check source state, your configuration-approval authority and the laboratory’s separation-of-duties rule."
+        },
+        {
+          "problem": "An existing file needs reprocessing after approval.",
+          "recovery": "Use Retry import on its earlier Result imports attempt; loading identical bytes again is deduplicated."
+        }
+      ]
+    }
+  ]
+}

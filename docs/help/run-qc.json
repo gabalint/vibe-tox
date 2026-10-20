@@ -1,0 +1,343 @@
+{
+  "id": "run-qc",
+  "title": "Run QC review",
+  "summary": "Review observations and record scoped quality decisions for a run.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/bench/runs/:runId/qc/:tab?", "/quality/deviations/:deviationId"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Use Assessments for the current QC decisions, Observations for the evidence received, Changed QC rows for conflicting imports and Deviations for recorded issues. Tabs with open work show its count.",
+        "Open the relevant observation or assessment to inspect its details before using the available decision action. The workspace covers the run, individual analytes and preparation batches where applicable. Open run returns to positions when your account can perform analysis."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Match the observation to its analyte, run position and material lot. Record the scope and reason of a decision using the laboratory’s approved procedure. The page supplies evidence and workflow controls; it does not choose acceptance criteria.",
+        "Review changed QC rows before assuming an earlier decision still applies. An accepted QC assessment is separate from technical result review and report release."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "No observations means none have been received for this run. Check intake and mapping before entering a decision without evidence. Unresolved conflicts, deviations or failed assessments can continue to block downstream work; address the displayed scope rather than trying to clear unrelated results."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/analytics/qc/RunQcPage.tsx",
+    "ui/src/features/analytics/qc/AssessmentsTab.tsx",
+    "ui/src/features/analytics/qc/ScopePanel.tsx",
+    "ui/src/features/analytics/qc/AssessQcDialog.tsx",
+    "ui/src/features/analytics/qc/ObservationGrid.tsx",
+    "ui/src/features/analytics/qc/ConflictsTab.tsx",
+    "ui/src/features/analytics/qc/ConflictPanel.tsx",
+    "ui/src/features/analytics/qc/ResolveConflictDialog.tsx",
+    "ui/src/features/analytics/qc/DeviationsTab.tsx",
+    "ui/src/features/analytics/qc/DeviationPanel.tsx",
+    "ui/src/features/analytics/qc/OpenDeviationDialog.tsx",
+    "ui/src/features/analytics/qc/CloseDeviationDialog.tsx",
+    "ui/src/features/analytics/qc/qcScopes.ts",
+    "ui/src/features/analytics/labels.ts",
+    "crates/lis-analytical/src/commands/qc.rs",
+    "crates/lis-analytical/src/commands/deviations.rs",
+    "crates/lis-analytical/src/commands/mod.rs",
+    "ui/src/features/analytics/qc/DeviationPage.tsx"
+  ],
+  "pages": [
+    {
+      "title": "Run QC review",
+      "routes": ["/bench/runs/:runId/qc/:tab?"],
+      "purpose": "Assess the exact QC evidence for each analyte, the whole run and associated preparation batches; investigate changed rows and deviations.",
+      "access": "Requires quality-management authority. Open run additionally requires analysis authority.",
+      "fields": [
+        {
+          "name": "Tabs",
+          "meaning": "Separates decisions, source evidence and unresolved issues.",
+          "values": "Assessments, Observations, Changed QC rows, Deviations.",
+          "rules": "Defaults to Assessments. Changed-row and deviation tab counts are the open items, not the full history."
+        },
+        {
+          "name": "Assessed for",
+          "meaning": "Identifies the exact scope of a decision.",
+          "values": "An analyte code on this run, Whole run, or an associated Preparation batch.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Current observations",
+          "meaning": "Counts the observations that have not been replaced.",
+          "values": "Nonnegative count.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Assessment",
+          "meaning": "Shows the latest decision on the scope.",
+          "values": "Not assessed, Accepted or Rejected.",
+          "rules": "Read-only. Accepted is a QC decision, not a technical review or release."
+        },
+        {
+          "name": "Assessed / Replaced",
+          "meaning": "Shows when the current decision was recorded and how many earlier assessments exist.",
+          "values": "Date/time and nonnegative history count.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Assessment history",
+          "meaning": "Preserves decision, assessor, time, cited-observation count and reason.",
+          "values": "Current and earlier assessments.",
+          "rules": "Read-only; assessments are superseded, never edited in place."
+        },
+        {
+          "name": "Assess QC: Decision",
+          "meaning": "Records the reviewer’s judgment under the laboratory procedure.",
+          "values": "Accept or Reject.",
+          "rules": "Required; no default. An analyte acceptance must cite the current, nonempty set of observations. A preparation batch must be completed before acceptance."
+        },
+        {
+          "name": "Assess QC: Reason",
+          "meaning": "Explains an assessment or its replacement.",
+          "values": "Free text.",
+          "rules": "Optional for the first assessment; required for replacement; at most 1,000 characters after trimming."
+        },
+        {
+          "name": "Observations: Analyte / Test code",
+          "meaning": "Shows the catalog mapping and the original source code.",
+          "values": "Catalog code or Not mapped; analyzer text.",
+          "rules": "Read-only. Unmapped evidence is visible and is not silently assigned to an analyte."
+        },
+        {
+          "name": "Observations: Position / Lot",
+          "meaning": "Identifies where the QC material was placed and its recorded lot.",
+          "values": "Run-position label and registered product/lot, or no lot for a blank.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Observations: Value / Flags / Status",
+          "meaning": "Preserves source evidence for comparison with the approved QC procedure.",
+          "values": "Original value, unit, flags and status text; missing units are explicitly identified.",
+          "rules": "Read-only; neither colors nor source flags supply laboratory acceptance criteria."
+        },
+        {
+          "name": "Observations: Current / Received",
+          "meaning": "Distinguishes usable current evidence from replaced evidence and records arrival time.",
+          "values": "Current or Replaced; date/time.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Changed QC rows: Stored observation / Changed value as received",
+          "meaning": "Shows the previous evidence beside the conflicting arrival.",
+          "values": "Original values and units, with position for stored observation.",
+          "rules": "Read-only. Both remain preserved after a decision."
+        },
+        {
+          "name": "Changed QC rows: Flags as received / Status as received / Received",
+          "meaning": "Provides context for the changed evidence.",
+          "values": "Source text or Not reported; received time.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Changed QC rows: State / Decision",
+          "meaning": "Tracks whether the changed row still blocks work.",
+          "values": "Awaits a decision, Accepted as correction or Rejected; decision reason, person and time when decided.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Accept as correction / Reject changed row: Reason",
+          "meaning": "Documents the basis for deciding a conflicting row.",
+          "values": "Free text.",
+          "rules": "Required, trimmed 1–1,000 characters."
+        },
+        {
+          "name": "Open deviation: Applies to",
+          "meaning": "Defines how broadly the issue affects work.",
+          "values": "This run, One position or One lot.",
+          "rules": "Required; no default. This dialog does not offer instrument-wide or preparation-batch targets."
+        },
+        {
+          "name": "Open deviation: Position / Lot",
+          "meaning": "Identifies the particular affected QC position or material.",
+          "values": "Positions or lots represented in this run’s QC observations.",
+          "rules": "Required when the selected scope is One position or One lot."
+        },
+        {
+          "name": "Open deviation: Analyte",
+          "meaning": "Optionally limits the issue to one analyte.",
+          "values": "Analytes on this run.",
+          "rules": "Optional; blank applies to every analyte within the selected scope."
+        },
+        {
+          "name": "Open deviation: Description",
+          "meaning": "Records what happened.",
+          "values": "Free text.",
+          "rules": "Required, trimmed 1–1,000 characters."
+        },
+        {
+          "name": "Open deviation / Close deviation: Reason",
+          "meaning": "Explains why the deviation is opened or closed.",
+          "values": "Free text.",
+          "rules": "Required, trimmed 1–1,000 characters."
+        },
+        {
+          "name": "Deviations: State / Applies to / Analyte / Opened",
+          "meaning": "Shows current status, scope, limitation and attribution.",
+          "values": "Open or Closed; selected target; analyte or Not limited to one analyte; person and date/time.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Close deviation: Disposition",
+          "meaning": "Records how the issue was resolved under the laboratory procedure.",
+          "values": "Free text, not a predefined acceptance category.",
+          "rules": "Required, trimmed 1–1,000 characters."
+        },
+        {
+          "name": "Deviations: Closed / Disposition / Reason for closing",
+          "meaning": "Preserves the closure and its explanation.",
+          "values": "Person, date/time and recorded text; shown once closed.",
+          "rules": "Read-only; supplied by the current record."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Assess QC / Record assessment",
+          "does": "Records a decision on the opened scope and exact evidence shown.",
+          "availableWhen": "Quality-management authority; current evidence and prior assessment still match.",
+          "result": "Adds an attributed assessment. A replacement preserves history."
+        },
+        {
+          "name": "Accept as correction",
+          "does": "Applies the changed QC observation in place of the stored observation.",
+          "availableWhen": "Conflict is open; quality authority; displayed conflict version is current.",
+          "result": "Retains both versions. QC relying on the old value needs reassessment."
+        },
+        {
+          "name": "Reject changed row",
+          "does": "Keeps the original QC observation and rejects the changed arrival.",
+          "availableWhen": "Conflict is open and quality authority permits the decision.",
+          "result": "Retains the changed row with its rejection and reason."
+        },
+        {
+          "name": "Open deviation",
+          "does": "Records a scoped quality issue.",
+          "availableWhen": "Deviations tab; valid target and quality authority.",
+          "result": "Blocks dependent results until the deviation is closed."
+        },
+        {
+          "name": "Close deviation",
+          "does": "Records disposition and reason for ending a deviation.",
+          "availableWhen": "Deviation is open and its displayed version is current.",
+          "result": "Removes that open deviation condition; other QC or release requirements remain."
+        },
+        {
+          "name": "Open assessment, conflict or deviation row",
+          "does": "Shows the complete facts and available decisions.",
+          "availableWhen": "The corresponding tab contains records.",
+          "result": "Opens a panel with Previous, Next and Close."
+        },
+        {
+          "name": "Open run",
+          "does": "Returns to this run’s material and positions.",
+          "availableWhen": "Analysis authority.",
+          "result": "Opens the run without changing QC."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes an unsubmitted decision dialog.",
+          "availableWhen": "A dialog is open.",
+          "result": "No quality decision is recorded."
+        }
+      ],
+      "restrictions": [
+        "A Rejected QC assessment cannot be relabeled Accepted. There is no waiver action; investigate and follow the laboratory’s appropriate new-work procedure.",
+        "A changed observation can invalidate a previous QC decision and downstream technical reviews. Decide the conflict and reassess the relevant current evidence.",
+        "The application records decisions, not laboratory QC ranges or rules. Apply the laboratory’s approved procedure."
+      ],
+      "workflow": [
+        "Inspect Observations, checking analyte, position, lot, value and units.",
+        "Resolve Changed QC rows and relevant Deviations using their exact scope.",
+        "In Assessments, open the intended scope, inspect history and record the decision supported by the evidence."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Acceptance is refused because evidence changed.",
+          "recovery": "Reload the workspace, review all newly arrived or replaced observations, and start the decision again."
+        },
+        {
+          "problem": "There are no observations for an analyte.",
+          "recovery": "Check run positions, result intake and the analyte mapping. An analyte cannot be accepted without received evidence."
+        },
+        {
+          "problem": "Accepted QC still does not permit review.",
+          "recovery": "Read the remaining gates on the result: another scope, deviation, identity hold or technical-review requirement may remain."
+        }
+      ]
+    },
+    {
+      "title": "Quality deviation",
+      "routes": ["/quality/deviations/:deviationId"],
+      "purpose": "Open the exact deviation named by a work queue, including a lot shared across several runs.",
+      "access": "Reading this exact deviation page and closing it require Manage quality.",
+      "fields": [
+        {
+          "name": "Description / Scope / Reason / State",
+          "meaning": "The retained issue, target type and identity, opening explanation and current state.",
+          "values": "Recorded description and reason; instrument, lot, preparation batch, run or position scope; open or closed state.",
+          "rules": "Read-only. A target ID identifies the original scope; shared lots are not assigned to an arbitrary run."
+        },
+        {
+          "name": "Opened / Closed",
+          "meaning": "Who opened or closed the deviation and when.",
+          "values": "Recorded actor and timestamp; dash when not closed.",
+          "rules": "Original events remain retained; closing does not rewrite opening evidence."
+        },
+        {
+          "name": "Disposition / Closure reason",
+          "meaning": "Resolution recorded by the quality-authorized operator.",
+          "values": "Still open until closure; retained text after closure.",
+          "rules": "The Close deviation dialog requires a trimmed disposition and reason, each 1–1,000 characters."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Refresh",
+          "does": "Read the current deviation revision and state.",
+          "availableWhen": "The exact deviation page is open.",
+          "result": "Current facts replace the earlier read; failures remain visible with recovery."
+        },
+        {
+          "name": "Open run quality context",
+          "does": "Navigate to the original run’s deviations tab.",
+          "availableWhen": "The deviation has run scope.",
+          "result": "The exact deviation is selected in its run context."
+        },
+        {
+          "name": "Close deviation / Close deviation dialog / Cancel",
+          "does": "Record disposition and reason against the reviewed revision, or cancel without changing the record.",
+          "availableWhen": "Manage quality and the deviation is still open.",
+          "result": "Successful closure is audited and the page refreshes. An intervening change is refused; refresh and review before trying again."
+        },
+        {
+          "name": "Work queues",
+          "does": "Return to outstanding work.",
+          "availableWhen": "The page breadcrumb is visible.",
+          "result": "The operator can select another task."
+        }
+      ],
+      "restrictions": [
+        "Closing one deviation removes only that open condition; identity, QC, technical review and release gates still apply."
+      ],
+      "workflow": [
+        "Open the queue’s exact deviation and inspect scope and retained evidence.",
+        "Investigate under the laboratory’s approved process.",
+        "If authorized, record disposition and closure reason, then review remaining work."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The deviation is unavailable or changed",
+          "recovery": "Refresh the exact record or return to the queue. Preserve the error details; do not recreate a clinical record to bypass the error."
+        }
+      ]
+    }
+  ]
+}

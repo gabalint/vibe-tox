@@ -1,0 +1,25 @@
+[package]
+name = "lis-catalog"
+description = "Analytes, methods and orderables with draft, approved and retired versions"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+lis-audit = { workspace = true }
+lis-auth = { workspace = true }
+lis-core = { workspace = true }
+lis-store = { workspace = true }
+rusqlite = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+ts-rs = { workspace = true }
+
+[dev-dependencies]
+lis-store = { workspace = true, features = ["testing"] }
+
+[lints]
+workspace = true

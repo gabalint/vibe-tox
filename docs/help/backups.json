@@ -1,0 +1,358 @@
+{
+  "id": "backups",
+  "title": "Backups and the recovery kit",
+  "summary": "Track verified backup copies, test readability and maintain the installation’s recovery key.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/operations/backups/:tab?", "/operations/recovery-kit"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Backups shows protection status, Targets, Runs and Restore tests. Add an approved target folder, request a backup and inspect the run’s copy outcomes. A backup counts as verified only after its checks finish. Restore tests exercise reading a retained copy.",
+        "Recovery kit shows the installation-key state and fingerprint, the last export and storage confirmation. Export the kit when needed and confirm its actual storage using the available action. An outdated kit is identified with a reason."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Check verification outcomes rather than treating a queued job as protection. Use the laboratory’s approved off-computer storage and rotation procedure, and investigate failed restore tests.",
+        "The recovery kit contains sensitive key material needed on a replacement computer. Keep it in the approved secure locations, separate from dependence on the computer being protected. Confirm storage only after checking it."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Missing targets, unavailable media, key-store problems or damaged stored files can prevent a complete backup. Read the affected run and health check before retrying. Preserve existing verified copies while investigating; exporting a kit does not itself create a backup."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Backups",
+      "routes": ["/operations/backups/:tab?"],
+      "purpose": "Maintain encrypted backup targets, inspect every backup-copy outcome and test retained sets for readability.",
+      "access": "Backup and restore authority is required for backup management. Actions also depend on target availability and purpose.",
+      "fields": [
+        {
+          "name": "Targets / Runs / Restore tests tabs",
+          "meaning": "Switch between destinations, backup jobs and test evidence.",
+          "values": "Targets is the default tab; Runs; Restore tests.",
+          "rules": "Navigation only. Runs and tests start with 100 records. Load older backup runs or Load older restore tests continues through all retained history, including equal timestamps. Recorded request-time ordering does not establish causal chronology after a clock correction."
+        },
+        {
+          "name": "Data",
+          "meaning": "Whether all tracked changes are covered by a verified copy.",
+          "values": "Every change is in a verified copy; Changes not yet in a verified copy.",
+          "rules": "Read-only engine assessment, not a statement that every target is healthy."
+        },
+        {
+          "name": "Newest verified copy",
+          "meaning": "Most recent successfully verified backup and where it resides.",
+          "values": "Timestamp and target, or None yet.",
+          "rules": "Read-only; a queued or failed run does not qualify."
+        },
+        {
+          "name": "Running now / Next backup due",
+          "meaning": "Current job and scheduled due time.",
+          "values": "Backup kind/state/time or Nothing; due timestamp or Not scheduled.",
+          "rules": "Read-only; scheduled work runs while the app is open."
+        },
+        {
+          "name": "Latest run / Latest restore test",
+          "meaning": "Most recent job outcomes across the installation.",
+          "values": "Recorded job summary or no history.",
+          "rules": "Read-only links lead to the relevant history."
+        },
+        {
+          "name": "Name / Target",
+          "meaning": "Human-readable target identity.",
+          "values": "PHI-free name up to 80 characters.",
+          "rules": "Required when adding. Distinguish physical media clearly."
+        },
+        {
+          "name": "Kind",
+          "meaning": "Type of storage used for the target.",
+          "values": "Second internal disk; Removable drive; Network share.",
+          "rules": "Required, no default. Classification affects off-host/offline protection checks."
+        },
+        {
+          "name": "Receives",
+          "meaning": "Whether the folder stores full backup sets as well as audit evidence.",
+          "values": "Backups and audit anchors; Audit anchors only.",
+          "rules": "Required. Anchors-only storage cannot substitute for an encrypted database backup."
+        },
+        {
+          "name": "Location / Choose folder",
+          "meaning": "Actual target folder selected in the native operating-system dialog.",
+          "values": "Existing writable folder outside the live data directory.",
+          "rules": "Required to add a target. The app writes a marker identifying this installation; a different installation/key or already-active target is refused."
+        },
+        {
+          "name": "State / Last verified copy / Last failure",
+          "meaning": "Availability and most recent success/failure for the target.",
+          "values": "Available; Not connected; Retired, plus last copy time and failure code/time where present.",
+          "rules": "Read-only. Available means the marked target is reachable, not that its latest backup succeeded."
+        },
+        {
+          "name": "Show retired",
+          "meaning": "Include retired targets in the directory.",
+          "values": "Unchecked by default; checked includes them.",
+          "rules": "Retired targets retain their historical facts, but this screen does not list their stored sets."
+        },
+        {
+          "name": "Backup sets on this target",
+          "meaning": "Complete sets currently found in an active target’s manifests.",
+          "values": "Made time, Scheduled/Manual/Before an update, app version, database size and any incompatibility reason.",
+          "rules": "Read-only; initially shows the newest ten. Incompatible sets cannot be treated as readable by this app version."
+        },
+        {
+          "name": "Backup set (Request restore test)",
+          "meaning": "Which retained set to decrypt and check.",
+          "values": "A listed set; blank chooses the newest set when the test runs.",
+          "rules": "Optional; selecting a particular set makes the test target explicit."
+        },
+        {
+          "name": "Reason (Retire target)",
+          "meaning": "Why a target must stop receiving new backups and anchors.",
+          "values": "Explanation up to 500 characters.",
+          "rules": "Required; existing copies are retained."
+        },
+        {
+          "name": "Requested / Started / Finished / Kind",
+          "meaning": "Timing and purpose of the selected backup job.",
+          "values": "Saved times; Scheduled, Manual or Before an update.",
+          "rules": "Read-only. Not started/Not finished identify pending stages."
+        },
+        {
+          "name": "State / Copies",
+          "meaning": "Run outcome and separate result for each destination.",
+          "values": "Requested, Running, Verified, Failed or Interrupted; each copy names its target, verification time or failure code, and whether it was since pruned.",
+          "rules": "Read-only. Inspect all copy outcomes; one verified copy does not prove every intended target succeeded."
+        },
+        {
+          "name": "Database / Stored files / Stored-file problems / Failure",
+          "meaning": "Snapshot size, artifact count, detected artifact issues and job failure code.",
+          "values": "Sizes/counts or Unknown; failure code or None.",
+          "rules": "Read-only; database size is not total backup footprint. Investigate stored-file problems even when a copy was produced."
+        },
+        {
+          "name": "Result / Backup made / Restore time / Findings (Restore tests)",
+          "meaning": "Outcome, snapshot time, elapsed time and detected problems of a read-back test.",
+          "values": "Requested, Running, Passed, Failed or Interrupted; seconds or Not finished; findings count and descriptions.",
+          "rules": "Read-only. Open the test for complete findings and anchor comparison counts; a request is not a passed test."
+        },
+        {
+          "name": "Audit anchor comparison (restore test)",
+          "meaning": "Evidence comparisons made while checking a retained set.",
+          "values": "Compared, Matched, Lost interval, Unverified restore boundary, Mismatched, Local events missing, Conflicts, Gaps and Not yet anchored counts.",
+          "rules": "Read-only; an expected lost interval is different from mismatched or missing evidence."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Back up now",
+          "does": "Queue a manual encrypted backup.",
+          "availableWhen": "Backup and restore authority and a usable backup configuration.",
+          "result": "A request appears in Runs; protection advances only after a copy is verified."
+        },
+        {
+          "name": "Add backup target / Choose folder",
+          "does": "Register the selected marked destination with its name, kind and purpose.",
+          "availableWhen": "Backup and restore authority, valid required values and usable folder.",
+          "result": "The target appears in Targets. Canceling the folder chooser adds nothing and leaves the form open."
+        },
+        {
+          "name": "Request restore test / Start restore test",
+          "does": "Decrypt a selected or newest backup into scratch storage and check database, audit chains/anchors and stored files.",
+          "availableWhen": "A target offers the action and a retained set can be read.",
+          "result": "Queues the test; live data is untouched. Inspect Restore tests for its final result."
+        },
+        {
+          "name": "Retire target",
+          "does": "Stop sending new backups and anchors to a target.",
+          "availableWhen": "The target offers the action; reason and current revision.",
+          "result": "Retains existing copies for recovery; target retirement can make the recovery kit outdated."
+        },
+        {
+          "name": "Show all sets / Show the newest 10",
+          "does": "Expand or shorten the active target’s set preview.",
+          "availableWhen": "More than ten complete sets are listed.",
+          "result": "Changes only what is displayed."
+        },
+        {
+          "name": "Open row / Previous / Next / Close / Clear filters",
+          "does": "Inspect target, run or test evidence and navigate the loaded history.",
+          "availableWhen": "A row or retired filter is available.",
+          "result": "Read-only navigation; clearing filters hides retired targets."
+        },
+        {
+          "name": "Load older backup runs / Load older restore tests",
+          "availableWhen": "Older history may exist after the displayed page.",
+          "does": "Appends the next retained page in request-time and ID order. An exactly full restore page may need one final empty read. Loading and failures retain the displayed records; Retry requests the failed read again.",
+          "result": "Loaded history and exact selected records remain read-only. Errors explain the failed read and offer Retry; Refresh re-reads current engine state."
+        },
+        {
+          "name": "Refresh history",
+          "availableWhen": "On the Runs or Restore tests tab, including an exact linked record.",
+          "does": "Reloads the loaded pages and the selected exact record. A linked older record opens directly without loading every intervening page. Missing or denied records show an error and recovery controls; another record is never substituted. Unfinished background jobs poll every five seconds until all loaded jobs finish. A failed background read stops automatic polling and labels the retained record as potentially out of date. Use Try again or Refresh after resolving the error.",
+          "result": "Loaded history and exact selected records remain read-only. Errors explain the failed read and offer Retry; Refresh re-reads current engine state."
+        }
+      ],
+      "restrictions": [
+        "A restore test uses scratch storage and is different from restoring production.",
+        "Backups are encrypted with the installation key; preserve a current recovery kit off the protected computer.",
+        "Keep the app running for scheduled backups; a due time is not proof a job completed.",
+        "Do not remove good earlier copies while investigating a damaged or failed newer set."
+      ],
+      "workflow": [
+        "Add approved backup destinations with their correct storage kind and purpose.",
+        "Request a backup and inspect every copy outcome in Runs until verification completes.",
+        "Open an available backup target and request a restore test; inspect the finished test and findings.",
+        "After adding or retiring targets, export and store a current recovery kit."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Target is Not connected or cannot be added",
+          "recovery": "Connect the intended medium/share, confirm access and its installation marker, and choose a writable location outside the data directory. Do not repurpose another installation’s marked folder."
+        },
+        {
+          "problem": "Backup fails or reports stored-file problems",
+          "recovery": "Open the run, record the exact failure and affected copy evidence, resolve the disk/key/file issue and request another backup; retain existing verified sets."
+        },
+        {
+          "problem": "Restore test fails",
+          "recovery": "Read the specific findings: wrong key, unreadable manifest, incompatible newer schema, corrupt/missing files or broken audit evidence require different remedies. Preserve the set and escalate through the laboratory recovery process."
+        }
+      ]
+    },
+    {
+      "title": "Recovery kit",
+      "routes": ["/operations/recovery-kit"],
+      "purpose": "Export and track the installation key and recovery instructions needed to read backups on a replacement computer.",
+      "access": "Backup and restore authority is required to export or confirm storage; export also requires fresh confirmation with your password or security key.",
+      "fields": [
+        {
+          "name": "Key fingerprint",
+          "meaning": "Identifier used to match recovery material to this installation’s key.",
+          "values": "Read-only fingerprint.",
+          "rules": "This is not the secret key and cannot decrypt backups by itself."
+        },
+        {
+          "name": "Key state",
+          "meaning": "Whether the required installation key is usable.",
+          "values": "Key available; Key missing; Key does not match this database; Key store unavailable.",
+          "rules": "Read-only. A missing/mismatched key must be resolved through recovery, not by guessing another key."
+        },
+        {
+          "name": "The recovery kit is outdated",
+          "meaning": "Why the stored kit needs renewal.",
+          "values": "Never exported; installation key changed; backup targets added or retired.",
+          "rules": "Read-only warning. An old export remains history, not evidence of a current kit."
+        },
+        {
+          "name": "Kit number / Exported / Exported by / File name",
+          "meaning": "Identify the last successful kit export and its author.",
+          "values": "Increasing kit number, time, person and filename.",
+          "rules": "Read-only; no patient content or key should be copied into support messages."
+        },
+        {
+          "name": "Storage last confirmed",
+          "meaning": "When and by whom the latest kit’s storage was checked.",
+          "values": "Timestamp/person or Never confirmed.",
+          "rules": "Read-only; exporting and confirming storage are separate actions."
+        },
+        {
+          "name": "Where the disk-encryption recovery key is kept",
+          "meaning": "Reference printed in the kit so the responsible person can locate disk recovery material.",
+          "values": "Location/reference up to 200 characters.",
+          "rules": "Required to export. Enter where it is kept, never the disk-encryption recovery key itself."
+        },
+        {
+          "name": "Your password",
+          "meaning": "Fresh confirmation of the person exporting key material.",
+          "values": "Your current password.",
+          "rules": "Password accounts only. Required before export completes."
+        },
+        {
+          "name": "Security key",
+          "meaning": "Fresh confirmation by the signed-in person using their registered security key.",
+          "values": "The active personal keys registered to your account; the first returned key is selected initially.",
+          "rules": "Security-key accounts only; replaces Your password. Select one key, review and submit the action, then follow its PIN or biometric verification and touch prompt. The key confirms only that submitted action. Permissions, reasons and record-state gates still apply. Use your own key; a selected label alone does not authorize anything."
+        },
+        {
+          "name": "Where the kit is stored",
+          "meaning": "Evidence of the kit’s actual custody.",
+          "values": "Note naming both approved places off this computer, up to 500 characters.",
+          "rules": "Required to Confirm storage; retained in the audit trail. Only the latest exported kit may be confirmed."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Export recovery kit / Choose where to save",
+          "does": "Write the installation key, backup locations and restore instructions to the selected file.",
+          "availableWhen": "Backup and restore authority, valid location reference, working installation key and fresh account confirmation.",
+          "result": "A completed export is recorded with kit number and filename; canceling file selection writes no kit."
+        },
+        {
+          "name": "Confirm where the kit is stored / Confirm storage",
+          "does": "Record that the latest exported kit is stored in the described places.",
+          "availableWhen": "A successful latest export exists and you have verified its actual storage.",
+          "result": "Appends a custody confirmation; it does not create additional copies or a backup."
+        }
+      ],
+      "restrictions": [
+        "Anyone holding this file can read the encrypted backups. Keep it in the laboratory’s approved secure places off this computer.",
+        "A recovery kit is key material and instructions, not the database backup itself."
+      ],
+      "workflow": [
+        "Inspect the key state and outdated reason.",
+        "Export a current kit with the approved reference for disk recovery material.",
+        "Store it in the laboratory’s two approved off-computer locations.",
+        "Verify those copies, then record where the latest kit is stored."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Key missing, mismatched or unavailable",
+          "recovery": "Preserve the existing database and key material; follow the installation recovery process with the authorized owner."
+        },
+        {
+          "problem": "Kit became outdated after target changes",
+          "recovery": "Export the updated kit and replace/store copies through the laboratory’s custody process, then confirm actual storage."
+        },
+        {
+          "problem": "Storage confirmation refuses an old kit number",
+          "recovery": "Refresh the page and inspect the newest export; confirm only after locating that actual kit."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/operations/backups/BackupsPage.tsx",
+    "ui/src/features/operations/backups/AddTargetDialog.tsx",
+    "ui/src/features/operations/backups/RetireTargetDialog.tsx",
+    "ui/src/features/operations/backups/TargetPanel.tsx",
+    "ui/src/features/operations/backups/StatusBand.tsx",
+    "ui/src/features/operations/backups/RestoreTestDialog.tsx",
+    "ui/src/features/operations/backups/RestoreTestPanel.tsx",
+    "ui/src/features/operations/backups/RunPanel.tsx",
+    "ui/src/features/operations/backups/SetsSection.tsx",
+    "ui/src/features/operations/backups/RunsSection.tsx",
+    "ui/src/features/operations/backups/RestoreTestsSection.tsx",
+    "ui/src/features/operations/backups/targetColumns.tsx",
+    "ui/src/features/operations/kit/RecoveryKitPage.tsx",
+    "ui/src/features/operations/kit/ExportKitDialog.tsx",
+    "ui/src/features/operations/kit/ConfirmStorageDialog.tsx",
+    "crates/lis-ops/src/targets.rs",
+    "crates/lis-ops/src/kit.rs",
+    "ui/src/features/operations/backups/useBackupLists.ts",
+    "crates/lis-ops/src/backup/query.rs",
+    "crates/lis-ops/src/restore/test_repo.rs",
+    "crates/lis-engine/src/commands/backup/backups.rs",
+    "ui/src/features/operations/backups/JobHistory.tsx",
+    "ui/src/features/operations/backups/useExactJob.ts",
+    "ui/src/lib/securityKeyAuthenticationField.tsx",
+    "ui/src/lib/securityKeyPrompt.tsx",
+    "ui/src/lib/commands.ts",
+    "crates/lis-auth/src/key_proofs.rs"
+  ]
+}

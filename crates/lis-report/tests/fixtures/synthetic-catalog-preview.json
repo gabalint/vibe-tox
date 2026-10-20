@@ -1,0 +1,104 @@
+{
+  "report": {
+    "id": "CP-SYN-0001",
+    "generatedAt": "2026-10-13 09:30 CDT",
+    "generatedAtUtc": "2026-10-13 14:30 UTC",
+    "generatedBy": "Synthetic Manager",
+    "contentDigest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+  },
+  "laboratoryName": "Synthetic Toxicology Laboratory",
+  "disclaimer": "Starter content: check every value before use. It is not validated for your laboratory and not ready for patient testing.",
+  "gaps": [
+    { "record": "SYN-METHOD-IA version 1", "analyte": "SYN-A1", "gap": "blank_cutoff" },
+    { "record": "SYN-METHOD-IA version 1", "analyte": null, "gap": "starter_threshold_rule" },
+    { "record": "SYN-METHOD-IA version 1", "analyte": null, "gap": "starter_threshold_rounding" }
+  ],
+  "drafts": [
+    { "recordType": "method", "code": "SYN-METHOD-IA", "name": "Synthetic immunoassay", "version": "1", "revision": "3" },
+    { "recordType": "test", "code": "SYN-TEST-1", "name": "Synthetic test", "version": "1", "revision": "2" },
+    { "recordType": "panel", "code": "SYN-PANEL-1", "name": "Synthetic panel", "version": "1", "revision": "1" },
+    { "recordType": "validity_policy", "code": "SYN-UR", "name": "Synthetic urine validity", "version": "1", "revision": "1" }
+  ],
+  "specimenTypes": [
+    { "code": "SYN-UR", "name": "Synthetic urine" },
+    { "code": "SYN-OF", "name": "Synthetic oral fluid" }
+  ],
+  "analytes": [
+    { "code": "SYN-A1", "name": "Synthetic analyte one", "loincCode": "0000-0", "loincDisplayName": "Synthetic analyte one [Presence] in Urine", "drugClass": "SYN-CLASS" },
+    { "code": "SYN-A2", "name": "Synthetic analyte two", "loincCode": null, "loincDisplayName": null, "drugClass": null }
+  ],
+  "methods": [
+    {
+      "code": "SYN-METHOD-IA",
+      "name": "Synthetic immunoassay",
+      "versions": [
+        {
+          "version": "1",
+          "status": "draft",
+          "specimenType": "SYN-UR",
+          "certainty": "presumptive",
+          "outputScale": "qualitative",
+          "thresholdRule": { "value": "at_or_above", "source": { "kind": "starter_value" } },
+          "thresholdRounding": { "value": "before_rounding", "source": { "kind": "starter_value" } },
+          "analytes": [
+            { "code": "SYN-A1", "name": "Synthetic analyte one", "unit": "ng/mL", "cutoff": null, "cutoffSource": { "kind": "blank" }, "lod": null, "loq": null, "reportableLow": null, "reportableHigh": null, "displayScale": null },
+            { "code": "SYN-A2", "name": "Synthetic analyte two", "unit": null, "cutoff": "50.0", "cutoffSource": { "kind": "published", "title": "Synthetic Guideline 2026", "label": "Synthetic initial test cutoff" }, "lod": "1.5", "loq": "5", "reportableLow": "5", "reportableHigh": "5000", "displayScale": "0" }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "SYN-METHOD-MS",
+      "name": "Synthetic mass spectrometry",
+      "versions": [
+        {
+          "version": "2",
+          "status": "in_effect",
+          "specimenType": "SYN-UR",
+          "certainty": "definitive",
+          "outputScale": "quantitative",
+          "thresholdRule": { "value": "above", "source": { "kind": "changed_by_laboratory" } },
+          "thresholdRounding": { "value": "after_rounding", "source": { "kind": "entered_by_laboratory" } },
+          "analytes": [
+            { "code": "SYN-A1", "name": "Synthetic analyte one", "unit": "ng/mL", "cutoff": "10", "cutoffSource": { "kind": "demo_value" }, "lod": "0.5", "loq": "1", "reportableLow": "1", "reportableHigh": "1000", "displayScale": "1" }
+          ]
+        }
+      ]
+    }
+  ],
+  "orderables": [
+    {
+      "code": "SYN-TEST-1",
+      "name": "Synthetic test",
+      "kind": "test",
+      "versions": [
+        { "version": "1", "status": "draft", "components": [
+          { "position": "1", "methodCode": "SYN-METHOD-MS", "methodVersion": "2", "purpose": "analytical", "analyteCodes": ["SYN-A1"] }
+        ] }
+      ]
+    },
+    {
+      "code": "SYN-PANEL-1",
+      "name": "Synthetic panel",
+      "kind": "panel",
+      "versions": [
+        { "version": "1", "status": "draft", "components": [
+          { "position": "1", "methodCode": "SYN-METHOD-IA", "methodVersion": "1", "purpose": "analytical", "analyteCodes": ["SYN-A1", "SYN-A2"] },
+          { "position": "2", "methodCode": "SYN-METHOD-VA", "methodVersion": "1", "purpose": "validity", "analyteCodes": ["SYN-A2"] }
+        ] }
+      ]
+    }
+  ],
+  "validityPolicies": [
+    {
+      "specimenType": "SYN-UR",
+      "versions": [
+        { "version": "1", "status": "draft", "categories": [
+          { "code": "DILUTE", "label": "Synthetic dilute", "action": "qualifier", "qualifierText": "Synthetic qualifier text" },
+          { "code": "SUBST", "label": "Synthetic substituted", "action": "hold", "qualifierText": null }
+        ] }
+      ]
+    }
+  ],
+  "loincNotice": "Synthetic LOINC notice text."
+}

@@ -1,0 +1,519 @@
+{
+  "id": "billing-work",
+  "title": "Billing work and handoffs",
+  "summary": "Review performed-service derivations, hand them off and reconcile the partner\u2019s outcomes.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/billing/work", "/billing/derivations/:derivationId", "/billing/handoffs/:handoffId"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Billing work groups items by what they need: derivation, review, handoff or partner follow-up. Open a row for its next step. A derivation shows the patient, date-of-service rule, mapping version, flags and the ordered, performed and reported classes for each specimen.",
+        "Approve an eligible derivation after review. Select eligible items for a handoff where offered. The handoff page shows the stored file, its items and the partner\u2019s recorded outcome for each item.",
+        "Review order billing opens the financial selection behind a specimen. Resolve billing context conflict records an allocation agreed with the external billing owner while preserving the combined performed work and all order contexts. It does not create additional services or claims."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Check the performed work and component dispositions, including adjustments to earlier derivations. Billing classes come from the approved mapping; they must not be inferred from positive results.",
+        "Treat a handoff export as transfer preparation. Record the partner\u2019s actual acknowledgement or rejection and reconcile each affected item. Keep diagnoses and supporting evidence as supplied by the ordering source.",
+        "For a rejected item, Record follow-up outcome preserves the earlier rejection and records the next partner response, its reference and your reason. A rejected item remains open for another documented follow-up; acknowledge it only from the partner\u2019s actual response."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "An out-of-date derivation needs to be derived again and reviewed against current work. Resolve flags and mapping issues before approval. A handoff file\u2019s existence or a partner acknowledgement does not establish payment or a complete claim."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/billing/labels.ts",
+    "ui/src/features/billing/DeriveDialog.tsx",
+    "ui/src/features/billing/work/BillingWorkPage.tsx",
+    "ui/src/features/billing/work/CreateHandoffAction.tsx",
+    "ui/src/features/billing/work/useWorkRowActions.tsx",
+    "ui/src/features/billing/work/workColumns.tsx",
+    "ui/src/features/billing/derivations/DerivationPage.tsx",
+    "ui/src/features/billing/derivations/SpecimenSection.tsx",
+    "ui/src/features/billing/derivations/FlagsSection.tsx",
+    "ui/src/features/billing/derivations/ContextResolutionDialog.tsx",
+    "ui/src/features/billing/handoffs/HandoffPage.tsx",
+    "ui/src/features/billing/handoffs/HandoffItems.tsx",
+    "ui/src/features/billing/handoffs/HandoffItemPanel.tsx",
+    "ui/src/features/billing/handoffs/RecordOutcomeDialog.tsx",
+    "crates/lis-billing/src/policy.rs",
+    "crates/lis-billing/src/handoffs.rs",
+    "crates/lis-billing/src/handoffs/export.rs",
+    "crates/lis-billing/src/reconciliation.rs",
+    "crates/lis-billing/src/derivations.rs",
+    "ui/src/components/FormDialog/FormDialog.tsx",
+    "ui/src/features/billing/contract.ts",
+    "crates/lis-engine/src/commands/billing/mod.rs",
+    "crates/lis-engine/src/commands/billing/services.rs",
+    "ui/src/features/workqueues/itemPath.ts",
+    "crates/lis-billing/src/work.rs"
+  ],
+  "pages": [
+    {
+      "title": "Billing work",
+      "routes": ["/billing/work"],
+      "purpose": "Find performed services needing calculation, approval, handoff or response reconciliation.",
+      "access": "Billing authority is required. Available actions also depend on the current derivation or handoff state; reading financial records and submitting decisions are audited.",
+      "fields": [
+        {
+          "name": "Show",
+          "meaning": "Financial-work category to inspect.",
+          "values": "Needs derivation; Held; Ready for approval or handoff; Handed off, awaiting outcome; Rejected by the billing partner.",
+          "rules": "Defaults to Needs derivation. Changing filter clears the selected rows."
+        },
+        {
+          "name": "Accessions",
+          "meaning": "Material contributing to one patient/date-of-service work item.",
+          "values": "Read-only accession numbers.",
+          "rules": "Patient names are not shown in this queue; open the derivation to verify identity."
+        },
+        {
+          "name": "Date of service",
+          "meaning": "Collection date used to group performed services.",
+          "values": "Read-only collection-local date or Unknown.",
+          "rules": "It is not the report date or the billing export date."
+        },
+        {
+          "name": "Handoff",
+          "meaning": "Export batch containing this item.",
+          "values": "Read-only handoff number or None.",
+          "rules": "Exists only after a handoff is created."
+        },
+        {
+          "name": "State / Since",
+          "meaning": "Current financial-work state and the timestamp associated with that work.",
+          "values": "Needs derivation; Held; Ready for approval; Approved; Handed off; Awaiting outcome; Rejected or Acknowledged as applicable.",
+          "rules": "Read-only, oldest first; use Refresh to retrieve current work."
+        },
+        {
+          "name": "Selection checkboxes",
+          "meaning": "Approved derivations to include in a handoff.",
+          "values": "Rows under Ready for approval or handoff.",
+          "rules": "Only rows currently allowed for handoff are included; review the count in the confirmation. A visible ready row may still need approval."
+        },
+        {
+          "name": "Outcome",
+          "meaning": "The billing partner\u2019s actual response.",
+          "values": "Acknowledged by the billing partner; Rejected by the billing partner.",
+          "rules": "Required explicit choice. Acknowledgement is not payment or claim adjudication."
+        },
+        {
+          "name": "Partner reference",
+          "meaning": "Reference supplied by the billing partner for its response.",
+          "values": "Optional text, up to 200 characters.",
+          "rules": "Shown for an initial acknowledgement and for all follow-up outcomes. Initial rejection records its reason instead."
+        },
+        {
+          "name": "Reason \u2014 initial rejection",
+          "meaning": "Reason the partner gave for rejecting the handoff item.",
+          "values": "Required text, up to 1000 characters.",
+          "rules": "Shown when recording the initial Rejected outcome."
+        },
+        {
+          "name": "Reason for follow-up",
+          "meaning": "Evidence and explanation for a new response after rejection.",
+          "values": "Required text, up to 1000 characters.",
+          "rules": "Required for either follow-up outcome; the previous rejection remains in history."
+        },
+        {
+          "name": "Exact patient and service-date target",
+          "meaning": "A work-queue link may constrain this list to the named patient and collection-local date.",
+          "values": "The target is carried in the address; unknown dates remain explicitly unknown.",
+          "rules": "A different service date for the same patient is not a substitute. The scope message names the service date or explicitly unknown date. Show all patients and dates clears the patient/date scope and selected rows."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Refresh",
+          "does": "Reloads the selected financial-work category.",
+          "availableWhen": "Billing authority is required. Available actions also depend on the current derivation or handoff state; reading financial records and submitting decisions are audited.",
+          "result": "Updates loaded pages, current states and whether more work remains."
+        },
+        {
+          "name": "Open row",
+          "does": "Opens the handoff if already handed off, otherwise the derivation; underived work opens confirmation to derive.",
+          "availableWhen": "A row has a record or an allowed derivation action.",
+          "result": "Navigates to the next review step."
+        },
+        {
+          "name": "Derive services",
+          "does": "Calculates services from ordered, performed and reported work for the patient and service date.",
+          "availableWhen": "The row offers derivation.",
+          "result": "Opens the result for review; unchanged inputs reuse the same derivation."
+        },
+        {
+          "name": "Create handoff",
+          "does": "Creates one stored file from eligible selected approved derivations.",
+          "availableWhen": "Ready filter; at least one selected approved, current derivation.",
+          "result": "Confirmation shows the eligible count. Each derivation is handed off once; later changes require an adjustment."
+        },
+        {
+          "name": "Record outcome",
+          "does": "Records the partner response for an outstanding handoff item.",
+          "availableWhen": "Item awaiting an initial response.",
+          "result": "Sets Acknowledged or Rejected with the supplied evidence."
+        },
+        {
+          "name": "Review rejected handoff",
+          "does": "Opens the rejected item for follow-up reconciliation.",
+          "availableWhen": "A rejected handed-off item offers follow-up.",
+          "result": "Opens the handoff item panel; record an actual later response there."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes the current unsaved editor or pending action dialog.",
+          "availableWhen": "No command is pending.",
+          "result": "Unsaved dialog entries are deliberately discarded when Cancel is chosen; saved records remain."
+        },
+        {
+          "name": "Load more billing work",
+          "does": "Loads the next 200 items in the selected category and exact target scope.",
+          "availableWhen": "More matching work remains.",
+          "result": "Appends later patient/date entries while retaining current selection. Refresh rechecks loaded pages."
+        },
+        {
+          "name": "Show all patients and dates",
+          "does": "Clears the exact linked patient/date scope and row selections while retaining the Show category.",
+          "availableWhen": "The page was opened for a specific patient/date target.",
+          "result": "Returns to the full selected billing-work category."
+        }
+      ],
+      "restrictions": [
+        "The queue loads 200 work items per page. Load more billing work reaches later items without completing earlier work. A single handoff still contains at most 200 unique derivations.",
+        "Derivation uses performed and reported work, not positive results. This workflow does not make a payer-specific coding or payment decision.",
+        "Creating or exporting a handoff does not transmit it to a partner or record partner acceptance.",
+        "In editable dialogs, Escape and an outside click close only an unchanged form with no command running. Cancel deliberately discards unsaved dialog entries and is disabled while saving."
+      ],
+      "workflow": [
+        "Choose the appropriate Show category.",
+        "Derive current services and review the resulting flags and source work.",
+        "Approve eligible derivations, then select them in Ready for approval or handoff and create a handoff.",
+        "Export through the handoff page and record the partner\u2019s actual response for every item."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The record changed while the dialog was open.",
+          "recovery": "Keep the source document available. Cancel the dialog, refresh or reopen the record, compare the current facts, then reopen the action. Do not repeatedly submit a decision based on an older revision."
+        },
+        {
+          "problem": "A save fails or a field is rejected.",
+          "recovery": "Read the message and correct the indicated value. The open form retains entered values after failure; success is shown only after the application accepts the save. Cancel abandons an unsaved dialog."
+        },
+        {
+          "problem": "None of these is approved for handoff.",
+          "recovery": "Open the derivations and complete review/approval. Only selected items with an offered handoff action are included."
+        },
+        {
+          "problem": "Nothing appears under the chosen category.",
+          "recovery": "Choose another Show category and refresh. An empty category does not mean all billing work is complete."
+        },
+        {
+          "problem": "A linked patient/date work item is no longer present.",
+          "recovery": "Refresh and check its current owning derivation or handoff. Do not derive a different service date merely because it belongs to the same patient. Show all patients and dates returns to the general list."
+        }
+      ]
+    },
+    {
+      "title": "Service derivation",
+      "routes": ["/billing/derivations/:derivationId"],
+      "purpose": "Review exactly which performed services are eligible for financial handoff.",
+      "access": "Billing authority is required. Available actions also depend on the current derivation or handoff state; reading financial records and submitting decisions are audited.",
+      "fields": [
+        {
+          "name": "Patient identity / Service derivation number",
+          "meaning": "The person and numbered service calculation under review.",
+          "values": "Read-only identity banner and sequential derivation number.",
+          "rules": "Check identity before approval; this is a financial record, not a new clinical order."
+        },
+        {
+          "name": "State",
+          "meaning": "Current review and handoff status.",
+          "values": "Held; Ready for approval; Approved; Handed off; Superseded.",
+          "rules": "Read-only. Only a current, unblocked candidate may be approved."
+        },
+        {
+          "name": "Completeness",
+          "meaning": "Whether final reporting required by the derivation is complete.",
+          "values": "Complete; Awaiting final reports.",
+          "rules": "Read-only. Resolve incomplete source work before approval."
+        },
+        {
+          "name": "Date of service / Date of service rule",
+          "meaning": "The day used to group work and the rule that produced it.",
+          "values": "Collection date, in the collection\u2019s local time; date may be Unknown.",
+          "rules": "Read-only. Date-only collection uses the supplied date; unknown collection timing cannot be guessed from receipt."
+        },
+        {
+          "name": "Class mapping",
+          "meaning": "Approved and laboratory-confirmed mapping used by this derivation.",
+          "values": "Version link or None.",
+          "rules": "Read-only frozen mapping reference. Follow the link to review its actual entries."
+        },
+        {
+          "name": "Adjusts",
+          "meaning": "Earlier derivation affected by this revision.",
+          "values": "Read-only link to a prior derivation, when this is an adjustment.",
+          "rules": "Changes retain lineage; they do not erase the prior handoff."
+        },
+        {
+          "name": "Out of date",
+          "meaning": "Indicates the source work changed after calculation.",
+          "values": "Warning displayed when the derivation is stale.",
+          "rules": "Derive again and review the new result before approval."
+        },
+        {
+          "name": "Flags: Flag / Reference / Effect",
+          "meaning": "Reasons for review and the affected record.",
+          "values": "Flag labels: Order billing selection missing; Order billing selection incomplete; Same-day order billing contexts need reconciliation; Financial follow-up remains open; Collection correction awaits quality review; No billing class for an analyte; Date of service unknown; Report not final; Laboratory billing NPI or TIN missing; Ordered but not performed; Presumptive and definitive testing on the same specimen; More than one presumptive test that day; Performed but not ordered (not counted); Only failed attempts (not counted); Performed but not reported. Effect is Blocking: holds the derivation, or For information.",
+          "rules": "Read-only. Blocking flags must be resolved at their source and services derived again. Informational flags still require reviewer attention."
+        },
+        {
+          "name": "Order / Order version",
+          "meaning": "Order context used for each specimen\u2019s services.",
+          "values": "Review order billing link and frozen order version.",
+          "rules": "Use the link to inspect financial context; do not infer source facts from the class count."
+        },
+        {
+          "name": "Class code / Class label / Certainty",
+          "meaning": "Configured billing-class grouping for this specimen.",
+          "values": "Source mapping code/label; Presumptive (screening) or Definitive (confirmation).",
+          "rules": "Read-only. Classes derive from mapped performed work, never positive results."
+        },
+        {
+          "name": "Ordered / Performed / Reported",
+          "meaning": "Whether each billing class was requested, actually performed and reported.",
+          "values": "Yes; No for each column.",
+          "rules": "These are independent facts, not interchangeable completion indicators."
+        },
+        {
+          "name": "Components: Orderable / Disposition",
+          "meaning": "Disposition of the source component work.",
+          "values": "Performed; Cancelled; Not performed; Failed attempts only; Specimen validity (excluded).",
+          "rules": "Read-only; excluded/failed/unperformed work must not be converted into billed services by changing the description."
+        },
+        {
+          "name": "Allocation decision, evidence and reason",
+          "meaning": "Agreed resolution of differing same-day order billing arrangements.",
+          "values": "Required source-backed explanation, up to 1000 characters.",
+          "rules": "Billing authority and a current conflict flag. Agree allocation with the external billing owner before recording it."
+        },
+        {
+          "name": "Billing context reconciliation",
+          "meaning": "Previously recorded reconciliation supporting the current calculation.",
+          "values": "Read-only explanation when present.",
+          "rules": "Bound to the reviewed inputs. Changed inputs require fresh review."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Approve derivation",
+          "does": "Confirms exactly the displayed services for handoff.",
+          "availableWhen": "Current Ready for approval derivation, current revision and no blocking flags.",
+          "result": "Marks this calculation Approved. Later source changes make it stale and require derivation/review again."
+        },
+        {
+          "name": "Derive again / Derive services",
+          "does": "Rebuilds services from the current source facts.",
+          "availableWhen": "Derivation action is offered.",
+          "result": "Reuses an identical calculation or creates a replacement/adjustment preserving history."
+        },
+        {
+          "name": "Resolve billing context conflict / Record reconciliation",
+          "does": "Records an agreed same-day billing allocation and recalculates.",
+          "availableWhen": "Current derivation with a blocking billing-context conflict and billing authority.",
+          "result": "Preserves combined work and all source contexts; does not create extra performed services or claims."
+        },
+        {
+          "name": "Review order billing / Class mapping / Adjusts link",
+          "does": "Opens the relevant source financial selection, mapping or prior derivation.",
+          "availableWhen": "The link is present and access is permitted.",
+          "result": "Allows source review without editing the displayed frozen calculation."
+        },
+        {
+          "name": "Previous / Next",
+          "does": "Moves between derivations from the list that opened this record.",
+          "availableWhen": "A neighboring record exists.",
+          "result": "Check the new identity banner and service date before acting."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes the current unsaved editor or pending action dialog.",
+          "availableWhen": "No command is saving.",
+          "result": "Unsaved dialog entries are deliberately discarded when Cancel is chosen; saved records remain."
+        }
+      ],
+      "restrictions": [
+        "A blocking flag is not cleared by approval; correct its source and derive again.",
+        "The current date-of-service rule is the source collection\u2019s local date. It is an implemented application rule, not a universal payer rule.",
+        "A stale calculation cannot be approved even if its previous state was ready.",
+        "In editable dialogs, Escape and an outside click close only an unchanged form with no command running. Cancel deliberately discards unsaved dialog entries and is disabled while saving."
+      ],
+      "workflow": [
+        "Verify patient, service date, mapping and any adjustment lineage.",
+        "Read every blocking/informational flag and inspect ordered/performed/reported class facts.",
+        "Correct source deficiencies or record the agreed context reconciliation, then derive again as needed.",
+        "Approve only the current calculation and return to Billing work for handoff."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The record changed while the dialog was open.",
+          "recovery": "Keep the source document available. Cancel the dialog, refresh or reopen the record, compare the current facts, then reopen the action. Do not repeatedly submit a decision based on an older revision."
+        },
+        {
+          "problem": "Out of date.",
+          "recovery": "Use Derive again, inspect the new source facts and flags, then approve the new current calculation if eligible."
+        },
+        {
+          "problem": "Held.",
+          "recovery": "Read the flag\u2019s reference and effect. Correct the underlying billing, collection, mapping or report issue; derive again after the source change."
+        },
+        {
+          "problem": "No billing classes for a specimen.",
+          "recovery": "Inspect component dispositions and the configured mapping. Do not assume no services were performed or create mappings from positive results."
+        }
+      ]
+    },
+    {
+      "title": "Billing handoff",
+      "routes": ["/billing/handoffs/:handoffId"],
+      "purpose": "Export the stored billing handoff and retain each item\u2019s partner response history.",
+      "access": "Billing authority is required. Available actions also depend on the current derivation or handoff state; reading financial records and submitting decisions are audited.",
+      "fields": [
+        {
+          "name": "Handoff number / Created by / Created time",
+          "meaning": "Provenance of the stored handoff batch.",
+          "values": "Read-only batch number, staff member and timestamp.",
+          "rules": "Exporting again does not create a new batch."
+        },
+        {
+          "name": "Format / SHA-256",
+          "meaning": "Stored file format and digest identifying its exact contents.",
+          "values": "Read-only format label and checksum.",
+          "rules": "The checksum helps distinguish file versions; it is not a payer acknowledgement."
+        },
+        {
+          "name": "Derivation / Item / Kind / Adjusts item",
+          "meaning": "Calculation included in each handoff item and adjustment lineage.",
+          "values": "Derivation number/link; item identifier; Original or Adjustment; earlier item or None.",
+          "rules": "Read-only. An item belongs to this stored file and is not edited in place."
+        },
+        {
+          "name": "Status / Outcome details / Outcome history",
+          "meaning": "Latest partner outcome and retained earlier responses.",
+          "values": "Awaiting outcome; Acknowledged; Rejected. Detail includes reason/reference, recorded time and user; history appears after subsequent responses.",
+          "rules": "Opening a row shows a side panel with the derivation link and permitted outcome actions."
+        },
+        {
+          "name": "Outcome",
+          "meaning": "The billing partner\u2019s actual response.",
+          "values": "Acknowledged by the billing partner; Rejected by the billing partner.",
+          "rules": "Required explicit choice. Acknowledgement is not payment or claim adjudication."
+        },
+        {
+          "name": "Partner reference",
+          "meaning": "Reference supplied by the billing partner for its response.",
+          "values": "Optional text, up to 200 characters.",
+          "rules": "Shown for an initial acknowledgement and for all follow-up outcomes. Initial rejection records its reason instead."
+        },
+        {
+          "name": "Reason \u2014 initial rejection",
+          "meaning": "Reason the partner gave for rejecting the handoff item.",
+          "values": "Required text, up to 1000 characters.",
+          "rules": "Shown when recording the initial Rejected outcome."
+        },
+        {
+          "name": "Reason for follow-up",
+          "meaning": "Evidence and explanation for a new response after rejection.",
+          "values": "Required text, up to 1000 characters.",
+          "rules": "Required for either follow-up outcome; the previous rejection remains in history."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Export file",
+          "does": "Writes a copy of the stored handoff into the computer\u2019s Downloads folder.",
+          "availableWhen": "Billing authority and export is offered.",
+          "result": "Success displays the actual file name. This local export does not send the file to the billing partner."
+        },
+        {
+          "name": "Open item / Previous / Next / Close",
+          "does": "Opens, navigates or closes the item detail panel.",
+          "availableWhen": "An item is selected; neighbor controls depend on list position.",
+          "result": "Displays item lineage and response history without changing status."
+        },
+        {
+          "name": "Record outcome",
+          "does": "Records the first actual partner response.",
+          "availableWhen": "Outstanding item with no prior outcome.",
+          "result": "Acknowledgement may include a partner reference; rejection requires a reason."
+        },
+        {
+          "name": "Record follow-up outcome",
+          "does": "Records a subsequent actual response after rejection.",
+          "availableWhen": "The latest outcome is Rejected and the displayed revision is current.",
+          "result": "Appends Acknowledged or Rejected with a required follow-up reason, preserving previous responses. Another rejection remains eligible for further follow-up."
+        },
+        {
+          "name": "Derivation link",
+          "does": "Opens the services represented by the item.",
+          "availableWhen": "The item panel is open.",
+          "result": "Shows the calculation and source facts for review."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes the current unsaved editor or pending action dialog.",
+          "availableWhen": "No save is pending.",
+          "result": "Unsaved dialog entries are deliberately discarded when Cancel is chosen; saved records remain."
+        },
+        {
+          "name": "Open linked handoff item",
+          "does": "Opens the exact retained item from a work-queue link.",
+          "availableWhen": "The linked handoff and item exist and billing authority is granted.",
+          "result": "Shows that item\u2019s current outcome and permitted reconciliation actions; another item is never selected as a substitute."
+        }
+      ],
+      "restrictions": [
+        "Do not record acknowledgement from file creation or local export alone.",
+        "An acknowledged response is not payment, acceptance of every claim field or completion of a claim.",
+        "An initial outcome cannot be overwritten. Follow-up is available only while the latest recorded outcome remains Rejected.",
+        "The export contains financial/patient information; handle it through the laboratory\u2019s authorized handoff procedure.",
+        "In editable dialogs, Escape and an outside click close only an unchanged form with no command running. Cancel deliberately discards unsaved dialog entries and is disabled while saving."
+      ],
+      "workflow": [
+        "Inspect the handoff identity and stored file metadata.",
+        "Export file and follow the laboratory\u2019s authorized partner-transfer procedure.",
+        "Open each item and record the actual partner response.",
+        "For rejected items, retain the first rejection and use Record follow-up outcome when a subsequent response arrives."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The record changed while the dialog was open.",
+          "recovery": "Keep the source document available. Cancel the dialog, refresh or reopen the record, compare the current facts, then reopen the action. Do not repeatedly submit a decision based on an older revision."
+        },
+        {
+          "problem": "A save fails or a field is rejected.",
+          "recovery": "Read the message and correct the indicated value. The open form retains entered values after failure; success is shown only after the application accepts the save. Cancel abandons an unsaved dialog."
+        },
+        {
+          "problem": "Not exported.",
+          "recovery": "Read the export error and correct the local destination or artifact issue. Retry Export file; do not treat a failed export as a delivered handoff."
+        },
+        {
+          "problem": "Record outcome is unavailable.",
+          "recovery": "Open the item history. An initial response may already be recorded; only a currently rejected item offers follow-up."
+        },
+        {
+          "problem": "A later partner response changes the clinical or financial source facts.",
+          "recovery": "Correct the source through its authorized workflow and derive an adjustment as needed. Do not relabel the existing handoff item to conceal the change."
+        }
+      ]
+    }
+  ]
+}

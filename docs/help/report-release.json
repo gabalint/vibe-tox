@@ -1,0 +1,700 @@
+{
+  "id": "report-release",
+  "title": "Preparing and releasing reports",
+  "summary": "Review a specimen’s report content, resolve release gates and release a current candidate.",
+  "reviewedOn": "2026-10-15",
+  "routes": [
+    "/reports/release",
+    "/reports/specimens/:specimenId",
+    "/reports/specimens/:specimenId/candidates/:candidateId"
+  ],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Open a specimen from Release queue to see its report workspace. The preview shows expected tests, their dispositions, current release gates and the content as it would print. Prepare candidate freezes that content for a release decision.",
+        "The candidate page shows the content as it will print and whether anything changed after preparation. Release report appears only when the application allows it. Follow the confirmation and authentication prompts to record the release."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Confirm patient and accession identity, expected tests, result units and report completeness before release. Review any reason or relationship requested for a subsequent revision. A preview or prepared candidate is not a released report.",
+        "Resolve the actual identity, QC, review or other gate using the responsible workflow. The application checks the state again when release is attempted."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "A stale candidate cannot be released. Return to the workspace and prepare a new candidate after reviewing the change. Missing authority or separation-of-duties requirements may need another authorized person. Report delivery is a separate workflow after a successful release."
+      ]
+    },
+    {
+      "title": "Preserved report chronology and provenance",
+      "paragraphs": [
+        "Current reports label preparation as Generated and show per-result recorded and first-reported provenance. Actual release remains a separate committed event. Earlier template copies, original timestamps and exact PDF bytes remain unchanged.",
+        "Current condition codes and receipt disposition always appear. During preparation, explicitly select which current descriptions and earlier conditions belong in the patient report. All original receipt records remain internal evidence, including excluded notes. Approved method comments and reference information remain distinct from analytical cutoffs and limits."
+      ]
+    },
+    {
+      "title": "Refresh and exact record navigation",
+      "paragraphs": [
+        "Refresh shows the current read time and explicitly reloads the opened workspace, candidate or report. If a stale submission is refused, cancel its confirmation, refresh and review the current content/gates before reopening an action. Refresh never authorizes a changed candidate.",
+        "Report history loads older pages using release time and report identity together, so equal timestamps remain reachable. Refresh checks the loaded pages again. A preservation incident link identifies its exact incident within the report and focuses it; a missing requested incident produces a warning rather than selecting another incident."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/reports/release/ReleaseQueuePage.tsx",
+    "ui/src/features/reports/release/ReportWorkspacePage.tsx",
+    "ui/src/features/reports/release/PrepareCandidateDialog.tsx",
+    "ui/src/features/reports/release/CandidatePage.tsx",
+    "ui/src/features/reports/release/CandidateSummary.tsx",
+    "ui/src/features/reports/release/ReleaseDialog.tsx",
+    "ui/src/features/reports/content/ReportContent.tsx",
+    "ui/src/features/reports/content/ResultGroups.tsx",
+    "ui/src/features/reports/content/Dispositions.tsx",
+    "ui/src/features/reports/labels.ts",
+    "ui/src/lib/ReauthConfirmDialog.tsx",
+    "ui/src/components/SelfApprovalConfirm/SelfApprovalConfirm.tsx",
+    "crates/lis-reporting/src/commands/prepare.rs",
+    "crates/lis-reporting/src/commands/release.rs",
+    "crates/lis-reporting/src/authority.rs",
+    "crates/lis-engine/src/commands/reporting.rs",
+    "crates/lis-engine/src/commands/work_queues/catalog.rs",
+    "crates/lis-reporting/src/snapshot/provenance.rs",
+    "crates/lis-reporting/src/snapshot/sections.rs",
+    "crates/lis-reporting/src/report_data.rs",
+    "crates/lis-reporting/src/relationship.rs",
+    "crates/lis-reporting/src/gates.rs",
+    "crates/lis-report/templates/tox-report/v3.typ",
+    "ui/src/features/reports/release/ConditionReviewFields.tsx",
+    "crates/lis-reporting/src/condition_review.rs",
+    "crates/lis-reporting/src/commands/prepare/rendering.rs",
+    "ui/src/lib/useBoundedQueue.ts",
+    "ui/src/lib/QueueScanControls.tsx",
+    "ui/src/lib/securityKeyAuthenticationField.tsx",
+    "ui/src/lib/securityKeyPrompt.tsx",
+    "ui/src/lib/commands.ts",
+    "crates/lis-auth/src/key_proofs.rs"
+  ],
+  "pages": [
+    {
+      "title": "Release queue",
+      "routes": ["/reports/release"],
+      "purpose": "Find release-ready, blocked, partial and correction work, then open the appropriate specimen or revision.",
+      "access": "Requires report-release authority.",
+      "fields": [
+        {
+          "name": "Queue",
+          "meaning": "Selects the release workload.",
+          "values": "Reports ready for release; Report release blocked; Partial reports outstanding; Report corrections due, as available to the account.",
+          "rules": "Defaults to the first available queue; selection is retained in the address."
+        },
+        {
+          "name": "Item",
+          "meaning": "Identifies the specimen/report requiring attention.",
+          "values": "Accession or report-oriented queue title.",
+          "rules": "Read-only; open it to inspect identity and full details."
+        },
+        {
+          "name": "State",
+          "meaning": "Explains the current work condition.",
+          "values": "Current queue wording such as Ready, Blocked, Partial report or Correction due.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Waiting since",
+          "meaning": "Shows when this work entered the waiting state.",
+          "values": "Recorded date/time.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Next action",
+          "meaning": "Names the responsible next workflow.",
+          "values": "Prepare and release, Resolve gates, Complete or Issue a correction.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Count / freshness",
+          "meaning": "Shows loaded workload and when it was checked.",
+          "values": "Displayed count, total or capped-total indication and refresh time.",
+          "rules": "Pages load up to 200 oldest items; Load more continues with the engine cursor. A capped count is a lower bound, not an exact total. Sorting applies to loaded rows only. Refresh starts at the beginning."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open item row",
+          "does": "Opens the specimen’s report workspace or the released revision needing follow-up.",
+          "availableWhen": "An item has a corresponding screen.",
+          "result": "Provides the full release context; no release is recorded by opening."
+        },
+        {
+          "name": "Queue",
+          "does": "Switches release work categories.",
+          "availableWhen": "A queue is available to the account.",
+          "result": "Reloads the selected items."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reloads queue items and summary counts.",
+          "availableWhen": "The page is open.",
+          "result": "Starts a fresh check at the beginning and updates summary counts. Earlier loaded pages are replaced; new or resolved work may appear or disappear."
+        },
+        {
+          "name": "Refresh current record",
+          "does": "Re-read the currently opened record or list and display updated read time.",
+          "availableWhen": "Page is open; wait for any pending request.",
+          "result": "Review refreshed state before resubmitting stale work; existing issued report content remains immutable."
+        },
+        {
+          "name": "Load more",
+          "does": "Append the next bounded page using the prior item’s timestamp, kind and identity.",
+          "availableWhen": "The engine reports more matching work.",
+          "result": "Later pending work becomes reachable without resolving earlier rows; refreshed pages recheck current state."
+        },
+        {
+          "name": "Pause checking / Resume checking",
+          "does": "Pauses scheduling further bounded queue requests after the active request finishes, or continues the current check.",
+          "availableWhen": "More history remains while the requested group of items is loading.",
+          "result": "Loaded rows remain available; no clinical work is cancelled or changed."
+        },
+        {
+          "name": "Try again",
+          "does": "Retries a failed next-page read with the same retained cursor.",
+          "availableWhen": "A read failed with a recoverable error; a permission refusal requires an authorized account.",
+          "result": "Earlier rows remain available. Refresh instead starts a new check at the beginning."
+        }
+      ],
+      "restrictions": [
+        "The queue’s state is a snapshot. Preparation and release recheck the actual current records."
+      ],
+      "workflow": [
+        "Select the intended release queue.",
+        "Open the item, confirm identity and resolve the displayed next action."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No release queues are listed.",
+          "recovery": "Check whether the signed-in account has report-release authority."
+        },
+        {
+          "problem": "A previously ready item now fails.",
+          "recovery": "Read the current workspace gates; new results, holds or review changes may have altered readiness."
+        }
+      ]
+    },
+    {
+      "title": "Report workspace",
+      "routes": ["/reports/specimens/:specimenId"],
+      "purpose": "Review current proposed report content and prepare a frozen candidate for an explicit release decision.",
+      "access": "Requires report-release authority; access to report content is audited.",
+      "fields": [
+        {
+          "name": "Identity banner / Specimen type",
+          "meaning": "Confirms the patient, accession and specimen type for this report.",
+          "values": "Linked patient identity, accession and laboratory specimen-type code.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Report",
+          "meaning": "Identifies whether reporting has already started.",
+          "values": "Not yet issued, or report number with Current, Superseded or Withdrawn status and latest revision/completeness.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Release preview",
+          "meaning": "Shows the relationship and completeness of content prepared now.",
+          "values": "Initial report, Supplement or Correction; Final or Partial.",
+          "rules": "Read-only, derived from current work and prior released content."
+        },
+        {
+          "name": "Prepare candidate: Reason for correction",
+          "meaning": "Explains a correction to earlier issued content.",
+          "values": "Free text.",
+          "rules": "Required only for a Correction, trimmed 1–1,000 characters. Printed on the corrected report and audited; unavailable for an Initial report or Supplement."
+        },
+        {
+          "name": "Candidate: State",
+          "meaning": "Indicates rendering and release lifecycle.",
+          "values": "Rendering, Prepared, Released, Superseded, Rendering failed; Content changed since preparation when stale.",
+          "rules": "Read-only. Prepared means rendering succeeded, not that all current release checks pass."
+        },
+        {
+          "name": "Candidate: Proposed / Follows revision / Reason for correction",
+          "meaning": "Identifies the proposed revision, completeness and relationship.",
+          "values": "Sequential revision; Initial report, Supplement or Correction; Final or Partial; predecessor and reason where applicable.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Candidate: Signatory",
+          "meaning": "Identifies the person who prepared this candidate.",
+          "values": "Signed-in preparer’s display name.",
+          "rules": "Read-only. Only this person may release this candidate; another releaser must prepare their own."
+        },
+        {
+          "name": "Candidate: Prepared on / Expires",
+          "meaning": "Defines the candidate’s review window.",
+          "values": "Preparation date/time and expiry one hour later.",
+          "rules": "Read-only; expired candidates cannot be released."
+        },
+        {
+          "name": "Candidate: Content digest",
+          "meaning": "Identifies the exact content frozen for review.",
+          "values": "SHA-256 digest text.",
+          "rules": "Read-only integrity evidence, not laboratory validation."
+        },
+        {
+          "name": "Expected tests",
+          "meaning": "Explains whether each expected test is included.",
+          "values": "Reported, Pending, Held, Cancelled, Not activated, Reflex decision pending, with holding reasons.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Blocking release / What changed",
+          "meaning": "Names conditions preventing release and changes since preparation.",
+          "values": "Current identity, order, QC, review, configuration or other gate messages.",
+          "rules": "Read-only; resolve the responsible record, then prepare a new candidate when stale."
+        },
+        {
+          "name": "Printed report: Report number / Revision / Status / Relationship",
+          "meaning": "Identifies the issued version and its relationship to earlier reporting.",
+          "values": "Report number; sequential revision; Final or Partial; Initial report, Supplement or Correction.",
+          "rules": "Read-only printed content. Partial explicitly leaves expected work unreported."
+        },
+        {
+          "name": "Printed report: Follows / Reason for correction / Generated (historical Issued)",
+          "meaning": "Links an amended report to its predecessor and explains a correction.",
+          "values": "Prior revision and actual release time, correction reason and candidate generation time in the laboratory time zone.",
+          "rules": "Generated records preparation, not actual release. Older template copies retain their original Issued label. See report history for the committed release time; copies are never redated."
+        },
+        {
+          "name": "Reporting laboratory contact: Laboratory / Address / CLIA number / Director / Phone",
+          "meaning": "Shows the current reporting contact profile frozen for this revision; each result separately identifies its actual historical performing site.",
+          "values": "Configured laboratory profile values.",
+          "rules": "Read-only. Historical v2 copies keep their original Performing laboratory heading. A contact/profile update does not relabel the site where older testing was performed."
+        },
+        {
+          "name": "Patient and order: Patient / Birth date / Sex / Identifiers",
+          "meaning": "Identifies the subject as represented in this report.",
+          "values": "Patient name, date, sex or Unknown, and identifier type/value/authority.",
+          "rules": "Read-only; the issued content is preserved even if current identity records later change."
+        },
+        {
+          "name": "Patient and order: Ordering practitioner / Client / Location / Placer order",
+          "meaning": "Identifies the supplied ordering source.",
+          "values": "Practitioner name/NPI, ordering client, location and external order reference; None where not recorded.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Specimen: Accession / Specimen type / Containers",
+          "meaning": "Connects printed results to the received material.",
+          "values": "Accession number, matrix/type and printed container labels.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Specimen: Collected / Received / Condition / Collection observations",
+          "meaning": "Preserves collection and receipt context.",
+          "values": "Recorded times or Unknown; condition notes; supplied observations with recorder.",
+          "rules": "Read-only. Unknown is not a presumed collection or receipt time. The workspace preview omits unreviewed descriptions and earlier conditions. Preparation requires explicit reportability choices; the frozen candidate shows the selected content. Current condition codes/disposition always remain visible. Original receipt evidence and excluded notes remain preserved internally."
+        },
+        {
+          "name": "Medications",
+          "meaning": "Lists medication context as supplied with its provenance.",
+          "values": "Recorded medication name, source and as-of date or Unknown; None when absent.",
+          "rules": "Read-only; the report does not infer unrecorded medications."
+        },
+        {
+          "name": "Result groups: test name / method / certainty / role",
+          "meaning": "Groups reported analytes under their ordered work and method.",
+          "values": "Configured group/method text, presumptive/definitive certainty and testing-sequence role.",
+          "rules": "Read-only; screening/confirmation roles and qualitative/quantitative output are distinct properties."
+        },
+        {
+          "name": "Result rows: Analyte / Result / Units / Limits / Comparison",
+          "meaning": "Provides the exact reported assertion and configured analytical context.",
+          "values": "Printed analyte, original-preserving value/comparator, unit, applicable limit text and comparison wording.",
+          "rules": "Read-only. Verify units, precision and comparator; a comparison is not an independently generated clinical interpretation."
+        },
+        {
+          "name": "Tests not reported in this revision",
+          "meaning": "Explains incomplete or inactive expected work.",
+          "values": "Test names with Pending, Held, Cancelled, Not activated or Reflex decision pending, and applicable notes.",
+          "rules": "Read-only; absence from reported results must not be interpreted as a negative result."
+        },
+        {
+          "name": "Specimen validity: Outcome / Notes / Released by",
+          "meaning": "Shows the recorded validity assessment and responsible signatory.",
+          "values": "Approved-policy outcome and notes, or no assessment as indicated; signatory name.",
+          "rules": "Read-only. No new validity interpretation is made in the report view."
+        },
+        {
+          "name": "Changes in this correction",
+          "meaning": "Identifies analytes whose reported content changed and the changed context sections.",
+          "values": "Changed result/method information, removed reported results, patient identity, specimen context, ordering/medication context, validity or reporting contact information.",
+          "rules": "Read-only comparison with the preceding issued snapshot; the correction reason and predecessor remain separately visible. Original PDFs stay unchanged."
+        },
+        {
+          "name": "Result provenance: Result recorded / First reported",
+          "meaning": "Distinguishes when the exact result revision was recorded from its earliest committed report release.",
+          "values": "Laboratory-zone date/time; first-report text when this candidate is the first report of this result revision; Unknown only for unavailable historical evidence.",
+          "rules": "These timestamps do not infer specimen collection or instrument completion. Existing rows retain the first release date across cumulative supplements; a changed result revision begins new report provenance."
+        },
+        {
+          "name": "Result provenance: Performing location",
+          "meaning": "Names and addresses the laboratory profile pinned to each selected measurement run.",
+          "values": "Laboratory name, address, CLIA identifier and profile version; Not performed for an unperformed test.",
+          "rules": "Read-only. New preparation/release is blocked while a performed result has unknown site evidence. A quality-authorized person must confirm the unpinned run against source evidence; choosing the latest contact profile without evidence is not a repair."
+        },
+        {
+          "name": "Method information / Reference information",
+          "meaning": "Shows approved method limitations and pertinent reference information separately from cutoff, detection and quantitation limits.",
+          "values": "Optional text from the pinned approved method version; absent when no text is configured.",
+          "rules": "Read-only, shown exactly as administrator-approved configuration. No interval, clinical threshold or interpretation is inferred. Configuring content does not grant clinical release authority."
+        },
+        {
+          "name": "Prepared for release by (historical Released by)",
+          "meaning": "Identifies the candidate preparer whose name is frozen in the PDF.",
+          "values": "Signed-in preparer name; earlier templates retain their original label.",
+          "rules": "Preparation does not establish release. The actual release event and time are retained in report history."
+        },
+        {
+          "name": "Receipt condition review — Report choice for condition",
+          "meaning": "Explicitly determines which captured condition information appears in this patient report.",
+          "values": "Each condition starts blank. Current: Include description or Keep description internal; report current code. Earlier: Include earlier condition and description or Keep earlier condition internal.",
+          "rules": "Required for every listed condition. Current codes and receipt disposition cannot be excluded. Original notes remain preserved internally. No choices are inferred from old notes or preselected."
+        },
+        {
+          "name": "Reason for condition selections",
+          "meaning": "Explains clinical relevance of the inclusion/exclusion decisions.",
+          "values": "Required when conditions exist; up to 1,000 characters.",
+          "rules": "Retained in the frozen candidate with the acting preparer audit. Not printed on the patient report. It does not replace the separate correction reason."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Prepare candidate",
+          "does": "Freezes current report content and renders its PDF.",
+          "availableWhen": "The action is offered; report-release authority, report not withdrawn, and current preparation/release gates pass.",
+          "result": "Supersedes any open candidate, opens the newly prepared candidate and starts its one-hour expiry. It does not release the report."
+        },
+        {
+          "name": "Review candidate",
+          "does": "Opens the existing candidate for review.",
+          "availableWhen": "An open candidate is shown.",
+          "result": "Displays its frozen content and current staleness/gates."
+        },
+        {
+          "name": "Report number",
+          "does": "Opens report history.",
+          "availableWhen": "A report record exists.",
+          "result": "Shows revisions, delivery, exports and post-release follow-up."
+        },
+        {
+          "name": "Previous / Next / Release queue",
+          "does": "Navigates the originating release list.",
+          "availableWhen": "Adjacent records exist when opened from a list.",
+          "result": "Changes viewed specimen; submitted candidates remain recorded."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes preparation without submitting.",
+          "availableWhen": "Prepare report candidate dialog is open.",
+          "result": "Records no new candidate."
+        },
+        {
+          "name": "Refresh current record",
+          "does": "Re-read the currently opened record or list and display updated read time.",
+          "availableWhen": "Page is open; wait for any pending request.",
+          "result": "Review refreshed state before resubmitting stale work; existing issued report content remains immutable."
+        }
+      ],
+      "restrictions": [
+        "The preview reflects current records and can change. The candidate freezes content, but release still checks current identity, reviews, quality, configuration and report state.",
+        "A required hold cannot be cleared from help or the preview; resolve it at the owning record.",
+        "A withdrawn report cannot receive another revision."
+      ],
+      "workflow": [
+        "Confirm patient and accession, expected tests and every displayed gate.",
+        "Read the complete printed-content preview, including pending tests, units, limits and validity.",
+        "Choose Prepare candidate; for a correction, enter the factual reason.",
+        "Review the resulting candidate before releasing it."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Content as it would print is unavailable.",
+          "recovery": "Resolve the named missing data or blocking condition in the workspace; no candidate can substitute for missing required content."
+        },
+        {
+          "problem": "A correction reason is unexpectedly required.",
+          "recovery": "Review which previously released content changed and enter the real reason; do not force a supplement classification."
+        },
+        {
+          "problem": "An earlier candidate disappears after preparing.",
+          "recovery": "Preparing intentionally supersedes the open candidate. Use the newly created candidate and review its content."
+        },
+        {
+          "problem": "Performing site unresolved blocks preparation or release.",
+          "recovery": "Open the selected measurement run. A quality-authorized person must confirm its actual performing laboratory with a source reference and reason. Reload the report workspace and prepare a new candidate after the confirmation."
+        },
+        {
+          "problem": "Legacy receipt chronology is unresolved.",
+          "recovery": "Have a quality-authorized person review the original receipt evidence and record the complete causal decision order. Do not infer order from timestamps or reorder original evidence. Reload the workspace after the review."
+        },
+        {
+          "problem": "Receipt conditions changed while the preparation dialog was open.",
+          "recovery": "Cancel the dialog, Refresh the workspace, review the original evidence again and make each choice anew. No candidate was prepared from the stale selections."
+        },
+        {
+          "problem": "Open candidate unavailable: integrity check failed.",
+          "recovery": "The damaged unissued content is not shown; the engine records its exact preservation incident before returning the workspace. Review the fresh clinical source and prepare a replacement when its gates pass. The damaged record remains preserved. Report readers can open View report and preservation incidents; quality staff handle the incident separately. A damaged issued revision still blocks normal correction until its preservation problem is resolved."
+        }
+      ]
+    },
+    {
+      "title": "Report candidate",
+      "routes": ["/reports/specimens/:specimenId/candidates/:candidateId"],
+      "purpose": "Review the exact frozen content and release it as an issued revision when current checks permit.",
+      "access": "Requires report-release authority. Only the displayed Signatory can release this candidate, using their own password or security key.",
+      "fields": [
+        {
+          "name": "Identity banner",
+          "meaning": "Identifies the patient and accession associated with the candidate’s specimen.",
+          "values": "Current linked identity.",
+          "rules": "Read-only; compare it with the frozen printed content and investigate any mismatch."
+        },
+        {
+          "name": "Candidate: State",
+          "meaning": "Indicates rendering and release lifecycle.",
+          "values": "Rendering, Prepared, Released, Superseded, Rendering failed; Content changed since preparation when stale.",
+          "rules": "Read-only. Prepared means rendering succeeded, not that all current release checks pass."
+        },
+        {
+          "name": "Candidate: Proposed / Follows revision / Reason for correction",
+          "meaning": "Identifies the proposed revision, completeness and relationship.",
+          "values": "Sequential revision; Initial report, Supplement or Correction; Final or Partial; predecessor and reason where applicable.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Candidate: Signatory",
+          "meaning": "Identifies the person who prepared this candidate.",
+          "values": "Signed-in preparer’s display name.",
+          "rules": "Read-only. Only this person may release this candidate; another releaser must prepare their own."
+        },
+        {
+          "name": "Candidate: Prepared on / Expires",
+          "meaning": "Defines the candidate’s review window.",
+          "values": "Preparation date/time and expiry one hour later.",
+          "rules": "Read-only; expired candidates cannot be released."
+        },
+        {
+          "name": "Candidate: Content digest",
+          "meaning": "Identifies the exact content frozen for review.",
+          "values": "SHA-256 digest text.",
+          "rules": "Read-only integrity evidence, not laboratory validation."
+        },
+        {
+          "name": "Expected tests",
+          "meaning": "Explains whether each expected test is included.",
+          "values": "Reported, Pending, Held, Cancelled, Not activated, Reflex decision pending, with holding reasons.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Blocking release / What changed",
+          "meaning": "Names conditions preventing release and changes since preparation.",
+          "values": "Current identity, order, QC, review, configuration or other gate messages.",
+          "rules": "Read-only; resolve the responsible record, then prepare a new candidate when stale."
+        },
+        {
+          "name": "Printed report: Report number / Revision / Status / Relationship",
+          "meaning": "Identifies the issued version and its relationship to earlier reporting.",
+          "values": "Report number; sequential revision; Final or Partial; Initial report, Supplement or Correction.",
+          "rules": "Read-only printed content. Partial explicitly leaves expected work unreported."
+        },
+        {
+          "name": "Printed report: Follows / Reason for correction / Generated (historical Issued)",
+          "meaning": "Links an amended report to its predecessor and explains a correction.",
+          "values": "Prior revision and actual release time, correction reason and candidate generation time in the laboratory time zone.",
+          "rules": "Generated records preparation, not actual release. Older template copies retain their original Issued label. See report history for the committed release time; copies are never redated."
+        },
+        {
+          "name": "Reporting laboratory contact: Laboratory / Address / CLIA number / Director / Phone",
+          "meaning": "Shows the current reporting contact profile frozen for this revision; each result separately identifies its actual historical performing site.",
+          "values": "Configured laboratory profile values.",
+          "rules": "Read-only. Historical v2 copies keep their original Performing laboratory heading. A contact/profile update does not relabel the site where older testing was performed."
+        },
+        {
+          "name": "Patient and order: Patient / Birth date / Sex / Identifiers",
+          "meaning": "Identifies the subject as represented in this report.",
+          "values": "Patient name, date, sex or Unknown, and identifier type/value/authority.",
+          "rules": "Read-only; the issued content is preserved even if current identity records later change."
+        },
+        {
+          "name": "Patient and order: Ordering practitioner / Client / Location / Placer order",
+          "meaning": "Identifies the supplied ordering source.",
+          "values": "Practitioner name/NPI, ordering client, location and external order reference; None where not recorded.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Specimen: Accession / Specimen type / Containers",
+          "meaning": "Connects printed results to the received material.",
+          "values": "Accession number, matrix/type and printed container labels.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Specimen: Collected / Received / Condition / Collection observations",
+          "meaning": "Preserves collection and receipt context.",
+          "values": "Recorded times or Unknown; condition notes; supplied observations with recorder.",
+          "rules": "Read-only. Unknown is not a presumed collection or receipt time. The workspace preview omits unreviewed descriptions and earlier conditions. Preparation requires explicit reportability choices; the frozen candidate shows the selected content. Current condition codes/disposition always remain visible. Original receipt evidence and excluded notes remain preserved internally."
+        },
+        {
+          "name": "Medications",
+          "meaning": "Lists medication context as supplied with its provenance.",
+          "values": "Recorded medication name, source and as-of date or Unknown; None when absent.",
+          "rules": "Read-only; the report does not infer unrecorded medications."
+        },
+        {
+          "name": "Result groups: test name / method / certainty / role",
+          "meaning": "Groups reported analytes under their ordered work and method.",
+          "values": "Configured group/method text, presumptive/definitive certainty and testing-sequence role.",
+          "rules": "Read-only; screening/confirmation roles and qualitative/quantitative output are distinct properties."
+        },
+        {
+          "name": "Result rows: Analyte / Result / Units / Limits / Comparison",
+          "meaning": "Provides the exact reported assertion and configured analytical context.",
+          "values": "Printed analyte, original-preserving value/comparator, unit, applicable limit text and comparison wording.",
+          "rules": "Read-only. Verify units, precision and comparator; a comparison is not an independently generated clinical interpretation."
+        },
+        {
+          "name": "Tests not reported in this revision",
+          "meaning": "Explains incomplete or inactive expected work.",
+          "values": "Test names with Pending, Held, Cancelled, Not activated or Reflex decision pending, and applicable notes.",
+          "rules": "Read-only; absence from reported results must not be interpreted as a negative result."
+        },
+        {
+          "name": "Specimen validity: Outcome / Notes / Released by",
+          "meaning": "Shows the recorded validity assessment and responsible signatory.",
+          "values": "Approved-policy outcome and notes, or no assessment as indicated; signatory name.",
+          "rules": "Read-only. No new validity interpretation is made in the report view."
+        },
+        {
+          "name": "Release report: Your password",
+          "meaning": "Reauthenticates the signed-in releaser.",
+          "values": "Your current account password.",
+          "rules": "Password accounts only. Required for this decision; it is not remembered for later releases."
+        },
+        {
+          "name": "Release report: Security key",
+          "meaning": "Fresh confirmation by the signed-in person using their registered security key.",
+          "values": "The active personal keys registered to your account; the first returned key is selected initially.",
+          "rules": "Security-key accounts only; replaces Your password. Select one key, review and submit the action, then follow its PIN or biometric verification and touch prompt. The key confirms only that submitted action. Permissions, reasons and record-state gates still apply. Use your own key; a selected label alone does not authorize anything."
+        },
+        {
+          "name": "Partial-report acknowledgment",
+          "meaning": "Confirms that tests listed as not reported are still outstanding.",
+          "values": "I acknowledge this is a partial report: the tests listed as not reported will follow in a later revision.",
+          "rules": "Required and initially unchecked only for Partial reports."
+        },
+        {
+          "name": "Confirm self-approval",
+          "meaning": "Records explicit acknowledgment when the releaser also reviewed reported results.",
+          "values": "I confirm that no second person reviewed this.",
+          "rules": "Shown only when the laboratory separation-of-duties policy permits self-release and the application requests it; initially unchecked. It cannot override a policy requiring another person."
+        },
+        {
+          "name": "Changes in this correction",
+          "meaning": "Identifies analytes whose reported content changed and the changed context sections.",
+          "values": "Changed result/method information, removed reported results, patient identity, specimen context, ordering/medication context, validity or reporting contact information.",
+          "rules": "Read-only comparison with the preceding issued snapshot; the correction reason and predecessor remain separately visible. Original PDFs stay unchanged."
+        },
+        {
+          "name": "Result provenance: Result recorded / First reported",
+          "meaning": "Distinguishes when the exact result revision was recorded from its earliest committed report release.",
+          "values": "Laboratory-zone date/time; first-report text when this candidate is the first report of this result revision; Unknown only for unavailable historical evidence.",
+          "rules": "These timestamps do not infer specimen collection or instrument completion. Existing rows retain the first release date across cumulative supplements; a changed result revision begins new report provenance."
+        },
+        {
+          "name": "Result provenance: Performing location",
+          "meaning": "Names and addresses the laboratory profile pinned to each selected measurement run.",
+          "values": "Laboratory name, address, CLIA identifier and profile version; Not performed for an unperformed test.",
+          "rules": "Read-only. New preparation/release is blocked while a performed result has unknown site evidence. A quality-authorized person must confirm the unpinned run against source evidence; choosing the latest contact profile without evidence is not a repair."
+        },
+        {
+          "name": "Method information / Reference information",
+          "meaning": "Shows approved method limitations and pertinent reference information separately from cutoff, detection and quantitation limits.",
+          "values": "Optional text from the pinned approved method version; absent when no text is configured.",
+          "rules": "Read-only, shown exactly as administrator-approved configuration. No interval, clinical threshold or interpretation is inferred. Configuring content does not grant clinical release authority."
+        },
+        {
+          "name": "Prepared for release by (historical Released by)",
+          "meaning": "Identifies the candidate preparer whose name is frozen in the PDF.",
+          "values": "Signed-in preparer name; earlier templates retain their original label.",
+          "rules": "Preparation does not establish release. The actual release event and time are retained in report history."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Release report",
+          "does": "Confirms and issues the exact reviewed candidate content.",
+          "availableWhen": "Candidate is Prepared, current, unexpired and owned by the signatory; fresh account confirmation, authority, integrity, review attribution and every release gate pass.",
+          "result": "Records an immutable issued revision and creates delivery obligations immediately; returns to the report workspace."
+        },
+        {
+          "name": "Open the report workspace / Report workspace",
+          "does": "Returns to current source content.",
+          "availableWhen": "The link or breadcrumb is available; especially needed for a stale candidate.",
+          "result": "Allows preparation of a replacement after changes have been reviewed."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes the release confirmation before submission.",
+          "availableWhen": "The release dialog is open.",
+          "result": "Does not release; the candidate still expires at its recorded time."
+        },
+        {
+          "name": "Refresh current record",
+          "does": "Re-read the currently opened record or list and display updated read time.",
+          "availableWhen": "Page is open; wait for any pending request.",
+          "result": "Review refreshed state before resubmitting stale work; existing issued report content remains immutable."
+        }
+      ],
+      "restrictions": [
+        "Release is an issued clinical record, not a preview. Later supplementation or correction uses a new revision; withdrawal preserves earlier records and is terminal for the report.",
+        "Candidate content, review attribution, signatory, expiry and current gates are checked again at release. A prior clean preview does not bypass a later change.",
+        "Release creates delivery work; it does not establish that anyone received the report."
+      ],
+      "workflow": [
+        "Compare candidate identity, proposed revision, completeness and printed content with the intended work.",
+        "Confirm no staleness or release gate remains.",
+        "Choose Release report, confirm with Your password or Security key, acknowledge partial content if required and confirm permitted self-release only when applicable.",
+        "Verify the issued revision and resulting delivery work."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The content changed since this candidate was prepared.",
+          "recovery": "Return to the workspace, review what changed and prepare a new candidate."
+        },
+        {
+          "problem": "Candidate expired or belongs to another signatory.",
+          "recovery": "The authorized intended releaser must prepare and inspect a new candidate under their own account."
+        },
+        {
+          "problem": "Release is blocked by separation of duties.",
+          "recovery": "Have an authorized independent releaser prepare their own candidate unless an already approved laboratory policy explicitly permits self-release."
+        },
+        {
+          "problem": "The password is rejected.",
+          "recovery": "Re-enter your current password; release has not occurred. Resolve account access separately if necessary."
+        },
+        {
+          "problem": "Performing site unresolved blocks preparation or release.",
+          "recovery": "Open the selected measurement run. A quality-authorized person must confirm its actual performing laboratory with a source reference and reason. Reload the report workspace and prepare a new candidate after the confirmation."
+        },
+        {
+          "problem": "Legacy receipt chronology is unresolved.",
+          "recovery": "Have a quality-authorized person review the original receipt evidence and record the complete causal decision order. Do not infer order from timestamps or reorder original evidence. Reload the workspace after the review."
+        }
+      ]
+    }
+  ]
+}

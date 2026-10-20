@@ -1,0 +1,23 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "results",
+  "description": "Result review, import and quarantine commands for the main window (REQ-RES-001\u2013005, NFR-02).",
+  "windows": ["main"],
+  "permissions": [
+    "allow-list-review-queue",
+    "allow-get-specimen-results",
+    "allow-select-result-evidence",
+    "allow-record-result-disposition",
+    "allow-submit-technical-review",
+    "allow-list-validity-policies",
+    "allow-record-validity-assessment",
+    "allow-list-import-attempts",
+    "allow-get-import-attempt",
+    "allow-resolve-quarantine-item",
+    "allow-retry-import",
+    "allow-list-reflex-triggers",
+    "allow-record-reflex-decision",
+    "allow-use-measured-result",
+    "allow-get-receipt-import-attempt"
+  ]
+}

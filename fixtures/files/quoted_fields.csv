@@ -1,0 +1,6 @@
+Sample Name,Component Name,Calculated Concentration,Conc. Units,Flags
+C00000134,"Morphine, total",88.0,ng/mL,
+C00000134,Codeine,12.0,ng/mL,"Ion ratio ""high"""
+C00000134,Hydrocodone,4.4,ng/mL,"Peak split
+manual integration"
+C00000134,Oxycodone,9.1,ng/mL,

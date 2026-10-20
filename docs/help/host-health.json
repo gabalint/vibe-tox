@@ -1,0 +1,489 @@
+{
+  "id": "host-health",
+  "title": "Host health and history",
+  "summary": "Inspect the host’s current checks and investigate changes, stops and listening gaps.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/operations/health", "/operations/health/history/:tab?"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Host health shows the latest evaluated state of backups, anchors, disk, operating system and listeners, together with host information. Check now asks for another probe; requests less than a minute apart may show that the previous check is still recent.",
+        "Health history separates Application runs from State changes. Open a run to inspect its start, stop and any listening gap. State changes is a read-only history table with a check filter and continuation to older records.",
+        "The Health indicator in the application header opens this page. Dismiss notification can hide an App version notice across the current signed-in screens; the underlying version check and overall health remain visible here. Versions and updates describes acceptance of the detected running version and approval before a future update."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Read the individual check and its time before deciding what needs attention. Acknowledging a gap records review; it does not recover the results or other work that may have been missed.",
+        "Keep the application open when analyzer intake is needed. Follow the laboratory’s approved response to disk, clock, backup or listener findings, and record the relevant investigation in the offered workflow."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "A failed check needs its specific cause resolved. Use the related backup, instrument or recovery page when the finding points there. If the host cannot perform the check, retain the error details without patient information and involve the responsible operator."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Host health",
+      "routes": ["/operations/health"],
+      "purpose": "Inspect current operational findings for this computer and its laboratory data.",
+      "access": "Available to signed-in users. Manage configuration is required for the checks that offer Attest.",
+      "fields": [
+        {
+          "name": "Overall",
+          "meaning": "Worst current evaluated health state.",
+          "values": "OK, Warning or Alert. Unknown individual checks count toward Warning.",
+          "rules": "Read-only; an overall state summarizes checks, not clinical readiness."
+        },
+        {
+          "name": "Health indicator (application header)",
+          "meaning": "Summarize the current overall health on every signed-in screen and link to these details.",
+          "values": "Health: checking while loading; Health: OK, Warning or Alert after a successful read; Health: unavailable when the read fails.",
+          "rules": "Read-only; checked again every minute while the signed-in frame is open. Dismissing an App version notice does not hide this indicator or change the engine’s assessment."
+        },
+        {
+          "name": "Operating system / Version / Edition / Architecture",
+          "meaning": "Identify the host platform.",
+          "values": "Values reported by the computer; a dash means not reported.",
+          "rules": "Read-only; not editable here."
+        },
+        {
+          "name": "Web engine / App version / Data folder",
+          "meaning": "Identify the display engine, running software and local storage location.",
+          "values": "Reported engine/version and data-folder path.",
+          "rules": "Read-only; this page does not relocate data."
+        },
+        {
+          "name": "Keep awake / Since / Problem code",
+          "meaning": "Sleep-prevention status and when it began.",
+          "values": "Keeping the computer awake; Not needed: no analyzer listener is active; Unavailable. Timestamp and problem code when supplied.",
+          "rules": "Read-only. Investigate Unavailable before depending on unattended analyzer intake."
+        },
+        {
+          "name": "Check / State",
+          "meaning": "Identify an evaluated check and its result.",
+          "values": "OK: within the check’s limits. Warning: needs attention. Alert: needs action now. Unknown: app could not determine it. Attested: a person confirmed a supported manual check.",
+          "rules": "Read-only; checks appear with the most urgent first."
+        },
+        {
+          "name": "Summary / Value / Limit",
+          "meaning": "Explain the observed condition and threshold used.",
+          "values": "Engine-provided explanation, measurement and configured threshold; dash where unavailable.",
+          "rules": "Read-only. Configurable thresholds come from Operations settings; checks with fixed engineering limits cannot be changed on this page."
+        },
+        {
+          "name": "Observed / Next action",
+          "meaning": "When the check was evaluated and its suggested operational follow-up.",
+          "values": "Timestamp and provided action text.",
+          "rules": "Read-only. A recent page load is not necessarily a new probe."
+        },
+        {
+          "name": "Attested",
+          "meaning": "Who manually verified the check and how long that attestation applies.",
+          "values": "Person, attestation time and valid-until time.",
+          "rules": "Read-only; manual attestations last 90 days in the current implementation."
+        },
+        {
+          "name": "Note (Attest check)",
+          "meaning": "What was checked manually and how.",
+          "values": "PHI-free explanation up to 500 characters.",
+          "rules": "Required; retained in the audit trail. Attestation is offered only for disk encryption, OS support, web-engine smoke check, clock synchronization and power protection."
+        },
+        {
+          "name": "Backup target",
+          "meaning": "Whether an active backup target is configured.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Backup age",
+          "meaning": "Age of tracked changes still missing from a verified backup.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Backup failures",
+          "meaning": "Failed runs or target copies since later success.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Off-host copy",
+          "meaning": "Protection on removable/network storage away from the host.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Offline copy",
+          "meaning": "Verified set held on disconnected removable media.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Restore test",
+          "meaning": "Age of the latest passed read-back test.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Recovery kit",
+          "meaning": "Whether the key kit is exported, current and confirmed stored.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Audit anchors",
+          "meaning": "Lag in off-host anchor evidence.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Audit trail integrity",
+          "meaning": "Recorded audit chain/anchor verification findings.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Stored files",
+          "meaning": "Artifact problems detected during the latest backup.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Database integrity",
+          "meaning": "Integrity of the latest backup snapshot.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Free disk space",
+          "meaning": "Available space on the laboratory data disk.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Disk encryption",
+          "meaning": "Whether the data disk’s encryption can be established.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Operating system support",
+          "meaning": "Known support status and approaching end of support.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Web engine",
+          "meaning": "A changed embedded web engine that needs a smoke check.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Analyzer listeners",
+          "meaning": "Whether enabled listeners report errors.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Sleep prevention",
+          "meaning": "Whether the host is being kept awake while listeners run.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Listening gaps",
+          "meaning": "Gaps awaiting investigation/acknowledgement.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Unclean shutdowns",
+          "meaning": "Abnormal stops recorded in the previous 30 days.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Clock",
+          "meaning": "Clock movement, clock behind records or synchronization status.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Pending work",
+          "meaning": "Pending work that is old or exhausted its retries.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "App version",
+          "meaning": "Approval and acceptance of the automatically identified running version.",
+          "values": "Warning while awaiting acceptance; Alert when it started without approval and remains unaccepted; OK after acceptance.",
+          "rules": "Read-only. Use Versions and updates to inspect the running version and available acceptance or approval actions. This check does not offer Attest. Closing the App version notice hides only that notice; the finding and overall health state remain here."
+        },
+        {
+          "name": "Recovery reconciliation",
+          "meaning": "Unclosed post-restore reconciliation.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only. An open recovery reconciliation keeps its app-wide notice visible and blocks release, delivery and billing handoff until the laboratory closes it through Recovery reconciliation. It cannot be dismissed or overridden by Attest."
+        },
+        {
+          "name": "Power protection",
+          "meaning": "Working UPS evidence, which requires manual attestation.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        },
+        {
+          "name": "Cloud services",
+          "meaning": "Availability of cloud-service status; no cloud service is provided in this version.",
+          "values": "Read the check’s current State, Summary, Value and Limit.",
+          "rules": "Read-only evaluation; follow its Next action. Manual attestation cannot override every kind of failed check."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Check now",
+          "does": "Request another host probe.",
+          "availableWhen": "Signed in; no more than once per minute.",
+          "result": "Refreshes evaluated checks; an early request explains that a recent check already exists."
+        },
+        {
+          "name": "Open check / Previous / Next / Close",
+          "does": "Inspect the full explanation, observed values and available attestation.",
+          "availableWhen": "A check is listed.",
+          "result": "Read-only details panel opens."
+        },
+        {
+          "name": "Attest",
+          "does": "Record manual verification of a supported check.",
+          "availableWhen": "Manage configuration and a check that offers Attest; required note.",
+          "result": "Saves who attested and the validity period; it does not perform the hardware or external check."
+        },
+        {
+          "name": "Health history",
+          "does": "Open startup, shutdown and health-state records.",
+          "availableWhen": "Signed in.",
+          "result": "Navigates to Application runs and State changes."
+        },
+        {
+          "name": "Health indicator / Versions and updates",
+          "does": "Open Host health from the application header, or open the installed-version and update records from an App version notice.",
+          "availableWhen": "Signed in; the Versions and updates notice link is present while its warning or alert notice is shown.",
+          "result": "Navigates to the relevant evidence without accepting a version, approving an update or changing the health finding."
+        },
+        {
+          "name": "Dismiss notification (App version notice)",
+          "does": "Hide the app-wide App version notice for the current signed-in view.",
+          "availableWhen": "An App version warning or alert notice is visible. Recovery reconciliation has no dismiss control.",
+          "result": "The check and overall health remain visible. A changed version or warning, recurrence after resolution, or a recreated signed-in view shows the notice again. See Versions and updates for acceptance and approval; dismissal records neither."
+        },
+        {
+          "name": "Cancel (Attest check)",
+          "does": "Close the attestation form without saving its note.",
+          "availableWhen": "The attestation command is not running.",
+          "result": "No attestation is recorded. Return to the check and reopen Attest when ready."
+        }
+      ],
+      "restrictions": [
+        "Unknown is not healthy evidence. Read each finding and its observation time.",
+        "A health check does not repair the underlying cause; use the relevant backup, instrument, recovery or operating-system procedure.",
+        "Closing the App version notice does not acknowledge, approve or accept the version. Recovery reconciliation continues to show its notice and enforce its release, delivery and billing restrictions."
+      ],
+      "workflow": [
+        "Inspect Overall and the most urgent individual checks.",
+        "Open a check and read its value, limit, time and next action.",
+        "Resolve the specific cause, or manually verify an attestable condition and record the evidence.",
+        "Use Check now after correction, respecting the one-minute interval."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Checked less than a minute ago",
+          "recovery": "Review the latest results and retry after the minimum interval; this message is expected rate limiting."
+        },
+        {
+          "problem": "A check cannot be attested",
+          "recovery": "Resolve the measured condition through its owning workflow. Only supported manual checks offer attestation."
+        },
+        {
+          "problem": "Health loading or refresh fails",
+          "recovery": "Use the visible retry action and retain the error/correlation ID; unavailable health data does not prove the system is healthy."
+        },
+        {
+          "problem": "Health still warns after closing the App version notice",
+          "recovery": "Dismissal only hides the notice. Open Versions and updates, inspect Running version, complete the laboratory’s checks and use its acceptance action when available. An unapproved later version also needs approval followed by a restart under that approval."
+        },
+        {
+          "problem": "The App version notice appeared again",
+          "recovery": "The version or warning changed, a resolved warning recurred, or the signed-in view was recreated after a lock, sign-in or restart. Read the current finding; the previous dismissal did not resolve it."
+        }
+      ]
+    },
+    {
+      "title": "Health history",
+      "routes": ["/operations/health/history/:tab?"],
+      "purpose": "Investigate application runs, listening gaps and changes in health findings.",
+      "access": "Available to signed-in users. Perform analysis is required to acknowledge a listening gap.",
+      "fields": [
+        {
+          "name": "Application runs / State changes tabs",
+          "meaning": "Switch between process sessions and changes in check states.",
+          "values": "Application runs (default); State changes.",
+          "rules": "Application runs loads 200 at a time; State changes loads 100. Load older runs or Load older state changes continues until all matching history is reached. Sorting covers loaded rows only."
+        },
+        {
+          "name": "Started / Stopped / How it stopped",
+          "meaning": "Timing and manner of an application run.",
+          "values": "Recorded times; Closed normally, Quit despite warnings, other supplied code or dash when unknown.",
+          "rules": "Read-only; missing stop time is not automatically a clean stop. Recorded start time orders the display, with stable record identity breaking ties; clock changes can make this differ from the actual sequence of starts."
+        },
+        {
+          "name": "App version / Web engine",
+          "meaning": "Software active during the selected run.",
+          "values": "Recorded version/engine, or dash if unavailable.",
+          "rules": "Read-only; compare with the current host version when investigating regressions."
+        },
+        {
+          "name": "Gap before start / Clock gaps",
+          "meaning": "Recorded interruptions or forward-clock gaps associated with a run.",
+          "values": "Durations in seconds, or dash when absent.",
+          "rules": "Read-only. A stop longer than 60 seconds is a listening gap; clock gaps follow the configured threshold."
+        },
+        {
+          "name": "Previous stop unclean",
+          "meaning": "Whether the prior run ended without a recorded normal stop.",
+          "values": "Yes or No.",
+          "rules": "Read-only; investigate alongside gap times."
+        },
+        {
+          "name": "Gaps acknowledged",
+          "meaning": "Who recorded review of the run’s open gaps and when.",
+          "values": "Person/time or dash if not acknowledged.",
+          "rules": "Read-only; acknowledgement is separate from recovering missing results."
+        },
+        {
+          "name": "Note (Acknowledge listening gap)",
+          "meaning": "Investigation performed and results needing resend or reconciliation.",
+          "values": "PHI-free explanation up to 500 characters.",
+          "rules": "Required; retained in the audit trail."
+        },
+        {
+          "name": "Check (State changes filter)",
+          "meaning": "Select the health check whose state history is shown.",
+          "values": "All checks, or a check reported by the current installation.",
+          "rules": "Optional; defaults to all."
+        },
+        {
+          "name": "Check / State / Detail code / Observed (State changes)",
+          "meaning": "Identify a recorded check transition and its reason.",
+          "values": "Check label, health state, machine-readable detail code and time.",
+          "rules": "Read-only table; rows have distinct retained identities even when their check, state and observation time match. Recorded observation time orders the display; equal times and clock rollback do not establish causal sequence. State changes do not open an editable record."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open application run / Previous / Next / Close",
+          "does": "Inspect run timing, software and gap facts.",
+          "availableWhen": "The run is loaded in history, or an exact run is linked from a work queue independently of the current history page.",
+          "result": "Read-only panel opens."
+        },
+        {
+          "name": "Acknowledge listening gap / Acknowledge",
+          "does": "Record completed investigation of the run’s outstanding gaps.",
+          "availableWhen": "Perform analysis and a run needing acknowledgement; required note.",
+          "result": "Marks the currently outstanding start/clock gaps acknowledged and records the review."
+        },
+        {
+          "name": "Check filter / Clear filters",
+          "does": "Narrow or restore the health state-change history.",
+          "availableWhen": "State changes tab.",
+          "result": "Refreshes the displayed matching history."
+        },
+        {
+          "name": "Host health",
+          "does": "Return to current checks.",
+          "availableWhen": "Signed in.",
+          "result": "Shows the latest evaluated health state."
+        },
+        {
+          "name": "Load older runs / Load older state changes",
+          "does": "Append the next page of matching retained records.",
+          "availableWhen": "A further page is available; the button shows progress while loading.",
+          "result": "Older entries remain reachable without changing the filters or recreating records."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reload the selected history and, for Application runs, the exact selected record.",
+          "availableWhen": "Either history tab; current query errors also offer recovery.",
+          "result": "Updated state and acknowledgement facts replace the prior read. A read failure remains visible and does not imply no history exists."
+        },
+        {
+          "name": "Cancel (Acknowledge listening gap)",
+          "does": "Close the acknowledgement form without saving its note.",
+          "availableWhen": "The acknowledgement command is not running.",
+          "result": "The gap retains its actual acknowledgement state. Complete the investigation before reopening the action."
+        }
+      ],
+      "restrictions": [
+        "Acknowledging a gap does not reimport analyzer results or recreate work lost while the application was not listening.",
+        "Recorded times and stable identities order the history for browsing. They do not reconstruct causal chronology when older evidence is ambiguous.",
+        "After upgrading legacy health history, the next actual evaluation records a fresh observation for each check before resuming state-change deduplication. Original observations are not reordered or rewritten; the new baseline can repeat a visible state."
+      ],
+      "workflow": [
+        "Inspect Application runs around the incident.",
+        "Open the relevant run and review gaps, unclean-stop status and software versions.",
+        "Check analyzer records and reconcile missing work before acknowledging with a specific note.",
+        "Use State changes to correlate the incident with a check’s changing state."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "An older run or state change is not yet shown",
+          "recovery": "Load older entries until the desired period is reached. A work-queue run link retrieves its exact record independently. If that record is unavailable, refresh or return to the queue; retain the error details for investigation."
+        },
+        {
+          "problem": "Acknowledgement is refused",
+          "recovery": "Confirm the run still has an unacknowledged gap and that your account can perform analysis; do not acknowledge before investigation."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/operations/health/HealthPage.tsx",
+    "ui/src/features/operations/health/HostSection.tsx",
+    "ui/src/features/operations/health/ChecksSection.tsx",
+    "ui/src/features/operations/health/CheckPanel.tsx",
+    "ui/src/features/operations/health/NoteDialog.tsx",
+    "ui/src/features/operations/health/HealthHistoryPage.tsx",
+    "ui/src/features/operations/health/AppRuns.tsx",
+    "ui/src/features/operations/health/AppRunPanel.tsx",
+    "ui/src/features/operations/health/AcknowledgeDialog.tsx",
+    "ui/src/features/operations/health/CheckHistory.tsx",
+    "crates/lis-ops/src/health/checks.rs",
+    "crates/lis-ops/src/health/attestations.rs",
+    "crates/lis-ops/src/runs.rs",
+    "crates/lis-ops/src/policy.rs",
+    "crates/lis-ops/src/health/history.rs",
+    "crates/lis-ops/src/runs/view.rs",
+    "ui/src/features/operations/health/AppRuns.test.tsx",
+    "ui/src/features/operations/health/HealthHistoryPage.test.tsx",
+    "crates/lis-ops/migrations/runtime/0004_health_current.sql",
+    "ui/src/features/operations/health/checkColumns.tsx",
+    "ui/src/features/operations/health/runColumns.tsx",
+    "ui/src/features/operations/health/healthLabels.tsx",
+    "ui/src/features/operations/frame/HealthIndicator.tsx",
+    "ui/src/features/operations/frame/OperationsBanners.tsx",
+    "ui/src/features/operations/frame/VersionNotice.tsx",
+    "ui/src/features/operations/frame/OperationsFrame.test.tsx",
+    "ui/src/app/SessionRoot.tsx",
+    "ui/src/features/auth/AuthGate.tsx",
+    "ui/src/lib/CommandDialog.tsx",
+    "ui/src/components/FormDialog/FormDialog.tsx",
+    "crates/lis-ops/src/health/evaluate.rs",
+    "crates/lis-ops/src/updates/versions.rs",
+    "crates/lis-engine/src/commands/operations/health.rs"
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "id": "getting-started",
+  "title": "Using page help",
+  "summary": "Read the user manual beside your work, look up individual fields and actions, and adjust the panel to the space you need.",
+  "reviewedOn": "2026-10-14",
+  "routes": [],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Use the navigation to choose a work area. Open a record by clicking its row or pressing Enter on a focused row. Related records and breadcrumbs help you move between the list and its details."
+      ],
+      "steps": [
+        "Open Page help from the application header to read guidance for the current page.",
+        "Choose Browse all topics to search the guides without leaving your task. Current page returns to the guide for the screen you are using.",
+        "Use Close page help when finished. Your entered information stays on the working page."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Tab moves between controls; arrow keys move between grid cells. Space selects a row only in tables offering bulk actions. Escape closes the innermost open menu, dialog or panel.",
+        "This help describes the software. Follow your laboratory’s approved procedures for laboratory decisions. A page guide does not supply clinical interpretations, assay settings or authorization to perform a task."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Read the message beside a blocked action or failed request. Actions depend on your account and the record’s current state. Ask the person responsible for that workflow when you lack the required authority."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/app/AppShell.tsx",
+    "ui/src/app/help/PageHelp.tsx",
+    "ui/src/app/help/HelpHeader.tsx",
+    "ui/src/app/help/HelpTopics.tsx",
+    "ui/src/app/help/HelpArticleView.tsx",
+    "ui/src/app/help/ManualPageView.tsx",
+    "ui/src/app/help/useHelpLayout.ts",
+    "ui/src/app/help/HelpResize.tsx",
+    "ui/src/app/help/articles.ts"
+  ],
+  "pages": [
+    {
+      "title": "Using the user manual",
+      "routes": [],
+      "purpose": "Use Page help to understand the current screen without leaving it. The manual describes software behavior, values, actions and limitations; laboratory-approved procedures govern clinical work.",
+      "access": "Available to every signed-in user. Reading a topic does not grant the permissions needed to use the screen it describes.",
+      "fields": [
+        {
+          "name": "Find help topics",
+          "meaning": "Searches titles, explanations, field references, action references and troubleshooting in the bundled manual. It searches documentation only.",
+          "values": "Optional text. Matching ignores letter case; every space-separated word must occur somewhere in a topic. Empty text lists every topic.",
+          "rules": "Choose Browse all topics first. Apply the search with Enter or the search control; no patient data or network service is searched. No matches means no topic matched the words, not that your workflow is unavailable."
+        },
+        {
+          "name": "Page in this topic",
+          "meaning": "Selects the reference for a particular list, detail page or related task within the topic you are reading.",
+          "values": "The named pages documented by this topic. The current screen is selected automatically when opening its topic.",
+          "rules": "Shown only when a topic covers multiple pages. Changing it changes the manual, not the working page or its URL. Navigation to a different application page resets help to that page."
+        },
+        {
+          "name": "Fields and displayed information",
+          "meaning": "Explains each input, filter, status or read-only fact, including what it represents and why it is used.",
+          "values": "Expand a named entry for its meaning, possible values, rules and limits. Values may be a fixed list, an exact format, or choices from laboratory configuration.",
+          "rules": "Read the entry for the exact screen or dialog. Configured examples are not approved settings. A read-only value cannot be edited through help."
+        },
+        {
+          "name": "Actions",
+          "meaning": "Explains each command, navigation control or dialog action and its effect.",
+          "values": "Expand an action for what it does, when it is available and the resulting state or next step.",
+          "rules": "The engine checks permissions and current record state when the real action is used. Reading help or knowing an action name does not bypass a restriction."
+        },
+        {
+          "name": "Reviewed date",
+          "meaning": "The date the topic was checked against implemented software behavior.",
+          "values": "A calendar date in YYYY-MM-DD format.",
+          "rules": "Read-only; included with the application version. It is not a laboratory approval date. Text updates arrive with a rebuilt application."
+        },
+        {
+          "name": "Panel size",
+          "meaning": "Controls how much of the working area is used for documentation.",
+          "values": "Wide windows: width initially 400 pixels, normally 320–800 pixels, further limited to leave 480 pixels for the working page. Narrow windows: height initially 320 pixels, normally at least 160 pixels and at most 60% of available working height. Bounds shrink in small windows.",
+          "rules": "The side layout is used above 85rem window width; otherwise the panel sits below the page. Width and height are saved separately on this computer. Unavailable preference storage leaves controls usable for the current session."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Page help / Close page help",
+          "does": "Opens or hides the manual beside or below the current page.",
+          "availableWhen": "Signed in; the top-bar button is always available in the application frame.",
+          "result": "Opening focuses Page help; closing restores focus to its button. Unsaved working-page input is preserved. Reopening on the same page keeps the selected topic."
+        },
+        {
+          "name": "Browse all topics / Current page",
+          "does": "Opens the searchable manual library or returns to the current screen’s topic.",
+          "availableWhen": "The panel is open. Browse all topics is disabled while already browsing; Current page also resets the page reference within its topic.",
+          "result": "Only help content changes. Selecting a topic does not navigate or submit the working page."
+        },
+        {
+          "name": "Expand a reference",
+          "does": "Shows or hides one field, action, workflow, restriction or troubleshooting explanation.",
+          "availableWhen": "The reference is visible in the selected page’s manual. Use its heading with a pointer, or Tab followed by Enter or Space.",
+          "result": "The details expand in place. Other entries and the application page remain available."
+        },
+        {
+          "name": "Resize with the divider",
+          "does": "Changes panel width by dragging the left border, or height by dragging the top border when help is below the page.",
+          "availableWhen": "Help is open. Tab can focus the divider.",
+          "result": "Left/Up grows the panel; Right/Down shrinks it in the corresponding layout. Arrow steps are 32 pixels. Home chooses the minimum and End the maximum. The working page retains space. A cancelled pointer drag restores the prior size."
+        },
+        {
+          "name": "Page help size options",
+          "does": "Offers Wider/Narrower panel on wide windows, Taller/Shorter panel below the page, and Reset panel size.",
+          "availableWhen": "Help is open. Use the three-dot button beside the Page help heading.",
+          "result": "Changes size without dragging. Reset restores the default for the current layout, limited by available space. It does not change the saved size of the other layout."
+        },
+        {
+          "name": "Escape",
+          "does": "Closes help while keyboard focus is inside the help content.",
+          "availableWhen": "An inner menu or selector has not already consumed Escape.",
+          "result": "Focus returns to the Page help button. A menu closes first, allowing you to keep reading."
+        }
+      ],
+      "restrictions": [
+        "This manual covers signed-in application pages. First-run setup, sign-in, the locked session and the development component gallery are outside the current contextual-manual scope.",
+        "Help is bundled and works offline. It does not synchronize with a remote website and cannot be edited from the application.",
+        "Identity, required field instructions, holds and current error messages remain on the working screen. Read them before proceeding; optional documentation is not a substitute.",
+        "No topic supplies assay cutoffs, clinical interpretation or authorization. Values governed by laboratory policy must come from the responsible laboratory."
+      ],
+      "workflow": [
+        "Open the screen you need, then choose Page help in the application header.",
+        "Read the purpose and access requirements. Expand the field or action whose meaning you need; read restrictions before making a consequential change.",
+        "Use Workflow for a task sequence and Troubleshooting if the expected action is blocked.",
+        "Resize the panel or use Browse all topics to look up another term without leaving your task.",
+        "Return to the working page to carry out the action. Close help when finished."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No topic matches the search",
+          "recovery": "Use a visible page, field or action name and fewer words. Clear the search to browse all topics. Search covers topic text, not records."
+        },
+        {
+          "problem": "The panel is too small or too large",
+          "recovery": "Use Page help size options to change or reset its size, or focus the divider and use the arrow keys. Resizing the application window recalculates safe bounds."
+        },
+        {
+          "problem": "A described action is missing or disabled",
+          "recovery": "Read Available when for the action, then check the working screen’s state and error messages. Ask the workflow owner for missing authorization; help cannot grant it."
+        },
+        {
+          "problem": "The documentation and screen appear different",
+          "recovery": "Check that the selected page in the topic matches your screen and that you are reading Current page. Report the screen name, application version and discrepancy using your approved support process; do not include patient information in an unapproved channel."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,181 @@
+{
+  "id": "collection-review",
+  "title": "Collection timing review",
+  "summary": "Review supplied collection corrections and record the quality decision.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/accessions/:accessionId/collection-review"],
+  "sections": [
+    {
+      "title": "Review the collection record",
+      "paragraphs": [
+        "Check patient identity and accession number. Compare the original and current collection information, the source document reference and each correction reason. The original information remains available in the history."
+      ]
+    },
+    {
+      "title": "Record a correction or resolution",
+      "paragraphs": [
+        "Correct collection time records the precision and value supplied by the source, plus a document reference and reason. A correction requires quality review; entering a new date does not complete that review.",
+        "Resolve collection review is available to authorized quality staff. Record the review performed and its effect on testing, result review, released reports and billing. Follow the laboratory's approved correction and report-impact procedure; other required reviews remain separate."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "When a revision has changed, cancel the dialog, use Refresh collection history and review the new information before retrying. Missing actions reflect the record state or your authority. Do not infer collection times from receipt, testing or billing dates."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/accessioning/billing/CollectionHistorySection.tsx",
+    "ui/src/features/accessioning/billing/CollectionReviewPage.tsx",
+    "ui/src/features/accessioning/specimens/CollectionFields.tsx",
+    "ui/src/features/accessioning/specimens/labels.ts",
+    "ui/src/features/accessioning/specimens/accessionValues.ts",
+    "crates/lis-specimens/src/commands/collection.rs",
+    "crates/lis-specimens/src/input.rs",
+    "crates/lis-engine/src/commands/collection_corrections.rs",
+    "ui/src/components/FormDialog/FormDialog.tsx"
+  ],
+  "pages": [
+    {
+      "title": "Collection timing review",
+      "routes": ["/accessions/:accessionId/collection-review"],
+      "purpose": "Correct supplied collection timing with evidence and record the quality review of its consequences.",
+      "access": "Accessioning or quality authority may read collection history. Accessioning authority records corrections; quality authority resolves reviews.",
+      "fields": [
+        {
+          "name": "Patient identity / Accession",
+          "meaning": "The person and material whose collection history is being reviewed.",
+          "values": "Read-only identity banner and accession number.",
+          "rules": "Verify before recording a correction."
+        },
+        {
+          "name": "Original collection / Current collection / Collection revision",
+          "meaning": "Original source timing, latest correction and the version reviewed.",
+          "values": "Read-only known date/time, date-only or Unknown and a revision number.",
+          "rules": "Original timing is retained even after corrections."
+        },
+        {
+          "name": "Correction history: Revision / Collection time / Source reference / Reason / Recorded / Quality review",
+          "meaning": "Provenance and quality-review status for every correction.",
+          "values": "Read-only values; quality review is Pending or Resolved with the recorded reason.",
+          "rules": "A corrected collection time and a completed quality review are distinct events."
+        },
+        {
+          "name": "Collection time known",
+          "meaning": "Precision of the collection timing actually supplied.",
+          "values": "Date and time (UTC offset supplied); Date and time (named timezone); Date only; time not recorded; Unknown.",
+          "rules": "Required; no default. Choose Unknown if neither date nor time is supplied; do not substitute receipt time."
+        },
+        {
+          "name": "Collection date",
+          "meaning": "Local calendar date at the collection site.",
+          "values": "Real date in YYYY-MM-DD format.",
+          "rules": "Required except when Unknown. Date-only entry cannot exceed the current UTC date by more than one day; this accommodates timezone differences and is not permission to invent a date."
+        },
+        {
+          "name": "Collection time",
+          "meaning": "Local clock time at collection.",
+          "values": "24-hour HH:MM, without seconds.",
+          "rules": "Required for either date-and-time choice; hidden for date-only or Unknown. The resulting instant cannot be in the future."
+        },
+        {
+          "name": "Collection timezone (UTC offset)",
+          "meaning": "Offset supplied with the collection-site clock time.",
+          "values": "Signed HH:MM, from -12:00 through +14:00, such as -05:00.",
+          "rules": "Required for the UTC-offset choice. Use the offset at the collection event, not today’s offset."
+        },
+        {
+          "name": "Collection site timezone",
+          "meaning": "Named timezone for the collection site.",
+          "values": "A recognized named zone such as America/New_York, up to 200 characters.",
+          "rules": "Required for named-timezone entry. Ambiguous or nonexistent daylight-saving clock times are refused; verify the supplied time/offset."
+        },
+        {
+          "name": "Source document reference — collection correction",
+          "meaning": "Retained source supporting the new timing.",
+          "values": "Required reference, up to 1000 characters.",
+          "rules": "Must describe actual source evidence; no upload occurs here."
+        },
+        {
+          "name": "Correction reason",
+          "meaning": "Why the recorded timing needs correction.",
+          "values": "Required text, up to 1000 characters.",
+          "rules": "The new timing must differ from the current timing."
+        },
+        {
+          "name": "Quality review and resolution reason",
+          "meaning": "Review performed and effect on testing or released reports.",
+          "values": "Required explanation, up to 1000 characters.",
+          "rules": "Quality authority required. Separate report-impact reviews remain applicable."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Review collection history / Refresh collection history",
+          "does": "Opens or refreshes original timing, corrections and review states.",
+          "availableWhen": "Accessioning or quality authority.",
+          "result": "Shows the latest collection revision and pending reviews."
+        },
+        {
+          "name": "Correct collection time / Record correction",
+          "does": "Records a source-backed new collection timing.",
+          "availableWhen": "Accessioning authority, current collection revision and different timing.",
+          "result": "Preserves original timing and opens a quality review. Dependent work and billing must be reviewed."
+        },
+        {
+          "name": "Use laboratory timezone (…)",
+          "does": "Copies the configured laboratory timezone into the collection-site field.",
+          "availableWhen": "Named-timezone entry and a laboratory timezone is configured.",
+          "result": "Changes only the unsaved timezone value; use it only when it is the collection site’s correct zone."
+        },
+        {
+          "name": "Resolve collection review / Resolve review",
+          "does": "Records the quality decision for a pending correction.",
+          "availableWhen": "Quality authority and an unresolved correction.",
+          "result": "Completes that timing review with a reason; separate result/report impact assessment is not automatically completed."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes the current unsaved editor or pending action dialog.",
+          "availableWhen": "An editor is open and not saving.",
+          "result": "Unsaved dialog entries are deliberately discarded when Cancel is chosen; saved records remain."
+        }
+      ],
+      "restrictions": [
+        "Original timing and every correction remain retained. A correction must change the current value and cannot invent missing precision.",
+        "A correction opens quality review; recording the new date alone does not clear it.",
+        "Resolving timing review does not automatically resolve separate result/report impact review or recreate billing approvals.",
+        "In editable dialogs, Escape and an outside click close only an unchanged form with no command running. Cancel deliberately discards unsaved dialog entries and is disabled while saving."
+      ],
+      "workflow": [
+        "Compare original timing, current timing and the retained source evidence.",
+        "If needed choose Correct collection time, enter supplied precision/value, source reference and correction reason.",
+        "An authorized quality reviewer assesses effects on testing, results, reports and billing, then records Resolve review.",
+        "Refresh the history and check any separate outstanding work."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The record changed while the dialog was open.",
+          "recovery": "Keep the source document available. Cancel the dialog, refresh or reopen the record, compare the current facts, then reopen the action. Do not repeatedly submit a decision based on an older revision."
+        },
+        {
+          "problem": "A save fails or a field is rejected.",
+          "recovery": "Read the message and correct the indicated value. The open form retains entered values after failure; success is shown only after the application accepts the save. Cancel abandons an unsaved dialog."
+        },
+        {
+          "problem": "The collection time is unchanged.",
+          "recovery": "Check whether the source actually provides a correction; identical timing does not create a new revision."
+        },
+        {
+          "problem": "Quality review remains pending after correction.",
+          "recovery": "Have a reviewer with quality authority assess the correction and record a resolution; entering a date is not the quality decision."
+        },
+        {
+          "problem": "Collection site clock time is ambiguous.",
+          "recovery": "Confirm the source time and timezone, or enter its supplied UTC offset. Do not infer a side of a daylight-saving change."
+        }
+      ]
+    }
+  ]
+}

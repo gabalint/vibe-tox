@@ -1,0 +1,229 @@
+{
+  "id": "recovery",
+  "title": "Recovery reconciliation",
+  "summary": "Account for the interval missing from a restored backup before outward work resumes.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/operations/recovery"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "After restore, this page shows the backup time, applied restore, number floors, held label jobs, anchor findings and the recovery checklist. Each item represents work to reconcile against the laboratory’s other records.",
+        "Authorized quality staff can raise number floors and close reconciliation after the required attestations. Closing needs a note and fresh confirmation with the person’s password or security key. While reconciliation remains open, release, delivery, billing handoff and label printing are held."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Identify the lost interval from the backup through the incident or cutover. Reconcile orders, results, reports, billing outcomes, account changes and configuration changes using the laboratory’s recovery procedure. Compare number floors with physical labels and external records.",
+        "A test restore is not the production computer. Keep its reconciliation open and do not attest production readiness. Compare independently held anchors where available and investigate unexplained differences."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Do not close reconciliation simply to remove a hold. Missing evidence or unresolved external work needs the responsible laboratory owner’s decision. If no reconciliation is shown, this installation has no recorded restore reconciliation to work through."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Recovery reconciliation",
+      "routes": ["/operations/recovery"],
+      "purpose": "Account for the lost interval and authorize resumption after this installation has been restored.",
+      "access": "Any signed-in person may read this page. Manage quality is required to raise number floors or close reconciliation; closure also needs fresh confirmation with your password or security key.",
+      "fields": [
+        {
+          "name": "Backup made / Restore applied / Lost interval from",
+          "meaning": "Establish the snapshot time, restore application time and beginning of work requiring reconciliation.",
+          "values": "Recorded laboratory-local timestamps.",
+          "rules": "Read-only. Later activity may be absent from the restored database."
+        },
+        {
+          "name": "Label jobs held",
+          "meaning": "Count of print jobs withheld during reconciliation.",
+          "values": "Whole-number count.",
+          "rules": "Read-only. Review these before closure because they can print afterward."
+        },
+        {
+          "name": "Accession number floor / Container code floor",
+          "meaning": "Lower bound protecting newly issued numbers from reuse after restore.",
+          "values": "Recorded accession/container floor strings.",
+          "rules": "Read-only until Raise number floors; floors can only increase."
+        },
+        {
+          "name": "Audit anchors",
+          "meaning": "Counts of comparisons against retained audit evidence.",
+          "values": "Anchors compared; Matched; Lost interval; Explained by a restore not yet anchored; Mismatched; Local events missing; Conflicting anchors; Gaps; Not yet anchored.",
+          "rules": "Read-only. A zero count of compared anchors is not a successful independent check."
+        },
+        {
+          "name": "New accession number floor",
+          "meaning": "Raise the accession sequence beyond labels known to have been issued.",
+          "values": "A followed by the two-digit year and six sequence digits, below the final value of that sequence; or blank to leave unchanged.",
+          "rules": "At least one floor is required; new floor must be above already issued numbers and the existing floor."
+        },
+        {
+          "name": "New container code floor",
+          "meaning": "Raise the container sequence beyond known issued codes.",
+          "values": "C followed by eight digits, below the final sequence value; or blank to leave unchanged.",
+          "rules": "At least one floor is required; new floor must exceed the issued/existing floor."
+        },
+        {
+          "name": "Reason (Raise floors)",
+          "meaning": "Explain the evidence requiring a higher number floor.",
+          "values": "Specific explanation of the discovered issued numbers.",
+          "rules": "Required; raising cannot be undone by lowering the floor."
+        },
+        {
+          "name": "Items checked",
+          "meaning": "Attest each recovery task using the checklist guidance.",
+          "values": "All eleven displayed items; each begins unchecked in the closure dialog.",
+          "rules": "Every item must be checked only after the laboratory completes or reconciles it."
+        },
+        {
+          "name": "This computer is the production computer",
+          "meaning": "Recovery checklist: Confirm this restored computer replaces production. Never close a test-copy reconciliation: closure permits production-target writes and printing.",
+          "values": "Unchecked or checked in Items checked.",
+          "rules": "Required for closure; the checkbox records an attestation, not automatic completion of the task."
+        },
+        {
+          "name": "Lost interval listed",
+          "meaning": "Recovery checklist: Account for work between the backup time and incident that is absent from the restored database.",
+          "values": "Unchecked or checked in Items checked.",
+          "rules": "Required for closure; the checkbox records an attestation, not automatic completion of the task."
+        },
+        {
+          "name": "Number floors checked",
+          "meaning": "Recovery checklist: Compare accession/container floors with all physical labels issued in the lost interval and raise floors if necessary.",
+          "values": "Unchecked or checked in Items checked.",
+          "rules": "Required for closure; the checkbox records an attestation, not automatic completion of the task."
+        },
+        {
+          "name": "Analyzer results resent",
+          "meaning": "Recovery checklist: Arrange analyzer resend of lost-interval results and review the results-expected queue.",
+          "values": "Unchecked or checked in Items checked.",
+          "rules": "Required for closure; the checkbox records an attestation, not automatic completion of the task."
+        },
+        {
+          "name": "Reports reconciled",
+          "meaning": "Recovery checklist: Account for reports released or delivered after the snapshot; do not send an older revision as current.",
+          "values": "Unchecked or checked in Items checked.",
+          "rules": "Required for closure; the checkbox records an attestation, not automatic completion of the task."
+        },
+        {
+          "name": "Orders and work re-entered",
+          "meaning": "Recovery checklist: Re-enter the missing orders, decisions, QC and reviews through their authorized workflows.",
+          "values": "Unchecked or checked in Items checked.",
+          "rules": "Required for closure; the checkbox records an attestation, not automatic completion of the task."
+        },
+        {
+          "name": "Billing handoffs reconciled",
+          "meaning": "Recovery checklist: Reconcile lost-interval billing handoffs before resuming them.",
+          "values": "Unchecked or checked in Items checked.",
+          "rules": "Required for closure; the checkbox records an attestation, not automatic completion of the task."
+        },
+        {
+          "name": "Account changes reapplied",
+          "meaning": "Recovery checklist: Reapply later access changes; an account disabled after the snapshot may be active in the restored copy.",
+          "values": "Unchecked or checked in Items checked.",
+          "rules": "Required for closure; the checkbox records an attestation, not automatic completion of the task."
+        },
+        {
+          "name": "Configuration changes reapplied",
+          "meaning": "Recovery checklist: Review catalog, instrument, destination, settings and backup-target changes after the snapshot.",
+          "values": "Unchecked or checked in Items checked.",
+          "rules": "Required for closure; the checkbox records an attestation, not automatic completion of the task."
+        },
+        {
+          "name": "Audit anchors reviewed",
+          "meaning": "Recovery checklist: Review matched, lost-interval, mismatch and unchecked anchor findings.",
+          "values": "Unchecked or checked in Items checked.",
+          "rules": "Required for closure; the checkbox records an attestation, not automatic completion of the task."
+        },
+        {
+          "name": "Waiting labels reviewed",
+          "meaning": "Recovery checklist: Review held print jobs: they become eligible to print when reconciliation closes.",
+          "values": "Unchecked or checked in Items checked.",
+          "rules": "Required for closure; the checkbox records an attestation, not automatic completion of the task."
+        },
+        {
+          "name": "Note",
+          "meaning": "Explain the reconciliation performed and its evidence.",
+          "values": "PHI-free note up to 2,000 characters.",
+          "rules": "Required for closure and retained as the audit reason."
+        },
+        {
+          "name": "Your password",
+          "meaning": "Fresh confirmation of the person closing recovery.",
+          "values": "Your current password.",
+          "rules": "Password accounts only. Required to close."
+        },
+        {
+          "name": "Security key",
+          "meaning": "Fresh confirmation by the signed-in person using their registered security key.",
+          "values": "The active personal keys registered to your account; the first returned key is selected initially.",
+          "rules": "Security-key accounts only; replaces Your password. Select one key, review and submit the action, then follow its PIN or biometric verification and touch prompt. The key confirms only that submitted action. Permissions, reasons and record-state gates still apply. Use your own key; a selected label alone does not authorize anything."
+        },
+        {
+          "name": "Recovery reconciliation closed",
+          "meaning": "Closure status, person and time.",
+          "values": "Absent while open; recorded closure details afterward.",
+          "rules": "Read-only."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Raise number floors / Raise floors",
+          "does": "Increase one or both number sequences after comparing with physical labels.",
+          "availableWhen": "Manage quality, a reconciliation record, at least one valid higher floor and a reason.",
+          "result": "New allocations skip the raised range; saved floor history is retained."
+        },
+        {
+          "name": "Close recovery reconciliation / Close reconciliation",
+          "does": "Confirm all recovery tasks and allow the outbound workflows to resume.",
+          "availableWhen": "Manage quality, open reconciliation, all eleven attestations, note and fresh account confirmation.",
+          "result": "Closes this recovery record; held report release, delivery, billing handoff and label printing can resume subject to their other gates."
+        }
+      ],
+      "restrictions": [
+        "While reconciliation is open, release, delivery, billing handoff and label printing are held. Closing is a laboratory decision with operational effects.",
+        "Do not close a test restoration as production.",
+        "The screen cannot reconstruct missing work automatically or certify the completeness of your reconciliation."
+      ],
+      "workflow": [
+        "Review the snapshot time and lost interval, then compare independent evidence and anchor findings.",
+        "Review physical labels and raise number floors if they do not cover all issued numbers.",
+        "Complete every displayed recovery task, including account and configuration changes.",
+        "Review held label jobs, then have the authorized quality manager attest the completed checklist and close with a note and confirmation with your password or security key."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No recovery reconciliation is shown",
+          "recovery": "This installation has no recorded restore; this page is not the entry point for importing a backup."
+        },
+        {
+          "problem": "The floor is refused",
+          "recovery": "Check its exact prefix/digit format and choose a value above the current floor and every issued value, leaving room for future allocation."
+        },
+        {
+          "problem": "Closure is refused",
+          "recovery": "Check that every checklist item is attested and the note and account confirmation are valid; investigate any uncompleted item before retrying."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/operations/reconciliation/ReconciliationPage.tsx",
+    "ui/src/features/operations/reconciliation/CloseReconciliationDialog.tsx",
+    "ui/src/features/operations/reconciliation/RaiseFloorsDialog.tsx",
+    "ui/src/features/operations/labels.ts",
+    "crates/lis-ops/src/restore/recovery.rs",
+    "crates/lis-specimens/src/commands/floors.rs",
+    "crates/lis-specimens/src/numbering.rs",
+    "ui/src/lib/securityKeyAuthenticationField.tsx",
+    "ui/src/lib/securityKeyPrompt.tsx",
+    "ui/src/lib/commands.ts",
+    "crates/lis-auth/src/key_proofs.rs"
+  ]
+}

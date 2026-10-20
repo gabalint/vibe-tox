@@ -1,0 +1,379 @@
+{
+  "id": "runs",
+  "title": "Runs and positions",
+  "summary": "Track a run’s instrument, method version, materials and sample positions.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/bench/runs", "/bench/runs/:runId"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Open a run from Runs to inspect its method version, instrument, recorded lots and positions. The run page offers the actions currently allowed. Analysts add patient samples by scanning container labels and add control, calibrator or blank positions through the corresponding actions.",
+        "QC review opens the run’s quality workspace when your account has quality authority. Close run ends additions to the run; results arriving afterward are quarantined for review."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Check the run’s instrument and method version before adding positions. Preserve the actual attempt kind and supplied dilution information rather than representing a repeat as a different specimen.",
+        "Compare each scanned label with the material being placed. Check lot identity and expiry information against the materials used. Closing a run is an explicit workflow decision, so confirm that its intended intake is complete before choosing it."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "A rejected position may reflect specimen acceptance, an incompatible method, material readiness or the run state. Read the displayed reason and resolve the underlying record. Unexpected results for a closed run belong in Result imports for investigation."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/analytics/runs/RunsPage.tsx",
+    "ui/src/features/analytics/runs/RunPage.tsx",
+    "ui/src/features/analytics/runs/Positions.tsx",
+    "ui/src/features/analytics/runs/PositionPanel.tsx",
+    "ui/src/features/analytics/runs/PatientPositionForm.tsx",
+    "ui/src/features/analytics/runs/QcPositionDialog.tsx",
+    "ui/src/features/analytics/runs/FailExecutionDialog.tsx",
+    "ui/src/features/analytics/labels.ts",
+    "crates/lis-analytical/src/commands/runs.rs",
+    "crates/lis-analytical/src/commands/patient.rs",
+    "crates/lis-analytical/src/commands/mod.rs",
+    "ui/src/features/analytics/runs/RepeatPositionDialog.tsx",
+    "ui/src/features/analytics/runs/PerformingSite.tsx",
+    "ui/src/features/analytics/runs/PrepBatchChoice.tsx",
+    "crates/lis-analytical/src/commands/performing_site.rs",
+    "crates/lis-analytical/src/queries/runs.rs"
+  ],
+  "pages": [
+    {
+      "title": "Runs",
+      "routes": ["/bench/runs"],
+      "purpose": "Find and reopen analytical runs by instrument, creation time and state.",
+      "access": "Requires authority to perform analysis.",
+      "fields": [
+        {
+          "name": "Show",
+          "meaning": "Limits the runs shown.",
+          "values": "Open runs, Closed runs, All runs.",
+          "rules": "Defaults to Open runs. Stored in the page address."
+        },
+        {
+          "name": "Created",
+          "meaning": "Identifies a run by its start time.",
+          "values": "Recorded date/time.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Instrument",
+          "meaning": "Names the instrument used.",
+          "values": "Configured instrument name.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Positions",
+          "meaning": "Counts sample and QC positions.",
+          "values": "Nonnegative count.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "State",
+          "meaning": "Indicates whether a run accepts positions and incoming results.",
+          "values": "Open or Closed.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Run count / freshness",
+          "meaning": "Reports the loaded list size and last refresh.",
+          "values": "Count and time.",
+          "rules": "Runs load in pages of 200 in descending creation time and stable identifier order. Load older runs reaches retained history; displayed sorting applies to loaded rows."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open run row",
+          "does": "Opens that run’s positions and details.",
+          "availableWhen": "A row is loaded; click its identifier or press Enter on the row.",
+          "result": "Opens the run with Previous and Next through the current list order."
+        },
+        {
+          "name": "Show",
+          "does": "Changes the state filter.",
+          "availableWhen": "The page is open.",
+          "result": "Reloads matching runs."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reads the latest run states.",
+          "availableWhen": "The page is open.",
+          "result": "Updates the list and freshness indication."
+        },
+        {
+          "name": "Go to worklist",
+          "does": "Opens method-specific waiting material.",
+          "availableWhen": "The page is open.",
+          "result": "Choose a method and version there to create a run."
+        },
+        {
+          "name": "Load older runs",
+          "does": "Loads the next page with the same state filter.",
+          "availableWhen": "More matching runs may remain.",
+          "result": "Appends rows without changing the filter; continue until all matching runs are reached."
+        }
+      ],
+      "restrictions": [
+        "Closed runs retain their records. Finding a closed run does not reopen it."
+      ],
+      "workflow": [
+        "Choose the needed state filter and refresh.",
+        "Compare Created and Instrument, then open the intended run."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A run is absent.",
+          "recovery": "Check the Show filter, refresh, and use Load older runs. Do not create a duplicate run to replace an older record."
+        }
+      ]
+    },
+    {
+      "title": "Run and positions",
+      "routes": ["/bench/runs/:runId"],
+      "purpose": "Record the actual patient and QC positions on one run and inspect their evidence.",
+      "access": "Requires authority to perform analysis. QC review additionally requires quality-management authority.",
+      "fields": [
+        {
+          "name": "Run title / Created / State",
+          "meaning": "Identifies the method code and version, instrument, author and creation time.",
+          "values": "Recorded identity; Open or Closed.",
+          "rules": "Read-only; confirm these before adding any position."
+        },
+        {
+          "name": "Closed",
+          "meaning": "Records closure time and a recorded reason when present.",
+          "values": "Date/time and reason, displayed only for a closed run.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Lots",
+          "meaning": "Shows the materials attached when the run was created.",
+          "values": "Material kind, product, lot number, expiry and Active, Expired or Withdrawn state.",
+          "rules": "Read-only historical associations; a later status change does not erase usage."
+        },
+        {
+          "name": "Position",
+          "meaning": "Identifies the physical position being added.",
+          "values": "Lab-assigned position text.",
+          "rules": "Required, trimmed 1–64 characters, unique within the run."
+        },
+        {
+          "name": "Container barcode",
+          "meaning": "Identifies patient material from its printed label.",
+          "values": "Existing container label; scanner or keyboard input.",
+          "rules": "Required; Enter submits Add sample. The specimen must be accepted, compatible and eligible for ordered work."
+        },
+        {
+          "name": "Add-on stability check",
+          "meaning": "Records how stability was checked for add-on tests.",
+          "values": "Free text documenting the check under the laboratory SOP.",
+          "rules": "Required when the placed work contains an add-on; otherwise optional. Trimmed, at most 1,000 characters; the application does not calculate stability."
+        },
+        {
+          "name": "Add control, calibrator or blank: Role",
+          "meaning": "Separates QC material from patient samples.",
+          "values": "Control, Calibrator, Blank.",
+          "rules": "Required; no default."
+        },
+        {
+          "name": "Control lot / Calibrator lot",
+          "meaning": "Associates a QC position with the actual material.",
+          "values": "Active, unexpired lots of the selected kind.",
+          "rules": "Required for controls and calibrators; the lot must have a sample label. Its label is used automatically."
+        },
+        {
+          "name": "Blank: Sample label",
+          "meaning": "Defines the label sent for a blank.",
+          "values": "Lab-assigned text.",
+          "rules": "Required for a blank; trimmed 1–64 characters. A blank has no lot."
+        },
+        {
+          "name": "Positions: Sample label",
+          "meaning": "Shows the scanned patient label or QC label used to associate received data.",
+          "values": "Recorded label.",
+          "rules": "Read-only; both position and sample label must be unique within the run."
+        },
+        {
+          "name": "Positions: Role",
+          "meaning": "Shows the material’s structural role.",
+          "values": "Patient, Control, Calibrator, Blank.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Attempt",
+          "meaning": "Explains the relationship to earlier analytical work.",
+          "values": "Initial, Rerun, Re-extraction or Dilution.",
+          "rules": "Add sample creates Initial attempts. Open a patient position and use Repeat test for a Rerun, Re-extraction or Dilution linked to the original execution."
+        },
+        {
+          "name": "Execution",
+          "meaning": "Shows whether the patient attempt remains active.",
+          "values": "Active or Failed, with failure reason; no execution for QC positions.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Expected analytes",
+          "meaning": "Shows the number of analytes this patient attempt is expected to serve.",
+          "values": "Count; no patient-analyte count for QC positions.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Position detail: Lot / Reason for the attempt / Dilution factor",
+          "meaning": "Explains material and lineage of the opened position.",
+          "values": "Registered lot, recorded reason or Not recorded, and recorded dilution or None.",
+          "rules": "Read-only. Dilution is preserved as recorded, not calculated here."
+        },
+        {
+          "name": "Mark attempt failed: Reason",
+          "meaning": "Explains why this attempt cannot be used.",
+          "values": "Free text.",
+          "rules": "Required, trimmed 1–1,000 characters; recorded with the failure."
+        },
+        {
+          "name": "Completed preparation batch",
+          "meaning": "Links actual preparation to the new patient execution.",
+          "values": "Optional completed batches for the exact run method version; blank means no recorded link.",
+          "rules": "Choose the batch actually used. Load more preparation batches reaches older records. Open or incompatible batches are refused by the engine."
+        },
+        {
+          "name": "Position detail: Patient / Accession / Specimen type",
+          "meaning": "Checks patient and material identity against the sample label.",
+          "values": "Current recorded name, DOB and identifiers, accession number and specimen type.",
+          "rules": "Read-only. Patient context is loaded with the audited run read; it does not infer identity from a label."
+        },
+        {
+          "name": "Repeat test: Target run / Position / Container barcode",
+          "meaning": "Places the follow-on attempt under the original approved method version.",
+          "values": "Open runs for that version; position text 1–64 characters; existing container barcode, initially the original label.",
+          "rules": "Target and position required. A different container must belong to the same specimen. Labels must be unique within the target run. Create a run for this version when needed; Load more open runs reaches older open runs."
+        },
+        {
+          "name": "Repeat test: Attempt kind / Dilution factor / Reason",
+          "meaning": "Preserves repeat lineage, actual dilution and rationale.",
+          "values": "Rerun, Re-extraction or Dilution; positive decimal factor for Dilution; free-text reason.",
+          "rules": "Kind and reason required; reason 1–1000 characters. Factor is required only for Dilution and remains exact text. The source must supply final concentration; the LIS does not multiply. Include the actual stability check for add-on work."
+        },
+        {
+          "name": "Performing site / Site evidence / Site resolution reason",
+          "meaning": "Identifies the laboratory profile pinned when the run started, or a later factual resolution.",
+          "values": "Historical profile name/address/version; Unknown when no pin or resolution exists; retained resolution source and reason when supplied.",
+          "rules": "Read-only. An unknown site blocks new report preparation/release, but already-issued report bytes remain accessible."
+        },
+        {
+          "name": "Record performing site: Historical performing site / Source evidence reference / Reason",
+          "meaning": "Resolves an unknown site using retained evidence of where testing actually occurred.",
+          "values": "Configured historical laboratory profile; required source reference and reason, each 1–1000 characters.",
+          "rules": "Quality-management authority required. No default profile. Confirm the actual site from evidence; the append-only resolution cannot replace an existing pin or resolution."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Add sample",
+          "does": "Places the scanned container and creates an Initial analytical attempt.",
+          "availableWhen": "Run is Open and allows additions; specimen, identity, order and method checks pass; served work is not already in progress.",
+          "result": "Adds a position, clears the scan fields and returns focus to Position."
+        },
+        {
+          "name": "Add control, calibrator or blank / Add position",
+          "does": "Adds a QC position after Role and material are entered.",
+          "availableWhen": "Run is Open and the label is unique; control/calibrator lot passes validation.",
+          "result": "Records QC material separately from patient work."
+        },
+        {
+          "name": "Open position row",
+          "does": "Shows the position’s material, execution details and available actions.",
+          "availableWhen": "A position exists.",
+          "result": "Opens a side panel with Previous, Next and Close."
+        },
+        {
+          "name": "Mark attempt failed / Mark failed",
+          "does": "Records failure with a reason.",
+          "availableWhen": "The patient execution is Active and the action is offered.",
+          "result": "Keeps the attempt and evidence. Open the position and use Repeat test to record follow-on work."
+        },
+        {
+          "name": "Close run",
+          "does": "Confirms the run’s intake is finished.",
+          "availableWhen": "An open run offers this action and its displayed revision is current.",
+          "result": "Prevents further positions; later incoming results for it are quarantined. The confirmation has no reason-entry field."
+        },
+        {
+          "name": "QC review",
+          "does": "Opens this run’s quality workspace.",
+          "availableWhen": "Your account has quality-management authority.",
+          "result": "Shows QC assessments, observations, changed rows and deviations."
+        },
+        {
+          "name": "Previous / Next / Runs",
+          "does": "Navigates the run list or returns to it.",
+          "availableWhen": "Previous/Next are available when opened from a list with adjacent records.",
+          "result": "Changes the displayed run; submitted positions remain recorded."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes an unsubmitted action dialog.",
+          "availableWhen": "A dialog is open.",
+          "result": "The pending action is not recorded."
+        },
+        {
+          "name": "Repeat test / Record repeat",
+          "does": "Creates a follow-on execution linked to the selected patient execution and original scope.",
+          "availableWhen": "Analysis authority, accepted material, valid ordered work, an open target run under the original approved method, and source readiness checks.",
+          "result": "Records repeat lineage and optional completed preparation; original observations remain. Retirement and explicit safety holds continue to block testing."
+        },
+        {
+          "name": "Record performing site",
+          "does": "Permanently records a factual historical site resolution.",
+          "availableWhen": "Quality-management authority, unknown site, required evidence/reason, and current run revision.",
+          "result": "Audits the acting user and evidence, increments the run revision, and enables reporting to reevaluate its site gate."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reloads run state, patient context and evidence.",
+          "availableWhen": "Run page is open.",
+          "result": "Updates the displayed revision before another action; a stale action must be reviewed and submitted again."
+        }
+      ],
+      "restrictions": [
+        "Closing does not approve results or QC. There is no reopen action on this page.",
+        "A patient container cannot be placed as QC to work around specimen or order restrictions.",
+        "Preparation links and original execution provenance are retained. If preparation was omitted, perform and record an appropriate repeat with the correct completed batch; do not recreate or rewrite the historical attempt."
+      ],
+      "workflow": [
+        "Verify method version, instrument and lots in the header.",
+        "Enter Position, scan Container barcode and provide the actual add-on stability check when needed; choose Add sample.",
+        "Add actual QC positions with the correct role and lot. Inspect positions before closing the run.",
+        "For repeat work, open the original patient position, choose Repeat test, verify original method and target run, choose the actual attempt kind and completed preparation, and record the reason before submitting."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The position or sample label is already in use.",
+          "recovery": "Open the existing position and reconcile it with the physical run; do not invent a replacement identity."
+        },
+        {
+          "problem": "Patient placement is refused.",
+          "recovery": "Resolve the named specimen, order, hold or in-progress condition in its responsible screen, then rescan the correct container."
+        },
+        {
+          "problem": "Data arrived after closure.",
+          "recovery": "Investigate the receipt in Result imports. Closing does not silently discard the received evidence."
+        },
+        {
+          "problem": "A method version is no longer current.",
+          "recovery": "Use the original approved version for already accepted work and repeats. Routine supersession does not repin orders. Explicit retirement or safety holds still require resolution by the responsible laboratory authority."
+        },
+        {
+          "problem": "A stale revision or unknown performing site blocks action.",
+          "recovery": "Refresh and review the latest run. A quality-authorized user can resolve an unknown site only from retained evidence; no site should be guessed from today’s profile."
+        }
+      ]
+    }
+  ]
+}

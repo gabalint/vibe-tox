@@ -1,0 +1,445 @@
+{
+  "format": "vibe-tox/demo-data",
+  "formatVersion": 1,
+  "dataVersion": "1.1.0",
+  "notice": "All people, organizations, addresses, telephone numbers, email addresses and identifiers in this file are fictitious. Any resemblance to a real person or organization is coincidental. Not for patient testing.",
+  "laboratoryProfile": {
+    "name": "Demo Toxicology Laboratory",
+    "addressLines": [
+      "100 Example Way",
+      "Suite 200",
+      "Chicago, IL 60601"
+    ],
+    "cliaId": "00D0000000",
+    "director": "Imogen Pellinore, PhD",
+    "phone": "312-555-0101",
+    "timeZone": "America/Chicago"
+  },
+  "clients": [
+    {
+      "code": "DEMO-LARKENFIELD",
+      "name": "Larkenfield Pain Management (Demo)",
+      "locations": [
+        {
+          "code": "DEMO-MAIN",
+          "name": "Larkenfield Pain Management - Main Clinic (Demo)"
+        },
+        {
+          "code": "DEMO-NORTH",
+          "name": "Larkenfield Pain Management - North Office (Demo)"
+        }
+      ],
+      "destinations": [
+        {
+          "channel": "fax",
+          "label": "Main Clinic results fax",
+          "address": "312-555-0111",
+          "locationCode": "DEMO-MAIN"
+        },
+        {
+          "channel": "email",
+          "label": "Main Clinic results email",
+          "address": "results@larkenfield-pain.example",
+          "locationCode": "DEMO-MAIN"
+        },
+        {
+          "channel": "fax",
+          "label": "North Office results fax",
+          "address": "312-555-0112",
+          "locationCode": "DEMO-NORTH"
+        },
+        {
+          "channel": "courier",
+          "label": "Courier to Main Clinic",
+          "address": "Courier route 1, Example Way, Chicago IL (Demo)",
+          "locationCode": "DEMO-MAIN"
+        }
+      ]
+    },
+    {
+      "code": "DEMO-WEXCOMBE",
+      "name": "Wexcombe Treatment Program (Demo)",
+      "locations": [
+        {
+          "code": "DEMO-MAIN",
+          "name": "Wexcombe Treatment Program - Dosing Clinic (Demo)"
+        }
+      ],
+      "destinations": [
+        {
+          "channel": "fax",
+          "label": "Clinic results fax",
+          "address": "414-555-0121"
+        },
+        {
+          "channel": "email",
+          "label": "Clinic results email",
+          "address": "labresults@wexcombe-otp.example"
+        },
+        {
+          "channel": "pickup",
+          "label": "Pickup at the laboratory"
+        }
+      ]
+    },
+    {
+      "code": "DEMO-PERRIMOOR",
+      "name": "Perrimoor Family Medicine (Demo)",
+      "locations": [
+        {
+          "code": "DEMO-MAIN",
+          "name": "Perrimoor Family Medicine - Main Office (Demo)"
+        },
+        {
+          "code": "DEMO-EAST",
+          "name": "Perrimoor Family Medicine - East Office (Demo)"
+        },
+        {
+          "code": "DEMO-WEST",
+          "name": "Perrimoor Family Medicine - West Office (Demo)"
+        }
+      ],
+      "destinations": [
+        {
+          "channel": "fax",
+          "label": "Practice results fax",
+          "address": "608-555-0131"
+        },
+        {
+          "channel": "email",
+          "label": "Practice results email",
+          "address": "results@perrimoor-fm.example"
+        },
+        {
+          "channel": "fax",
+          "label": "East Office results fax",
+          "address": "608-555-0132",
+          "locationCode": "DEMO-EAST"
+        },
+        {
+          "channel": "mail",
+          "label": "Practice mailing address",
+          "address": "100 Example Way, Madison, WI 53703 (Demo)"
+        }
+      ]
+    },
+    {
+      "code": "DEMO-KESTRELBY",
+      "name": "Kestrelby Behavioral Health (Demo)",
+      "locations": [
+        {
+          "code": "DEMO-MAIN",
+          "name": "Kestrelby Behavioral Health - Outpatient Clinic (Demo)"
+        },
+        {
+          "code": "DEMO-CRISIS",
+          "name": "Kestrelby Behavioral Health - Crisis Stabilization Unit (Demo)"
+        }
+      ],
+      "destinations": [
+        {
+          "channel": "fax",
+          "label": "Outpatient clinic results fax",
+          "address": "612-555-0141",
+          "locationCode": "DEMO-MAIN"
+        },
+        {
+          "channel": "email",
+          "label": "Outpatient clinic results email",
+          "address": "results@kestrelby-bh.example",
+          "locationCode": "DEMO-MAIN"
+        },
+        {
+          "channel": "courier",
+          "label": "Courier to Crisis Unit",
+          "locationCode": "DEMO-CRISIS"
+        },
+        {
+          "channel": "pickup",
+          "label": "Pickup at the laboratory"
+        }
+      ]
+    }
+  ],
+  "practitioners": [
+    {
+      "npi": "2395716998",
+      "familyName": "Tessingham",
+      "givenNames": "Anika"
+    },
+    {
+      "npi": "1391039819",
+      "familyName": "Marrowby",
+      "givenNames": "Theodore"
+    },
+    {
+      "npi": "1923772028",
+      "familyName": "Dunmarrow",
+      "givenNames": "Rosalind"
+    },
+    {
+      "npi": "1299566574",
+      "familyName": "Harrowmere",
+      "givenNames": "Emeka"
+    },
+    {
+      "npi": "2767634027",
+      "familyName": "Corbinwyck",
+      "givenNames": "Lucia"
+    },
+    {
+      "npi": "2319071785",
+      "familyName": "Sundermere",
+      "givenNames": "Samuel"
+    },
+    {
+      "npi": "2280606353",
+      "familyName": "Eldermoor",
+      "givenNames": "Hana"
+    },
+    {
+      "npi": "1307140347",
+      "familyName": "Bexhallow",
+      "givenNames": "Gideon"
+    }
+  ],
+  "patients": [
+    {
+      "key": "P01",
+      "demographics": {
+        "familyName": "Fennimoor",
+        "birthDate": "1978-03-14",
+        "givenNames": "Marisol",
+        "administrativeSex": "F"
+      },
+      "source": "demo-data",
+      "identifiers": [
+        {
+          "assigningAuthority": "DEMO-LARKENFIELD-MRN",
+          "identifierType": "MR",
+          "value": "DEMO-100001"
+        }
+      ]
+    },
+    {
+      "key": "P02",
+      "demographics": {
+        "familyName": "Quillbrook",
+        "birthDate": "1991-07-22",
+        "givenNames": "Darnell",
+        "administrativeSex": "M"
+      },
+      "source": "demo-data",
+      "identifiers": [
+        {
+          "assigningAuthority": "DEMO-WEXCOMBE-MRN",
+          "identifierType": "MR",
+          "value": "DEMO-200001"
+        }
+      ]
+    },
+    {
+      "key": "P03",
+      "demographics": {
+        "familyName": "Valdenmere",
+        "birthDate": "1985-11-02",
+        "givenNames": "Priya",
+        "administrativeSex": "F"
+      },
+      "source": "demo-data",
+      "identifiers": [
+        {
+          "assigningAuthority": "DEMO-PERRIMOOR-MRN",
+          "identifierType": "MR",
+          "value": "DEMO-300001"
+        }
+      ]
+    },
+    {
+      "key": "P04",
+      "demographics": {
+        "familyName": "Brindlewick-Orlindale",
+        "birthDate": "1969-05-30",
+        "givenNames": "Tamsin",
+        "administrativeSex": "F"
+      },
+      "source": "demo-data",
+      "identifiers": [
+        {
+          "assigningAuthority": "DEMO-KESTRELBY-MRN",
+          "identifierType": "MR",
+          "value": "DEMO-400001"
+        }
+      ]
+    },
+    {
+      "key": "P05",
+      "demographics": {
+        "familyName": "D'Arvelle",
+        "birthDate": "1958-09-09",
+        "givenNames": "Colm",
+        "administrativeSex": "M"
+      },
+      "source": "demo-data",
+      "identifiers": [
+        {
+          "assigningAuthority": "DEMO-LARKENFIELD-MRN",
+          "identifierType": "MR",
+          "value": "DEMO-100002"
+        }
+      ]
+    },
+    {
+      "key": "P06",
+      "demographics": {
+        "familyName": "Fallowmère",
+        "birthDate": "2001-01-17",
+        "givenNames": "Renée",
+        "administrativeSex": "F"
+      },
+      "source": "demo-data",
+      "identifiers": [
+        {
+          "assigningAuthority": "DEMO-PERRIMOOR-MRN",
+          "identifierType": "MR",
+          "value": "DEMO-300002"
+        }
+      ]
+    },
+    {
+      "key": "P07",
+      "demographics": {
+        "familyName": "Yarrowdale",
+        "birthDate": "1994-04-04",
+        "givenNames": "Jordan",
+        "administrativeSex": "M"
+      },
+      "source": "demo-data",
+      "identifiers": [
+        {
+          "assigningAuthority": "DEMO-LARKENFIELD-MRN",
+          "identifierType": "MR",
+          "value": "DEMO-100003"
+        }
+      ]
+    },
+    {
+      "key": "P08",
+      "demographics": {
+        "familyName": "Yarrowdale",
+        "birthDate": "1994-04-04",
+        "givenNames": "Jordan",
+        "administrativeSex": "M"
+      },
+      "source": "demo-data",
+      "identifiers": [
+        {
+          "assigningAuthority": "DEMO-KESTRELBY-MRN",
+          "identifierType": "MR",
+          "value": "DEMO-400002"
+        }
+      ],
+      "acknowledgeCandidates": [
+        "P07"
+      ]
+    },
+    {
+      "key": "P09",
+      "demographics": {
+        "familyName": "Ambrosegate",
+        "birthDate": "1950-12-01"
+      },
+      "source": "demo-data",
+      "identifiers": [
+        {
+          "assigningAuthority": "DEMO-WEXCOMBE-MRN",
+          "identifierType": "MR",
+          "value": "DEMO-200002"
+        }
+      ]
+    },
+    {
+      "key": "P10",
+      "demographics": {
+        "familyName": "Trevanwick",
+        "birthDate": "1999-08-19",
+        "givenNames": "Linh",
+        "administrativeSex": "F"
+      },
+      "source": "demo-data",
+      "identifiers": [
+        {
+          "assigningAuthority": "DEMO-PERRIMOOR-MRN",
+          "identifierType": "MR",
+          "value": "DEMO-300003"
+        }
+      ]
+    },
+    {
+      "key": "P11",
+      "demographics": {
+        "familyName": "Penhallow",
+        "birthDate": "1950-02-27",
+        "givenNames": "Everett",
+        "administrativeSex": "M"
+      },
+      "source": "demo-data",
+      "identifiers": [
+        {
+          "assigningAuthority": "DEMO-WEXCOMBE-MRN",
+          "identifierType": "MR",
+          "value": "DEMO-200003"
+        }
+      ]
+    },
+    {
+      "key": "P12",
+      "demographics": {
+        "familyName": "Ashkettle",
+        "birthDate": "2005-06-12",
+        "givenNames": "Imani",
+        "administrativeSex": "U"
+      },
+      "source": "demo-data",
+      "identifiers": [
+        {
+          "assigningAuthority": "DEMO-KESTRELBY-MRN",
+          "identifierType": "MR",
+          "value": "DEMO-400003"
+        }
+      ]
+    }
+  ],
+  "demoCutoffs": [
+    {
+      "method": "OF-IA-SCREEN",
+      "analyte": "OF-MDMA-IA",
+      "value": "10",
+      "label": "Demo value, not a recommended cutoff"
+    },
+    {
+      "method": "UR-LCMSMS-BARBITURATE",
+      "analyte": "UR-AMO",
+      "value": "50",
+      "label": "Demo value, not a recommended cutoff"
+    },
+    {
+      "method": "OF-LCMSMS-FENTANYL",
+      "analyte": "OF-NFENT",
+      "value": "5",
+      "label": "Demo value, not a recommended cutoff"
+    },
+    {
+      "method": "OF-LCMSMS-BENZO",
+      "analyte": "OF-7ACLO",
+      "value": "5",
+      "label": "Demo value, not a recommended cutoff"
+    },
+    {
+      "method": "OF-LCMSMS-AMPHET",
+      "analyte": "OF-MDA",
+      "value": "5",
+      "label": "Demo value, not a recommended cutoff"
+    }
+  ]
+}

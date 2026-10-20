@@ -1,0 +1,501 @@
+{
+  "id": "laboratory-directory",
+  "title": "Laboratory and ordering directories",
+  "summary": "Set the laboratory profile and register the clients and practitioners referenced by orders.",
+  "reviewedOn": "2026-10-14",
+  "routes": [
+    "/configuration/laboratory",
+    "/configuration/clients",
+    "/configuration/clients/:clientId",
+    "/configuration/practitioners"
+  ],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Laboratory profile records the performing laboratory’s report details and display time zone. Updating it creates a new version; changes after the first version require a reason.",
+        "Clients lists ordering organizations. Open a client for its locations and report destinations. Practitioners lists ordering practitioners and their supplied NPI. Use the corresponding add or register action when an authorized directory record is needed."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Check profile details against the laboratory’s approved information, including the time zone. Missing profile information can prevent report preparation, and times display in UTC until a profile is set.",
+        "Keep the performing laboratory, ordering client, client location and practitioner distinct. Use stable codes and the supplied identifiers to avoid selecting a similarly named record. A client’s destination still needs its separate verification workflow."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Order entry needs configured clients and practitioners. If a record is missing, have a configuration administrator create it from an authorized source. Do not register a guessed practitioner or substitute a different client just to complete an order. Review the exact directory before adding another entry."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Laboratory profile",
+      "routes": ["/configuration/laboratory"],
+      "purpose": "Maintain performing-laboratory details printed on reports and the time zone used throughout the app.",
+      "access": "Any signed-in person may read the profile; Manage configuration is required to save a new version.",
+      "fields": [
+        {
+          "name": "Laboratory name / Name",
+          "meaning": "Performing laboratory’s report name.",
+          "values": "Approved laboratory name.",
+          "rules": "Required; up to 200 characters."
+        },
+        {
+          "name": "Address line 1 / Address",
+          "meaning": "First line of the performing laboratory’s postal address.",
+          "values": "Approved address text.",
+          "rules": "Required; up to 200 characters per line. One to three nonempty lines are stored."
+        },
+        {
+          "name": "Address lines 2 and 3",
+          "meaning": "Additional address lines printed with the laboratory details.",
+          "values": "Approved address text or blank.",
+          "rules": "Optional; up to 200 characters each. Blank lines are omitted."
+        },
+        {
+          "name": "CLIA number",
+          "meaning": "Certificate identifier printed with the laboratory’s identity.",
+          "values": "Two digits, D, seven digits.",
+          "rules": "Required. This is a format check, not verification of certificate scope or status."
+        },
+        {
+          "name": "Laboratory director / Director",
+          "meaning": "Director name printed on reports.",
+          "values": "Approved name up to 200 characters.",
+          "rules": "Required; registration here does not confer clinical privileges on an application account."
+        },
+        {
+          "name": "Phone",
+          "meaning": "Laboratory contact telephone as printed.",
+          "values": "Approved contact text up to 40 characters.",
+          "rules": "Required; stored as supplied after trimming."
+        },
+        {
+          "name": "Time zone",
+          "meaning": "Zone used to display laboratory dates and times.",
+          "values": "A recognized IANA name, such as America/Chicago, or UTC.",
+          "rules": "Required; up to 64 characters. Fixed numeric offsets and informal abbreviations are refused. Saving refreshes time displays."
+        },
+        {
+          "name": "Billing NPI",
+          "meaning": "Performing laboratory’s billing identifier.",
+          "values": "Ten digits with a valid NPI check digit, or blank.",
+          "rules": "Optional in the profile; other billing workflows may flag missing billing identity."
+        },
+        {
+          "name": "Tax ID",
+          "meaning": "Tax identification number used for billing identity.",
+          "values": "Nine digits, optionally entered as NN-NNNNNNN, or blank.",
+          "rules": "Optional; stored without the hyphen."
+        },
+        {
+          "name": "Version and Set",
+          "meaning": "Identify the current profile revision, who saved it and when.",
+          "values": "Increasing version number, person and recorded time.",
+          "rules": "Read-only; each successful change appends a version."
+        },
+        {
+          "name": "Reason",
+          "meaning": "Why approved laboratory details are changing.",
+          "values": "Explanation up to 1,000 characters.",
+          "rules": "Required after the first saved profile; the initial profile has no reason."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Set laboratory profile / Change profile",
+          "does": "Open the form, prefilled from the current profile where present.",
+          "availableWhen": "Manage configuration.",
+          "result": "Save profile appends a new version; Cancel closes without saving."
+        },
+        {
+          "name": "Save profile",
+          "does": "Persist the complete laboratory details.",
+          "availableWhen": "Valid required values and the current profile revision.",
+          "result": "The new version becomes current and the display time zone refreshes."
+        }
+      ],
+      "restrictions": [
+        "Reports cannot be prepared until a profile is set; times display in UTC until then.",
+        "Changing the profile preserves older versions; it does not establish laboratory accreditation or validate clinical use."
+      ],
+      "workflow": [
+        "Check the performing laboratory’s approved details.",
+        "Set or change the profile and explicitly select its IANA time zone.",
+        "Supply a reason for a revision, save, then confirm the displayed details and version."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Time zone or NPI is refused",
+          "recovery": "Use a recognized IANA name or the supplied ten-digit NPI with correct check digit; do not substitute a guessed value."
+        },
+        {
+          "problem": "Another profile version was saved meanwhile",
+          "recovery": "Reload the profile and compare the latest details before retrying your change."
+        }
+      ]
+    },
+    {
+      "title": "Clients",
+      "routes": ["/configuration/clients"],
+      "purpose": "Find ordering organizations and register new authorized clients.",
+      "access": "Client creation requires Manage configuration.",
+      "fields": [
+        {
+          "name": "Find clients",
+          "meaning": "Search existing organizations before registration.",
+          "values": "Code or name text; blank shows all.",
+          "rules": "Optional."
+        },
+        {
+          "name": "Code",
+          "meaning": "Stable laboratory identifier for the ordering client.",
+          "values": "Laboratory-assigned code; use the displayed letters/digits/period/underscore/hyphen convention.",
+          "rules": "Required; up to 64 characters and unique among retained clients. Correct factual mistakes from the client detail page; records are never deleted."
+        },
+        {
+          "name": "Name",
+          "meaning": "Human-readable label staff see when selecting the record.",
+          "values": "Laboratory-approved text.",
+          "rules": "Required; up to 200 characters; surrounding spaces are removed and control characters are refused."
+        },
+        {
+          "name": "Locations",
+          "meaning": "Count of registered sites under the organization.",
+          "values": "Whole-number count.",
+          "rules": "Read-only; inspect or add sites on the client page."
+        },
+        {
+          "name": "Availability / Revision",
+          "meaning": "Shows whether this retained directory identity may be selected for new orders and which correction revision is displayed.",
+          "values": "Active or Retired; positive revision number.",
+          "rules": "Read-only in the directory. Correct client, Correct location or Correct practitioner changes availability with a required explanation. Retired records remain available in configuration and historical lookups."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Add client",
+          "does": "Register an ordering organization from its authorized code and name.",
+          "availableWhen": "Manage configuration; unique code.",
+          "result": "Opens the new client page."
+        },
+        {
+          "name": "Open row",
+          "does": "Open the selected organization’s details, locations and destinations.",
+          "availableWhen": "A listed client.",
+          "result": "Shows the client page with navigation back to the directory."
+        }
+      ],
+      "restrictions": [
+        "A client is an organization; it is distinct from the ordering practitioner and the performing laboratory."
+      ],
+      "workflow": [
+        "Search for the organization.",
+        "Open the existing client or add its approved code and name.",
+        "Review its locations and delivery destinations before using it in orders."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A similar or duplicate client exists",
+          "recovery": "Compare the supplied identifiers before adding another record; do not use a similarly named organization as a substitute."
+        }
+      ]
+    },
+    {
+      "title": "Client details",
+      "routes": ["/configuration/clients/:clientId"],
+      "purpose": "Maintain locations and view active report destinations for one ordering organization.",
+      "access": "Manage configuration is required to add or correct clients, locations and destinations.",
+      "fields": [
+        {
+          "name": "Code and Name",
+          "meaning": "Identify the selected client organization.",
+          "values": "Saved client code and display name.",
+          "rules": "Read-only; verify these before adding related records."
+        },
+        {
+          "name": "Location Code",
+          "meaning": "Site identifier within this client.",
+          "values": "Laboratory-assigned code, up to 64 characters.",
+          "rules": "Required in Add location; unique within the client."
+        },
+        {
+          "name": "Location Name",
+          "meaning": "Human-readable name of the client’s site.",
+          "values": "Approved site name up to 200 characters.",
+          "rules": "Required, up to 200 characters. Open the location row to correct supplied facts or retire the selection; earlier facts remain in history."
+        },
+        {
+          "name": "Delivery destinations",
+          "meaning": "Active recipient addresses attached to this client.",
+          "values": "Client/location, label, channel, address and verification state.",
+          "rules": "Read-only preview excludes retired destinations; open a row for its full actions."
+        },
+        {
+          "name": "Client",
+          "meaning": "Ordering organization this destination serves.",
+          "values": "A registered client chosen by name and code.",
+          "rules": "Required when adding from the directory; preset when adding from a client page. Changing it clears Location."
+        },
+        {
+          "name": "Location",
+          "meaning": "Restrict the destination to one site of that client.",
+          "values": "Registered locations belonging to the selected client; blank means Whole client.",
+          "rules": "Optional; a location from another client is refused."
+        },
+        {
+          "name": "Channel",
+          "meaning": "Staff-operated route used to send or hand over the report.",
+          "values": "Fax; Email; Mail; Courier; Pickup at the laboratory.",
+          "rules": "Required for a new destination. A replacement retains the original client, location and channel."
+        },
+        {
+          "name": "Address",
+          "meaning": "Where the report is sent or handed over.",
+          "values": "Fax: 7–20 digits with spaces, +, -, parentheses or periods. Email: one address with an @ and dotted domain. Mail: postal address. Courier: optional handover description. Pickup: blank.",
+          "rules": "Up to 500 characters. Required for Fax, Email and Mail; optional for Courier; forbidden for Pickup. Format acceptance does not verify the recipient."
+        },
+        {
+          "name": "Label",
+          "meaning": "Name staff use to distinguish this destination.",
+          "values": "Specific label such as the clinic’s authorized main fax.",
+          "rules": "Required; up to 200 characters."
+        },
+        {
+          "name": "How it was verified",
+          "meaning": "Evidence that the address reaches the intended client.",
+          "values": "Description of the actual verification method.",
+          "rules": "Required to Verify; up to 500 characters. Do not record a test or contact that did not occur."
+        },
+        {
+          "name": "Reason",
+          "meaning": "Explanation for replacing or retiring a destination.",
+          "values": "Specific explanation up to 1,000 characters.",
+          "rules": "Required for Replace and Retire."
+        },
+        {
+          "name": "Self-verification confirmation",
+          "meaning": "Acknowledgement that the destination’s creator is also its verifier.",
+          "values": "Initially unchecked confirmation shown when requested by the engine.",
+          "rules": "Only accepted when the laboratory’s separation-of-duties policy allows it."
+        },
+        {
+          "name": "Availability / Revision",
+          "meaning": "Shows whether this retained directory identity may be selected for new orders and which correction revision is displayed.",
+          "values": "Active or Retired; positive revision number.",
+          "rules": "Read-only in the directory. Correct client, Correct location or Correct practitioner changes availability with a required explanation. Retired records remain available in configuration and historical lookups."
+        },
+        {
+          "name": "Correct client / Correct location: Code, Name, Availability for new orders, Reason",
+          "meaning": "Corrects the same organization or site using supplied evidence, or retires it from new ordering.",
+          "values": "Current code/name prefilled; Active or Retired preselected to current state; initially blank explanation.",
+          "rules": "Code 1–64 characters, name 1–200, reason 1–1000; all required. Code remains unique among retained clients or within the original client for locations. A location cannot move to another client."
+        },
+        {
+          "name": "Correction history: Revision / Saved facts / Recorded / Recorded by / Reason",
+          "meaning": "Shows original registration and each factual correction or retirement in causal revision order.",
+          "values": "Saved code/name or NPI/names and availability; timestamp, acting user, explanation.",
+          "rules": "Read-only and immutable. Migrated baseline shows Unknown — legacy baseline: its retained creation time does not establish earlier edit chronology or an author. No historical attribution is invented."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Add location",
+          "does": "Register a site under this client.",
+          "availableWhen": "Manage configuration and a unique location code.",
+          "result": "The new site appears in Locations and relevant location choices."
+        },
+        {
+          "name": "Add destination",
+          "does": "Open destination registration with this client already selected.",
+          "availableWhen": "Manage configuration.",
+          "result": "Creates an unverified address; see Delivery destinations for verification and replacement requirements."
+        },
+        {
+          "name": "Open destination",
+          "does": "Open the destination’s full detail panel.",
+          "availableWhen": "An active destination is listed.",
+          "result": "Navigates to Delivery destinations for Verify, Replace or Retire as permitted."
+        },
+        {
+          "name": "Previous / Next / Clients breadcrumb",
+          "does": "Move between clients or return to the originating directory.",
+          "availableWhen": "A neighboring record or directory link is available.",
+          "result": "Navigation only; saved directory data is retained."
+        },
+        {
+          "name": "Open location row / Correct location / Correct client / Save correction",
+          "does": "Opens current facts and submits a versioned correction or retirement.",
+          "availableWhen": "Manage configuration, current revision, unique code and required evidence-backed reason.",
+          "result": "Updates the same identity and appends immutable history and audit. New order selections exclude retired records; accepted orders and issued PDFs remain retained."
+        },
+        {
+          "name": "Show correction history / Hide correction history",
+          "does": "Loads or hides the selected record’s retained revision history.",
+          "availableWhen": "The client or practitioner detail or location panel is open.",
+          "result": "Shows all saved versions in revision order; opening history changes no records."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes an unsaved correction dialog.",
+          "availableWhen": "A correction dialog is open.",
+          "result": "No correction, retirement or history entry is recorded."
+        }
+      ],
+      "restrictions": [
+        "A saved location is separate from a verified report destination; adding one does not establish the other.",
+        "Corrections must describe the same organization, site or practitioner. Use a distinct registration for a different identity. Retirement prevents new selection; it does not revoke or rewrite accepted orders or issued report artifacts."
+      ],
+      "workflow": [
+        "Confirm the client identity.",
+        "Add only sites supplied by the organization.",
+        "Add authorized delivery destinations, then complete their verification separately.",
+        "For factual correction or retirement, open the existing record, inspect its history, choose Correct, enter supported facts and a reason, save, and verify the new availability and revision."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Client not found",
+          "recovery": "Return to Clients and open a current row."
+        },
+        {
+          "problem": "No delivery destination is shown",
+          "recovery": "This preview hides retired addresses. Check Delivery destinations with Show retired before registering a replacement."
+        },
+        {
+          "problem": "The record changed, or a retired source is refused for a new order",
+          "recovery": "Reload and inspect the current record/history before resubmitting a correction. Select an active source only when supported by the ordering evidence; do not substitute another organization or practitioner to bypass retirement."
+        }
+      ]
+    },
+    {
+      "title": "Practitioners",
+      "routes": ["/configuration/practitioners"],
+      "purpose": "Register ordering practitioners using their supplied identity and NPI.",
+      "access": "Manage configuration is required for registration, correction and retirement.",
+      "fields": [
+        {
+          "name": "Find practitioners",
+          "meaning": "Locate an ordering professional.",
+          "values": "Name or NPI text; blank shows all.",
+          "rules": "Optional; check before registering."
+        },
+        {
+          "name": "NPI",
+          "meaning": "Practitioner identifier used to distinguish ordering professionals.",
+          "values": "Exactly ten digits with a valid NPI check digit.",
+          "rules": "Required and unique. Format validation does not verify licensing, enrollment or authorization to order."
+        },
+        {
+          "name": "Family name",
+          "meaning": "Practitioner’s supplied surname.",
+          "values": "Text up to 200 characters.",
+          "rules": "Required; shown first in the directory."
+        },
+        {
+          "name": "Given names",
+          "meaning": "Practitioner’s supplied given names.",
+          "values": "Text up to 200 characters, or blank.",
+          "rules": "Optional; absent values show Not provided."
+        },
+        {
+          "name": "Availability / Revision",
+          "meaning": "Shows whether this retained directory identity may be selected for new orders and which correction revision is displayed.",
+          "values": "Active or Retired; positive revision number.",
+          "rules": "Read-only in the directory. Correct client, Correct location or Correct practitioner changes availability with a required explanation. Retired records remain available in configuration and historical lookups."
+        },
+        {
+          "name": "Correct practitioner: Availability for new orders / Reason",
+          "meaning": "Retires or reactivates selection of this same practitioner and explains any factual correction.",
+          "values": "Active or Retired, prefilled to current state; initially blank reason.",
+          "rules": "Required; reason 1–1000 characters. NPI and names are prefilled and retain their ordinary validation. Never transfer an existing identity to another person."
+        },
+        {
+          "name": "Correction history: Revision / Saved facts / Recorded / Recorded by / Reason",
+          "meaning": "Shows original registration and each factual correction or retirement in causal revision order.",
+          "values": "Saved code/name or NPI/names and availability; timestamp, acting user, explanation.",
+          "rules": "Read-only and immutable. Migrated baseline shows Unknown — legacy baseline: its retained creation time does not establish earlier edit chronology or an author. No historical attribution is invented."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Register practitioner",
+          "does": "Save the supplied NPI and names.",
+          "availableWhen": "Manage configuration; NPI is valid and unused.",
+          "result": "Opens the registered practitioner panel with current facts and correction history."
+        },
+        {
+          "name": "Open row / Previous / Next / Close",
+          "does": "Inspect saved names and NPI.",
+          "availableWhen": "A listed practitioner.",
+          "result": "Shows or navigates the panel. Correct practitioner is available to configuration managers; no deletion is offered."
+        },
+        {
+          "name": "Correct practitioner / Save correction",
+          "does": "Records corrected supplied names/NPI or availability on the same practitioner identity.",
+          "availableWhen": "Manage configuration, current revision, valid unique NPI and required reason.",
+          "result": "Appends immutable prior/current facts and actor audit. Retired practitioners disappear from new order choices; historical lookup and accepted orders remain."
+        },
+        {
+          "name": "Show correction history / Hide correction history",
+          "does": "Loads or hides the selected record’s retained revision history.",
+          "availableWhen": "The client or practitioner detail or location panel is open.",
+          "result": "Shows all saved versions in revision order; opening history changes no records."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes an unsaved correction dialog.",
+          "availableWhen": "A correction dialog is open.",
+          "result": "No correction, retirement or history entry is recorded."
+        }
+      ],
+      "restrictions": [
+        "Do not guess an NPI or substitute another ordering practitioner to unblock an order.",
+        "Corrections must describe the same organization, site or practitioner. Use a distinct registration for a different identity. Retirement prevents new selection; it does not revoke or rewrite accepted orders or issued report artifacts."
+      ],
+      "workflow": [
+        "Search by the supplied NPI and name.",
+        "If absent, obtain authorized details and register the practitioner.",
+        "Check the saved identity before selecting it on an order.",
+        "For factual correction or retirement, open the existing record, inspect its history, choose Correct, enter supported facts and a reason, save, and verify the new availability and revision."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "NPI already registered",
+          "recovery": "Open the existing practitioner and confirm identity."
+        },
+        {
+          "problem": "NPI check fails",
+          "recovery": "Check the supplied digits with the source; a ten-digit string can still have an invalid check digit."
+        },
+        {
+          "problem": "The record changed, or a retired source is refused for a new order",
+          "recovery": "Reload and inspect the current record/history before resubmitting a correction. Select an active source only when supported by the ordering evidence; do not substitute another organization or practitioner to bypass retirement."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/configuration/laboratory/LaboratoryPage.tsx",
+    "ui/src/features/configuration/laboratory/ProfileDialog.tsx",
+    "ui/src/features/configuration/clients/ClientsPage.tsx",
+    "ui/src/features/configuration/clients/ClientPage.tsx",
+    "ui/src/features/configuration/clients/ClientLocations.tsx",
+    "ui/src/features/configuration/clients/ClientDestinations.tsx",
+    "ui/src/features/configuration/practitioners/PractitionersPage.tsx",
+    "ui/src/features/configuration/practitioners/RegisterPractitionerDialog.tsx",
+    "ui/src/features/configuration/destinations/AddDestinationDialog.tsx",
+    "crates/lis-identity/src/commands/organizations.rs",
+    "crates/lis-identity/src/commands/laboratory.rs",
+    "crates/lis-identity/src/model.rs",
+    "ui/src/features/configuration/clients/CorrectClientDialog.tsx",
+    "ui/src/features/configuration/clients/DirectoryHistory.tsx",
+    "ui/src/features/configuration/practitioners/CorrectPractitionerDialog.tsx",
+    "crates/lis-identity/src/directories.rs",
+    "crates/lis-identity/migrations/0004_directory_history.sql",
+    "crates/lis-identity/src/directories/history.rs"
+  ]
+}

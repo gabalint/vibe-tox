@@ -1,0 +1,6 @@
+Filename,Sample ID,Sample Type,Compound,Calculated Amt,Theoretical Amt,Response Ratio,Excluded
+SYN-BATCH-1013_007,C00000125,Unknown,Oxycodone,85.20,,1.204,No
+SYN-BATCH-1013_007,C00000125,Unknown,Oxymorphone,N/F,,N/F,No
+SYN-BATCH-1013_007,C00000125,Unknown,Oxycodone-D6,N/F,,N/F,No
+SYN-BATCH-1013_008,QC-HIGH-L5678,QC Std,Oxycodone,412.0,400,5.881,No
+SYN-BATCH-1013_001,CAL-3,Cal Std,Oxycodone,49.6,50,0.701,No

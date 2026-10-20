@@ -1,0 +1,75 @@
+/* A versioned record page: the compact Versions list beside the shown version's content. */
+.versionLayout {
+  display: flex;
+  flex: 1 1 0;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.versionColumn {
+  flex: none;
+  width: min(20rem, 100%);
+}
+
+.versionItems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One version: a link that shows its content; the shown one is marked like an open grid row. */
+.versionLink {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.versionLink:hover {
+  background: var(--color-surface-hover);
+}
+
+.versionLink[aria-current="true"] {
+  background: var(--color-accent-subtle);
+  box-shadow: inset 3px 0 0 var(--color-accent);
+}
+
+.versionTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+/* The shown version: its heading and actions, its facts, then its content grid filling the rest. */
+.versionContent {
+  display: flex;
+  flex: 1 1 24rem;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.versionHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.versionHeading {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}

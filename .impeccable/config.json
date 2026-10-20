@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "website/index.html"
+        ],
+        "createdAt": "2026-10-14T20:12:15.088Z",
+        "reason": "Agent review: browser measurements confirm 24px top/bottom padding on all three workflow list items; presentation and ownership sections have 44px mobile block padding and 18px wrapper inset, with 64px/76px desktop block padding. The detector misses logical padding and inner wrappers."
+      }
+    ]
+  }
+}

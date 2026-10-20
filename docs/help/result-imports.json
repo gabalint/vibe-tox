@@ -1,0 +1,326 @@
+{
+  "id": "result-imports",
+  "title": "Result imports",
+  "summary": "Account for received results and investigate rows that were not applied.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/review/imports", "/review/imports/:importAttemptId/:tab?"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Result imports lists attempts to process received data. Load results file lets you choose a registered instrument and a file. Open an attempt to see its outcome, counts and refusal reasons; file attempts also show file provenance and the template version used.",
+        "Quarantined rows need investigation. Set aside lists rows kept outside patient results. Retry import processes the received message again as a new attempt and replaces earlier open quarantine outcomes with the retry’s outcome."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Reconcile every row category, including duplicates, QC, set-aside rows and measured-but-not-ordered values. A successful file receipt is separate from successful result processing.",
+        "Preserve the original export. Correct the source configuration, missing run association or other stated cause before retrying, and record a meaningful reason. Review the new attempt to confirm what changed."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "A changed header, unknown label, unexpected unit or unmapped value can prevent processing. Read the file-level and row-level reasons separately. Repeatedly loading or retrying the same data does not resolve an unchanged cause; inspect the affected source, run or mapping first."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/analytics/imports/ImportAttemptsPage.tsx",
+    "ui/src/features/analytics/imports/LoadResultFileDialog.tsx",
+    "ui/src/features/analytics/imports/LoadedFile.tsx",
+    "ui/src/features/analytics/imports/ImportAttemptPage.tsx",
+    "ui/src/features/analytics/imports/ImportFile.tsx",
+    "ui/src/features/analytics/imports/QuarantineItems.tsx",
+    "ui/src/features/analytics/imports/QuarantinePanel.tsx",
+    "ui/src/features/analytics/imports/ResolveQuarantineDialog.tsx",
+    "ui/src/features/analytics/imports/SetAsideRows.tsx",
+    "ui/src/features/analytics/resultLabels.ts",
+    "ui/src/features/analytics/contract.ts",
+    "crates/lis-results/src/commands/quarantine.rs",
+    "crates/lis-results/src/error.rs",
+    "crates/lis-engine/src/commands/results.rs",
+    "crates/lis-results/src/queries/imports.rs"
+  ],
+  "pages": [
+    {
+      "title": "Result imports",
+      "routes": ["/review/imports"],
+      "purpose": "Find every recent attempt to process analyzer messages or result files, and load an approved result file manually.",
+      "access": "Viewing import work requires result-review authority. Load results file additionally requires analysis authority.",
+      "fields": [
+        {
+          "name": "Processed",
+          "meaning": "Identifies when an import attempt ran.",
+          "values": "Recorded date/time; newest attempts first.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Instrument",
+          "meaning": "Identifies the source instrument.",
+          "values": "Configured instrument name.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Received as",
+          "meaning": "Distinguishes acquisition paths.",
+          "values": "Analyzer message, File loaded by hand, File from the watched folder.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Attempt",
+          "meaning": "Numbers processing attempts on the same receipt.",
+          "values": "Positive attempt number; a retry creates a later attempt.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Outcome",
+          "meaning": "Summarizes processing, not clinical approval.",
+          "values": "Processed; Processed, some rows quarantined; Quarantined.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Rows / Quarantined",
+          "meaning": "Shows the total rows processed and number held for investigation.",
+          "values": "Nonnegative counts.",
+          "rules": "Read-only; open the attempt for all row categories and reasons."
+        },
+        {
+          "name": "Import count / freshness",
+          "meaning": "Indicates the list’s extent and read time.",
+          "values": "Count, more-items indication and last refresh.",
+          "rules": "Loads 200 matching records per page. Use Load older imports to reach retained records beyond the first page; sorting applies to loaded rows. Stable identifier tie-breakers preserve reachability when timestamps match or clocks move backward."
+        },
+        {
+          "name": "Load results file: Instrument",
+          "meaning": "Chooses the approved source template used to read the file.",
+          "values": "Instruments with an approved result-file template.",
+          "rules": "Required; no default. The dialog displays the selected software name/version before choosing the file."
+        },
+        {
+          "name": "File / Size / Received / Import",
+          "meaning": "Shows the manual-load receipt and eventual import status.",
+          "values": "Filename, byte count, received time and import outcome.",
+          "rules": "Read-only. Received does not mean imported; processing may still be pending."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Load results file / Choose file",
+          "does": "Selects an instrument and opens the operating-system file picker.",
+          "availableWhen": "Analysis authority and an approved file template are available.",
+          "result": "Stores a receipt of original bytes and schedules processing; does not change or move the original file."
+        },
+        {
+          "name": "Open import attempt / Open the earlier import attempt",
+          "does": "Opens the new processing result or the original attempt for duplicate bytes.",
+          "availableWhen": "The corresponding attempt has been processed and found.",
+          "result": "Opens the latest processing attempt for the exact received or duplicate receipt, even when the receipt is outside recent list pages. Shows counts, file provenance and quarantine."
+        },
+        {
+          "name": "Open import row",
+          "does": "Opens a selected attempt.",
+          "availableWhen": "A row is loaded.",
+          "result": "Opens details with Previous and Next in list order."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reads recently processed attempts.",
+          "availableWhen": "The page is open.",
+          "result": "Updates outcomes and counts."
+        },
+        {
+          "name": "Cancel / Close",
+          "does": "Closes the file selection or receipt dialog.",
+          "availableWhen": "The relevant dialog is open.",
+          "result": "Cancelling the system picker loads nothing; closing an already-received receipt does not undo processing."
+        },
+        {
+          "name": "Load older imports",
+          "does": "Loads the next page while preserving the selected filter and loaded rows.",
+          "availableWhen": "More matching records remain.",
+          "result": "Appends records and updates the loaded count. Refresh rereads the current pages after other work changes the queue."
+        }
+      ],
+      "restrictions": [
+        "Identical bytes received again from the same instrument are deduplicated. To reprocess after a reviewed template change, use Retry import on the existing receipt.",
+        "Files larger than 20 MiB are not read or imported; a receipt records the arrival. Export a supported smaller file.",
+        "The file receipt preserves transport evidence. Technical review and report release remain separate."
+      ],
+      "workflow": [
+        "Choose the actual exporting instrument before selecting a file.",
+        "Wait for its processing outcome and open the import attempt.",
+        "Reconcile all counts, including QC, duplicates, set-aside and retained measurements."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No instrument is offered.",
+          "recovery": "An authorized configuration reviewer must approve that result-file instrument’s template in Bench setup."
+        },
+        {
+          "problem": "File already received appears.",
+          "recovery": "Open the earlier attempt. Use Retry import there after correcting a documented cause; selecting the identical file again does not reprocess it."
+        },
+        {
+          "problem": "The file is received but no attempt is displayed.",
+          "recovery": "Keep the application running and check Result imports. If processing remains absent, inspect operational work and the instrument receipt; do not assume results were applied."
+        },
+        {
+          "problem": "An older record is outside the displayed rows",
+          "recovery": "Use Load older imports until the needed record appears. Check filters and Refresh after concurrent changes; do not recreate the work to make it visible."
+        }
+      ]
+    },
+    {
+      "title": "Import attempt",
+      "routes": ["/review/imports/:importAttemptId/:tab?"],
+      "purpose": "Reconcile one processing attempt, investigate quarantined rows and retry a corrected source receipt.",
+      "access": "Requires result-review authority. Opening details containing sample labels and values is audited.",
+      "fields": [
+        {
+          "name": "Attempt / Processed / Outcome",
+          "meaning": "Identifies the processing event and broad result.",
+          "values": "Attempt number, recorded processing time and Processed, Processed, some rows quarantined or Quarantined.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Message failure / File failure",
+          "meaning": "Explains why no rows could be processed at file/message level.",
+          "values": "None or a reason such as malformed message, no approved source, sender mismatch, unreadable encoding, header mismatch or file limits.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Rows / New results / Duplicates / Reprocessed / QC rows / Quarantined",
+          "meaning": "Accounts for rows processed by category.",
+          "values": "Nonnegative counts.",
+          "rules": "Read-only; duplicate does not create a second result. Reprocessing may create a new result revision."
+        },
+        {
+          "name": "Not results / Set aside / Measured, not ordered (kept)",
+          "meaning": "Accounts for file rows outside ordinary result insertion.",
+          "values": "Counts of named nonresults, listed exclusions and measurements retained outside ordered scope.",
+          "rules": "Read-only; retained measurements are not automatically reported or billable ordered work."
+        },
+        {
+          "name": "Origin / File name / Size / SHA-256 / Template",
+          "meaning": "Identifies the preserved file and the source version that read it.",
+          "values": "Manual loader or watched folder, filename, byte length, digest or Not computed, source software/version or no approved template.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Tabs",
+          "meaning": "Separates rows requiring a decision from recorded exclusions.",
+          "values": "Quarantined and Set aside, each with a count.",
+          "rules": "File attempts only. Analyzer-message attempts show quarantine directly."
+        },
+        {
+          "name": "Quarantined: Record / Sample label / Test code / Value as received",
+          "meaning": "Identifies the exact source evidence held back.",
+          "values": "Row reference, source label/code, original value and units, or Not reported.",
+          "rules": "Read-only. Investigate identity before attempting any resolution."
+        },
+        {
+          "name": "Why quarantined",
+          "meaning": "Explains the row-level refusal.",
+          "values": "Unknown or ambiguous sample, closed run, unknown analyte, outside ordered scope, incompatible unit, unreadable value, output-scale mismatch, conflicting duplicate, unsupported/mismatched dilution, failed execution, malformed row or sample-role mismatch.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Quarantine: State",
+          "meaning": "Tracks the row’s decision history.",
+          "values": "Needs a decision, Accepted as reprocessing, Rejected, Replaced by a retry.",
+          "rules": "Read-only; only open rows offer decisions."
+        },
+        {
+          "name": "Set aside: Record / Sample label / Analyte as written / Value as received / Sample type / Why set aside",
+          "meaning": "Explains file rows that do not require a quarantine decision.",
+          "values": "Source text; calibrator/blank not on a run, or measured-but-not-ordered data that failed checks.",
+          "rules": "Read-only; this tab has no accept/reject controls."
+        },
+        {
+          "name": "Retry import / Accept as reprocessing / Reject row: Reason",
+          "meaning": "Records why processing or a row decision is justified.",
+          "values": "Free text.",
+          "rules": "Required, trimmed 1–1,000 characters; preserved in the audit history."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Retry import",
+          "does": "Processes the original complete receipt again after a reasoned request.",
+          "availableWhen": "Result-review authority and a complete stored receipt.",
+          "result": "Queues a new attempt; earlier open quarantine outcomes are superseded by the retry’s outcome. Review the new attempt."
+        },
+        {
+          "name": "Open quarantined row",
+          "does": "Shows the full received evidence and refusal reason.",
+          "availableWhen": "A quarantined row exists.",
+          "result": "Opens a panel with Previous, Next and Close."
+        },
+        {
+          "name": "Accept as reprocessing / Accept row",
+          "does": "Applies a conflicting duplicate as reprocessed evidence.",
+          "availableWhen": "The row is open, specifically a conflicting duplicate, and all current checks pass.",
+          "result": "Creates a new result revision; current review/release requirements still apply."
+        },
+        {
+          "name": "Reject row",
+          "does": "Declines to import the quarantined evidence.",
+          "availableWhen": "An open row and result-review authority.",
+          "result": "Keeps the row and reason, marked Rejected."
+        },
+        {
+          "name": "Template",
+          "does": "Opens the exact file source used.",
+          "availableWhen": "The attempt has a known file-template registration.",
+          "result": "Shows its saved mappings and check controls."
+        },
+        {
+          "name": "Previous / Next / Result imports",
+          "does": "Navigates the recorded list of attempts.",
+          "availableWhen": "Adjacent records exist when opened from a list.",
+          "result": "Changes the viewed attempt without applying a decision."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes an unsubmitted retry or row decision.",
+          "availableWhen": "A dialog is open.",
+          "result": "Records no decision."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reloads current evidence, state and revision for this record.",
+          "availableWhen": "The detail page is open.",
+          "result": "Shows changes made by another workflow. Inspect refreshed facts before repeating any stale submission."
+        }
+      ],
+      "restrictions": [
+        "Acceptance is not a general bypass for quarantine: only conflicting duplicates offer Accept as reprocessing.",
+        "A retry processes original received bytes with applicable current configuration; fix and approve the cause before retrying.",
+        "The file reader allows 50,000 rows, 512 columns and 4 KiB per field. Header matching is limited to the first 50 lines.",
+        "A successfully received message is separate from a successfully processed result."
+      ],
+      "workflow": [
+        "Read the overall failure and reconcile all outcome counts.",
+        "For each quarantined row, compare the original label, analyte, value and units with the responsible run and approved source.",
+        "Correct configuration or workflow causes through their owning screens; record justified conflicting-row decisions or retry the receipt.",
+        "Open the resulting attempt and verify the outcome rather than relying on the queued-retry confirmation."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Header, unit or sample role does not match.",
+          "recovery": "Review the actual export and approved template/method/run role. Correct the source or register and approve a reviewed template; do not reinterpret data to force a pass."
+        },
+        {
+          "problem": "More than one sample matches the label.",
+          "recovery": "Investigate the active run placements and material identity; resolve ambiguity before retrying."
+        },
+        {
+          "problem": "The row is already resolved or replaced.",
+          "recovery": "Reload the attempt and inspect the latest retry/decision. Do not submit a decision against stale evidence."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,272 @@
+{
+  "id": "catalog-tests",
+  "title": "Tests and panels",
+  "summary": "Manage the versioned tests and panels available for order entry.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/configuration/orderables", "/configuration/orderables/:orderableId"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Use Tests and panels to find an orderable by its name or code and filter the directory by kind or version state. Open its page to inspect the version in effect, any draft and the earlier versions.",
+        "New draft version proposes a change. If a draft already exists, open it instead. Review its components and method references before using the available approval action. Order entry offers the version in effect; existing orders preserve the version they used."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Keep names, codes and components aligned with the laboratory’s approved catalog. Inspect the selected version explicitly: a page may initially show a draft awaiting review rather than the version currently in effect.",
+        "Treat a panel’s component list as laboratory configuration. Do not add or remove components to produce a billing class count or assume that approving a panel validates its methods."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Missing or unusable referenced methods can prevent approval. Open the relevant method and review its version state. Approval and drafting have separate authority requirements, subject to the laboratory’s separation-of-duties policy. Resolve the reported configuration issue before retrying."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Tests and panels",
+      "routes": ["/configuration/orderables"],
+      "purpose": "Find registered tests and panels and open their version history, or add a new record.",
+      "access": "View with the configuration access offered to your account. Adding and drafting require Manage configuration; approval and retirement require Approve configuration. The engine checks authority again when saving.",
+      "fields": [
+        {
+          "name": "Find tests and panels",
+          "meaning": "Narrow the displayed directory without changing saved records.",
+          "values": "Any part of the code or name; blank shows all.",
+          "rules": "Optional; matching is on the loaded directory."
+        },
+        {
+          "name": "Code",
+          "meaning": "Stable laboratory identifier used to recognize and reference the record.",
+          "values": "Laboratory-assigned letters, digits, period, underscore or hyphen.",
+          "rules": "Required; at most 64 characters; unique for this record type. Choose carefully: this screen does not rename codes."
+        },
+        {
+          "name": "Name",
+          "meaning": "Human-readable label staff see when selecting the record.",
+          "values": "Laboratory-approved text.",
+          "rules": "Required; up to 200 characters; surrounding spaces are removed and control characters are refused."
+        },
+        {
+          "name": "Versions",
+          "meaning": "Distinguish the version in effect from a draft awaiting approval.",
+          "values": "Version numbers, or no version in effect / no draft.",
+          "rules": "Read-only; a record can have a current version and a draft at the same time."
+        },
+        {
+          "name": "Kind (filter and Add test or panel)",
+          "meaning": "Distinguish single-component tests from panels.",
+          "values": "Filter: All kinds, Tests, Panels. New record: Test (one component), Panel (one or more components).",
+          "rules": "Filter defaults to all; the new record requires an explicit kind."
+        },
+        {
+          "name": "State",
+          "meaning": "Find records by their current and proposed versions.",
+          "values": "Any state; Awaiting approval; In effect; No version in effect.",
+          "rules": "Optional filter. Awaiting approval and In effect can both describe the same record."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Add test or panel",
+          "does": "Register the code and name, then open the record.",
+          "availableWhen": "Manage configuration; code is not already used.",
+          "result": "Creates the named record. Draft and approve its content separately."
+        },
+        {
+          "name": "Open row",
+          "does": "Show the selected record and its versions.",
+          "availableWhen": "A listed row is available.",
+          "result": "The record page opens. Click its row or press Enter."
+        },
+        {
+          "name": "Clear find / Clear filters",
+          "does": "Remove the selected search or filter constraints.",
+          "availableWhen": "A search or filter is applied.",
+          "result": "The list expands; no saved configuration changes."
+        }
+      ],
+      "restrictions": ["Adding a name and code alone does not create an approved definition."],
+      "workflow": [
+        "Search before adding a record to avoid duplicates.",
+        "Open the existing record or add the laboratory-approved code and name.",
+        "Review its version state before changing it."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No matching records",
+          "recovery": "Clear find and filters; if the record is still absent, ask the configuration owner before adding a new code."
+        }
+      ]
+    },
+    {
+      "title": "Test or panel versions",
+      "routes": ["/configuration/orderables/:orderableId"],
+      "purpose": "Choose the method versions and analytes that constitute an orderable definition.",
+      "access": "View with the configuration access offered to your account. Adding and drafting require Manage configuration; approval and retirement require Approve configuration. The engine checks authority again when saving.",
+      "fields": [
+        {
+          "name": "Version, Status and Versions list",
+          "meaning": "Identify exactly which definition you are viewing and whether it can govern new work.",
+          "values": "Draft; Approved; Replaced; Retired. Version numbers increase within the record.",
+          "rules": "Read-only. On opening, the draft is preferred, then the version in effect, then the newest. Choose a version explicitly before review."
+        },
+        {
+          "name": "Drafted, Approved by, Effective, Retired and Retirement reason",
+          "meaning": "Show who authored and authorized the definition, when it applied and why it ended.",
+          "values": "Recorded people, laboratory-local times, effective period and reason; Not approved or Not yet effective when applicable.",
+          "rules": "Read-only. Replacement ends the earlier effective period without deleting its content."
+        },
+        {
+          "name": "Reason (Retire version)",
+          "meaning": "Explain why this approved version must stop being used for new work.",
+          "values": "Specific laboratory explanation, up to 1,000 characters.",
+          "rules": "Required for retirement; retained in history."
+        },
+        {
+          "name": "Self-approval confirmation",
+          "meaning": "Explicitly records that the draft author is also approving it without another reviewer.",
+          "values": "An initially unchecked confirmation, shown when the engine requires it.",
+          "rules": "Available only if laboratory policy permits this duty to be performed by one person. Closing the dialog clears this confirmation."
+        },
+        {
+          "name": "Position",
+          "meaning": "Ordering of a component within the test or panel.",
+          "values": "Sequential positions beginning at 1.",
+          "rules": "Read-only in the saved view; follows the order of draft components."
+        },
+        {
+          "name": "Method (each Components row)",
+          "meaning": "The laboratory method contributing this component.",
+          "values": "Registered methods by code and name.",
+          "rules": "Required. Changing the method clears its selected version and analytes."
+        },
+        {
+          "name": "Method version",
+          "meaning": "Exact method definition the component references.",
+          "values": "Versions of the chosen method, with their status.",
+          "rules": "Required. A draft may reference an open method draft or current approved version; approval requires every dependency to be current and approved. Retired or replaced versions are refused."
+        },
+        {
+          "name": "Purpose",
+          "meaning": "Whether the component supplies drug results or specimen-validity evidence.",
+          "values": "Analytical (drug result); Specimen validity.",
+          "rules": "Required; no default. Do not confuse this with analytical certainty."
+        },
+        {
+          "name": "Analytes reported",
+          "meaning": "Measured analytes included in this component’s ordered scope.",
+          "values": "Checkboxes for analytes of the selected method version.",
+          "rules": "At least one is required in each component. Changing the method version clears the choices; no repeated analyte within a component."
+        },
+        {
+          "name": "Specimen type, Certainty and Result scale",
+          "meaning": "Show the referenced method version’s matrix, screening/confirmation category and qualitative/quantitative scale.",
+          "values": "Values supplied by the referenced method version.",
+          "rules": "Read-only in this page; change the method through its own version workflow."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Choose Version / Previous / Next",
+          "does": "Inspect a particular saved definition or move through the records from the directory.",
+          "availableWhen": "A version or neighboring record exists.",
+          "result": "The selected content and its history appear; no definition changes."
+        },
+        {
+          "name": "New draft version / New draft from this version",
+          "does": "Start an empty definition or copy the selected definition for revision.",
+          "availableWhen": "Manage configuration and no open draft for this record.",
+          "result": "A form opens. Saving creates the next draft; it is not yet in effect."
+        },
+        {
+          "name": "Open draft version / Edit draft",
+          "does": "Return to the open proposal and revise its content.",
+          "availableWhen": "A draft exists; editing requires Manage configuration and the draft author.",
+          "result": "Save draft updates the draft revision; approved versions remain immutable."
+        },
+        {
+          "name": "Approve version",
+          "does": "Confirm the reviewed draft and make it current.",
+          "availableWhen": "Approve configuration, current draft revision, valid dependencies, and the applicable separation-of-duties rule.",
+          "result": "Approved content becomes immutable immediately; the previous current version becomes Replaced."
+        },
+        {
+          "name": "Retire version",
+          "does": "End use of an approved version for new work while retaining its history.",
+          "availableWhen": "Approve configuration, an approved version and a reason; dependency checks must pass.",
+          "result": "The version is retained as Retired. Existing work keeps the version it used."
+        },
+        {
+          "name": "Save draft / Cancel",
+          "does": "Submit the draft form, or close it without saving.",
+          "availableWhen": "Required fields are supplied for Save draft.",
+          "result": "A successful save opens the saved draft; a refusal leaves the form available for correction."
+        },
+        {
+          "name": "Add component / Remove component",
+          "does": "Adjust the draft component list.",
+          "availableWhen": "While drafting or editing.",
+          "result": "Save draft persists the complete component list; a Test must have exactly one component and a Panel at least one."
+        }
+      ],
+      "restrictions": [
+        "Only one draft may be open per record, and only its author may edit it. Saving a draft is separate from approval.",
+        "A stale revision is refused. Reload and review the current version before repeating an edit or approval.",
+        "Laboratory approval establishes the configured definition; this software does not supply clinical validation or assay acceptance criteria.",
+        "The same method version cannot be listed twice in one test or panel.",
+        "Approving a test or panel does not validate its methods. Existing orders keep their frozen definition when a later catalog version becomes current.",
+        "Do not change orderable scope to target payer counts or infer what a clinician intended to order."
+      ],
+      "workflow": [
+        "Open the test or panel and identify its selected version.",
+        "Create or edit a draft, then select each method and exact version.",
+        "Choose each component’s purpose and the analytes it reports.",
+        "Save the draft; approve any draft method dependencies before approving the test or panel.",
+        "Review the resulting version in effect before using it for new orders."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The author cannot approve",
+          "recovery": "Arrange another authorized reviewer unless laboratory policy expressly permits self-approval; if permitted, read and explicitly confirm the prompt."
+        },
+        {
+          "problem": "Revision conflict or an existing draft",
+          "recovery": "Open the current record and draft, compare its content with your intended change, then retry only the applicable action."
+        },
+        {
+          "problem": "Approval reports incomplete configuration",
+          "recovery": "Open the referenced method versions and confirm they are current and approved. Update stale references through the draft, then review again."
+        },
+        {
+          "problem": "No analytes are selected after changing a method",
+          "recovery": "The selection is cleared intentionally. Choose the approved ordered analyte scope for the new method version before saving."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/configuration/Directory.tsx",
+    "ui/src/features/configuration/CodedNameFields.tsx",
+    "ui/src/features/configuration/VersionedRecordPage.tsx",
+    "ui/src/features/configuration/VersionPanel.tsx",
+    "ui/src/features/configuration/VersionFacts.tsx",
+    "ui/src/features/configuration/VersionList.tsx",
+    "ui/src/features/configuration/VersionActions.tsx",
+    "ui/src/features/configuration/DraftDialog.tsx",
+    "crates/lis-catalog/src/commands/lifecycle.rs",
+    "crates/lis-catalog/src/model.rs",
+    "crates/lis-catalog/src/content.rs",
+    "ui/src/features/configuration/orderables/OrderablesPage.tsx",
+    "ui/src/features/configuration/orderables/OrderableDraftDialog.tsx",
+    "ui/src/features/configuration/orderables/ComponentFields.tsx",
+    "ui/src/features/configuration/orderables/OrderableContent.tsx",
+    "ui/src/features/configuration/orderables/orderableValues.ts",
+    "ui/src/features/configuration/orderables/useOrderableFilters.tsx",
+    "crates/lis-catalog/src/commands/orderables.rs"
+  ]
+}

@@ -1,0 +1,672 @@
+{
+  "id": "report-history",
+  "title": "Reports and revisions",
+  "summary": "Inspect issued reports, preserved revisions, delivery history and post-release work.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/reports", "/reports/:reportId", "/reports/revisions/:revisionId"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Open a report from Reports to see its revision history, delivery obligations and attempts, exports, and any impact assessment or preservation incident. Open a revision to inspect the content exactly as issued and its recorded provenance.",
+        "Prepare next revision returns to the specimen’s report workspace when permitted. Withdrawal and impact actions appear according to the report’s state and your authority. A revision may offer PDF export with a specified purpose."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Check the revision number and availability before using a report. Earlier revisions remain readable after correction or withdrawal, so readable does not mean current.",
+        "Make corrections through the next-revision workflow. Preserve the original report and the reason for change. Review associated delivery obligations so a correction is reconciled with the recipients who may hold earlier content."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "A preservation incident, withdrawal or unresolved post-release impact can affect what is available. Read its details and follow the laboratory’s authorized resolution process. If a revision is unavailable for delivery, do not substitute an older copy simply because it opens."
+      ]
+    },
+    {
+      "title": "Preserved report chronology and provenance",
+      "paragraphs": [
+        "Current reports label preparation as Generated and show per-result recorded and first-reported provenance. Actual release remains a separate committed event. Earlier template copies, original timestamps and exact PDF bytes remain unchanged.",
+        "Condition text includes captured receipt discrepancies with their decision/date context. It excludes unrelated internal reasons. Approved method comments and reference information remain distinct from analytical cutoffs and limits."
+      ]
+    },
+    {
+      "title": "Refresh and exact record navigation",
+      "paragraphs": [
+        "Refresh shows the current read time and explicitly reloads the opened workspace, candidate or report. If a stale submission is refused, cancel its confirmation, refresh and review the current content/gates before reopening an action. Refresh never authorizes a changed candidate.",
+        "Report history loads older pages using release time and report identity together, so equal timestamps remain reachable. Refresh checks the loaded pages again. A preservation incident link identifies its exact incident within the report and focuses it; a missing requested incident produces a warning rather than selecting another incident."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/reports/history/ReportsPage.tsx",
+    "ui/src/features/reports/history/columns.tsx",
+    "ui/src/features/reports/history/ReportPage.tsx",
+    "ui/src/features/reports/history/RevisionPage.tsx",
+    "ui/src/features/reports/history/RevisionsSection.tsx",
+    "ui/src/features/reports/history/ImpactSection.tsx",
+    "ui/src/features/reports/history/ImpactDialog.tsx",
+    "ui/src/features/reports/history/IncidentsSection.tsx",
+    "ui/src/features/reports/history/CloseIncidentDialog.tsx",
+    "ui/src/features/reports/history/ExportsSection.tsx",
+    "ui/src/features/reports/history/WithdrawDialog.tsx",
+    "ui/src/features/reports/content/ReportContent.tsx",
+    "ui/src/features/reports/content/ResultGroups.tsx",
+    "ui/src/features/reports/delivery/DeliverySection.tsx",
+    "ui/src/features/reports/delivery/ObligationDialog.tsx",
+    "ui/src/features/reports/delivery/ObligationGrid.tsx",
+    "ui/src/features/reports/delivery/RecordAttemptDialog.tsx",
+    "ui/src/features/reports/delivery/ExportDialog.tsx",
+    "ui/src/features/reports/delivery/obligationActions.tsx",
+    "ui/src/features/reports/labels.ts",
+    "ui/src/lib/ReauthConfirmDialog.tsx",
+    "crates/lis-engine/src/report_reads.rs",
+    "crates/lis-engine/src/commands/reporting.rs",
+    "crates/lis-reporting/src/commands/withdraw.rs",
+    "crates/lis-reporting/src/commands/assess.rs",
+    "crates/lis-reporting/src/commands/incidents.rs",
+    "crates/lis-reporting/src/commands/obligations.rs",
+    "crates/lis-reporting/src/commands/exports.rs",
+    "crates/lis-engine/src/report_rendering/export_file.rs",
+    "crates/lis-reporting/src/snapshot/provenance.rs",
+    "crates/lis-reporting/src/snapshot/sections.rs",
+    "crates/lis-reporting/src/report_data.rs",
+    "crates/lis-reporting/src/relationship.rs",
+    "crates/lis-reporting/src/gates.rs",
+    "crates/lis-report/templates/tox-report/v3.typ",
+    "crates/lis-reporting/src/queries/report.rs",
+    "ui/src/lib/securityKeyAuthenticationField.tsx",
+    "ui/src/lib/securityKeyPrompt.tsx",
+    "ui/src/lib/commands.ts",
+    "crates/lis-auth/src/key_proofs.rs"
+  ],
+  "pages": [
+    {
+      "title": "Reports",
+      "routes": ["/reports"],
+      "purpose": "Find released reports and identify their latest revision, completeness and availability.",
+      "access": "Requires report-delivery authority or quality-management authority.",
+      "fields": [
+        {
+          "name": "Find by report number",
+          "meaning": "Finds reports whose number starts with the entered text.",
+          "values": "Report-number prefix.",
+          "rules": "Optional; blank shows all matching the state filter. This is not patient-name or accession-wide searching."
+        },
+        {
+          "name": "Show",
+          "meaning": "Limits the report directory.",
+          "values": "All reports, Partial reports, Withdrawn reports.",
+          "rules": "Defaults to All reports; selection and search stay in the address."
+        },
+        {
+          "name": "Report / Accession",
+          "meaning": "Identifies the issued report and received material.",
+          "values": "Report and accession numbers.",
+          "rules": "Read-only; open the report to see patient identity."
+        },
+        {
+          "name": "Latest revision",
+          "meaning": "Shows the latest issued revision number.",
+          "values": "Positive sequential number.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Availability",
+          "meaning": "Distinguishes current from historical or withdrawn content.",
+          "values": "Current, Superseded or Withdrawn.",
+          "rules": "Read-only; an earlier readable revision may be superseded."
+        },
+        {
+          "name": "Completeness",
+          "meaning": "States whether expected reporting is complete.",
+          "values": "Final or Partial.",
+          "rules": "Read-only; inspect unreported tests on a Partial report."
+        },
+        {
+          "name": "Released",
+          "meaning": "Dates the latest release.",
+          "values": "Recorded date/time.",
+          "rules": "Read-only; the directory is initially ordered latest release first."
+        },
+        {
+          "name": "Report count",
+          "meaning": "Shows how much of the directory is loaded.",
+          "values": "Count and more-results indication.",
+          "rules": "Pages load up to 200 reports; sorting applies only to loaded reports, not the entire history."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open report row",
+          "does": "Opens the report’s revisions and operational history.",
+          "availableWhen": "A report is loaded.",
+          "result": "Shows patient identity, delivery obligations, exports, impact and incidents."
+        },
+        {
+          "name": "Load older reports",
+          "does": "Loads the next page of older releases.",
+          "availableWhen": "Older reports remain available.",
+          "result": "Appends records without changing the current search/filter."
+        },
+        {
+          "name": "Show all reports",
+          "does": "Clears the search and state filter.",
+          "availableWhen": "An empty filtered/search result offers it.",
+          "result": "Restores the unfiltered directory."
+        },
+        {
+          "name": "Find by report number / Show",
+          "does": "Changes the directory query.",
+          "availableWhen": "The page is open.",
+          "result": "Loads the latest matching page."
+        },
+        {
+          "name": "Refresh current record",
+          "does": "Re-read the currently opened record or list and display updated read time.",
+          "availableWhen": "Page is open; wait for any pending request.",
+          "result": "Review refreshed state before resubmitting stale work; existing issued report content remains immutable."
+        }
+      ],
+      "restrictions": [
+        "This directory contains released reports. An unreleased candidate belongs to the specimen’s report workspace.",
+        "Report number search is a prefix match; a numeric fragment from the middle of a report number may not match."
+      ],
+      "workflow": [
+        "Set Show and enter a report-number prefix if known.",
+        "Verify accession, latest revision, completeness and availability; open the intended report.",
+        "Load older reports if the needed release is beyond the loaded pages."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No report matches.",
+          "recovery": "Clear the prefix/filter with Show all reports and check whether the report was actually released."
+        },
+        {
+          "problem": "Older reports could not be loaded.",
+          "recovery": "Keep the currently loaded records and retry Load older reports after resolving the displayed access or read error."
+        }
+      ]
+    },
+    {
+      "title": "Report history",
+      "routes": ["/reports/:reportId"],
+      "purpose": "Inspect preserved revisions, delivery work, exports and quality follow-up for one report.",
+      "access": "Reading requires report-delivery or quality-management authority. Next revision and withdrawal require report-release authority. Impact/incident decisions require quality-management authority. Delivery actions require report-delivery authority. Opening the report is audited.",
+      "fields": [
+        {
+          "name": "Identity banner / Report availability",
+          "meaning": "Identifies the patient, accession and current report state.",
+          "values": "Linked identity; Current, Superseded, Withdrawn or Not released.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Revisions: Revision / Kind",
+          "meaning": "Lists each issued version in sequence.",
+          "values": "Sequential revision and Initial report, Supplement or Correction.",
+          "rules": "Read-only; earliest revision first."
+        },
+        {
+          "name": "Revisions: Availability / Completeness / Released / Reason for correction",
+          "meaning": "Preserves status, signatory and change rationale.",
+          "values": "Current, Superseded or Withdrawn; Final or Partial; releaser/date/time; recorded amendment reason or none.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Withdrawal notice",
+          "meaning": "Explains terminal withdrawal of the whole report.",
+          "values": "Withdrawal time, actor, revision and internal reason.",
+          "rules": "Read-only. The internal reason is preserved on this record and is omitted from the outward withdrawal notice."
+        },
+        {
+          "name": "Impact after release: Open impact / Correction due",
+          "meaning": "Shows changes needing quality assessment after issuance.",
+          "values": "Explanatory change messages; Correction due when a quality decision requires a new revision.",
+          "rules": "Read-only. Open impact pauses delivery of the current report revision."
+        },
+        {
+          "name": "Impact history: Assessment / Reason / Assessed",
+          "meaning": "Preserves prior quality judgments.",
+          "values": "No impact on the released report or A correction is required; reason; person and time.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Record impact assessment: Changes assessed",
+          "meaning": "Selects exactly the current changes covered by this decision.",
+          "values": "Checklist of open change descriptions.",
+          "rules": "At least one required; selected changes must still be open."
+        },
+        {
+          "name": "Record impact assessment: Decision",
+          "meaning": "States the impact on released content.",
+          "values": "No impact on the released report; A correction is required.",
+          "rules": "Required; no default. A correction-required decision remains due until a new revision supersedes it."
+        },
+        {
+          "name": "Record impact assessment / Close incident / Withdraw report: Reason",
+          "meaning": "Records the factual basis for the decision.",
+          "values": "Free text.",
+          "rules": "Required, trimmed 1–1,000 characters; retained in the audit history."
+        },
+        {
+          "name": "Withdraw report: Your password",
+          "meaning": "Confirms the identity of the person withdrawing.",
+          "values": "Current signed-in user password.",
+          "rules": "Password accounts only. Required for this decision; must have report-release authority."
+        },
+        {
+          "name": "Withdraw report: Security key",
+          "meaning": "Fresh confirmation by the signed-in person using their registered security key.",
+          "values": "The active personal keys registered to your account; the first returned key is selected initially.",
+          "rules": "Security-key accounts only; replaces Your password. Select one key, review and submit the action, then follow its PIN or biometric verification and touch prompt. The key confirms only that submitted action. Permissions, reasons and record-state gates still apply. Use your own key; a selected label alone does not authorize anything."
+        },
+        {
+          "name": "PDF exports",
+          "meaning": "Records generated copies without claiming delivery.",
+          "values": "Exporting-person label, filename, time and purpose.",
+          "rules": "Read-only; exporting an issued file does not create a handoff attestation."
+        },
+        {
+          "name": "Preservation incidents: Subject / Record / Kind / Detected / Closure",
+          "meaning": "Identifies stored evidence that is missing or damaged and the recorded resolution.",
+          "values": "Revision, withdrawal notice or unreleased candidate; PDF file, stored report content or stored printed data; Missing or Damaged; detection time; Open or closure details.",
+          "rules": "Read-only; damaged content is not displayed as trustworthy issued evidence."
+        },
+        {
+          "name": "Close preservation incident: Resolution",
+          "meaning": "Records the actual outcome of investigation.",
+          "values": "Restored intact from a backup; A new revision was issued in its place; Accepted as lost.",
+          "rules": "Required; no default. Selecting this records a resolution; it does not itself restore bytes or issue a new revision."
+        },
+        {
+          "name": "Delivery status",
+          "meaning": "Names the channel and the strongest evidence recorded so far.",
+          "values": "Fax by staff, Email by staff, Mailed by staff, Handed to courier or Collected at the laboratory, followed by awaiting, failed, outcome unknown, blocked, paused, handed off with attestation, or closed with reason.",
+          "rules": "Read-only. Handed off is staff attestation; it does not prove recipient receipt."
+        },
+        {
+          "name": "Report / Sends",
+          "meaning": "Identifies the exact artifact owed to a destination.",
+          "values": "Report number and revision, or Withdrawal notice and revision.",
+          "rules": "Read-only; verify revision before using any exported file."
+        },
+        {
+          "name": "Destination",
+          "meaning": "Identifies the configured recipient endpoint.",
+          "values": "The ordering client’s configured destination label.",
+          "rules": "Read-only on an obligation; redirecting creates a new obligation rather than editing this history."
+        },
+        {
+          "name": "Why",
+          "meaning": "Explains how the obligation arose.",
+          "values": "Release, Follow-up of an earlier revision, Withdrawal notice, Added by staff or Redirected, with reason when recorded.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Last attempt / Created",
+          "meaning": "Dates the obligation and its most recent attempt.",
+          "values": "Date/time or None for no attempt.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Attempts",
+          "meaning": "Preserves every attempt in order.",
+          "values": "Handed off, Failed or Outcome unknown; failure cause, observed time, recorder and note.",
+          "rules": "Read-only; a retry is another recorded attempt, not an edit to an earlier one."
+        },
+        {
+          "name": "Record attempt: What happened",
+          "meaning": "Records the actual outcome staff observed.",
+          "values": "Handed off (I attest it was sent or handed over); Failed; Outcome unknown.",
+          "rules": "Required; no default. The current interface records the attempt time automatically."
+        },
+        {
+          "name": "Record attempt: Why it failed",
+          "meaning": "Records the failure category.",
+          "values": "No answer or busy, Wrong destination, Returned, Refused, Other.",
+          "rules": "Required only for Failed. Wrong destination blocks use of that destination until it is replaced or retired and work redirected."
+        },
+        {
+          "name": "Record attempt: Note",
+          "meaning": "Adds factual supporting detail.",
+          "values": "Free text.",
+          "rules": "Optional, trimmed, at most 1,000 characters."
+        },
+        {
+          "name": "Redirect / Add destination: Destination",
+          "meaning": "Chooses the new recipient endpoint for the ordering client.",
+          "values": "Verified destinations of that client, with address when available.",
+          "rules": "Required; must still be active, verified and not reported wrong. Redirect must select a different destination."
+        },
+        {
+          "name": "Redirect / Add destination: Reason",
+          "meaning": "Explains why an obligation is added or redirected.",
+          "values": "Free text.",
+          "rules": "Required, trimmed 1–1,000 characters."
+        },
+        {
+          "name": "Export PDF: Purpose",
+          "meaning": "Distinguishes a delivery copy from other authorized uses.",
+          "values": "For delivery to this destination; For the laboratory’s records; Internal use.",
+          "rules": "Required. Defaults to delivery when opened from an obligation. A revision page offers only records/internal use and has no default."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open revision row",
+          "does": "Opens the exact content and provenance of that issued version.",
+          "availableWhen": "An issued revision is listed.",
+          "result": "Shows that revision with Previous/Next through this report’s revisions."
+        },
+        {
+          "name": "Prepare next revision",
+          "does": "Opens the specimen’s current report workspace.",
+          "availableWhen": "Report-release authority, nonwithdrawn report and action offered.",
+          "result": "Allows a reviewed supplement/correction candidate; the old report is preserved."
+        },
+        {
+          "name": "Withdraw report",
+          "does": "Permanently withdraws every revision after fresh account confirmation and a reason.",
+          "availableWhen": "Report-release authority, current report revision and required notice preparation succeed.",
+          "result": "Prevents all future revisions of this report and creates withdrawal-notice obligations for destinations with prior obligations. This cannot be undone."
+        },
+        {
+          "name": "Record impact assessment / Record assessment",
+          "does": "Records the chosen decision for selected open changes.",
+          "availableWhen": "Quality-management authority and at least one open impact reason on the current revision.",
+          "result": "Keeps the assessment and reason; later changes can open impact again. Correction-required work stays due until superseded."
+        },
+        {
+          "name": "Close incident",
+          "does": "Records a preservation incident’s investigated resolution.",
+          "availableWhen": "Quality-management authority; incident is open and the displayed version is current.",
+          "result": "Preserves the incident and closure and removes its open work-queue item. It does not repair the affected evidence."
+        },
+        {
+          "name": "Add destination",
+          "does": "Creates an additional obligation for the current revision.",
+          "availableWhen": "Report-delivery authority; current usable revision and a verified destination belonging to the ordering client.",
+          "result": "Records the reason and adds delivery work; one obligation per revision, destination and kind is allowed."
+        },
+        {
+          "name": "Open delivery row",
+          "does": "Opens the matching obligation in Delivery.",
+          "availableWhen": "The obligation is not closed.",
+          "result": "Shows loaded open-obligation details; closed obligations currently have only their history row here."
+        },
+        {
+          "name": "Record attempt",
+          "does": "Records the chosen observed outcome and optional note.",
+          "availableWhen": "Delivery authority, an actionable obligation, usable current revision/notice and verified destination; impact and recovery gates are clear.",
+          "result": "Appends attributed evidence. Handed off ends further attempts on that obligation; Failed or Outcome unknown can be followed by another attempt."
+        },
+        {
+          "name": "Redirect",
+          "does": "Closes this obligation and creates one for another verified destination.",
+          "availableWhen": "Delivery authority and an actionable obligation; a different valid destination of the same ordering client is selected.",
+          "result": "Retains earlier attempts and the reason; the new obligation carries future delivery work."
+        },
+        {
+          "name": "Export PDF",
+          "does": "Saves the preserved issued PDF to Downloads for the selected purpose.",
+          "availableWhen": "Delivery authority and applicable artifact, obligation and delivery checks pass.",
+          "result": "Exports the exact issued bytes and records the export. A withdrawal obligation exports its notice. No attempt or delivery is recorded."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes an unsubmitted action dialog.",
+          "availableWhen": "A dialog is open.",
+          "result": "Does not record an attempt, redirect or export."
+        },
+        {
+          "name": "Previous / Next / Reports",
+          "does": "Navigates the originating report list.",
+          "availableWhen": "Adjacent records exist when opened from a list.",
+          "result": "Changes the viewed report without changing its history."
+        },
+        {
+          "name": "Refresh current record",
+          "does": "Re-read the currently opened record or list and display updated read time.",
+          "availableWhen": "Page is open; wait for any pending request.",
+          "result": "Review refreshed state before resubmitting stale work; existing issued report content remains immutable."
+        }
+      ],
+      "restrictions": [
+        "A correction never replaces or deletes an earlier issued version. Readable history is not proof that a copy remains current for delivery.",
+        "Withdrawal is terminal for this report. Do not choose it when the intended action is a normal correction or supplement.",
+        "The withdrawal notice excludes demographics, results and the internal reason; recipients still need delivery reconciliation.",
+        "The current interface has no separate detail view for a closed delivery obligation. Its row remains in report history."
+      ],
+      "workflow": [
+        "Confirm identity and the current revision. Open earlier revisions when investigating a change.",
+        "Review open impact, correction-due and preservation incidents before further report handling.",
+        "Use a new revision for corrected content; document quality decisions with the specific changes they cover.",
+        "Reconcile delivery obligations, follow-up notices and exports separately."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Delivery is paused after a result or quality change.",
+          "recovery": "Have authorized quality staff assess each open impact reason; prepare the required correction if one is due."
+        },
+        {
+          "problem": "A preservation incident prevents viewing/exporting content.",
+          "recovery": "Investigate the stored record and approved recovery options. Record the actual resolution only after the work has occurred."
+        },
+        {
+          "problem": "Withdraw report is refused because the report changed.",
+          "recovery": "Reload and review the new current revision before deciding whether withdrawal is still appropriate."
+        },
+        {
+          "problem": "A destination already has an obligation.",
+          "recovery": "Use that obligation’s permitted retry or redirect actions; do not create duplicates."
+        },
+        {
+          "problem": "A preservation queue link names a damaged revision before its incident has been recorded.",
+          "recovery": "Opening report history records the detected damage and focuses the unique open incident for that revision. If several open incidents match, the page asks you to review them explicitly; it does not choose the first. Refresh or return to the queue when the target is no longer present."
+        }
+      ]
+    },
+    {
+      "title": "Issued report revision",
+      "routes": ["/reports/revisions/:revisionId"],
+      "purpose": "Read one report exactly as issued and inspect the evidence identifying its stored content and PDF.",
+      "access": "Reading requires report-delivery or quality-management authority; PDF export requires report-delivery authority. Access is audited.",
+      "fields": [
+        {
+          "name": "Availability",
+          "meaning": "Indicates whether this revision is current, superseded or withdrawn.",
+          "values": "Current, Superseded or Withdrawn.",
+          "rules": "Read-only; inspect before using or exporting a copy."
+        },
+        {
+          "name": "Report / Revision / Released",
+          "meaning": "Identifies the report, version, relationship, completeness and releasing person.",
+          "values": "Report number; sequential revision with Initial report, Supplement or Correction; Final or Partial; release date/time and signatory.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Template / Fonts",
+          "meaning": "Identifies the rendering configuration that produced the stored file.",
+          "values": "Template identifier/version, renderer version and font names.",
+          "rules": "Read-only provenance; later configuration changes do not rewrite this revision."
+        },
+        {
+          "name": "Content digest / Data digest / File digest / Template digest",
+          "meaning": "Identifies the preserved snapshot, printed data, issued PDF and template.",
+          "values": "SHA-256 digest strings.",
+          "rules": "Read-only integrity evidence. These are not an accreditation or clinical-validation statement."
+        },
+        {
+          "name": "Printed report: Report number / Revision / Status / Relationship",
+          "meaning": "Identifies the issued version and its relationship to earlier reporting.",
+          "values": "Report number; sequential revision; Final or Partial; Initial report, Supplement or Correction.",
+          "rules": "Read-only printed content. Partial explicitly leaves expected work unreported."
+        },
+        {
+          "name": "Printed report: Follows / Reason for correction / Generated (historical Issued)",
+          "meaning": "Links an amended report to its predecessor and explains a correction.",
+          "values": "Prior revision and actual release time, correction reason and candidate generation time in the laboratory time zone.",
+          "rules": "Generated records preparation, not actual release. Older template copies retain their original Issued label. See report history for the committed release time; copies are never redated."
+        },
+        {
+          "name": "Reporting laboratory contact: Laboratory / Address / CLIA number / Director / Phone",
+          "meaning": "Shows the current reporting contact profile frozen for this revision; each result separately identifies its actual historical performing site.",
+          "values": "Configured laboratory profile values.",
+          "rules": "Read-only. Historical v2 copies keep their original Performing laboratory heading. A contact/profile update does not relabel the site where older testing was performed."
+        },
+        {
+          "name": "Patient and order: Patient / Birth date / Sex / Identifiers",
+          "meaning": "Identifies the subject as represented in this report.",
+          "values": "Patient name, date, sex or Unknown, and identifier type/value/authority.",
+          "rules": "Read-only; the issued content is preserved even if current identity records later change."
+        },
+        {
+          "name": "Patient and order: Ordering practitioner / Client / Location / Placer order",
+          "meaning": "Identifies the supplied ordering source.",
+          "values": "Practitioner name/NPI, ordering client, location and external order reference; None where not recorded.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Specimen: Accession / Specimen type / Containers",
+          "meaning": "Connects printed results to the received material.",
+          "values": "Accession number, matrix/type and printed container labels.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Specimen: Collected / Received / Condition / Collection observations",
+          "meaning": "Preserves collection and receipt context.",
+          "values": "Recorded times or Unknown; condition notes; supplied observations with recorder.",
+          "rules": "Read-only. Unknown is not a presumed collection or receipt time. Receipt discrepancy descriptions and decision/date provenance remain visible across hold and acceptance; historical conditions are labelled as recorded history. Internal hold reasons are not copied into the report."
+        },
+        {
+          "name": "Medications",
+          "meaning": "Lists medication context as supplied with its provenance.",
+          "values": "Recorded medication name, source and as-of date or Unknown; None when absent.",
+          "rules": "Read-only; the report does not infer unrecorded medications."
+        },
+        {
+          "name": "Result groups: test name / method / certainty / role",
+          "meaning": "Groups reported analytes under their ordered work and method.",
+          "values": "Configured group/method text, presumptive/definitive certainty and testing-sequence role.",
+          "rules": "Read-only; screening/confirmation roles and qualitative/quantitative output are distinct properties."
+        },
+        {
+          "name": "Result rows: Analyte / Result / Units / Limits / Comparison",
+          "meaning": "Provides the exact reported assertion and configured analytical context.",
+          "values": "Printed analyte, original-preserving value/comparator, unit, applicable limit text and comparison wording.",
+          "rules": "Read-only. Verify units, precision and comparator; a comparison is not an independently generated clinical interpretation."
+        },
+        {
+          "name": "Tests not reported in this revision",
+          "meaning": "Explains incomplete or inactive expected work.",
+          "values": "Test names with Pending, Held, Cancelled, Not activated or Reflex decision pending, and applicable notes.",
+          "rules": "Read-only; absence from reported results must not be interpreted as a negative result."
+        },
+        {
+          "name": "Specimen validity: Outcome / Notes / Released by",
+          "meaning": "Shows the recorded validity assessment and responsible signatory.",
+          "values": "Approved-policy outcome and notes, or no assessment as indicated; signatory name.",
+          "rules": "Read-only. No new validity interpretation is made in the report view."
+        },
+        {
+          "name": "Export PDF: Purpose",
+          "meaning": "Records why an issued copy is being saved.",
+          "values": "For the laboratory’s records; Internal use.",
+          "rules": "Required; no default on this page. Delivery-purpose export must be started from the relevant obligation."
+        },
+        {
+          "name": "Changes in this correction",
+          "meaning": "Identifies analytes whose reported content changed and the changed context sections.",
+          "values": "Changed result/method information, removed reported results, patient identity, specimen context, ordering/medication context, validity or reporting contact information.",
+          "rules": "Read-only comparison with the preceding issued snapshot; the correction reason and predecessor remain separately visible. Original PDFs stay unchanged."
+        },
+        {
+          "name": "Result provenance: Result recorded / First reported",
+          "meaning": "Distinguishes when the exact result revision was recorded from its earliest committed report release.",
+          "values": "Laboratory-zone date/time; first-report text when this candidate is the first report of this result revision; Unknown only for unavailable historical evidence.",
+          "rules": "These timestamps do not infer specimen collection or instrument completion. Existing rows retain the first release date across cumulative supplements; a changed result revision begins new report provenance."
+        },
+        {
+          "name": "Result provenance: Performing location",
+          "meaning": "Names and addresses the laboratory profile pinned to each selected measurement run.",
+          "values": "Laboratory name, address, CLIA identifier and profile version; Not performed for an unperformed test.",
+          "rules": "Read-only. New preparation/release is blocked while a performed result has unknown site evidence. A quality-authorized person must confirm the unpinned run against source evidence; choosing the latest contact profile without evidence is not a repair."
+        },
+        {
+          "name": "Method information / Reference information",
+          "meaning": "Shows approved method limitations and pertinent reference information separately from cutoff, detection and quantitation limits.",
+          "values": "Optional text from the pinned approved method version; absent when no text is configured.",
+          "rules": "Read-only, shown exactly as administrator-approved configuration. No interval, clinical threshold or interpretation is inferred. Configuring content does not grant clinical release authority."
+        },
+        {
+          "name": "Prepared for release by (historical Released by)",
+          "meaning": "Identifies the candidate preparer whose name is frozen in the PDF.",
+          "values": "Signed-in preparer name; earlier templates retain their original label.",
+          "rules": "Preparation does not establish release. The actual release event and time are retained in report history."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Export PDF",
+          "does": "Saves the preserved issued PDF to Downloads after purpose selection.",
+          "availableWhen": "Report-delivery authority and stored artifact verification succeed.",
+          "result": "Records an export of the exact released bytes; no delivery is attested."
+        },
+        {
+          "name": "Report link",
+          "does": "Opens the complete report history.",
+          "availableWhen": "The revision has loaded.",
+          "result": "Shows other revisions, impact, delivery and incidents."
+        },
+        {
+          "name": "Previous / Next",
+          "does": "Moves through the originating report’s revision list.",
+          "availableWhen": "Adjacent revisions exist in the navigation context.",
+          "result": "Loads each preserved issued version."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes the export dialog before submission.",
+          "availableWhen": "Export dialog is open.",
+          "result": "No PDF export is recorded."
+        },
+        {
+          "name": "Refresh current record",
+          "does": "Re-read the currently opened record or list and display updated read time.",
+          "availableWhen": "Page is open; wait for any pending request.",
+          "result": "Review refreshed state before resubmitting stale work; existing issued report content remains immutable."
+        }
+      ],
+      "restrictions": [
+        "The content is read-only. Use Prepare next revision from report history to correct issued material.",
+        "Historical copies can remain readable for records even when their availability is Superseded or Withdrawn. Use current obligations for actual delivery.",
+        "A preserved PDF that fails verification is not regenerated silently from current data."
+      ],
+      "workflow": [
+        "Check report number, revision, availability and release attribution.",
+        "Inspect patient/order/specimen context and every result as issued.",
+        "For an authorized records/internal copy, choose Export PDF and its purpose; check the Downloads confirmation."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Export PDF is visible but rejected.",
+          "recovery": "The action still requires delivery authority and intact stored bytes. Check the refusal and the report’s preservation incidents."
+        },
+        {
+          "problem": "The printed identity differs from current records.",
+          "recovery": "The revision preserves its issued snapshot. Review the change with authorized staff and use a new correction revision when required."
+        },
+        {
+          "problem": "Performing site unresolved blocks preparation or release.",
+          "recovery": "Open the selected measurement run. A quality-authorized person must confirm its actual performing laboratory with a source reference and reason. Reload the report workspace and prepare a new candidate after the confirmation."
+        },
+        {
+          "problem": "Legacy receipt chronology is unresolved.",
+          "recovery": "Have a quality-authorized person review the original receipt evidence and record the complete causal decision order. Do not infer order from timestamps or reorder original evidence. Reload the workspace after the review."
+        }
+      ]
+    }
+  ]
+}

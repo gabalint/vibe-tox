@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "result_files",
+  "description": "Result-file commands for the main window: load a file by hand, and choose or clear an instrument's watched folder (REQ-INT-009; NFR-31).",
+  "windows": ["main"],
+  "permissions": [
+    "allow-load-result-file",
+    "allow-choose-result-folder",
+    "allow-clear-result-folder"
+  ]
+}

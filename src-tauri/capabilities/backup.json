@@ -1,0 +1,32 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "backup",
+  "description": "Backup, recovery-kit, restore, reconciliation and exit-export commands for the main window (REQ-OPS-002/003/007/010; NFR-04/12/30).",
+  "windows": ["main"],
+  "permissions": [
+    "allow-list-backup-targets",
+    "allow-add-backup-target",
+    "allow-retire-backup-target",
+    "allow-get-backup-status",
+    "allow-request-backup",
+    "allow-list-backup-runs",
+    "allow-list-backup-sets",
+    "allow-request-restore-test",
+    "allow-list-restore-tests",
+    "allow-get-recovery-kit-status",
+    "allow-export-recovery-kit",
+    "allow-confirm-recovery-kit-storage",
+    "allow-get-restore-availability",
+    "allow-begin-restore",
+    "allow-choose-restore-source",
+    "allow-stage-restore",
+    "allow-check-restore-anchors",
+    "allow-confirm-restore",
+    "allow-cancel-restore",
+    "allow-get-recovery-reconciliation",
+    "allow-close-recovery-reconciliation",
+    "allow-raise-number-floors",
+    "allow-request-exit-export",
+    "allow-list-exit-exports"
+  ]
+}

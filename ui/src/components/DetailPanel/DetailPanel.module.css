@@ -1,0 +1,93 @@
+/* The list and the panel side by side; takes the remaining height of `Page`. */
+.layout {
+  display: flex;
+  flex: 1 1 0;
+  gap: var(--space-4);
+  min-height: calc(8 * var(--control-height));
+}
+
+/* A flex column, so a `DataGrid` with `fill` takes the remaining height. */
+.list {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.list[hidden] {
+  display: none;
+}
+
+/* The lower bound matches PANEL_MIN_REM in DetailLayout.tsx, which explains the widths. */
+.panel {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: clamp(22rem, 35%, 34rem);
+  max-height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+/* Alone in the layout, after "Back to list". */
+.list[hidden] + .panel {
+  flex: 1 1 0;
+  width: auto;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.title {
+  min-width: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.title:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-inline-start: auto;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.body {
+  flex: 1 1 auto;
+  padding: var(--space-4);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* In the Tab order only while it scrolls; the panel clips an outer ring. */
+.body:focus-visible {
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}

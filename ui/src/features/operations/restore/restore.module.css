@@ -1,0 +1,10 @@
+/* The restore flow sits in the signed-out card, without a page frame. Tokens only. */
+.title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.stepTitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}

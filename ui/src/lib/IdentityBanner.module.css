@@ -1,0 +1,4 @@
+/* Displayed in capitals so it stands apart from the given names; the stored text is unchanged. */
+.familyName {
+  text-transform: uppercase;
+}

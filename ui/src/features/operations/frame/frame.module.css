@@ -1,0 +1,8 @@
+/* The badge is the link's only content; the link keeps the control height (ui-standards). */
+.healthLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+}

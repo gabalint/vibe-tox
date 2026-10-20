@@ -1,0 +1,676 @@
+{
+  "id": "orders",
+  "title": "Orders and decisions",
+  "summary": "Review the supplied request, its tests, evidence, holds and specimen progress.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/orders", "/orders/:orderId"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Use Orders to locate a request and open its record. The order page brings together its source details, ordered tests, supporting evidence, clarification holds and associated accessions. Available actions reflect the current order state and your authority.",
+        "A newly saved request still needs an explicit acceptance decision before specimen receipt can continue. When continuing intake, review the saved request and any holds, then use the offered action to receive specimens or continue an existing accession."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Keep the ordering source’s request distinct from material received by the laboratory. An order can have specimen work at different stages; check the test and accession status before creating more work.",
+        "Record diagnoses, medications and supporting evidence as supplied. Do not infer missing information or alter requested tests to resolve a billing issue. Use clarification holds and the laboratory’s communication procedure when the request needs clarification."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Read the reason shown when acceptance, receipt or another action is unavailable. Check for unresolved identity or clarification holds and whether tests already belong to an accession. A saved order is not proof that its specimens were received or accepted."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/accessioning/orders/OrdersPage.tsx",
+    "ui/src/features/accessioning/orders/orderColumns.tsx",
+    "ui/src/features/accessioning/orders/OrderDetailPage.tsx",
+    "ui/src/features/accessioning/orders/OrderFacts.tsx",
+    "ui/src/features/accessioning/orders/OrderItems.tsx",
+    "ui/src/features/accessioning/orders/OrderEvidence.tsx",
+    "ui/src/features/accessioning/orders/OrderActions.tsx",
+    "ui/src/features/accessioning/orders/ClarificationHolds.tsx",
+    "ui/src/features/accessioning/orders/PlaceHoldDialog.tsx",
+    "ui/src/features/accessioning/orders/FollowOnDialog.tsx",
+    "ui/src/features/accessioning/orders/OrderAccessions.tsx",
+    "ui/src/features/accessioning/orders/labels.ts",
+    "crates/lis-orders/src/commands/validation.rs",
+    "crates/lis-orders/src/commands/order_support.rs",
+    "crates/lis-orders/src/commands/follow_on.rs",
+    "ui/src/features/accessioning/billing/BillingOrderPage.tsx",
+    "ui/src/features/accessioning/billing/OrderBillingSection.tsx",
+    "ui/src/features/accessioning/billing/OrderBillingFacts.tsx",
+    "ui/src/features/accessioning/billing/OrderContextDialog.tsx",
+    "ui/src/features/accessioning/billing/OrderEvidenceDialog.tsx",
+    "ui/src/features/accessioning/billing/ReviewItems.tsx",
+    "ui/src/features/accessioning/billing/labels.ts",
+    "crates/lis-orders/src/billing_context.rs",
+    "crates/lis-orders/src/billing_reviews.rs",
+    "crates/lis-engine/src/commands/billing_intake.rs",
+    "ui/src/features/accessioning/billing/PatientBillingSection.tsx",
+    "ui/src/features/accessioning/billing/PatientProfileDialog.tsx",
+    "ui/src/features/accessioning/billing/PatientProfileFacts.tsx",
+    "ui/src/features/accessioning/billing/ContactDialog.tsx",
+    "ui/src/features/accessioning/billing/GuarantorDialog.tsx",
+    "ui/src/features/accessioning/billing/CoverageDialog.tsx",
+    "ui/src/features/accessioning/billing/FinancialFields.tsx",
+    "ui/src/features/accessioning/billing/contactValues.ts",
+    "ui/src/features/accessioning/billing/EvidenceFields.tsx",
+    "ui/src/features/accessioning/billing/evidenceValues.ts",
+    "ui/src/features/accessioning/billing/EvidenceList.tsx",
+    "ui/src/features/accessioning/billing/BillingFacts.tsx",
+    "crates/lis-identity/src/billing_validation.rs",
+    "crates/lis-identity/src/model.rs",
+    "ui/src/components/FormDialog/FormDialog.tsx",
+    "crates/lis-identity/src/billing_model.rs",
+    "crates/lis-identity/src/billing.rs",
+    "ui/src/features/accessioning/orders/OrderMaintenance.tsx",
+    "crates/lis-orders/src/commands/evidence.rs",
+    "crates/lis-orders/src/commands/cancellation.rs",
+    "crates/lis-orders/src/queries.rs"
+  ],
+  "pages": [
+    {
+      "title": "Orders",
+      "routes": ["/orders"],
+      "purpose": "Locate saved requests and see which need acceptance or clarification.",
+      "access": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
+      "fields": [
+        {
+          "name": "Show orders",
+          "meaning": "Restricts the list to a request state or work category.",
+          "values": "All orders; Needs a decision; On hold; Accepted.",
+          "rules": "Defaults to All orders. The list shows the newest 200 matches, with a limit notice if more exist."
+        },
+        {
+          "name": "Patient filter",
+          "meaning": "Restricts orders to the patient from whose record you opened Orders.",
+          "values": "Read-only identity banner while a patient filter applies.",
+          "rules": "Use Show orders for all patients to remove it; New order retains the filtered patient."
+        },
+        {
+          "name": "Patient / Order number / Client / Tests / Received / Status / Open holds",
+          "meaning": "Columns used to identify a request and its progress.",
+          "values": "Patient name; clinic number or Not supplied; client; test count; request receipt time; Received, not yet accepted, Accepted or Rejected; number of open holds.",
+          "rules": "Read-only. Test count is not performed work and request receipt time is not collection time."
+        },
+        {
+          "name": "Birth date and patient identifiers",
+          "meaning": "Secondary identity context beside the patient name.",
+          "values": "Source-backed complete birth date and active authority/type/value identifiers.",
+          "rules": "Read-only; compare with the supplied request. No identifiers are inferred."
+        }
+      ],
+      "actions": [
+        {
+          "name": "New order",
+          "does": "Starts a new requisition.",
+          "availableWhen": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
+          "result": "Uses the patient filter if present; otherwise starts with patient selection."
+        },
+        {
+          "name": "Clear filter / Show all orders / Show orders for all patients",
+          "does": "Broadens the list.",
+          "availableWhen": "A state or patient filter is active.",
+          "result": "Removes the corresponding filter; the newest-result limit still applies."
+        },
+        {
+          "name": "Refresh",
+          "does": "Rereads the list.",
+          "availableWhen": "No refresh is pending.",
+          "result": "Shows current states from an audited read."
+        },
+        {
+          "name": "Open order row",
+          "does": "Opens the saved request.",
+          "availableWhen": "A result row is present; click or press Enter.",
+          "result": "Shows its evidence, tests, holds and specimen progress with Previous/Next navigation."
+        },
+        {
+          "name": "Load older orders",
+          "does": "Read the next page under the same patient/filter.",
+          "availableWhen": "More items remain after the last shown stable timestamp/ID cursor.",
+          "result": "All earlier work remains reachable; equal timestamps do not hide rows. Refresh reconciles new/changed work."
+        }
+      ],
+      "restrictions": [
+        "This is a bounded list, not an exhaustive export. Use the patient’s Orders view to narrow a large list.",
+        "Acceptance shown here does not prove that specimens were received or accepted."
+      ],
+      "workflow": [
+        "Choose the relevant state filter or open Orders from a patient.",
+        "Open the intended row and check identity and source details.",
+        "Make the explicit decision offered on the order record."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No orders under the selected filter.",
+          "recovery": "Choose Show all orders or remove the patient restriction. An empty filtered list is not evidence that no orders exist."
+        },
+        {
+          "problem": "The list is limited.",
+          "recovery": "Narrow through the patient record and check the oldest/newest notice rather than assuming omitted records are absent."
+        }
+      ]
+    },
+    {
+      "title": "Order record",
+      "routes": ["/orders/:orderId"],
+      "purpose": "Review the request, decide acceptance, resolve clarification and continue specimen receiving.",
+      "access": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
+      "fields": [
+        {
+          "name": "Patient banner / Order number / Status / Evidence version",
+          "meaning": "Identity, source order identifier and current request state.",
+          "values": "Received, not yet accepted; Accepted; Rejected. Evidence version is a read-only revision counter.",
+          "rules": "An order without a clinic number is displayed as Order. Check identity before any decision."
+        },
+        {
+          "name": "Requisition: Received / Client / Client location / Ordering practitioner / Clinic order number / Received as / Billing responsibility / Facility setting / Template use",
+          "meaning": "The request facts saved from the ordering source.",
+          "values": "Read-only values corresponding to New order, with Not recorded where absent.",
+          "rules": "Template use explicitly shows whether it was confirmed for this patient. Received is the saved request time, not specimen collection time."
+        },
+        {
+          "name": "Tests: Test / Kind / Sequence role / State / Reflex testing",
+          "meaning": "Tests requested and their current status.",
+          "values": "Kind: Initial, Add-on, Reflex. Sequence role: First-line test, Confirmation, or Not recorded on older records. State: Requested, Accepted, Declined, Cancelled. Reflex: Authorized, Not authorized, Not stated, with any authorized scope.",
+          "rules": "Initial items are decided with order acceptance. A requested add-on or reflex needs a separate decision."
+        },
+        {
+          "name": "Specimens and accessions / Specimen receiving status by test",
+          "meaning": "Material already linked to the order and eligibility for remaining tests.",
+          "values": "Accession links, specimen count, pending receipt-review count, creation time, and per-test eligibility or blocking explanation.",
+          "rules": "A test already linked to an accession is not offered for a second accession. Open the existing accession to finish receipt."
+        },
+        {
+          "name": "Clarification holds: state / deficiency / note",
+          "meaning": "Questions that prevent acceptance or performance until clarified.",
+          "values": "Open or Resolved, with the deficiency and any note; standing-order-generated holds are identified.",
+          "rules": "Resolve records how the question was clarified. It does not by itself add missing source evidence."
+        },
+        {
+          "name": "What needs clarifying",
+          "meaning": "Reason for placing a new clarification hold.",
+          "values": "Requestor missing; Test selection missing; Signature or intent to order required; Standing order expired; Standing order used up; Test outside the standing order; Reflex authority missing; Other authority question.",
+          "rules": "Required explicit choice in Place clarification hold."
+        },
+        {
+          "name": "Note — clarification hold",
+          "meaning": "Source context for the clarification request.",
+          "values": "Optional text, up to 1000 characters.",
+          "rules": "Saved with the hold."
+        },
+        {
+          "name": "Reason — Resolve hold / Reject order / Accept request / Decline request",
+          "meaning": "Evidence or explanation for the selected decision.",
+          "values": "Required text, up to 1000 characters.",
+          "rules": "The same field label serves different decisions; state the evidence relevant to this action."
+        },
+        {
+          "name": "Kind of request",
+          "meaning": "Whether additional work is a new authorized add-on or a reflex.",
+          "values": "Add-on, with new authority; Reflex, under an authorized test’s reflex scope.",
+          "rules": "Required in Request add-on or reflex; available only for an accepted order."
+        },
+        {
+          "name": "Test / Testing sequence role — follow-on",
+          "meaning": "The additional test requested and its sequence role.",
+          "values": "Current approved test; First-line test or Confirmation.",
+          "rules": "Both required; nothing is selected in advance."
+        },
+        {
+          "name": "Reflex from test / Triggering point-of-care result",
+          "meaning": "The parent order item and supplied external observation that triggered this reflex.",
+          "values": "An item on this order and a current, unremoved point-of-care result on the order.",
+          "rules": "Both required for Reflex. The requested test must fit the parent’s authorized reflex scope. Laboratory-result-triggered reflexes use the results workflow instead."
+        },
+        {
+          "name": "Authority reference",
+          "meaning": "Source of new authority for an add-on or supporting reflex context.",
+          "values": "Text, up to 1000 characters.",
+          "rules": "The request form permits blank, but an add-on cannot be accepted without new authority reference."
+        },
+        {
+          "name": "Reason — Record request",
+          "meaning": "Why the add-on or reflex was requested.",
+          "values": "Required text, up to 1000 characters.",
+          "rules": "Recorded with the request; submission does not authorize performance until accepted."
+        },
+        {
+          "name": "Evidence as supplied: Authority to test / Diagnoses / Medications / Point-of-care results",
+          "meaning": "Attributed request evidence with its recorded version history.",
+          "values": "Read-only authority/document, diagnosis/code system/source, medication/reporter/as-of date, and external result text/source/time.",
+          "rules": "Removed evidence stays visible with its removal version. Missing medication as-of date is stated explicitly; point-of-care observations remain context only."
+        },
+        {
+          "name": "Financial information to review",
+          "meaning": "Readiness issues in this order’s financial selection.",
+          "values": "Messages may request a billing selection, payment responsibility, bill-to account, coverage, member identifier, subscriber, billing address or resolution of open follow-up.",
+          "rules": "Read-only. These issues affect financial readiness and must not be treated as clinical release permission."
+        },
+        {
+          "name": "Billing revision / Responsibility / Patient profile revision / Coverage priority / Guarantor / Bill-to client account",
+          "meaning": "The exact financial facts selected for this order.",
+          "values": "Read-only revision and selected values, with None selected where absent.",
+          "rules": "Coverage order indicates payment priority. Expand Selected financial details for contact, guarantor and coverage facts."
+        },
+        {
+          "name": "Source / Reason / Confirmed",
+          "meaning": "Who supplied the selected facts, why they were recorded and the save time.",
+          "values": "Read-only supplied source, change reason and timestamp.",
+          "rules": "Distinct from a financial evidence event time."
+        },
+        {
+          "name": "Who is responsible for payment",
+          "meaning": "Payment arrangement confirmed for this order.",
+          "values": "Third party (insurance); Patient (self-pay); Client (ordering clinic); Not supplied.",
+          "rules": "Required; no initial default for a new selection. Switching away from third-party billing clears the selected coverages."
+        },
+        {
+          "name": "Bill-to client account",
+          "meaning": "Configured client account responsible for payment.",
+          "values": "Configured client names.",
+          "rules": "Required by the editor for Client billing; hidden and not saved for other arrangements."
+        },
+        {
+          "name": "Patient financial facts to use",
+          "meaning": "Profile revision whose supplied facts will be copied into the order.",
+          "values": "Do not select patient profile facts, or the currently selected and latest available Profile revision choices.",
+          "rules": "Required choice. Switching revision clears coverage priority, newly selected evidence and guarantor choice, so review them again."
+        },
+        {
+          "name": "Coverage priority 1, 2, …",
+          "meaning": "Coverages explicitly confirmed for this order, in payment order.",
+          "values": "Coverage records from the selected profile, identified by payer, member identifier and plan.",
+          "rules": "For Third party (insurance) only. Each added row is required; select each coverage once, at most eight. Do not assume the first available payer applies."
+        },
+        {
+          "name": "Use guarantor …",
+          "meaning": "Whether to copy the supplied guarantor from the chosen profile.",
+          "values": "Yes; No.",
+          "rules": "Required when that profile contains a guarantor. Choosing a profile without a guarantor shows that absence."
+        },
+        {
+          "name": "Evidence to copy",
+          "meaning": "Patient evidence that applies to this order.",
+          "values": "Checkboxes for evidence in the selected patient profile.",
+          "rules": "Optional explicit selection; no new patient evidence is selected automatically. Coverage references must match the order selection."
+        },
+        {
+          "name": "Order evidence retained in this revision",
+          "meaning": "Existing order financial evidence to retain when correcting the selection.",
+          "values": "Checkboxes for currently recorded order evidence; initially all checked.",
+          "rules": "Deselect items that no longer apply. Earlier order revisions retain them; changing the profile does not automatically remove them."
+        },
+        {
+          "name": "Evidence type",
+          "meaning": "Which financial event or document this record describes.",
+          "values": "Eligibility; Prior authorization; Advance notice (including ABN); Good faith estimate; Provider enrollment.",
+          "rules": "Required; initially blank. These are manually recorded source facts, not automated determinations."
+        },
+        {
+          "name": "Source status",
+          "meaning": "The status stated by the source for this evidence.",
+          "values": "Not checked; Unknown; Not required; Pending; Recorded; Approved; Denied.",
+          "rules": "Required; initially blank. Approved here describes the source response and does not guarantee payment."
+        },
+        {
+          "name": "Evidence reference",
+          "meaning": "How to locate the retained source document or external record.",
+          "values": "Source reference text, up to 1000 characters.",
+          "rules": "Required. Use a reference to evidence handled under laboratory procedures; this field does not upload a document."
+        },
+        {
+          "name": "Services and circumstances covered",
+          "meaning": "The scope to which the evidence applies.",
+          "values": "Source-supplied description, up to 2000 characters.",
+          "rules": "Required. State actual service scope; do not broaden an authorization or notice."
+        },
+        {
+          "name": "Source event time (UTC)",
+          "meaning": "When the documented event actually happened.",
+          "values": "UTC timestamp such as 2026-10-14T14:30:00Z.",
+          "rules": "Required; must not be in the future. This is separate from the automatic time the record is saved."
+        },
+        {
+          "name": "Authorization or reference number",
+          "meaning": "A payer or source reference associated with the evidence.",
+          "values": "Source-supplied text, up to 200 characters.",
+          "rules": "Optional."
+        },
+        {
+          "name": "Valid from / Valid until",
+          "meaning": "The dates over which the source states this evidence applies.",
+          "values": "Real dates in YYYY-MM-DD format.",
+          "rules": "Each optional; an end date cannot precede the start date."
+        },
+        {
+          "name": "Related coverage",
+          "meaning": "Coverage to which the evidence relates.",
+          "values": "A coverage from the patient profile being edited, or one already selected for the order.",
+          "rules": "Optional. An order evidence record cannot reference a coverage that the order has not selected."
+        },
+        {
+          "name": "Related provider NPI",
+          "meaning": "The provider identified by this evidence.",
+          "values": "A valid ten-digit NPI with a valid check digit.",
+          "rules": "Required for Provider enrollment; optional for other evidence. For order enrollment evidence it must identify the ordering practitioner."
+        },
+        {
+          "name": "Authorized units",
+          "meaning": "The quantity stated by the authorization source.",
+          "values": "A whole number from 1 through 4,294,967,295.",
+          "rules": "Optional; zero is rejected. Do not calculate units from results or infer authorization."
+        },
+        {
+          "name": "Notice or estimate details",
+          "meaning": "Whether detailed notice or estimate evidence was supplied.",
+          "values": "Notice details supplied; Not supplied.",
+          "rules": "Required only for Advance notice or Good faith estimate. Choosing supplied reveals the notice fields."
+        },
+        {
+          "name": "Notice or estimate form version",
+          "meaning": "Version of the actual source form used.",
+          "values": "Source text, up to 100 characters.",
+          "rules": "Optional; shown for supplied notice details."
+        },
+        {
+          "name": "Notice or estimate reason",
+          "meaning": "The documented reason for the notice or estimate.",
+          "values": "Source-supplied text, up to 2000 characters.",
+          "rules": "Required when notice details are supplied."
+        },
+        {
+          "name": "Estimated amount / Currency",
+          "meaning": "The source estimate and its currency.",
+          "values": "Nonnegative exact decimal without a currency symbol; currency is three uppercase letters, such as USD.",
+          "rules": "Both are optional together; supplying either requires the other. An estimate is not a collected payment."
+        },
+        {
+          "name": "Patient choice as documented",
+          "meaning": "The choice recorded on the source notice or estimate.",
+          "values": "Source text, up to 1000 characters.",
+          "rules": "Optional; do not select or infer a choice for the patient."
+        },
+        {
+          "name": "Provided to patient at (UTC) / Signed at (UTC)",
+          "meaning": "Actual delivery and signature times documented by the source.",
+          "values": "UTC timestamps.",
+          "rules": "Each optional and not in the future. Recording these values does not itself deliver or sign a notice."
+        },
+        {
+          "name": "Signer as documented",
+          "meaning": "Name of the signer stated on the source.",
+          "values": "Source text, up to 200 characters.",
+          "rules": "Optional."
+        },
+        {
+          "name": "Evidence notes",
+          "meaning": "Additional supplied context needed to understand the evidence.",
+          "values": "Free text, up to 2000 characters.",
+          "rules": "Optional. Does not replace the evidence reference, source event time or service scope."
+        },
+        {
+          "name": "Information source",
+          "meaning": "The document or external record used to confirm this revision.",
+          "values": "Source reference, up to 1000 characters.",
+          "rules": "Required for every patient billing edit and order billing selection/evidence change; blank at the start of each edit."
+        },
+        {
+          "name": "Reason for change",
+          "meaning": "Why this revision is being recorded.",
+          "values": "Meaningful explanation, up to 1000 characters.",
+          "rules": "Required even for an initial financial profile. Earlier revisions remain available to the application."
+        },
+        {
+          "name": "Missing financial evidence",
+          "meaning": "The deficiency for a new follow-up item.",
+          "values": "Supplied diagnosis; Medical necessity documentation; Payer-required signature; Provider enrollment; Other financial evidence.",
+          "rules": "Required. This opens a financial task; it does not invent a diagnosis or modify tests."
+        },
+        {
+          "name": "Source note",
+          "meaning": "Context for a new financial follow-up.",
+          "values": "Optional source text, up to 1000 characters.",
+          "rules": "Retained as Original note when the item is later updated."
+        },
+        {
+          "name": "Follow-up status",
+          "meaning": "Whether the financial task is still open.",
+          "values": "Open; Resolved.",
+          "rules": "Required, starting with the current status. Reopening is allowed through an attributed update."
+        },
+        {
+          "name": "Responsible person or team",
+          "meaning": "Owner of the follow-up action.",
+          "values": "Free text, up to 200 characters.",
+          "rules": "Optional while open; required to resolve."
+        },
+        {
+          "name": "Action evidence reference",
+          "meaning": "Evidence supporting the follow-up action.",
+          "values": "Source reference, up to 1000 characters.",
+          "rules": "Optional while open; required to resolve. A fresh value is requested for each update."
+        },
+        {
+          "name": "Reason for this action",
+          "meaning": "Explanation of the follow-up update.",
+          "values": "Text, up to 1000 characters.",
+          "rules": "Required for every update, including reopening."
+        },
+        {
+          "name": "Billing follow-up: Original note, Opened, Owner, Evidence reference, Latest reason",
+          "meaning": "Read-only context and latest action for each financial task.",
+          "values": "Open or Resolved; owner or Unassigned; source reference or Not supplied.",
+          "rules": "Open tasks expand automatically. Resolving a task preserves the prior actions; it does not establish payer acceptance."
+        },
+        {
+          "name": "Amend supplied evidence: authority, diagnoses, medications and point-of-care results",
+          "meaning": "Only newly supplied evidence to append as a new evidence version.",
+          "values": "Same fields and constraints as New order evidence; nothing is inferred or prefilled.",
+          "rules": "For a medication-only amendment, Authority to test = Not supplied records no new authority; previously active authority remains unless explicitly superseded. Never re-originate clinical authority."
+        },
+        {
+          "name": "Supersede these existing entries",
+          "meaning": "Active evidence selected for retirement in this amendment.",
+          "values": "Optional checkboxes identifying each exact existing authority/diagnosis/medication/point-of-care row; none checked initially.",
+          "rules": "Rows remain visible with their removed-in-version number; issued report content remains immutable."
+        },
+        {
+          "name": "Reason and source for amendment",
+          "meaning": "Explains the new source evidence and why prior entries change.",
+          "values": "Required text, blank initially.",
+          "rules": "Save checks the reviewed order revision and creates the next evidence version. Changed context can invalidate review and require report correction."
+        },
+        {
+          "name": "Cancellation: test, requester as supplied and reason",
+          "meaning": "The accepted test requested for cancellation, the requesting source and rationale.",
+          "values": "Choose one accepted item without an open cancellation request; requester and reason required.",
+          "rules": "A request does not cancel work. Exact duplicate pending request is replay-safe; differing concurrent request is refused."
+        },
+        {
+          "name": "Cancellation decision and reason",
+          "meaning": "Explicit acceptance or decline of a pending cancellation.",
+          "values": "No decision preselected. Accept cancellation or Decline cancellation; required reason.",
+          "rules": "Current request revision required. Acceptance cancels the item/components, preserving executions, observations and issued copies."
+        },
+        {
+          "name": "Cancellation history",
+          "meaning": "Test, source requester, request reason, state and decision reason.",
+          "values": "Requested, accepted or declined; pending decision reason until decided.",
+          "rules": "Retained record; inspect report impacts separately. It does not claim an issued report was recalled."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Accept order",
+          "does": "Confirms the saved request for accessioning.",
+          "availableWhen": "Received order, order-entry authority and no unresolved clarification hold; source authority and any standing-order gates are checked.",
+          "result": "Accepting freezes the ordered work. Missing authority or failed standing-order checks can instead place a hold and leave the order unaccepted."
+        },
+        {
+          "name": "Receive specimens",
+          "does": "Opens material registration for eligible tests.",
+          "availableWhen": "Accessioning authority and eligible accepted, unaccessioned tests; the application supplies the eligibility.",
+          "result": "Opens Receive specimens with existing accession context."
+        },
+        {
+          "name": "Place clarification hold / Place hold",
+          "does": "Records a deficiency requiring source clarification.",
+          "availableWhen": "When the order’s offered actions permit it.",
+          "result": "Prevents acceptance and performance until resolved; preserves the note and reason category."
+        },
+        {
+          "name": "Resolve / Resolve hold",
+          "does": "Records how an open clarification hold was resolved.",
+          "availableWhen": "Open hold and order-entry authority.",
+          "result": "Resolves that hold; review remaining holds and source evidence before retrying acceptance."
+        },
+        {
+          "name": "Request add-on or reflex / Record request",
+          "does": "Records a further test request without performing it.",
+          "availableWhen": "Accepted order and current approved catalog choices.",
+          "result": "Creates a Requested add-on/reflex item awaiting a decision; valid repeated reflex activation is deduplicated."
+        },
+        {
+          "name": "Accept request / Decline request",
+          "does": "Decides an individual requested follow-on with a reason.",
+          "availableWhen": "A Requested add-on or reflex item, current revision and order-entry authority.",
+          "result": "Acceptance makes the authorized test available for suitable material; decline preserves the request without performing it."
+        },
+        {
+          "name": "Reject order",
+          "does": "Rejects a received request with a reason and confirmation.",
+          "availableWhen": "Order is still Received and rejection is offered.",
+          "result": "Final rejection; the order and evidence remain. An accepted order cannot be rejected through this action."
+        },
+        {
+          "name": "Accession link / Previous / Next",
+          "does": "Opens linked material or navigates between orders from the originating list.",
+          "availableWhen": "The corresponding link or navigation control is available.",
+          "result": "Loads a different saved record; recheck the identity and state."
+        },
+        {
+          "name": "Open order billing / Refresh order billing",
+          "does": "Loads or refreshes the selected order’s financial facts and follow-up.",
+          "availableWhen": "Order-entry or billing authority is required for patient financial facts, order billing and follow-up. Opening a clinical patient or order record also requires its own access permission.",
+          "result": "Shows the order-specific selection and financial evidence."
+        },
+        {
+          "name": "Confirm order billing selection / Correct order billing selection",
+          "does": "Opens the order financial selection editor.",
+          "availableWhen": "Financial-edit authority; label is Confirm before the first selection and Correct afterwards.",
+          "result": "Save order billing selection creates a versioned selection of source facts and advances the order revision."
+        },
+        {
+          "name": "Add coverage to order / Remove coverage priority …",
+          "does": "Adds or removes a coverage-priority row.",
+          "availableWhen": "Third-party responsibility and a patient profile with coverage choices.",
+          "result": "Changes the unsaved selection only; removing a row changes the priority of later rows."
+        },
+        {
+          "name": "Save order billing selection",
+          "does": "Stores the chosen profile facts, retained/new evidence, source and reason.",
+          "availableWhen": "Valid current order and billing revisions.",
+          "result": "Refreshes the saved order facts; future patient-profile changes still require an explicit order correction."
+        },
+        {
+          "name": "Add order evidence / Save financial evidence",
+          "does": "Appends supplied financial evidence to the existing order selection.",
+          "availableWhen": "An order-specific selection exists and editing is allowed.",
+          "result": "Creates a new billing revision without changing the selected responsibility, coverages or guarantor."
+        },
+        {
+          "name": "Open billing follow-up / Open follow-up",
+          "does": "Records a financial deficiency and optional source note.",
+          "availableWhen": "Financial follow-up creation is allowed.",
+          "result": "Adds an open follow-up item associated with this order."
+        },
+        {
+          "name": "Update billing follow-up / Save follow-up",
+          "does": "Assigns, resolves or reopens a follow-up item with an attributed reason.",
+          "availableWhen": "Financial update authority; current item revision.",
+          "result": "Appends the action. Resolution needs both an owner and retained evidence reference."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes the current unsaved editor or pending action dialog.",
+          "availableWhen": "An editor is open and not saving.",
+          "result": "Unsaved dialog entries are deliberately discarded when Cancel is chosen; saved records remain."
+        },
+        {
+          "name": "Amend supplied evidence / Save evidence amendment",
+          "does": "Append supplied evidence and retire only explicitly selected prior rows.",
+          "availableWhen": "Order-entry authority and an amendable received or accepted order.",
+          "result": "Verify the next evidence version and holds; rejected orders cannot be amended."
+        },
+        {
+          "name": "Request cancellation / Record cancellation request",
+          "does": "Retain a cancellation request on the existing accepted test.",
+          "availableWhen": "Order-entry authority; eligible accepted test.",
+          "result": "Work remains pending its explicit decision. Original clinical evidence is not erased."
+        },
+        {
+          "name": "Decide cancellation / Record decision",
+          "does": "Accept or decline the pending cancellation with a reason.",
+          "availableWhen": "Order-entry authority; request still pending at reviewed revision.",
+          "result": "Accepted cancellation stops further item work; review/report impacts remain visible. Declined request keeps testing active."
+        },
+        {
+          "name": "Refresh",
+          "does": "Re-read order data and current revision.",
+          "availableWhen": "Order-entry authority.",
+          "result": "Close stale dialogs and review refreshed context before reopening; reviewed revisions are not silently replaced."
+        }
+      ],
+      "restrictions": [
+        "Missing authority cannot be bypassed by resolving a hold without obtaining the required source evidence.",
+        "The current record page has no general evidence-amendment, demographic correction or cancellation form. Follow the laboratory’s authorized workflow for those needs.",
+        "Financial follow-up and order billing do not permit changing requested tests or clinical release gates.",
+        "In editable dialogs, Escape and an outside click close only an unchanged form with no command running. Cancel deliberately discards unsaved dialog entries and is disabled while saving."
+      ],
+      "workflow": [
+        "Review identity, requisition, evidence, holds and existing accessions.",
+        "Resolve source questions through the laboratory procedure. Accept the saved order only when eligible.",
+        "Use Receive specimens for new material, or open an existing accession to finish its receipt decisions.",
+        "Review the order billing selection separately and track financial deficiencies with follow-up."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The record changed while the dialog was open.",
+          "recovery": "Keep the source document available. Cancel the dialog, refresh or reopen the record, compare the current facts, then reopen the action. Do not repeatedly submit a decision based on an older revision."
+        },
+        {
+          "problem": "A save fails or a field is rejected.",
+          "recovery": "Read the message and correct the indicated value. The open form retains entered values after failure; success is shown only after the application accepts the save. Cancel abandons an unsaved dialog."
+        },
+        {
+          "problem": "Acceptance creates a hold instead of accepting.",
+          "recovery": "Read Clarification holds, obtain the missing source authority or standing-order clarification, and ensure the underlying evidence is corrected before attempting acceptance again."
+        },
+        {
+          "problem": "No tests available to receive.",
+          "recovery": "Review each test’s displayed reason. Open linked accessions for already registered material; do not create duplicates."
+        },
+        {
+          "problem": "Add-on acceptance is blocked.",
+          "recovery": "Check the recorded authority reference and catalog availability. A saved request without new authority is still only a request."
+        },
+        {
+          "problem": "A cancellation or evidence amendment is stale",
+          "recovery": "Cancel the dialog, refresh the order, review changed items/evidence and submit a new decision only after checking it."
+        },
+        {
+          "problem": "Standing authority collection date is outside validity or unknown",
+          "recovery": "Correct collection evidence only from the source through collection review. Quality approval does not bypass standing validity. Keep unresolved work held and reconcile authority with the ordering source; do not fabricate dates."
+        }
+      ]
+    }
+  ]
+}

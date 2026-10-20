@@ -1,0 +1,17 @@
+[package]
+name = "lis-astm"
+description = "ASTM E1381/E1394 (CLSI LIS1-A/LIS2-A2) codec and receive-side driver state machine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+thiserror = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+
+[lints]
+workspace = true

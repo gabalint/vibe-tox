@@ -1,0 +1,308 @@
+{
+  "id": "catalog-vocabulary",
+  "title": "Analytes and specimen types",
+  "summary": "Maintain named catalog items and the versioned validity policies attached to specimen types.",
+  "reviewedOn": "2026-10-14",
+  "routes": [
+    "/configuration/analytes",
+    "/configuration/specimen-types",
+    "/configuration/specimen-types/:specimenTypeId"
+  ],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Analytes lists the substances and validity markers methods measure. Search by code, name or LOINC, then open a row to inspect its supplied identifiers. Add analyte records a new catalog item.",
+        "Specimen types lists the types used during receipt and their validity-policy version states. Open a type to inspect its policy versions, categories, actions and qualifier text. A new policy draft follows the available review and approval actions."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Use codes and names provided by the laboratory’s configuration owner. Confirm analyte identity before assigning external codes or drug classes; do not infer them from a similar name.",
+        "Validity categories and their consequences are laboratory decisions. Enter only the approved categories and wording. A missing policy or identifier should remain visible as a configuration issue until the responsible person supplies it."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Check whether you are viewing a draft or a version in effect. Unapproved policy content is not made active simply by saving it. If a receiving or review workflow lacks the expected type or category, ask the configuration owner to review the relevant record and version."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Analytes",
+      "routes": ["/configuration/analytes"],
+      "purpose": "Register the drugs and specimen-validity markers referenced by analytical methods.",
+      "access": "View with the configuration access offered to your account. Adding and drafting require Manage configuration; approval and retirement require Approve configuration. The engine checks authority again when saving.",
+      "fields": [
+        {
+          "name": "Find analytes",
+          "meaning": "Locate an existing analyte before adding another.",
+          "values": "Code, name or LOINC text; blank shows all.",
+          "rules": "Optional directory filter."
+        },
+        {
+          "name": "Code",
+          "meaning": "Stable laboratory identifier used to recognize and reference the record.",
+          "values": "Laboratory-assigned letters, digits, period, underscore or hyphen.",
+          "rules": "Required; at most 64 characters; unique for this record type. Choose carefully: this screen does not rename codes."
+        },
+        {
+          "name": "Name",
+          "meaning": "Human-readable label staff see when selecting the record.",
+          "values": "Laboratory-approved text.",
+          "rules": "Required; up to 200 characters; surrounding spaces are removed and control characters are refused."
+        },
+        {
+          "name": "LOINC code / LOINC",
+          "meaning": "External observation identifier supplied for this analyte.",
+          "values": "Laboratory-provided code, or blank.",
+          "rules": "Optional; up to 64 characters using letters, digits, period, underscore or hyphen. It is retained as supplied; saving does not prove that the mapping is clinically appropriate."
+        },
+        {
+          "name": "Drug class code / Drug class",
+          "meaning": "Laboratory-provided grouping identifier.",
+          "values": "Code, or blank.",
+          "rules": "Optional; same code syntax and length limit. Do not infer a class from the analyte name; missing values show Not provided."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Add analyte",
+          "does": "Save a new analyte and open its details.",
+          "availableWhen": "Manage configuration; a new unique code and name are provided.",
+          "result": "The analyte becomes available to method drafts."
+        },
+        {
+          "name": "Open row / Previous / Next / Close",
+          "does": "Inspect saved identifiers and move through the filtered list.",
+          "availableWhen": "A record is listed.",
+          "result": "Read-only details open; this screen has no rename or delete action."
+        }
+      ],
+      "restrictions": ["A registered analyte is not an approved assay or interpretation rule."],
+      "workflow": [
+        "Search by code, name and any known LOINC mapping.",
+        "Enter the authorized code and name plus supplied external identifiers.",
+        "Save and inspect the resulting record before using it in a method."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The code already exists",
+          "recovery": "Open and check the existing record. Do not create a slightly altered duplicate to bypass the conflict."
+        }
+      ]
+    },
+    {
+      "title": "Specimen types",
+      "routes": ["/configuration/specimen-types"],
+      "purpose": "Find registered specimen types and open their version history, or add a new record.",
+      "access": "View with the configuration access offered to your account. Adding and drafting require Manage configuration; approval and retirement require Approve configuration. The engine checks authority again when saving.",
+      "fields": [
+        {
+          "name": "Find specimen types",
+          "meaning": "Narrow the displayed directory without changing saved records.",
+          "values": "Any part of the code or name; blank shows all.",
+          "rules": "Optional; matching is on the loaded directory."
+        },
+        {
+          "name": "Code",
+          "meaning": "Stable laboratory identifier used to recognize and reference the record.",
+          "values": "Laboratory-assigned letters, digits, period, underscore or hyphen.",
+          "rules": "Required; at most 64 characters; unique for this record type. Choose carefully: this screen does not rename codes."
+        },
+        {
+          "name": "Name",
+          "meaning": "Human-readable label staff see when selecting the record.",
+          "values": "Laboratory-approved text.",
+          "rules": "Required; up to 200 characters; surrounding spaces are removed and control characters are refused."
+        },
+        {
+          "name": "Versions",
+          "meaning": "Distinguish the version in effect from a draft awaiting approval.",
+          "values": "Version numbers, or no version in effect / no draft.",
+          "rules": "Read-only; a record can have a current version and a draft at the same time."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Add specimen type",
+          "does": "Register the code and name, then open the record.",
+          "availableWhen": "Manage configuration; code is not already used.",
+          "result": "Creates the named record. Draft and approve its content separately."
+        },
+        {
+          "name": "Open row",
+          "does": "Show the selected record and its versions.",
+          "availableWhen": "A listed row is available.",
+          "result": "The record page opens. Click its row or press Enter."
+        },
+        {
+          "name": "Clear find / Clear filters",
+          "does": "Remove the selected search or filter constraints.",
+          "availableWhen": "A search or filter is applied.",
+          "result": "The list expands; no saved configuration changes."
+        }
+      ],
+      "restrictions": ["Adding a name and code alone does not create an approved definition."],
+      "workflow": [
+        "Search before adding a record to avoid duplicates.",
+        "Open the existing record or add the laboratory-approved code and name.",
+        "Review its version state before changing it."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No matching records",
+          "recovery": "Clear find and filters; if the record is still absent, ask the configuration owner before adding a new code."
+        }
+      ]
+    },
+    {
+      "title": "Specimen type validity policy",
+      "routes": ["/configuration/specimen-types/:specimenTypeId"],
+      "purpose": "Define the laboratory-approved categories and required consequences of specimen-validity assessment.",
+      "access": "View with the configuration access offered to your account. Adding and drafting require Manage configuration; approval and retirement require Approve configuration. The engine checks authority again when saving.",
+      "fields": [
+        {
+          "name": "Version, Status and Versions list",
+          "meaning": "Identify exactly which definition you are viewing and whether it can govern new work.",
+          "values": "Draft; Approved; Replaced; Retired. Version numbers increase within the record.",
+          "rules": "Read-only. On opening, the draft is preferred, then the version in effect, then the newest. Choose a version explicitly before review."
+        },
+        {
+          "name": "Drafted, Approved by, Effective, Retired and Retirement reason",
+          "meaning": "Show who authored and authorized the definition, when it applied and why it ended.",
+          "values": "Recorded people, laboratory-local times, effective period and reason; Not approved or Not yet effective when applicable.",
+          "rules": "Read-only. Replacement ends the earlier effective period without deleting its content."
+        },
+        {
+          "name": "Reason (Retire version)",
+          "meaning": "Explain why this approved version must stop being used for new work.",
+          "values": "Specific laboratory explanation, up to 1,000 characters.",
+          "rules": "Required for retirement; retained in history."
+        },
+        {
+          "name": "Self-approval confirmation",
+          "meaning": "Explicitly records that the draft author is also approving it without another reviewer.",
+          "values": "An initially unchecked confirmation, shown when the engine requires it.",
+          "rules": "Available only if laboratory policy permits this duty to be performed by one person. Closing the dialog clears this confirmation."
+        },
+        {
+          "name": "Code (each Categories row)",
+          "meaning": "Stable laboratory identifier for a validity category.",
+          "values": "Letters, digits, period, underscore or hyphen; up to 64 characters.",
+          "rules": "Required; unique within the policy version."
+        },
+        {
+          "name": "Label",
+          "meaning": "Name of the validity category shown to staff.",
+          "values": "Laboratory-approved wording up to 200 characters.",
+          "rules": "Required. No clinical categories are preselected."
+        },
+        {
+          "name": "Action",
+          "meaning": "Consequence associated with this validity category.",
+          "values": "No action; Report with a qualifier; Hold the results; Request recollection; Add a comment.",
+          "rules": "Required; choose according to approved laboratory policy, not a value suggested by this guide."
+        },
+        {
+          "name": "Qualifier text",
+          "meaning": "Exact report wording for a category that reports with a qualifier.",
+          "values": "Laboratory-approved text up to 200 characters.",
+          "rules": "Shown and required only for Report with a qualifier. Other actions save no qualifier text."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Choose Version / Previous / Next",
+          "does": "Inspect a particular saved definition or move through the records from the directory.",
+          "availableWhen": "A version or neighboring record exists.",
+          "result": "The selected content and its history appear; no definition changes."
+        },
+        {
+          "name": "New draft version / New draft from this version",
+          "does": "Start an empty definition or copy the selected definition for revision.",
+          "availableWhen": "Manage configuration and no open draft for this record.",
+          "result": "A form opens. Saving creates the next draft; it is not yet in effect."
+        },
+        {
+          "name": "Open draft version / Edit draft",
+          "does": "Return to the open proposal and revise its content.",
+          "availableWhen": "A draft exists; editing requires Manage configuration and the draft author.",
+          "result": "Save draft updates the draft revision; approved versions remain immutable."
+        },
+        {
+          "name": "Approve version",
+          "does": "Confirm the reviewed draft and make it current.",
+          "availableWhen": "Approve configuration, current draft revision, valid dependencies, and the applicable separation-of-duties rule.",
+          "result": "Approved content becomes immutable immediately; the previous current version becomes Replaced."
+        },
+        {
+          "name": "Retire version",
+          "does": "End use of an approved version for new work while retaining its history.",
+          "availableWhen": "Approve configuration, an approved version and a reason; dependency checks must pass.",
+          "result": "The version is retained as Retired. Existing work keeps the version it used."
+        },
+        {
+          "name": "Save draft / Cancel",
+          "does": "Submit the draft form, or close it without saving.",
+          "availableWhen": "Required fields are supplied for Save draft.",
+          "result": "A successful save opens the saved draft; a refusal leaves the form available for correction."
+        },
+        {
+          "name": "Add category / Remove category",
+          "does": "Adjust the categories in the draft policy.",
+          "availableWhen": "While creating or editing the draft.",
+          "result": "At least one category must remain when saving; the complete list is reviewed together."
+        }
+      ],
+      "restrictions": [
+        "Only one draft may be open per record, and only its author may edit it. Saving a draft is separate from approval.",
+        "A stale revision is refused. Reload and review the current version before repeating an edit or approval.",
+        "Laboratory approval establishes the configured definition; this software does not supply clinical validation or assay acceptance criteria.",
+        "Policy categories do not calculate or establish clinical validity by themselves. The responsible laboratory supplies their meaning and intended use."
+      ],
+      "workflow": [
+        "Open the specimen type and select its policy version.",
+        "Create or edit a draft with each authorized category, label and action.",
+        "Enter exact qualifier wording only where that action applies.",
+        "Save, review and approve the policy before expecting it to be current."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The author cannot approve",
+          "recovery": "Arrange another authorized reviewer unless laboratory policy expressly permits self-approval; if permitted, read and explicitly confirm the prompt."
+        },
+        {
+          "problem": "Revision conflict or an existing draft",
+          "recovery": "Open the current record and draft, compare its content with your intended change, then retry only the applicable action."
+        },
+        {
+          "problem": "A receiving workflow lacks the expected category",
+          "recovery": "Check the specimen type and its policy version in effect. Saving an unapproved draft alone does not update active choices."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/configuration/Directory.tsx",
+    "ui/src/features/configuration/CodedNameFields.tsx",
+    "ui/src/features/configuration/VersionedRecordPage.tsx",
+    "ui/src/features/configuration/VersionPanel.tsx",
+    "ui/src/features/configuration/VersionFacts.tsx",
+    "ui/src/features/configuration/VersionList.tsx",
+    "ui/src/features/configuration/VersionActions.tsx",
+    "ui/src/features/configuration/DraftDialog.tsx",
+    "crates/lis-catalog/src/commands/lifecycle.rs",
+    "crates/lis-catalog/src/model.rs",
+    "crates/lis-catalog/src/content.rs",
+    "ui/src/features/configuration/analytes/AnalytesPage.tsx",
+    "ui/src/features/configuration/validity/SpecimenTypesPage.tsx",
+    "ui/src/features/configuration/validity/ValidityDraftDialog.tsx",
+    "ui/src/features/configuration/validity/ValidityPolicyPage.tsx",
+    "crates/lis-catalog/src/commands/reference.rs",
+    "crates/lis-catalog/src/commands/validity.rs"
+  ]
+}

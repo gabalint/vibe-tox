@@ -1,0 +1,280 @@
+{
+  "id": "operations-settings",
+  "title": "Operations settings",
+  "summary": "Review versioned backup, health, sign-in and separation-of-duties policies.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/operations/settings"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "This page presents the settings your account is authorized to read or change. Operations settings cover backup intervals, retention and health thresholds. Security policy covers sign-in behavior. Separation of duties controls the listed requirements for another person’s approval.",
+        "Use the corresponding change action, review the fields and enter the requested reason and authentication. Each policy change creates a new version; the current values remain visible for review."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Use settings approved by the laboratory’s responsible owner. Check the operational effect of changed thresholds, retention or sign-in behavior before saving. A default is a starting configuration, not proof that it fits the laboratory.",
+        "Where self-approval is permitted, the application still asks for explicit confirmation at the affected action and records it. Changing the policy does not supply missing role authority or replace the laboratory’s review responsibilities.",
+        "Security keys require PIN or biometric verification by default. Allow security keys without a PIN for sign-in is a laboratory exception: a person holding a lost or unattended touch-only key may be able to sign in as its owner. Keep personal custody of keys and remove them when leaving the workstation."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Different settings require configuration, account-administration or quality authority. If a section is absent or its change action is unavailable, involve the person holding that responsibility. Read field errors rather than reducing a control merely to clear a warning."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Operations settings",
+      "routes": ["/operations/settings"],
+      "purpose": "Set the laboratory’s backup, retention and health thresholds, sign-in policy and separation of duties.",
+      "access": "Operations settings requires Manage configuration; Security policy requires Manage users; Separation of duties can be read with Approve configuration or Manage quality; only Approve configuration can change it. Each section is shown only with its corresponding authority.",
+      "fields": [
+        {
+          "name": "Backup interval",
+          "meaning": "Minutes between scheduled backups while the app is open.",
+          "values": "5–1440 minutes; default 60.",
+          "rules": "Required whole number when editing; current values are prefilled. Backup age warning must be greater than this interval."
+        },
+        {
+          "name": "Recent backup sets kept",
+          "meaning": "Number of newest sets retained per target.",
+          "values": "2–96 sets; default 6.",
+          "rules": "Required whole number when editing; current values are prefilled. Retains complete recent sets; this is not a count of individual files."
+        },
+        {
+          "name": "Daily backup sets kept",
+          "meaning": "Retention of the newest set of each UTC day.",
+          "values": "0–90 days; default 7.",
+          "rules": "Required whole number when editing; current values are prefilled. Zero disables this daily retention tier."
+        },
+        {
+          "name": "Weekly backup sets kept",
+          "meaning": "Retention of the newest set of each ISO week.",
+          "values": "0–104 weeks; default 4.",
+          "rules": "Required whole number when editing; current values are prefilled. Zero disables this weekly retention tier."
+        },
+        {
+          "name": "Backup age warning",
+          "meaning": "Age of the latest verified backup that raises a warning.",
+          "values": "10–1440 minutes; default 120.",
+          "rules": "Required whole number when editing; current values are prefilled. Must be greater than Backup interval."
+        },
+        {
+          "name": "Backup age alert",
+          "meaning": "Age that raises the stronger backup alert.",
+          "values": "30–10080 minutes; default 240.",
+          "rules": "Required whole number when editing; current values are prefilled. Must be greater than Backup age warning."
+        },
+        {
+          "name": "Off-host copy age warning",
+          "meaning": "Age threshold for a backup copy held away from the host.",
+          "values": "1–168 hours; default 24.",
+          "rules": "Required whole number when editing; current values are prefilled. This threshold changes warnings; it does not create an off-host copy."
+        },
+        {
+          "name": "Offline copy age warning",
+          "meaning": "Age threshold for a copy on disconnected removable media.",
+          "values": "1–90 days; default 7.",
+          "rules": "Required whole number when editing; current values are prefilled. A connected target is not itself proof of an offline copy."
+        },
+        {
+          "name": "Restore test age warning",
+          "meaning": "Age threshold for a successful restore-readability test.",
+          "values": "7–365 days; default 90.",
+          "rules": "Required whole number when editing; current values are prefilled. A backup job and a restore test are separate records."
+        },
+        {
+          "name": "Recovery kit confirmation warning",
+          "meaning": "Maximum age before kit-storage confirmation becomes due.",
+          "values": "7–365 days; default 90.",
+          "rules": "Required whole number when editing; current values are prefilled. Confirm only after checking actual storage."
+        },
+        {
+          "name": "Audit anchor lag warning",
+          "meaning": "Lag of retained audit-anchor evidence that raises a warning.",
+          "values": "10–1440 minutes; default 30.",
+          "rules": "Required whole number when editing; current values are prefilled. Independent of the backup interval."
+        },
+        {
+          "name": "Audit anchor lag incident",
+          "meaning": "Longer lag that raises an incident alert and work item.",
+          "values": "1–168 hours; default 24.",
+          "rules": "Required whole number when editing; current values are prefilled. Converted to minutes, must exceed Audit anchor lag warning."
+        },
+        {
+          "name": "Free disk space warning",
+          "meaning": "Free-space threshold on the laboratory data disk.",
+          "values": "1–1024 GiB; default 10.",
+          "rules": "Required whole number when editing; current values are prefilled. Raises a warning when free space falls below it; it does not reserve capacity."
+        },
+        {
+          "name": "Warning before operating system support ends",
+          "meaning": "Advance warning interval before the known support end.",
+          "values": "7–365 days; default 90.",
+          "rules": "Required whole number when editing; current values are prefilled. The check depends on available operating-system support information."
+        },
+        {
+          "name": "Clock jump recorded as a gap above",
+          "meaning": "Wall-clock movement threshold recorded for investigation.",
+          "values": "10–3600 seconds; default 60.",
+          "rules": "Required whole number when editing; current values are prefilled. Does not change the host clock."
+        },
+        {
+          "name": "Idle timeout",
+          "meaning": "Inactivity period before an authenticated screen locks.",
+          "values": "2–60 minutes; default 15.",
+          "rules": "Required whole number when editing; current values are prefilled. Security policy setting; unlocking still requires the applicable sign-in checks."
+        },
+        {
+          "name": "Failed sign-ins before lockout",
+          "meaning": "Number of failed sign-in attempts that triggers account lockout.",
+          "values": "3–10 attempts; default 5.",
+          "rules": "Required whole number when editing; current values are prefilled. Security policy setting; lower values make accidental lockout easier."
+        },
+        {
+          "name": "Lockout duration",
+          "meaning": "Length of the sign-in lockout.",
+          "values": "5–60 minutes; default 15.",
+          "rules": "Required whole number when editing; current values are prefilled. Security policy setting; distinct from idle lock."
+        },
+        {
+          "name": "Allow security keys without a PIN for sign-in",
+          "meaning": "Permit compatible keys without configured PIN or biometric verification to be enrolled from a signed-in account for touch-only sign-in and key unlock.",
+          "values": "Checkbox; unchecked by default. Unchecked requires PIN or biometric verification. Checked permits touch-only use where the newly enrolled key supports it.",
+          "rules": "Prefilled from the current laboratory policy. A key with configured PIN or biometric verification can still request it; previously verified keys retain that protection. Sensitive actions, first-account setup and saved-code recovery always require PIN or biometric verification. Changing this checkbox in either direction needs fresh account confirmation. Enabling requires a reason even on the first saved policy."
+        },
+        {
+          "name": "Security key sign-in",
+          "meaning": "Current saved requirement for personal security keys.",
+          "values": "PIN or biometric verification required (default); Keys without a PIN are allowed.",
+          "rules": "Read-only policy fact. It does not state whether a particular key supports touch-only use or remove stronger verification already retained for a key."
+        },
+        {
+          "name": "Defaults apply / Version / Set",
+          "meaning": "Identify whether software defaults or a laboratory-saved policy is in effect and who set it.",
+          "values": "Defaults apply until saved; then version, person and time. Values equal to a default are marked (default).",
+          "rules": "Read-only. Matching a default value does not mean the laboratory has reviewed its suitability."
+        },
+        {
+          "name": "Approve configuration they wrote",
+          "meaning": "Allow or prohibit one person authoring and approving configuration.",
+          "values": "Checked: one person may do both, confirming each time. Unchecked: second person required.",
+          "rules": "Applies to methods, tests/panels, validity and billing mappings, catalog review and result sources. Default is unchecked."
+        },
+        {
+          "name": "Release a report whose results they reviewed",
+          "meaning": "Allow or prohibit a technical reviewer releasing their own reviewed results.",
+          "values": "Checked: one person may do both, confirming each time. Unchecked: second person required.",
+          "rules": "Does not grant report-release authority or remove any other release gate. Default is unchecked."
+        },
+        {
+          "name": "Verify a delivery destination they created",
+          "meaning": "Allow or prohibit a destination’s creator also verifying it.",
+          "values": "Checked: one person may do both, confirming each time. Unchecked: second person required.",
+          "rules": "Does not bypass verification evidence. Default is unchecked."
+        },
+        {
+          "name": "Reason",
+          "meaning": "Explain the policy or settings change.",
+          "values": "PHI-free laboratory explanation.",
+          "rules": "Required after the first operations/security version, when enabling sign-in without a key PIN even on the first security version, and for every separation-of-duties change. Reasons allow up to 500 characters."
+        },
+        {
+          "name": "Your password",
+          "meaning": "Reconfirm the administrator making a separation-of-duties change or changing whether key sign-in may omit verification.",
+          "values": "Your current password.",
+          "rules": "Password accounts only. Required for Save policy and for Save settings when Allow security keys without a PIN for sign-in differs from its saved value. Numeric security settings alone do not request it. Never enter another person’s password."
+        },
+        {
+          "name": "Security key",
+          "meaning": "Fresh confirmation by the signed-in person using their registered security key.",
+          "values": "The active personal keys registered to your account; the first returned key is selected initially.",
+          "rules": "Security-key accounts only; replaces Your password for separation-of-duties changes and a changed key-verification checkbox. Select one key, review and submit the action, then follow its PIN or biometric verification and touch prompt. Touch-only sign-in cannot confirm these changes. The key confirms only that submitted action. Permissions, reasons and record-state gates still apply. Use your own key; a selected label alone does not authorize anything."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Change operations settings / Change security policy",
+          "does": "Open the complete corresponding values for review.",
+          "availableWhen": "The section’s required capability.",
+          "result": "Save settings creates a new current version; Cancel abandons the unsaved form."
+        },
+        {
+          "name": "Save settings",
+          "does": "Validate and save a complete settings version.",
+          "availableWhen": "All values are within their ranges, related thresholds are consistent and the displayed version is current. Changing the key-verification checkbox requires fresh password or verified-key confirmation; enabling it requires a reason even on the first version.",
+          "result": "The new values become effective; earlier versions remain recorded. Changing the key-verification checkbox ends all other laboratory sessions and retains the acting administrator’s session. Personal unlock-PIN settings are unchanged. Turning the checkbox off requires previously enrolled touch-only keys to use PIN or biometric verification on their next sign-in or key unlock."
+        },
+        {
+          "name": "Change separation of duties / Save policy",
+          "does": "Set which duties the laboratory permits one person to perform alone.",
+          "availableWhen": "Approve configuration, a reason, fresh account confirmation and current policy version.",
+          "result": "Saves an attributable policy version. Each later self-approval still needs its own confirmation and audit record."
+        }
+      ],
+      "restrictions": [
+        "Defaults are software starting values, not laboratory-approved procedures.",
+        "Changing thresholds does not repair failed backups, disks or operating-system support.",
+        "Separation-of-duties permission does not confer a role or prove a person’s qualifications; laboratory procedures remain authoritative.",
+        "Allowing sign-in without a key PIN does not weaken sensitive-action confirmation, first-account setup or saved-code recovery, and it does not bypass a wrong or blocked key PIN. Configure verification or arrange an existing verified key before disabling the exception."
+      ],
+      "workflow": [
+        "Review the current values and whether a version has been set.",
+        "Open the relevant section, enter laboratory-approved whole-number values and check related threshold ordering.",
+        "For separation of duties, select only approved exceptions, enter the reason and confirm with your password or security key.",
+        "For the security-key exception, review custody and workstation risks, select the approved setting, enter a reason when required and confirm with your password or a key’s PIN or biometric check. Tell other users they will need to sign in again.",
+        "Save and review the new version; investigate health findings using the relevant operational pages."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A warning/alert threshold is refused",
+          "recovery": "Keep backup warning above the backup interval, backup alert above warning, and anchor incident hours greater than anchor warning minutes after unit conversion."
+        },
+        {
+          "problem": "No settings to show",
+          "recovery": "The account lacks the capabilities for these sections; have the authorized owner perform the change."
+        },
+        {
+          "problem": "A settings version changed meanwhile",
+          "recovery": "Reload the section, review the new values and make the intended adjustment against the current version."
+        },
+        {
+          "problem": "A key signs in but cannot confirm a policy change",
+          "recovery": "Policy changes require the key’s PIN or biometric verification even when touch-only sign-in is allowed. Configure verification with the key’s management software or select another already registered key that supports it. The personal unlock PIN cannot confirm the change."
+        },
+        {
+          "problem": "Confirmation fails or is cancelled",
+          "recovery": "The new policy is not saved. Correct a highlighted password or reason error, or retry key confirmation deliberately. If the session locked or ended, unlock or sign in again and reopen the current policy before retrying."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/operations/settings/OperationsSettingsPage.tsx",
+    "ui/src/features/operations/settings/SettingsDialog.tsx",
+    "ui/src/features/operations/settings/SecurityPolicyDialog.tsx",
+    "ui/src/features/operations/settings/SecurityPolicySection.tsx",
+    "ui/src/features/operations/settings/SecurityPolicyDialog.test.tsx",
+    "ui/src/features/operations/settings/SettingsFacts.tsx",
+    "ui/src/features/operations/settings/settingFields.ts",
+    "ui/src/features/operations/settings/SeparationPolicyDialog.tsx",
+    "ui/src/features/operations/settings/SeparationPolicySection.tsx",
+    "ui/src/features/operations/settings/separationDuties.ts",
+    "crates/lis-ops/src/settings.rs",
+    "crates/lis-ops/src/policy.rs",
+    "crates/lis-auth/src/policy.rs",
+    "crates/lis-auth/src/key_policy.rs",
+    "crates/lis-auth/src/separation.rs",
+    "crates/lis-engine/src/commands/operations/mod.rs",
+    "crates/lis-engine/src/commands/operations/settings.rs",
+    "ui/src/lib/securityKeyAuthenticationField.tsx",
+    "ui/src/lib/securityKeyPrompt.tsx",
+    "ui/src/lib/commands.ts",
+    "crates/lis-auth/src/key_proofs.rs"
+  ]
+}

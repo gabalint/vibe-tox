@@ -1,0 +1,149 @@
+# Cargo workspace for the Vibe Toxicology LIS engine and desktop shell.
+# Dependency admission: docs/governance/library-policy.md. Add a crate here only
+# after it is approved there; member crates reference it with `{ workspace = true }`.
+
+[workspace]
+resolver = "3"
+members = [
+  "crates/lis-core",
+  "crates/lis-audit",
+  "crates/lis-store",
+  "crates/lis-astm",
+  "crates/lis-au",
+  "crates/lis-report",
+  "crates/lis-labels",
+  "crates/lis-auth",
+  "crates/lis-security-key",
+  "crates/lis-identity",
+  "crates/lis-catalog",
+  "crates/lis-interfaces",
+  "crates/lis-orders",
+  "crates/lis-specimens",
+  "crates/lis-analytical",
+  "crates/lis-results",
+  "crates/lis-reporting",
+  "crates/lis-billing",
+  "crates/lis-ops",
+  "crates/lis-engine",
+  "src-tauri",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97"
+publish = false
+license = "GPL-3.0-only"
+
+[workspace.dependencies]
+# Internal crates
+lis-core = { path = "crates/lis-core" }
+lis-audit = { path = "crates/lis-audit" }
+lis-store = { path = "crates/lis-store" }
+lis-astm = { path = "crates/lis-astm" }
+lis-au = { path = "crates/lis-au" }
+lis-report = { path = "crates/lis-report" }
+lis-labels = { path = "crates/lis-labels" }
+lis-auth = { path = "crates/lis-auth" }
+lis-security-key = { path = "crates/lis-security-key" }
+lis-identity = { path = "crates/lis-identity" }
+lis-catalog = { path = "crates/lis-catalog" }
+lis-interfaces = { path = "crates/lis-interfaces" }
+lis-orders = { path = "crates/lis-orders" }
+lis-specimens = { path = "crates/lis-specimens" }
+lis-analytical = { path = "crates/lis-analytical" }
+lis-results = { path = "crates/lis-results" }
+lis-reporting = { path = "crates/lis-reporting" }
+lis-billing = { path = "crates/lis-billing" }
+lis-ops = { path = "crates/lis-ops" }
+lis-engine = { path = "crates/lis-engine" }
+
+# Approved external crates (docs/governance/library-policy.md)
+argon2 = "0.6.0"
+async-trait = "=0.1.92"
+chacha20poly1305 = "0.11.0"
+csv = "1.4"
+fs4 ={ version = "1.1.0", default-features = false, features = ["sync"] }
+hex = "0.4.3"
+jiff = { version = "0.2.38", features = ["serde"] }
+keepawake = { version = "0.6.1", default-features = false }
+openssl = { version = "=0.10.81", features = ["vendored"] }
+keyring = "4.2.0"
+qrcode = { version = "0.14.1", default-features = false, features = ["svg"] }
+rand = "0.10.3"
+rusqlite = { version = "0.40.2", features = ["bundled", "hooks"] }
+rust_decimal = { version = "1.43.0", default-features = false, features = ["std"] }
+secrecy = { version = "0.10.3", features = ["serde"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+serialport = "4.10.1"
+sha2 = "0.11.1"
+subtle = "2.6.1"
+tauri = "2.12.3"
+tauri-build = "2.7.2"
+tauri-plugin-dialog = "2.8.2"
+tauri-plugin-single-instance = "2.5.3"
+thiserror = "2.0.21"
+tokio = { version = "1.53.2", features = ["rt-multi-thread", "macros", "net", "io-util", "time", "sync"] }
+totp-rs = { version = "6.0.0", default-features = false, features = ["alloc", "zeroize"] }
+tracing = "0.1.44"
+tracing-appender = "0.2.5"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
+ts-rs = "12.0.1"
+typst = "0.15.1"
+typst-assets = { version = "0.15.1", features = ["fonts"] }
+typst-pdf = "0.15.1"
+unicode-normalization = "0.1.25"
+url = "=2.5.8"
+ciborium = "=0.2.2"
+webauthn-authenticator-rs = { version = "=0.5.5", default-features = false }
+webauthn-rs = "=0.5.5"
+webauthn-rs-proto = "=0.5.5"
+uuid = { version = "1.28.0", features = ["v7", "serde"] }
+zeroize = "1.9.1"
+
+# Approved dev-only crates
+insta = "1.49.0"
+proptest = "1.12.0"
+tempfile = "3.27.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+unreachable_pub = "warn"
+unused_must_use = "deny"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+# Errors are values: no panicking shortcuts outside tests (clippy.toml allows them in tests).
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+dbg_macro = "deny"
+# Output goes through `tracing`, never stdout/stderr.
+print_stdout = "deny"
+print_stderr = "deny"
+# Clinical values are exact decimals; floats are never used for them.
+float_arithmetic = "warn"
+float_cmp = "deny"
+# Complexity budgets (thresholds in clippy.toml); CI runs clippy with -D warnings.
+cognitive_complexity = "warn"
+too_many_lines = "warn"
+too_many_arguments = "warn"
+excessive_nesting = "warn"
+large_enum_variant = "warn"
+redundant_clone = "warn"
+needless_collect = "warn"
+
+[profile.dev]
+# Keep debug builds reasonably fast for Typst and SQLite-heavy tests.
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"

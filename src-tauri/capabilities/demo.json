@@ -1,0 +1,14 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "demo",
+  "description": "The demo laboratory for the main window: its status and data loader, and the shell-only switches that open, leave or reset it (proposed REQ-OPS-016; NFR-31).",
+  "windows": ["main"],
+  "permissions": [
+    "allow-demo-status",
+    "allow-load-demo-data",
+    "allow-complete-demo-setup",
+    "allow-open-demo-laboratory",
+    "allow-leave-demo-laboratory",
+    "allow-reset-demo-laboratory"
+  ]
+}

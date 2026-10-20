@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "anchors",
+  "description": "Audit anchor status, export and verification commands for the main window (NFR-18, ADR 0008).",
+  "windows": ["main"],
+  "permissions": [
+    "allow-get-anchor-status",
+    "allow-list-anchor-exports",
+    "allow-export-anchors-now",
+    "allow-verify-audit-anchors"
+  ]
+}

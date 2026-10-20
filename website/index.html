@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Meet Vibe Toxicology LIS: a free, open-source laboratory information system for small US clinical toxicology labs, built for one lab computer. Watch the overview and explore the development project.">
+    <meta name="theme-color" content="#0b5cad">
+    <meta property="og:site_name" content="Vibe Toxicology LIS">
+    <meta property="og:title" content="Vibe Toxicology LIS — Your laboratory, on your computer">
+    <meta property="og:description" content="From order to report, with your laboratory in control. Explore the project and watch the presentation. Development preview; synthetic data only.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gabalint.github.io/vibe-tox/">
+    <meta property="og:image" content="https://gabalint.github.io/vibe-tox/media/vibe-tox-overview-poster.jpg">
+    <meta property="og:image:width" content="1920">
+    <meta property="og:image:height" content="1080">
+    <meta property="og:image:alt" content="Vibe Toxicology LIS project presentation">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="canonical" href="https://gabalint.github.io/vibe-tox/">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="responsive.css">
+    <title>Vibe Toxicology LIS — Your laboratory, on your computer</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header wrap">
+      <a class="wordmark" href="./" aria-label="Vibe Toxicology LIS home">
+        <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><path d="M6 10h8l6 18 6-18h8L23 36h-6L6 10Z" fill="currentColor"/><path d="M17 4h6v8h-6z" fill="currentColor"/></svg>
+        <span>Vibe Toxicology <span class="wordmark-suffix">LIS</span></span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#presentation">Presentation</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#get-started">Get started</a>
+        <a href="https://github.com/gabalint/vibe-tox">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+    <main id="main">
+      <section class="hero wrap" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Free and open source · GPL-3.0-only</p>
+          <h1 id="hero-title">Your laboratory.<br>Your computer.<br><span>Your control.</span></h1>
+          <p class="intro">A laboratory information system for small US clinical toxicology labs. One connected workflow, from the first order to the final report, on a computer the lab owns.</p>
+          <div class="actions">
+            <a class="button primary" href="#presentation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z" fill="currentColor"/></svg>Watch the presentation</a>
+            <a class="button secondary" href="https://github.com/gabalint/vibe-tox">View on GitHub <span aria-hidden="true">↗</span></a>
+          </div>
+          <ul class="facts">
+            <li>Works without internet</li>
+            <li>No server to run</li>
+            <li>Backup and export included</li>
+          </ul>
+          <p class="development-note"><strong>In development.</strong> Built and tested on synthetic data. Not clinically validated or ready for patient reporting.</p>
+        </div>
+        <aside class="workflow-preview" aria-label="A connected laboratory workflow">
+          <div class="preview-heading"><span>One laboratory</span><span>One system of record</span></div>
+          <ol>
+            <li><span class="step-number">01</span><div><strong>Order &amp; accession</strong><span>Requests, specimens, barcode labels</span></div></li>
+            <li><span class="step-number">02</span><div><strong>Analyze &amp; review</strong><span>Results, quality control, traceability</span></div></li>
+            <li><span class="step-number">03</span><div><strong>Release &amp; deliver</strong><span>Versioned reports, recorded handoffs</span></div></li>
+          </ol>
+          <div class="local-record"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="5" width="24" height="17" rx="2"/><path d="M16 22v5M10 27h12"/></svg><span>The clinical record stays<br><strong>on the lab’s computer.</strong></span></div>
+        </aside>
+      </section>
+
+      <section class="presentation-section" id="presentation" aria-labelledby="presentation-title">
+        <div class="wrap">
+          <div class="section-heading"><h2 id="presentation-title">Meet Vibe Toxicology LIS.</h2><p>A two-minute walkthrough of the application,<br>from order to report and beyond.</p></div>
+          <figure class="presentation">
+            <video controls playsinline preload="none" loading="lazy" width="1920" height="1080" poster="media/vibe-tox-overview-poster.jpg" aria-label="Vibe Toxicology LIS narrated application walkthrough" aria-describedby="video-description">
+              <source src="media/vibe-tox-overview.mp4" type="video/mp4">
+              <track src="media/vibe-tox-overview.en.vtt" kind="captions" srclang="en" label="English" default>
+              Your browser cannot play this video. <a href="media/vibe-tox-overview.mp4">Download the presentation</a> or <a href="media/transcript.txt">read the transcript</a>.
+            </video>
+            <figcaption id="video-description"><span>2:01 walkthrough · Narration and music · English captions</span><span><a href="media/transcript.txt">Read the transcript</a><a href="media/vibe-tox-overview.mp4" download>Download video</a><a href="media/credits.txt">Media credits</a></span></figcaption>
+          </figure>
+          <p class="license-note">Recorded with synthetic demo data and simulated laboratory activity. See the <a href="#disclaimer">development disclaimer</a>.</p>
+        </div>
+      </section>
+
+      <section class="workflow-section wrap" id="workflow" aria-labelledby="workflow-title">
+        <div class="section-heading"><h2 id="workflow-title">Follow the work.<br>Keep the history.</h2><p>Each stage of the laboratory’s work is connected, with identity, quality control, and authorization checks along the way.</p></div>
+        <ol class="screens">
+          <li>
+            <a class="screen-shot" href="media/screens/orders-1600.webp"><img src="media/screens/orders-960.webp" srcset="media/screens/orders-960.webp 960w, media/screens/orders-1600.webp 1600w" sizes="(max-width: 720px) 100vw, 580px" width="960" height="505" loading="lazy" decoding="async" alt="Orders screen listing synthetic clinic orders with client, test count, received time and status."></a>
+            <p class="screen-step">Order &amp; accession</p>
+            <h3>Orders, as the clinic sent them</h3>
+            <p>Tests, diagnoses and supporting evidence are recorded exactly as supplied, never filled in. Receiving a specimen creates the accession and prints its barcode label.</p>
+          </li>
+          <li>
+            <a class="screen-shot" href="media/screens/bench-run-1600.webp"><img src="media/screens/bench-run-960.webp" srcset="media/screens/bench-run-960.webp 960w, media/screens/bench-run-1600.webp 1600w" sizes="(max-width: 720px) 100vw, 580px" width="960" height="505" loading="lazy" decoding="async" alt="LC-MS/MS run showing calibrator and control lots and plate positions for blank, calibrator, control and patient samples."></a>
+            <p class="screen-step">Bench</p>
+            <h3>Runs with their calibrators and controls</h3>
+            <p>Worklists gather waiting specimens for each method. Results arrive from ASTM and Olympus AU400/AU640 analyzers and from LC-MS/MS result files, and quality control is recorded.</p>
+          </li>
+          <li>
+            <a class="screen-shot" href="media/screens/result-review-1600.webp"><img src="media/screens/result-review-960.webp" srcset="media/screens/result-review-960.webp 960w, media/screens/result-review-1600.webp 1600w" sizes="(max-width: 720px) 100vw, 580px" width="960" height="505" loading="lazy" decoding="async" alt="Results for a synthetic accession with analyte values, cutoff classifications, methods and the evidence for the selected result."></a>
+            <p class="screen-step">Review</p>
+            <h3>Every result technically reviewed</h3>
+            <p>Results appear with their method, classification and provenance. A failed QC or an identity question holds the result, and each approval records who reviewed it and when.</p>
+          </li>
+          <li>
+            <a class="screen-shot" href="media/screens/report-revisions-1600.webp"><img src="media/screens/report-revisions-960.webp" srcset="media/screens/report-revisions-960.webp 960w, media/screens/report-revisions-1600.webp 1600w" sizes="(max-width: 720px) 100vw, 580px" width="960" height="505" loading="lazy" decoding="async" alt="Released report page with its revision history and pending delivery destination."></a>
+            <p class="screen-step">Release</p>
+            <h3>Released reports are versioned</h3>
+            <p>Release rechecks every hold at the moment an authorized person releases the PDF report. A correction creates a new revision and keeps the earlier one.</p>
+          </li>
+          <li>
+            <a class="screen-shot" href="media/screens/delivery-1600.webp"><img src="media/screens/delivery-960.webp" srcset="media/screens/delivery-960.webp 960w, media/screens/delivery-1600.webp 1600w" sizes="(max-width: 720px) 100vw, 580px" width="960" height="505" loading="lazy" decoding="async" alt="Delivery list of synthetic reports with handoff status, destination and last attempt, including unknown and failed outcomes."></a>
+            <p class="screen-step">Deliver &amp; bill</p>
+            <h3>Handoffs with their evidence</h3>
+            <p>Each fax, email, mail, courier or pickup is logged with the evidence available, never a bare “delivered”. Billable services derive from the work performed, not from positive results.</p>
+          </li>
+          <li>
+            <a class="screen-shot" href="media/screens/audit-trail-1600.webp"><img src="media/screens/audit-trail-960.webp" srcset="media/screens/audit-trail-960.webp 960w, media/screens/audit-trail-1600.webp 1600w" sizes="(max-width: 720px) 100vw, 580px" width="960" height="505" loading="lazy" decoding="async" alt="Clinical audit trail listing sequenced events with time, user, action, outcome and record, and a Verify chain action."></a>
+            <p class="screen-step">Audit</p>
+            <h3>A tamper-evident audit trail</h3>
+            <p>Every change and every view of sensitive data is recorded and attributed to a personal account. The trail can verify its own chain.</p>
+          </li>
+        </ol>
+        <p class="license-note">Screens from the presentation recording: the application’s interface with a mocked engine and synthetic demo data. Select a screen to open it at full size.</p>
+      </section>
+
+      <section class="ownership-section" aria-labelledby="ownership-title">
+        <div class="wrap ownership-layout">
+          <div><h2 id="ownership-title">The lab’s data.<br>The lab’s choice.</h2><p class="intro">Core laboratory work belongs on the laboratory’s own computer, with offline operation and a clear way to take its data with it.</p></div>
+          <dl class="principles">
+            <div><dt>Local by design</dt><dd>A standalone desktop application with no server to run. Analyzers can send results while the app is open, including while users are signed out.</dd></div>
+            <div><dt>Backup and exit included</dt><dd>Encrypted backups to the lab’s own disk, NAS or USB drive, restore tests, and a complete export. None of it needs a hosted service.</dd></div>
+            <div><dt>Every action is attributed</dt><dd>Personal accounts with two-factor sign-in or a security key, roles, and configurable separation of duties, including a one-person mode.</dd></div>
+            <div><dt>Hosted services are optional</dt><dd>A clinic portal, off-site backup, secure delivery, and EHR interfaces are separate future proposals. They would only relay copies; the LIS remains the system of record.</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="start-section wrap" id="get-started" aria-labelledby="start-title">
+        <div class="section-heading"><h2 id="start-title">Run it from source.</h2><p>No installers are published yet. Developers and evaluators can build the development application from source. Use synthetic data only.</p></div>
+        <div class="start-layout">
+          <div>
+            <h3>You will need</h3>
+            <ul class="checklist">
+              <li>Rust through <a href="https://rustup.rs/">rustup</a>; the repository pins its toolchain</li>
+              <li>Node.js 24 and npm</li>
+              <li>The <a href="https://v2.tauri.app/start/prerequisites/">Tauri 2 prerequisites</a> for Windows, macOS or Linux</li>
+            </ul>
+            <p class="start-links"><a href="https://github.com/gabalint/vibe-tox/blob/main/docs/development/README.md">Developer guide</a><a href="https://github.com/gabalint/vibe-tox/blob/main/CONTRIBUTING.md">Contributing</a><a href="https://github.com/gabalint/vibe-tox/blob/main/SECURITY.md">Security policy</a></p>
+          </div>
+          <figure class="terminal">
+            <figcaption>Build and run the desktop application</figcaption>
+            <pre><code>git clone https://github.com/gabalint/vibe-tox.git
+cd vibe-tox
+npm ci
+npm run tauri dev</code></pre>
+          </figure>
+        </div>
+      </section>
+
+      <section class="status-section" id="status" aria-labelledby="status-title">
+        <div class="wrap">
+          <div class="section-heading"><h2 id="status-title">Open-source development.<br>Clear about what’s next.</h2><p>This is an early development project. The repository contains the source, research, architecture, and verification records.</p></div>
+          <table class="status-table">
+            <caption>Project status · October 2026</caption>
+            <thead><tr><th scope="col">Available in development</th><th scope="col">Still ahead</th></tr></thead>
+            <tbody>
+              <tr><td>Order-to-report workflow on synthetic data</td><td>Validation with a partner laboratory</td></tr>
+              <tr><td>Local backup, restore, and export tools</td><td>Signed installers and production verification</td></tr>
+              <tr><td>A development build running on macOS; Windows and Linux are targets</td><td>Decisions on additional workstations and optional hosted services</td></tr>
+              <tr><td>GPL-3.0-only source and project documentation</td><td>Trademark and remaining project governance decisions</td></tr>
+            </tbody>
+          </table>
+          <div class="notices">
+            <section aria-labelledby="license-title">
+              <h3 id="license-title">License</h3>
+              <p>Licensed under <a href="https://github.com/gabalint/vibe-tox/blob/main/LICENSE">GNU GPL version 3 only (GPL-3.0-only)</a>. Commercial use and redistribution are permitted. Distributors must preserve the required notices, license covered works under GPLv3, and provide corresponding source as the license requires. Third-party material retains its own terms.</p>
+            </section>
+            <section class="disclaimer" id="disclaimer" aria-labelledby="disclaimer-title">
+              <h3 id="disclaimer-title">Development disclaimer</h3>
+              <p><strong>This project is vibe coded:</strong> developed with substantial AI assistance. Reasonable effort has gone into research, planning, analysis, review, and testing. That effort does not guarantee correctness, security, regulatory compliance, or fitness for clinical use. Built and tested on synthetic data; not clinically validated or ready for patient reporting.</p>
+              <p>Provided as is, with GPLv3’s warranty exclusions and liability limitations, subject to applicable law and written agreements. This notice does not change the license. <a href="https://github.com/gabalint/vibe-tox/blob/main/docs/governance/development-disclaimer.md">Read the full disclaimer</a>.</p>
+            </section>
+          </div>
+          <div class="closing"><p>Explore the work behind the workflow.</p><div class="actions"><a class="button primary" href="https://github.com/gabalint/vibe-tox">View on GitHub <span aria-hidden="true">↗</span></a><a class="text-link" href="https://github.com/gabalint/vibe-tox/blob/main/docs/README.md">Read the documentation</a></div></div>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="wrap footer-layout">
+        <p class="footer-brand">Vibe Toxicology LIS<br><span class="byline">A project by <a href="https://github.com/gabalint">gabalint</a></span></p>
+        <nav aria-label="Project">
+          <h2>Project</h2>
+          <a href="https://github.com/gabalint/vibe-tox">Source code</a>
+          <a href="https://github.com/gabalint/vibe-tox/blob/main/docs/README.md">Documentation</a>
+          <a href="https://github.com/gabalint/vibe-tox/blob/main/docs/overview.md">Product overview &amp; sources</a>
+        </nav>
+        <nav aria-label="Contribute">
+          <h2>Contribute</h2>
+          <a href="https://github.com/gabalint/vibe-tox/blob/main/CONTRIBUTING.md">Contributing guide</a>
+          <a href="https://github.com/gabalint/vibe-tox/blob/main/SECURITY.md">Security policy</a>
+          <a href="https://github.com/gabalint/vibe-tox/issues">Issues</a>
+        </nav>
+        <nav aria-label="Legal">
+          <h2>Legal</h2>
+          <a href="https://github.com/gabalint/vibe-tox/blob/main/LICENSE">GPL-3.0-only license</a>
+          <a href="https://github.com/gabalint/vibe-tox/blob/main/docs/governance/development-disclaimer.md">Development disclaimer</a>
+          <a href="media/credits.txt">Media credits</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

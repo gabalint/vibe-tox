@@ -1,0 +1,151 @@
+{
+  "id": "exit-export",
+  "title": "Exit export",
+  "summary": "Create a complete portable copy of the local installation and verify its outcome.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/operations/exit-export"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Export all data requests a complete package containing the local database, retained files, audit evidence and format documentation. Read the plaintext warning, enter a reason and confirm with your password or security key, then choose the destination folder.",
+        "The list shows each request’s state. Wait for a successful final outcome before treating its package as complete. A complete package includes a manifest; an interrupted folder is not a usable substitute."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Choose laboratory-controlled encrypted media with enough capacity. The exported package is plaintext, unlike an encrypted backup bundle, and should be handled only through the laboratory’s approved access and transfer process.",
+        "Follow the package’s verification instructions using a trusted verifier obtained independently of the package. Preserve the original package and investigate verification failures. Export completion is separate from successful import and reconciliation in another system."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Review the failed request’s reason before retrying and check available space and destination access. Do not edit a failed package to make verification pass. The export covers data held by this local installation; it does not establish that a separate receiving system has a complete usable copy."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Exit export",
+      "routes": ["/operations/exit-export"],
+      "purpose": "Create a portable documented copy of all data held by this local installation.",
+      "access": "Export authority, a reason and fresh confirmation with your password or security key are required to request an export.",
+      "fields": [
+        {
+          "name": "Reason",
+          "meaning": "Why a complete data copy is being created.",
+          "values": "Specific explanation up to 1,000 characters.",
+          "rules": "Required; retained in the audit trail."
+        },
+        {
+          "name": "Your password",
+          "meaning": "Fresh confirmation of the person exporting the data.",
+          "values": "Your current password.",
+          "rules": "Password accounts only. Required before the folder chooser opens."
+        },
+        {
+          "name": "Security key",
+          "meaning": "Fresh confirmation by the signed-in person using their registered security key.",
+          "values": "The active personal keys registered to your account; the first returned key is selected initially.",
+          "rules": "Security-key accounts only; replaces Your password. Select one key, review and submit the action, then follow its PIN or biometric verification and touch prompt. The key confirms only that submitted action. Permissions, reasons and record-state gates still apply. Use your own key; a selected label alone does not authorize anything."
+        },
+        {
+          "name": "Folder",
+          "meaning": "Destination selected in the operating-system folder chooser.",
+          "values": "An existing writable laboratory-controlled folder outside the app’s data directory.",
+          "rules": "Required to proceed. Choose encrypted media; the exported package itself is plaintext. Canceling the chooser creates no export."
+        },
+        {
+          "name": "Requested / By",
+          "meaning": "When the export was requested and by whom.",
+          "values": "Saved time and person.",
+          "rules": "Read-only; rows show newest requests first, up to the displayed 100-record limit."
+        },
+        {
+          "name": "State",
+          "meaning": "Progress or final outcome of the export job.",
+          "values": "Requested; Running; Verified; Failed; Interrupted.",
+          "rules": "Read-only. Requested and Running are not completed exports; the page refreshes while jobs are unfinished."
+        },
+        {
+          "name": "Package",
+          "meaning": "Name of the completed package directory.",
+          "values": "Generated package name or Not written.",
+          "rules": "Read-only; a partial directory without a completed manifest is not a complete package."
+        },
+        {
+          "name": "Database size / Stored files",
+          "meaning": "Size of the database snapshot and count of retained artifacts.",
+          "values": "Reported size/count or Unknown before available.",
+          "rules": "Read-only; Database size is not total package size."
+        },
+        {
+          "name": "Manifest SHA-256",
+          "meaning": "Fingerprint of the package’s completed content manifest.",
+          "values": "Hexadecimal digest or None.",
+          "rules": "Read-only; use the verification instructions and an independently trusted verifier."
+        },
+        {
+          "name": "Failure",
+          "meaning": "Recorded reason code for an unsuccessful job.",
+          "values": "Failure code or None.",
+          "rules": "Read-only; retain this with the request details when investigating."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Export all data",
+          "does": "Open the plaintext warning and authorization form.",
+          "availableWhen": "Export authority.",
+          "result": "Choose the folder requests the package after account confirmation and reason validation and destination selection."
+        },
+        {
+          "name": "Choose the folder",
+          "does": "Select the destination after confirming the export request.",
+          "availableWhen": "Required reason and fresh account confirmation.",
+          "result": "A successful request appears in the list; completion happens separately."
+        },
+        {
+          "name": "Cancel",
+          "does": "Close the request or folder chooser.",
+          "availableWhen": "Before a job is requested.",
+          "result": "No export is requested."
+        }
+      ],
+      "restrictions": [
+        "The package contains patient information in readable files; use the laboratory’s approved encrypted storage and handling process.",
+        "Exporting does not delete local records or prove that another system has imported and reconciled them.",
+        "The package contains the database, retained files, audit evidence, a data dictionary and verification materials; verify the result before relying on it."
+      ],
+      "workflow": [
+        "Choose an approved encrypted destination with sufficient space.",
+        "Select Export all data, read the warning and supply the reason and confirm with your password or security key.",
+        "Choose the folder and wait for a final successful state and manifest digest.",
+        "Follow the package verification instructions using independently trusted verification materials before transfer or reliance."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The folder is refused",
+          "recovery": "Choose an existing writable folder outside the live application data directory and check available capacity."
+        },
+        {
+          "problem": "Export is Failed or Interrupted",
+          "recovery": "Inspect the Failure code and storage access/capacity, preserve evidence of the failure and request a new export after correction. Do not edit a partial package to appear complete."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/operations/export/ExitExportPage.tsx",
+    "ui/src/features/operations/export/ExitExportDialog.tsx",
+    "ui/src/features/operations/export/exitExportColumns.tsx",
+    "ui/src/features/operations/labels.ts",
+    "crates/lis-ops/src/exit_export/mod.rs",
+    "ui/src/lib/securityKeyAuthenticationField.tsx",
+    "ui/src/lib/securityKeyPrompt.tsx",
+    "ui/src/lib/commands.ts",
+    "crates/lis-auth/src/key_proofs.rs"
+  ]
+}

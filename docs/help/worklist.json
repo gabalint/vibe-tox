@@ -1,0 +1,249 @@
+{
+  "id": "worklist",
+  "title": "Worklist",
+  "summary": "Find accepted containers waiting for an approved method version.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/bench/worklist"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Choose a method, then an approved version. The table lists waiting containers with their label codes, accession numbers, specimen types, tests and receipt times. Refresh the list when you need to include newly received material.",
+        "Create run opens the run setup for the selected method version. The preparation-batch section records preparation work associated with that version. The created run is where you add actual positions."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Confirm the selected method version before preparing a run. A worklist is specific to that version; an empty list for one version does not establish that the whole bench has no work.",
+        "Use the container label and accession together to distinguish samples. Check instrument readiness, approved result sources and material lots in Bench setup before creating the run. The application checks readiness again when you act."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "If no approved version is available, the method needs configuration review. If a container is absent, check its receipt acceptance, ordered work and method version. Read any creation refusal before retrying; changing an identifier to force eligibility can associate work with the wrong material."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/analytics/runs/WorklistPage.tsx",
+    "ui/src/features/analytics/runs/CreateRunDialog.tsx",
+    "ui/src/features/analytics/runs/PrepBatchSection.tsx",
+    "ui/src/features/analytics/runs/RecordPrepStepDialog.tsx",
+    "crates/lis-analytical/src/commands/runs.rs",
+    "crates/lis-analytical/src/commands/lots.rs",
+    "crates/lis-analytical/src/commands/mod.rs",
+    "ui/src/features/analytics/runs/PrepBatchDirectory.tsx",
+    "ui/src/features/analytics/runs/PrepBatchDetail.tsx",
+    "crates/lis-analytical/src/queries/preparation.rs"
+  ],
+  "pages": [
+    {
+      "title": "Worklist",
+      "routes": ["/bench/worklist"],
+      "purpose": "Find accepted material for one method version, start a run, and record a preparation batch.",
+      "access": "Requires authority to perform analysis.",
+      "fields": [
+        {
+          "name": "Method",
+          "meaning": "Selects which analytical method’s waiting work to display.",
+          "values": "Methods configured in Laboratory setup, shown by name and code.",
+          "rules": "No initial selection. Choosing a different method clears the version and preparation-batch display."
+        },
+        {
+          "name": "Version (approved)",
+          "meaning": "Identifies the exact method definition for preparation and the run.",
+          "values": "Approved versions of the selected method.",
+          "rules": "Required. Current versions serve new orders; approved superseded versions remain available for accepted orders pinned to them, including repeats. Retirement and explicit safety holds remain effective."
+        },
+        {
+          "name": "Container",
+          "meaning": "Identifies the labeled primary container or aliquot waiting for this method.",
+          "values": "The recorded container barcode.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Accession",
+          "meaning": "Links material to the received accession.",
+          "values": "Recorded accession number.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Specimen type",
+          "meaning": "Shows the material type to compare with the method.",
+          "values": "Laboratory-configured specimen-type code.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Tests",
+          "meaning": "Shows the ordered work served by this method.",
+          "values": "Orderable names from the accepted order.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Received",
+          "meaning": "Shows when material was received.",
+          "values": "Recorded date and time.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Waiting containers / freshness",
+          "meaning": "Shows the number of currently loaded waiting containers and when the list was read.",
+          "values": "A count and refresh time.",
+          "rules": "Read-only; this is specific to the chosen version, not all bench work."
+        },
+        {
+          "name": "Create run: Instrument",
+          "meaning": "Identifies the instrument actually used.",
+          "values": "Configured instruments, with their service status.",
+          "rules": "Required; no default. The instrument must be in service."
+        },
+        {
+          "name": "Create run: Lots used on this run",
+          "meaning": "Records the reagent, calibrator, control and internal-standard materials used.",
+          "values": "Registered active lots, including product, lot number and expiry.",
+          "rules": "Optional checklist; every selected lot must remain active and unexpired at submission."
+        },
+        {
+          "name": "Preparation batch: Batch",
+          "meaning": "Identifies the selected saved preparation batch.",
+          "values": "Generated batch identifier.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Preparation batch: State",
+          "meaning": "Indicates whether steps can still be added.",
+          "values": "Open or Completed.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Preparation batch: Started / Completed",
+          "meaning": "Attributes preparation to the people and times recorded.",
+          "values": "Date/time and user; Not yet until completion.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Preparation steps: Step",
+          "meaning": "Preserves the sequence in which steps were recorded.",
+          "values": "Sequential number.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Step code",
+          "meaning": "Identifies the performed step using the laboratory procedure.",
+          "values": "Free text, such as the lab’s extraction-step code.",
+          "rules": "Required when recording a step; trimmed, 1–64 characters."
+        },
+        {
+          "name": "Lot used",
+          "meaning": "Links a preparation step to a material lot.",
+          "values": "Active, unexpired registered lots.",
+          "rules": "Optional; selected lot must pass readiness checks."
+        },
+        {
+          "name": "Note",
+          "meaning": "Records additional facts about the performed step.",
+          "values": "Free text.",
+          "rules": "Optional; trimmed, at most 1,000 characters."
+        },
+        {
+          "name": "Preparation steps: Performed",
+          "meaning": "Attributes each recorded step.",
+          "values": "Date/time and user.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Preparation batches directory: Started / Batch / State / Steps",
+          "meaning": "Finds retained preparation batches for the selected method version.",
+          "values": "Start time, generated identifier, Open or Completed, number of recorded steps.",
+          "rules": "Loads pages of 50. Select a row to inspect or resume it; saved batch selection is retained in the page address."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Refresh",
+          "does": "Reloads waiting material.",
+          "availableWhen": "After selecting a method and version.",
+          "result": "Newly eligible material can appear; selection remains."
+        },
+        {
+          "name": "Create run",
+          "does": "Opens run setup, then records the chosen instrument, method version and lots.",
+          "availableWhen": "Method/version selected; analysis authority and readiness checks pass.",
+          "result": "Creates an open run and opens its Positions screen. It does not place the waiting containers automatically."
+        },
+        {
+          "name": "Start preparation batch / Start batch",
+          "does": "Starts a preparation record for the selected version after confirmation.",
+          "availableWhen": "No open batch is currently displayed; the selected version remains approved, including an approved superseded version.",
+          "result": "Shows the new batch and its step controls."
+        },
+        {
+          "name": "Record step",
+          "does": "Appends the entered step, optional lot and note.",
+          "availableWhen": "The displayed batch is Open.",
+          "result": "Adds an attributed step; existing steps stay recorded."
+        },
+        {
+          "name": "Complete batch",
+          "does": "Confirms that the displayed steps are complete.",
+          "availableWhen": "An Open batch has at least one step and has not changed since display.",
+          "result": "Marks it Completed. No more steps can be added or changed; QC can now assess its completion."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes a run, batch or step dialog without submitting.",
+          "availableWhen": "A dialog is open.",
+          "result": "No new run, batch or step is recorded."
+        },
+        {
+          "name": "Open preparation batch row",
+          "does": "Reopens the saved batch detail.",
+          "availableWhen": "A batch row is loaded.",
+          "result": "Open batches can receive additional actual steps; completed batches remain immutable."
+        },
+        {
+          "name": "Load more preparation batches",
+          "does": "Loads the next retained batch page.",
+          "availableWhen": "More batches may remain for the selected version.",
+          "result": "Appends rows; no batch is recreated."
+        },
+        {
+          "name": "Refresh preparation batches / Refresh selected batch",
+          "does": "Reloads saved batch summaries or selected evidence.",
+          "availableWhen": "The directory or batch is displayed.",
+          "result": "Shows current state and revision before continuing; resolve a stale completion by refreshing and reviewing steps."
+        }
+      ],
+      "restrictions": [
+        "The waiting list excludes material that does not satisfy the method, receipt and ordered-work rules. An empty list says nothing about other versions.",
+        "Saved batches can be reopened after navigation or restart. Completed batches cannot be reopened for editing; use them when adding a patient position or repeat under the same method version.",
+        "This screen records preparation evidence; it does not calculate stability or decide QC acceptance."
+      ],
+      "workflow": [
+        "Select Method and Version (approved). Compare Container, Accession, Specimen type and Tests with the material at the bench.",
+        "If recording preparation, start the batch, record each actual step, and complete it when finished. After interruption, reopen the saved batch from the directory and inspect existing steps before adding more.",
+        "Choose Create run, select the actual instrument and lots, then add positions on the resulting run screen."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No approved version or no containers appear.",
+          "recovery": "Check the method’s current approval, receipt acceptance and ordered work. Refresh after the responsible record is corrected."
+        },
+        {
+          "problem": "A lot or instrument blocks creation.",
+          "recovery": "Resolve the specific readiness state in Bench setup; recheck the material actually in use."
+        },
+        {
+          "problem": "Complete batch is refused.",
+          "recovery": "Record at least one performed step and review the latest batch state before confirming again."
+        },
+        {
+          "problem": "Preparation was interrupted or a batch is outside the first page.",
+          "recovery": "Return to the same method/version, use Load more preparation batches as needed, and open the original batch. Inspect saved steps before continuing; do not recreate them."
+        }
+      ]
+    }
+  ]
+}

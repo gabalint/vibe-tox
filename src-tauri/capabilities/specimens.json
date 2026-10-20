@@ -1,0 +1,30 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "specimens",
+  "description": "Accessioning, specimen, container, hold, excursion and label commands the main window may call (NFR-31). The engine checks each command's capability.",
+  "windows": ["main"],
+  "permissions": [
+    "allow-create-accession",
+    "allow-get-accession",
+    "allow-get-order-accession-context",
+    "allow-find-container",
+    "allow-record-receipt-decision",
+    "allow-create-aliquot",
+    "allow-mark-container-depleted",
+    "allow-move-container",
+    "allow-dispose-container",
+    "allow-print-labels",
+    "allow-list-printers",
+    "allow-list-locations",
+    "allow-place-hold",
+    "allow-release-hold",
+    "allow-record-excursion",
+    "allow-assess-excursion",
+    "allow-configure-location",
+    "allow-configure-printer",
+    "allow-get-container-history",
+    "allow-list-excursions",
+    "allow-get-excursion",
+    "allow-resolve-receipt-chronology"
+  ]
+}

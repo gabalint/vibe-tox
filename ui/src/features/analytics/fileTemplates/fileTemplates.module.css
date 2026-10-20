@@ -1,0 +1,19 @@
+/* Layout of the file template pages (tokens only). */
+.raw {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.raw pre {
+  overflow-x: auto;
+  font-family: var(--font-family-mono);
+  white-space: pre;
+}
+
+.mappings {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}

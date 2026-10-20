@@ -1,0 +1,83 @@
+{
+  "id": "about",
+  "title": "About this app",
+  "summary": "Find the software versions to include when reporting an application problem.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/about"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Read the app version, web engine version and platform shown on this page. Include these details when reporting a problem so support can identify the software involved. If the web engine version says Not reported by the operating system, include that wording rather than guessing a version."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Describe what you were trying to do, the visible error message and its correlation ID when one is supplied. Use synthetic examples and omit patient data, credentials and clinical documents from a support report."
+      ]
+    },
+    {
+      "title": "Updates and further checks",
+      "paragraphs": [
+        "This page identifies the running software. Authorized staff record update approvals and acceptance in Versions and updates. Use Host health to investigate the computer’s current operating condition."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "About this app",
+      "routes": ["/about"],
+      "purpose": "Identify the running software and platform when investigating or reporting an application problem.",
+      "access": "Available to signed-in users.",
+      "fields": [
+        {
+          "name": "App version",
+          "meaning": "Version of the installed application currently running.",
+          "values": "Read-only version string reported by the app.",
+          "rules": "Report this value exactly; it is not an offer to install an update."
+        },
+        {
+          "name": "Web engine version",
+          "meaning": "Version of the operating system’s embedded browser engine used to display the interface.",
+          "values": "Reported engine version, or Not reported by the operating system.",
+          "rules": "Read-only; do not infer a version if the operating system did not supply one."
+        },
+        {
+          "name": "Platform",
+          "meaning": "Operating-system platform reported by the running application.",
+          "values": "Reported platform text.",
+          "rules": "Read-only; include it with the app version when describing a platform-specific issue."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Retry",
+          "does": "Request application information again after a loading error.",
+          "availableWhen": "An error is displayed with Retry.",
+          "result": "Replaces the failed load if the request succeeds."
+        }
+      ],
+      "restrictions": [
+        "This page cannot update the app or change operating-system settings.",
+        "Use synthetic examples and omit patient data and credentials from support descriptions."
+      ],
+      "workflow": [
+        "Open About this app from the user menu.",
+        "Read all three values and retain any visible error/correlation ID.",
+        "Use Versions and updates for update approval history or Host health for operational checks."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Web engine version is not reported",
+          "recovery": "Include the exact Not reported by the operating system wording along with App version and Platform."
+        },
+        {
+          "problem": "Application information fails to load",
+          "recovery": "Use Retry and retain the error and correlation ID if the problem persists."
+        }
+      ]
+    }
+  ],
+  "reviewSources": ["ui/src/features/system/AboutPage.tsx"]
+}

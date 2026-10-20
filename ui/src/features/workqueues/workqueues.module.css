@@ -1,0 +1,8 @@
+/* The title of an item without a screen of its own: plain text, not styled as a link like
+   the identifier column. An inline block keeps the cell's underline from reaching it. */
+.noScreen {
+  display: inline-block;
+  color: var(--color-text);
+  text-decoration: none;
+  cursor: default;
+}

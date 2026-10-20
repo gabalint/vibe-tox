@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "work_queues",
+  "description": "Capability-filtered operational work queues (REQ-OPS-004).",
+  "windows": ["main"],
+  "permissions": ["allow-list-work-queues", "allow-list-work-queue-items"]
+}

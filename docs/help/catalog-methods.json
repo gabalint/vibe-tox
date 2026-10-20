@@ -1,0 +1,327 @@
+{
+  "id": "catalog-methods",
+  "title": "Methods",
+  "summary": "Review method definitions and preserve the versions used for analytical work.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/configuration/methods", "/configuration/methods/:methodId"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "The Methods directory shows each method’s version in effect and any draft awaiting approval. Open a method to choose a version and inspect its content. New draft version proposes a change while earlier versions remain readable.",
+        "Review analytes and their configured result properties in the selected version. Available version actions depend on its state and your account. Worklists and runs select an approved method version, preserving the definition used for that work."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Enter only the laboratory’s approved method definitions, units, limits and interpretation settings. This guide provides no assay values. Check exact analyte identity and the distinction between measurement limits and reportable interpretation.",
+        "Inspect which version is shown before approving or retiring it. A draft is a proposal; the version in effect governs new work that references it. Preserve the reason for a change when requested."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "The application can refuse to retire or replace a method version that current tests still use. Review the referencing tests and their version transitions with the configuration owner. Do not work around the dependency by creating a misleading duplicate method."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Methods",
+      "routes": ["/configuration/methods"],
+      "purpose": "Find registered methods and open their version history, or add a new record.",
+      "access": "Configuration access is required to view. Manage configuration permits drafting; the administrator role approves and activates configuration and retires versions. Configuration authority does not confer order-entry, technical-review or report-release authority. The engine rechecks permissions.",
+      "fields": [
+        {
+          "name": "Find methods",
+          "meaning": "Narrow the displayed directory without changing saved records.",
+          "values": "Any part of the code or name; blank shows all.",
+          "rules": "Optional; matching is on the loaded directory."
+        },
+        {
+          "name": "Code",
+          "meaning": "Stable laboratory identifier used to recognize and reference the record.",
+          "values": "Laboratory-assigned letters, digits, period, underscore or hyphen.",
+          "rules": "Required; at most 64 characters; unique for this record type. Choose carefully: this screen does not rename codes."
+        },
+        {
+          "name": "Name",
+          "meaning": "Human-readable label staff see when selecting the record.",
+          "values": "Laboratory-approved text.",
+          "rules": "Required; up to 200 characters; surrounding spaces are removed and control characters are refused."
+        },
+        {
+          "name": "Versions",
+          "meaning": "Distinguish the version in effect from a draft awaiting approval.",
+          "values": "Version numbers, or no version in effect / no draft.",
+          "rules": "Read-only; a record can have a current version and a draft at the same time."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Add method",
+          "does": "Register the code and name, then open the record.",
+          "availableWhen": "Manage configuration; code is not already used.",
+          "result": "Creates the named record. Draft and approve its content separately."
+        },
+        {
+          "name": "Open row",
+          "does": "Show the selected record and its versions.",
+          "availableWhen": "A listed row is available.",
+          "result": "The record page opens. Click its row or press Enter."
+        },
+        {
+          "name": "Clear find / Clear filters",
+          "does": "Remove the selected search or filter constraints.",
+          "availableWhen": "A search or filter is applied.",
+          "result": "The list expands; no saved configuration changes."
+        }
+      ],
+      "restrictions": ["Adding a name and code alone does not create an approved definition."],
+      "workflow": [
+        "Search before adding a record to avoid duplicates.",
+        "Open the existing record or add the laboratory-approved code and name.",
+        "Review its version state before changing it."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No matching records",
+          "recovery": "Clear find and filters; if the record is still absent, ask the configuration owner before adding a new code."
+        }
+      ]
+    },
+    {
+      "title": "Method versions",
+      "routes": ["/configuration/methods/:methodId"],
+      "purpose": "Define the specimen matrix, analytical certainty, result scale and per-analyte properties used by a method.",
+      "access": "Configuration access is required to view. Manage configuration permits drafting; the administrator role approves and activates configuration and retires versions. Configuration authority does not confer order-entry, technical-review or report-release authority. The engine rechecks permissions.",
+      "fields": [
+        {
+          "name": "Version, Status and Versions list",
+          "meaning": "Identify exactly which definition you are viewing and whether it can govern new work.",
+          "values": "Draft; Approved; Replaced; Retired. Version numbers increase within the record.",
+          "rules": "Read-only. On opening, the draft is preferred, then the version in effect, then the newest. Choose a version explicitly before review."
+        },
+        {
+          "name": "Drafted, Approved by, Effective, Retired and Retirement reason",
+          "meaning": "Show who authored and authorized the definition, when it applied and why it ended.",
+          "values": "Recorded people, laboratory-local times, effective period and reason; Not approved or Not yet effective when applicable.",
+          "rules": "Read-only. Replacement ends the earlier effective period without deleting its content."
+        },
+        {
+          "name": "Reason (Retire version)",
+          "meaning": "Explain why this approved version must stop being used for new work.",
+          "values": "Specific laboratory explanation, up to 1,000 characters.",
+          "rules": "Required for retirement; retained in history."
+        },
+        {
+          "name": "Self-approval confirmation",
+          "meaning": "Explicitly records that the draft author is also approving it without another reviewer.",
+          "values": "An initially unchecked confirmation, shown when the engine requires it.",
+          "rules": "Available only if laboratory policy permits this duty to be performed by one person. Closing the dialog clears this confirmation."
+        },
+        {
+          "name": "Specimen type",
+          "meaning": "Matrix for which this method version is configured.",
+          "values": "Choose a registered specimen type by code and name.",
+          "rules": "Required; no default in a new empty draft."
+        },
+        {
+          "name": "Certainty",
+          "meaning": "Whether the method is a screening or confirmation method.",
+          "values": "Presumptive (screening); Definitive (confirmation).",
+          "rules": "Required; chosen independently of result scale."
+        },
+        {
+          "name": "Result scale",
+          "meaning": "How this method represents results.",
+          "values": "Qualitative; Quantitative.",
+          "rules": "Required; a quantitative result is not automatically a confirmation result."
+        },
+        {
+          "name": "Cutoff rule",
+          "meaning": "Which side of the configured analyte cutoff classifies a result as positive.",
+          "values": "Positive at or above the cutoff; Positive only above the cutoff.",
+          "rules": "Required; use the laboratory-approved comparison. This guide supplies no cutoff values."
+        },
+        {
+          "name": "Cutoff comparison",
+          "meaning": "Whether the cutoff comparison uses the original value or its display-rounded value.",
+          "values": "Compare the value as reported, before rounding; Compare after rounding to the display scale.",
+          "rules": "Required; this setting is separate from the displayed number of decimals."
+        },
+        {
+          "name": "Analyte (each Analytes measured row)",
+          "meaning": "Substance or validity marker measured by this method.",
+          "values": "Choose from the analyte directory.",
+          "rules": "At least one row is required; an analyte may appear only once in this method version."
+        },
+        {
+          "name": "Unit",
+          "meaning": "Unit associated with that analyte’s values and limits.",
+          "values": "Laboratory-provided unit text, for example a validated UCUM unit.",
+          "rules": "Optional; up to 64 characters, no control characters. Blank is Not set. The app does not convert units."
+        },
+        {
+          "name": "Cutoff",
+          "meaning": "Laboratory threshold used with the method’s cutoff rule.",
+          "values": "An exact decimal such as 0.50, or blank.",
+          "rules": "Optional. No scientific notation or thousands separators; the entered decimal precision is preserved. Blank supplies no threshold."
+        },
+        {
+          "name": "Limit of detection / LOD",
+          "meaning": "Laboratory-configured detection bound for this analyte.",
+          "values": "An exact decimal, or blank.",
+          "rules": "Optional. Distinct from the cutoff and quantitation limit; do not substitute one for another."
+        },
+        {
+          "name": "Limit of quantitation / LOQ",
+          "meaning": "Laboratory-configured quantitation bound for this analyte.",
+          "values": "An exact decimal, or blank.",
+          "rules": "Optional; cannot be numerically below LOD when both are entered."
+        },
+        {
+          "name": "Reportable range low",
+          "meaning": "Lower end of the laboratory’s reportable range.",
+          "values": "An exact decimal, or blank.",
+          "rules": "Optional. Blank means no lower limit is configured here."
+        },
+        {
+          "name": "Reportable range high",
+          "meaning": "Upper end of the laboratory’s reportable range.",
+          "values": "An exact decimal, or blank.",
+          "rules": "Optional; cannot be below the low end when both are supplied. Blank means no upper limit is configured here."
+        },
+        {
+          "name": "Display scale",
+          "meaning": "Number of decimal places shown for this analyte.",
+          "values": "A whole number from 0 through 28, or blank.",
+          "rules": "Optional; no sign or decimal point. This affects display and may affect comparison if Compare after rounding is selected."
+        },
+        {
+          "name": "Report limitations and notes",
+          "meaning": "Method-specific laboratory-approved information printed on patient reports.",
+          "values": "Optional text, up to 4000 characters; blank means no supplied method note.",
+          "rules": "Entered in a draft and frozen on approval. No clinical content is generated automatically. Include relevant limitations rather than internal operational notes."
+        },
+        {
+          "name": "Reference interval",
+          "meaning": "Laboratory-approved reference information printed for the analyte.",
+          "values": "Optional text, up to 1000 characters; blank means not supplied.",
+          "rules": "Distinct from analytical reportable bounds and decision cutoff. Supply only approved clinical content; versioned and immutable after approval."
+        },
+        {
+          "name": "Range policy",
+          "meaning": "Chooses whether configured analytical bounds enforce review/release eligibility.",
+          "values": "Report only (legacy and new-draft default); Require within range.",
+          "rules": "Require within range is opt-in: quantitative method and at least one bound required. Inclusive bounds apply to exact final-concentration numeric results. Comparator or qualitative results cannot be presumed within range; use a suitable approved result or invalid, indeterminate or not-performed disposition. The LIS supplies no conversion or override."
+        },
+        {
+          "name": "External approval reference (optional)",
+          "meaning": "Identifier or location of the laboratory approval record retained outside the LIS. The saved reference is displayed with this method approval or catalog review.",
+          "values": "Blank by default. Optional trimmed text, at most 1000 characters; control characters are refused.",
+          "rules": "Blank leaves the reference absent. The administrator, activation time and approved version are retained with the approval. A supplied reference is immutable after approval and does not supply clinical content, replace the configured separation-of-duties checks, or confer clinical permissions. It is never printed on patient reports. Cancel closes the dialog without approving. If refused, correct the field or refresh a stale draft and review it again."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Choose Version / Previous / Next",
+          "does": "Inspect a particular saved definition or move through the records from the directory.",
+          "availableWhen": "A version or neighboring record exists.",
+          "result": "The selected content and its history appear; no definition changes."
+        },
+        {
+          "name": "New draft version / New draft from this version",
+          "does": "Start an empty definition or copy the selected definition for revision.",
+          "availableWhen": "Manage configuration and no open draft for this record.",
+          "result": "A form opens. Saving creates the next draft; it is not yet in effect."
+        },
+        {
+          "name": "Open draft version / Edit draft",
+          "does": "Return to the open proposal and revise its content.",
+          "availableWhen": "A draft exists; editing requires Manage configuration and the draft author.",
+          "result": "Save draft updates the draft revision; approved versions remain immutable."
+        },
+        {
+          "name": "Approve version",
+          "does": "Confirm the reviewed draft and make it current.",
+          "availableWhen": "Approve configuration, current draft revision, valid dependencies, and the applicable separation-of-duties rule.",
+          "result": "The administrator and activation time are audited; approved content becomes immutable. The previous version is superseded for new orders while accepted orders and repeats keep their original version. Applicable self-approval controls remain."
+        },
+        {
+          "name": "Retire version",
+          "does": "End use of an approved version for new work while retaining its history.",
+          "availableWhen": "Approve configuration, an approved version and a reason; dependency checks must pass.",
+          "result": "The version is retained as Retired and blocks further testing under it. This explicit control differs from routine supersession; existing records and issued reports remain unchanged."
+        },
+        {
+          "name": "Save draft / Cancel",
+          "does": "Submit the draft form, or close it without saving.",
+          "availableWhen": "Required fields are supplied for Save draft.",
+          "result": "A successful save opens the saved draft; a refusal leaves the form available for correction."
+        },
+        {
+          "name": "Add analyte / Remove analyte",
+          "does": "Add or remove a measured-analyte row in the draft.",
+          "availableWhen": "While creating or editing a draft.",
+          "result": "Changes the draft form; Save draft persists the complete analyte list."
+        }
+      ],
+      "restrictions": [
+        "Only one draft may be open per record, and only its author may edit it. Saving a draft is separate from approval.",
+        "A stale revision is refused. Reload and review the current version before repeating an edit or approval.",
+        "Laboratory approval establishes the configured definition; this software does not supply clinical validation or assay acceptance criteria.",
+        "Replacing or retiring a method can be blocked while a current test or panel references it; resolve the dependent catalog versions first.",
+        "All limits are laboratory-supplied configuration, not recommended clinical values.",
+        "Routine supersession does not require draining outstanding accepted orders. Explicit safety holds and retirement remain effective. Formal laboratory approval evidence may remain outside the LIS; application approval is attributable to the administrator and is not clinical validation."
+      ],
+      "workflow": [
+        "Open the desired method and select the version to inspect.",
+        "For a change, open its draft or create one from the relevant version.",
+        "Choose the specimen type, certainty, result scale and cutoff behavior explicitly.",
+        "Review every analyte’s unit, cutoff, LOD, LOQ, reportable range and display scale; save the draft.",
+        "Have an administrator review and approve the complete definition under the configured separation-of-duties rule. Verify the new current version; accepted earlier orders remain pinned to their approved versions."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The author cannot approve",
+          "recovery": "Arrange another authorized reviewer unless laboratory policy expressly permits self-approval; if permitted, read and explicitly confirm the prompt."
+        },
+        {
+          "problem": "Revision conflict or an existing draft",
+          "recovery": "Open the current record and draft, compare its content with your intended change, then retry only the applicable action."
+        },
+        {
+          "problem": "A limit or display scale is refused",
+          "recovery": "Use ordinary decimal text, correct LOQ/LOD or high/low ordering, and keep display scale within 0–28. Preserve the approved laboratory meaning while correcting the entry."
+        },
+        {
+          "problem": "A method is still referenced",
+          "recovery": "Inspect current tests and panels using the method. Coordinate their version changes before retiring or replacing the method."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/configuration/Directory.tsx",
+    "ui/src/features/configuration/CodedNameFields.tsx",
+    "ui/src/features/configuration/VersionedRecordPage.tsx",
+    "ui/src/features/configuration/VersionPanel.tsx",
+    "ui/src/features/configuration/VersionFacts.tsx",
+    "ui/src/features/configuration/VersionList.tsx",
+    "ui/src/features/configuration/VersionActions.tsx",
+    "ui/src/features/configuration/DraftDialog.tsx",
+    "crates/lis-catalog/src/commands/lifecycle.rs",
+    "crates/lis-catalog/src/model.rs",
+    "crates/lis-catalog/src/content.rs",
+    "ui/src/features/configuration/methods/MethodsPage.tsx",
+    "ui/src/features/configuration/methods/MethodDraftDialog.tsx",
+    "ui/src/features/configuration/methods/MethodContent.tsx",
+    "ui/src/features/configuration/methods/methodValues.ts",
+    "ui/src/features/configuration/methods/MethodPage.test.tsx",
+    "crates/lis-catalog/src/commands/methods.rs",
+    "crates/lis-catalog/src/approval_references.rs",
+    "crates/lis-catalog/migrations/0007_external_approval_references.sql"
+  ]
+}

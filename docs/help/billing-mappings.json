@@ -1,0 +1,250 @@
+{
+  "id": "billing-mappings",
+  "title": "Billing class mappings",
+  "summary": "Manage the versioned association between analytes and billing classes.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/billing/class-mappings", "/billing/class-mappings/:versionId"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "The page identifies the version in effect and any version awaiting approval or laboratory confirmation. Choose an entry in Versions to inspect its effective period, entries and state. New draft starts a proposed change.",
+        "A mapping becomes usable only after the required billing approval and confirmation of analyte identities by the laboratory. Approval actions follow the current separation-of-duties policy. Earlier versions remain available for understanding prior derivations."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Use the laboratory and billing owner’s reviewed mapping. Confirm that each entry identifies the intended analyte; similar names are not enough. Record reasons accurately so later service derivations can be understood. Effective times are recorded automatically by the mapping lifecycle actions.",
+        "Review changes for their effect on performed-service grouping. The mapping does not authorize altering the ordered panel, diagnoses or performed work. The application does not supply a default billing mapping."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "If no usable mapping exists, complete its draft, approval and confirmation workflow. If a requested version is absent, select a recorded version from the list. Do not approve a guessed mapping merely to clear billing work; obtain the responsible owners’ decision."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/billing/mappings/ClassMappingsPage.tsx",
+    "ui/src/features/billing/mappings/ClassMappingPage.tsx",
+    "ui/src/features/billing/mappings/NewDraftDialog.tsx",
+    "ui/src/features/billing/mappings/EntriesDialog.tsx",
+    "ui/src/features/billing/mappings/EffectivePeriod.tsx",
+    "ui/src/features/billing/mappings/MappingActions.tsx",
+    "ui/src/features/billing/mappings/MappingFacts.tsx",
+    "ui/src/features/billing/mappings/MappingVersion.tsx",
+    "ui/src/features/billing/mappings/MappingVersions.tsx",
+    "ui/src/features/billing/labels.ts",
+    "ui/src/components/SelfApprovalConfirm/SelfApprovalConfirm.tsx",
+    "ui/src/lib/CommandConfirmDialog.tsx",
+    "crates/lis-billing/src/mapping.rs",
+    "crates/lis-billing/src/mapping_support.rs",
+    "ui/src/components/FormDialog/FormDialog.tsx",
+    "crates/lis-engine/src/commands/billing/mod.rs"
+  ],
+  "pages": [
+    {
+      "title": "Billing class mappings",
+      "routes": ["/billing/class-mappings"],
+      "purpose": "Maintain the billing owner’s versioned analyte-to-class mapping and laboratory identity confirmation.",
+      "access": "Billing authority is required to read mappings and create, edit, approve or retire versions. Laboratory confirmation additionally requires configuration-approval authority. Draft editing is limited to its author.",
+      "fields": [
+        {
+          "name": "Version in effect / Awaiting approval or confirmation",
+          "meaning": "Summary of the mapping available for current derivations and outstanding lifecycle steps.",
+          "values": "Read-only version numbers or No version in effect.",
+          "rules": "Approval alone does not make a version effective; laboratory confirmation is also required."
+        },
+        {
+          "name": "Versions: Version / Status / Effective / Drafted by / Approved by",
+          "meaning": "Recorded mapping versions and their lifecycle provenance.",
+          "values": "Status: Draft; Awaiting confirmation; Current; Replaced; Retired. Effective: Not yet effective, a start time until replaced, or a closed interval.",
+          "rules": "Newest versions first. The selected row determines the entries shown below."
+        },
+        {
+          "name": "Lifecycle: Status / Drafted / Approved / Confirmed by the laboratory / Effective / Retired / Retirement reason",
+          "meaning": "Detailed provenance of the displayed version.",
+          "values": "Read-only staff/time facts and any retirement reason.",
+          "rules": "Effective periods are set by confirmation/retirement events; this screen has no manually editable effective-date fields."
+        },
+        {
+          "name": "Entries: Analyte / Class code / Class label",
+          "meaning": "Association between a catalog analyte and its billing owner’s reviewed class.",
+          "values": "Read-only current row values; editable in a draft through Edit entries.",
+          "rules": "The association groups performed services; it does not prescribe clinical testing or identify drugs from results."
+        },
+        {
+          "name": "Analyte — draft entry",
+          "meaning": "Catalog substance to map.",
+          "values": "Configured catalog analyte code/name choices.",
+          "rules": "Required; each analyte may appear only once. At least one and at most 10,000 entries."
+        },
+        {
+          "name": "Class code — draft entry",
+          "meaning": "Billing owner’s identifier for the class this analyte counts toward.",
+          "values": "Supplied text, up to 64 characters.",
+          "rules": "Required. Multiple analytes may share a class code, but the label must be identical for that code."
+        },
+        {
+          "name": "Class label — draft entry",
+          "meaning": "Human-readable name of the supplied billing class.",
+          "values": "Text, up to 200 characters.",
+          "rules": "Required; one consistent label per class code. No mapping is inferred from the analyte or clinical panel name."
+        },
+        {
+          "name": "I confirm that no second person reviewed this",
+          "meaning": "Explicit acknowledgement for a permitted self-approval.",
+          "values": "Unchecked or checked checkbox shown only when the application requests it.",
+          "rules": "Applies only if laboratory separation-of-duties policy permits author approval. Otherwise another authorized billing user must approve."
+        },
+        {
+          "name": "Reason — retirement",
+          "meaning": "Why the mapping version is being withdrawn from new use.",
+          "values": "Required explanation, up to 1000 characters.",
+          "rules": "Retirement preserves the version and existing derivations; it does not rewrite prior mappings."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open a Versions row",
+          "does": "Selects a recorded version for inspection.",
+          "availableWhen": "A recorded version exists.",
+          "result": "Updates the shown lifecycle and entries; no clinical or billing facts are changed."
+        },
+        {
+          "name": "New draft",
+          "does": "Starts the one editable mapping draft.",
+          "availableWhen": "Billing authority and no existing draft.",
+          "result": "Copies the current mapping’s entries when one exists; otherwise starts with one blank entry."
+        },
+        {
+          "name": "Add entry / Remove entry …",
+          "does": "Changes the unsaved set of analyte-to-class rows.",
+          "availableWhen": "In New class mapping draft or Edit entries.",
+          "result": "The final saved draft must contain at least one valid entry."
+        },
+        {
+          "name": "Edit entries / Save draft",
+          "does": "Replaces the draft’s complete entry set.",
+          "availableWhen": "The draft author with billing authority, a Draft state and current revision.",
+          "result": "Saves validated entries and advances the draft revision. Approved versions cannot be edited."
+        },
+        {
+          "name": "Approve version",
+          "does": "Records billing-owner approval and locks the entries.",
+          "availableWhen": "Draft state, billing authority and applicable separation-of-duties policy.",
+          "result": "The version awaits laboratory confirmation. If permitted self-approval is requested, read and check its acknowledgement before confirming again."
+        },
+        {
+          "name": "Confirm analyte identities",
+          "does": "Confirms that mapped analytes are the laboratory’s intended substances.",
+          "availableWhen": "Configuration-approval authority and an approved, unconfirmed version.",
+          "result": "Makes the version current immediately and ends the previous current version’s effective period."
+        },
+        {
+          "name": "Retire version",
+          "does": "Withdraws an approved version with a reason.",
+          "availableWhen": "Billing authority and Approved state, when retirement is offered.",
+          "result": "New derivations can no longer use it. Existing derivations and the version remain retained."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes the current unsaved editor or pending action dialog.",
+          "availableWhen": "No command is saving.",
+          "result": "Unsaved dialog entries are deliberately discarded when Cancel is chosen; saved records remain."
+        }
+      ],
+      "restrictions": [
+        "Only one editable draft may exist at a time. The product does not ship a billing mapping.",
+        "New draft starts from the current effective mapping, not whichever historical version happens to be displayed.",
+        "When no version was explicitly chosen, the page shows the newest version awaiting action, otherwise current, otherwise newest. Verify the version heading before acting.",
+        "Approval and laboratory identity confirmation are separate steps. Effective dates cannot be backdated in this interface.",
+        "Mapping text must not contain control characters. Changes must come from the responsible billing and laboratory owners; do not guess to clear a work queue.",
+        "In editable dialogs, Escape and an outside click close only an unchanged form with no command running. Cancel deliberately discards unsaved dialog entries and is disabled while saving."
+      ],
+      "workflow": [
+        "Inspect the version in effect and any version awaiting action.",
+        "Create or edit the single draft using the billing owner’s reviewed entries.",
+        "Have an eligible billing user approve the draft, following current separation policy.",
+        "Have laboratory configuration authority confirm the analyte identities.",
+        "Verify the new current version and the prior version’s closed effective period."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The record changed while the dialog was open.",
+          "recovery": "Keep the source document available. Cancel the dialog, refresh or reopen the record, compare the current facts, then reopen the action. Do not repeatedly submit a decision based on an older revision."
+        },
+        {
+          "problem": "A save fails or a field is rejected.",
+          "recovery": "Read the message and correct the indicated value. The open form retains entered values after failure; success is shown only after the application accepts the save. Cancel abandons an unsaved dialog."
+        },
+        {
+          "problem": "A draft already exists.",
+          "recovery": "Select the Draft version. Its author can edit it; complete the existing lifecycle before starting another draft."
+        },
+        {
+          "problem": "Approval is refused for the draft author.",
+          "recovery": "Use a second authorized reviewer unless the configured separation policy explicitly permits self-approval. A checkbox cannot override a policy that forbids it."
+        },
+        {
+          "problem": "An analyte is duplicated or a class label is inconsistent.",
+          "recovery": "Keep one entry per analyte and one exact label for every repeated class code."
+        },
+        {
+          "problem": "No version in effect.",
+          "recovery": "Complete approval and laboratory confirmation of the reviewed mapping before deriving billable services."
+        }
+      ]
+    },
+    {
+      "title": "Saved mapping-version link",
+      "routes": ["/billing/class-mappings/:versionId"],
+      "purpose": "Open a particular mapping version from an existing saved link.",
+      "access": "Billing authority is required to read mapping versions.",
+      "fields": [
+        {
+          "name": "Requested version",
+          "meaning": "Version identified by the saved link.",
+          "values": "A recorded mapping-version identifier.",
+          "rules": "Read-only; the application finds the associated version number and opens it in Billing class mappings."
+        },
+        {
+          "name": "Class mapping version not found",
+          "meaning": "The supplied identifier does not match a retained mapping version.",
+          "values": "Explicit empty-state message.",
+          "rules": "The application does not silently substitute the current mapping."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open the saved version link",
+          "does": "Resolves the retained mapping identifier.",
+          "availableWhen": "The version is present.",
+          "result": "Redirects to Billing class mappings with that exact version selected."
+        },
+        {
+          "name": "Billing class mappings navigation",
+          "does": "Returns to the mapping list when a saved link cannot resolve.",
+          "availableWhen": "Use application navigation.",
+          "result": "Choose a recorded version by its number and inspect the version heading."
+        }
+      ],
+      "restrictions": [
+        "This address is a compatibility entry point, not a second editor. All fields and actions are described under Billing class mappings."
+      ],
+      "workflow": [
+        "Open the saved link.",
+        "Verify the selected version number and lifecycle on the destination page.",
+        "If absent, return to the mapping list and verify the intended reference with its source."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Class mapping version not found.",
+          "recovery": "Check the saved link or select a retained version from Billing class mappings. Do not assume the current mapping represents the missing reference."
+        }
+      ]
+    }
+  ]
+}

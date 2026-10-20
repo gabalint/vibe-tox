@@ -1,0 +1,17 @@
+{
+  "laboratory": {
+    "name": "Synthetic Toxicology Laboratory",
+    "addressLines": ["100 Example Way", "Testville, ST 00000"],
+    "cliaId": "00D0000000",
+    "director": "Dr. Example Director, PhD",
+    "phone": "555-0100"
+  },
+  "notice": {
+    "reportNumber": "RPT-SYN-0002",
+    "revision": "2",
+    "accession": "ACC-SYN-0002",
+    "kind": "withdrawal",
+    "issuedAt": "2026-10-13 10:05 CDT",
+    "issuedBy": "Dr. Example Director, PhD"
+  }
+}

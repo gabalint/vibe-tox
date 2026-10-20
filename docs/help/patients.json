@@ -1,0 +1,743 @@
+{
+  "id": "patients",
+  "title": "Patients and registration",
+  "summary": "Find a patient, review identifying details and check possible matches before registration.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/patients", "/patients/register", "/patients/:subjectId"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Use Patients to find an existing record before starting an order. Open the patient to review identifiers, identity holds and demographic history. Orders opens that patient’s orders; New order starts a request for the displayed patient. Quality-only users can find and correct identity or resolve holds; order-entry actions are shown only to accounts with that separate permission.",
+        "Register patient first collects the supplied details, then shows possible existing matches before saving. If you started registration from New order, choosing or registering the patient returns you to order entry."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Compare the identifiers supplied with the request against the displayed patient. Similar names alone do not establish a match. Review every candidate offered during registration and go back to correct details when necessary.",
+        "Demographic history preserves details as each source supplied them. Earlier entries remain visible. Viewing a patient is recorded, so open records for your assigned task."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Do not register a duplicate merely to get past a possible match or an identity hold. Follow the laboratory’s identity-resolution procedure; the available resolution actions depend on quality authority. When a search finds nothing, check the entered criteria before registering a new patient."
+      ]
+    },
+    {
+      "title": "Corrected collection outside standing validity",
+      "paragraphs": [
+        "An accepted order keeps its original standing-authority basis and reserved use. If corrected collection evidence is outside that authority’s validity period, testing and release remain blocked even after a quality review or later addition of a requisition. Correct an inaccurate date only from source evidence, or cancel the affected work when appropriate. The LIS does not silently replace the accepted order’s standing basis or release its reserved use."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/accessioning/patients/PatientSearch.tsx",
+    "ui/src/features/accessioning/patients/PatientDirectory.tsx",
+    "ui/src/features/accessioning/patients/SearchResults.tsx",
+    "ui/src/features/accessioning/patients/PatientDetailsForm.tsx",
+    "ui/src/features/accessioning/patients/CandidateReview.tsx",
+    "ui/src/features/accessioning/patients/RegisterPatientPage.tsx",
+    "ui/src/features/accessioning/patients/RegisterButton.tsx",
+    "ui/src/features/accessioning/patients/PatientDetailPage.tsx",
+    "ui/src/features/accessioning/patients/DetailsSummary.tsx",
+    "ui/src/features/accessioning/patients/IdentityHolds.tsx",
+    "ui/src/features/accessioning/patients/registration.ts",
+    "ui/src/features/accessioning/SubjectPicker.tsx",
+    "crates/lis-identity/src/commands/subjects.rs",
+    "crates/lis-identity/src/model.rs",
+    "ui/src/features/accessioning/billing/PatientBillingSection.tsx",
+    "ui/src/features/accessioning/billing/PatientProfileDialog.tsx",
+    "ui/src/features/accessioning/billing/PatientProfileFacts.tsx",
+    "ui/src/features/accessioning/billing/ContactDialog.tsx",
+    "ui/src/features/accessioning/billing/GuarantorDialog.tsx",
+    "ui/src/features/accessioning/billing/CoverageDialog.tsx",
+    "ui/src/features/accessioning/billing/FinancialFields.tsx",
+    "ui/src/features/accessioning/billing/contactValues.ts",
+    "ui/src/features/accessioning/billing/EvidenceFields.tsx",
+    "ui/src/features/accessioning/billing/evidenceValues.ts",
+    "ui/src/features/accessioning/billing/EvidenceList.tsx",
+    "ui/src/features/accessioning/billing/BillingFacts.tsx",
+    "crates/lis-identity/src/billing_validation.rs",
+    "ui/src/components/FormDialog/FormDialog.tsx",
+    "crates/lis-identity/src/search.rs",
+    "crates/lis-identity/src/billing_model.rs",
+    "crates/lis-identity/src/billing.rs",
+    "ui/src/features/accessioning/patients/PatientMaintenance.tsx",
+    "ui/src/features/accessioning/orders/StandingOrders.tsx",
+    "crates/lis-orders/src/commands/standing.rs",
+    "crates/lis-orders/src/standing_authority.rs",
+    "crates/lis-specimens/src/standing_authority.rs",
+    "ui/src/features/accessioning/patients/PatientsPage.tsx",
+    "ui/src/features/accessioning/patients/QualityPatientAccess.test.tsx"
+  ],
+  "pages": [
+    {
+      "title": "Patients",
+      "routes": ["/patients"],
+      "purpose": "Find an existing person before creating an order or registering another record.",
+      "access": "Order-entry or quality-management authority permits audited patient browsing, matching and identity reads. Quality-management authority permits demographic correction, identifier deactivation and identity-hold resolution. Register patient, Add identifier, Orders, New order and standing-order actions require order-entry authority. Patient billing is available only with order-entry or billing authority. The engine checks each action separately.",
+      "fields": [
+        {
+          "name": "Find by name or identifier",
+          "meaning": "Narrows the patient directory to records to compare.",
+          "values": "Literal name or active-identifier prefix, up to 402 characters. Names ignore case; identifiers are case-sensitive.",
+          "rules": "Optional; clearing it browses all patients. Searches also include former names, while result rows show current demographics. Search text stays in this session rather than being stored in a patient record."
+        },
+        {
+          "name": "Find by identifier: Identifier / Assigning authority / Identifier type",
+          "meaning": "Looks up an identifier within the namespace of the organization that assigned it.",
+          "values": "Exact source values; Identifier type may be a source code such as MR.",
+          "rules": "All three required for this detailed search; each up to 64 characters. Values are compared exactly after surrounding spaces are removed."
+        },
+        {
+          "name": "Find by name: Family name / Given names / Birth date",
+          "meaning": "Searches name prefixes, optionally restricted by birth date.",
+          "values": "Family-name prefix when used alone; complete family name plus a given-name prefix when both are entered; optional real birth date in YYYY-MM-DD format.",
+          "rules": "Family name is required for detailed name search; names up to 200 characters. A similar name is a candidate, not identity confirmation."
+        },
+        {
+          "name": "Name / Birth date / Administrative sex / Identifiers / Identity",
+          "meaning": "Patient facts shown for comparison before opening or selecting a record.",
+          "values": "Read-only supplied demographics, active identifiers and identity-hold indicators.",
+          "rules": "Compare at least the supplied independent identifiers for your task. Unknown data is shown explicitly; the list does not resolve a hold."
+        },
+        {
+          "name": "Patients count",
+          "meaning": "Number of records in the current result page.",
+          "values": "Up to 25 visible patients per page.",
+          "rules": "The displayed range is a page count, not a claim that all matching records are shown."
+        }
+      ],
+      "actions": [
+        {
+          "name": "More filters / Find by identifier / Find by name",
+          "does": "Opens detailed criteria and runs the corresponding patient search.",
+          "availableWhen": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
+          "result": "Shows the first page of results for the supplied criteria."
+        },
+        {
+          "name": "Show all patients / Clear search",
+          "does": "Removes the current search criteria.",
+          "availableWhen": "A search is active.",
+          "result": "Returns to the first page of the directory."
+        },
+        {
+          "name": "Previous / Next",
+          "does": "Moves through patient directory pages.",
+          "availableWhen": "Previous after the first page; Next when another page exists; unavailable during refresh.",
+          "result": "Shows the preceding or following 25 patients."
+        },
+        {
+          "name": "Open or select a patient row",
+          "does": "Opens the patient record, or chooses the patient when this directory is in New order.",
+          "availableWhen": "A patient row is present; click or press Enter.",
+          "result": "The chosen patient is shown with an identity banner before further work."
+        },
+        {
+          "name": "Register patient",
+          "does": "Starts the two-step registration process.",
+          "availableWhen": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
+          "result": "Enter source details and review matches before saving."
+        },
+        {
+          "name": "New order",
+          "does": "Starts order entry for the selected patient.",
+          "availableWhen": "Patient row action or patient record header.",
+          "result": "Opens an unsaved order with that patient selected."
+        }
+      ],
+      "restrictions": [
+        "Directory searches and opening patient records are audited.",
+        "A matching name alone does not prove identity. Search results do not merge patients."
+      ],
+      "workflow": [
+        "Search with the supplied identifier or name.",
+        "Compare the listed birth date and identifiers.",
+        "Open the existing patient, start New order, or register only after checking for an existing record."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No matching patients.",
+          "recovery": "Check the identifier authority/type or spelling. Clear filters to broaden the search before registering."
+        },
+        {
+          "problem": "No more patients on this page.",
+          "recovery": "Use Previous or start a new search."
+        },
+        {
+          "problem": "Patients could not be loaded.",
+          "recovery": "Use Retry in the error state; do not assume an unavailable directory means the patient is new."
+        }
+      ]
+    },
+    {
+      "title": "Register patient",
+      "routes": ["/patients/register"],
+      "purpose": "Record source-supplied demographics only after reviewing possible existing records.",
+      "access": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
+      "fields": [
+        {
+          "name": "Family name",
+          "meaning": "Family name as supplied on the requisition.",
+          "values": "Text, up to 200 characters.",
+          "rules": "Required; no inferred spelling or normalized replacement is saved."
+        },
+        {
+          "name": "Given names",
+          "meaning": "Given name or names supplied by the source.",
+          "values": "Text, up to 200 characters.",
+          "rules": "Optional, including for a single-name person."
+        },
+        {
+          "name": "Birth date",
+          "meaning": "Supplied patient date of birth.",
+          "values": "A real date in YYYY-MM-DD format.",
+          "rules": "Required; an unknown or partial date is not accepted by this form."
+        },
+        {
+          "name": "Administrative sex",
+          "meaning": "Administrative sex code exactly as supplied.",
+          "values": "Free text, up to 64 characters; no fixed choice list.",
+          "rules": "Optional; do not infer from name, appearance or other records."
+        },
+        {
+          "name": "Source of these details",
+          "meaning": "Origin of the demographics, such as the paper requisition.",
+          "values": "Source description, up to 200 characters.",
+          "rules": "Required."
+        },
+        {
+          "name": "Identifiers: Identifier / Assigning authority / Identifier type",
+          "meaning": "Each supplied patient identifier and its issuing namespace.",
+          "values": "Source-supplied identifier, authority and type, each up to 64 characters.",
+          "rules": "Adding identifiers is optional, but all three fields are required in each added row. Duplicate triples and identifiers owned by another patient are refused."
+        },
+        {
+          "name": "Details to register",
+          "meaning": "Summary of the draft before saving.",
+          "values": "Read-only entered names, date, administrative sex, source and identifiers.",
+          "rules": "Review this summary and match results before Register patient."
+        },
+        {
+          "name": "Possible matches / Patients holding these identifiers",
+          "meaning": "Existing records returned by the identity check.",
+          "values": "Name, birth date, administrative sex, identifiers and hold indicators.",
+          "rules": "An identifier match prevents new registration. Name/date matches require comparison and may create a possible-duplicate hold."
+        },
+        {
+          "name": "I compared these records; this is a different person",
+          "meaning": "Explicit acknowledgement that every name/date candidate was reviewed.",
+          "values": "Unchecked or checked checkbox.",
+          "rules": "Required to register when possible name/date matches exist. It does not resolve the resulting identity hold."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Add identifier / Remove identifier …",
+          "does": "Adds or removes an identifier row in the draft.",
+          "availableWhen": "While entering details.",
+          "result": "Only affects the unsaved draft."
+        },
+        {
+          "name": "Check for existing patients",
+          "does": "Validates demographics and checks identifiers and name/date candidates.",
+          "availableWhen": "Required registration fields are present.",
+          "result": "Moves to candidate review without registering the patient."
+        },
+        {
+          "name": "Change details",
+          "does": "Returns from candidate review to the entered draft.",
+          "availableWhen": "During candidate review.",
+          "result": "Preserves the draft and requires a new matching check after changes."
+        },
+        {
+          "name": "Register patient",
+          "does": "Saves the reviewed details as a new patient.",
+          "availableWhen": "No identifier match, and any name/date candidates have been acknowledged.",
+          "result": "Opens the patient record; when started from New order, returns to order entry with this patient. Possible matches create an identity hold."
+        },
+        {
+          "name": "Open or choose an existing patient",
+          "does": "Uses a candidate already in the laboratory records.",
+          "availableWhen": "A matching row is displayed.",
+          "result": "Opens the patient, or returns the chosen patient to New order. It does not create another patient."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes the current unsaved editor or pending action dialog.",
+          "availableWhen": "While editing registration details.",
+          "result": "Returns to Patients or New order; the full-page unsaved-changes guard asks before discarding entered registration details."
+        }
+      ],
+      "restrictions": [
+        "Matching is repeated at save. If candidates changed, review the new set and acknowledge it again.",
+        "An identity hold blocks release for the involved records until authorized quality review; it is not permission to create duplicates.",
+        "Registration does not itself create an order."
+      ],
+      "workflow": [
+        "Enter the demographics and identifiers exactly as supplied.",
+        "Choose Check for existing patients.",
+        "Use the existing record if it is the same person; otherwise review all candidates and register."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "This identifier already belongs to a patient.",
+          "recovery": "Open that record and compare the source. If the source is wrong, use the laboratory identity-correction procedure; do not change the identifier merely to bypass the check."
+        },
+        {
+          "problem": "The patient was not registered because candidates changed.",
+          "recovery": "Review the refreshed candidate set and check the acknowledgement again if the source establishes a different person."
+        },
+        {
+          "problem": "A save fails or a field is rejected.",
+          "recovery": "Read the message and correct the indicated value. The open form retains entered values after failure; success is shown only after the application accepts the save. Cancel abandons an unsaved dialog."
+        }
+      ]
+    },
+    {
+      "title": "Patient record",
+      "routes": ["/patients/:subjectId"],
+      "purpose": "Review a person’s identity, demographic history, holds and reusable billing profile.",
+      "access": "Order-entry or quality-management authority permits audited patient browsing, matching and identity reads. Quality-management authority permits demographic correction, identifier deactivation and identity-hold resolution. Register patient, Add identifier, Orders, New order and standing-order actions require order-entry authority. Patient billing is available only with order-entry or billing authority. The engine checks each action separately.",
+      "fields": [
+        {
+          "name": "Patient identity banner",
+          "meaning": "Patient name, birth date, identifiers and current identity warning.",
+          "values": "Read-only saved patient facts.",
+          "rules": "Compare the displayed identity to the source before creating an order or editing billing."
+        },
+        {
+          "name": "Identity holds: Possible duplicate / Opened / Compare with",
+          "meaning": "An unresolved possible match and links to the other involved records.",
+          "values": "Open hold status, opening time and comparison patient links.",
+          "rules": "All patients named by an open hold are prevented from result release."
+        },
+        {
+          "name": "Reason — Confirm different people",
+          "meaning": "Evidence supporting a determination that the compared records are different people.",
+          "values": "Required explanation, up to 1000 characters.",
+          "rules": "Quality authority required; this action keeps records separate and does not merge or correct demographics."
+        },
+        {
+          "name": "Demographic history: Recorded / Name / Birth date / Administrative sex / Source / Reason for change",
+          "meaning": "Every demographic assertion in recorded order.",
+          "values": "Read-only source assertions, oldest first; the original reason displays First record.",
+          "rules": "Earlier entries remain unchanged. Correct demographics records a new source-backed assertion after candidate review and requires quality-management authority."
+        },
+        {
+          "name": "Profile revision / Source / Change reason / Recorded",
+          "meaning": "Provenance of the current reusable patient billing profile.",
+          "values": "Read-only revision number, supplied source and reason, and saved timestamp.",
+          "rules": "A missing profile is shown explicitly. Editing creates a new revision; existing orders retain their previously selected facts."
+        },
+        {
+          "name": "Address / Phone / Email",
+          "meaning": "Read-only summary of the selected contact.",
+          "values": "Recorded address and contact details, or Not supplied.",
+          "rules": "Expand Guarantor details or Subscriber details to inspect the relevant party separately."
+        },
+        {
+          "name": "Responsible party details",
+          "meaning": "Whether a guarantor or responsible party was supplied.",
+          "values": "Responsible party supplied; Not supplied.",
+          "rules": "Required in Edit guarantor. Not supplied clears the current guarantor in a new profile revision; earlier revisions remain retained."
+        },
+        {
+          "name": "Guarantor name / Subscriber name",
+          "meaning": "The named person responsible for payment or named by the coverage source.",
+          "values": "Source-supplied name, up to 200 characters.",
+          "rules": "Required when responsible-party or subscriber details are marked supplied."
+        },
+        {
+          "name": "Patient's relationship to guarantor / Patient's relationship to subscriber",
+          "meaning": "How the patient is related to the person being recorded.",
+          "values": "Self; Spouse; Child; Parent; Other; Unknown.",
+          "rules": "Required when the person is supplied; no initial selection. Do not infer a relationship from a shared name."
+        },
+        {
+          "name": "Guarantor birth date / Subscriber birth date",
+          "meaning": "Birth date supplied for that party.",
+          "values": "A real calendar date in YYYY-MM-DD format.",
+          "rules": "Optional. It does not change the clinical patient birth date."
+        },
+        {
+          "name": "Address line 1 / Address line 2 / Address line 3",
+          "meaning": "The mailing address supplied for the patient, guarantor or subscriber whose editor is open.",
+          "values": "Up to three text lines; blank lines are omitted.",
+          "rules": "Each line is optional and limited to 200 characters. These fields record supplied facts; they do not verify deliverability."
+        },
+        {
+          "name": "City / State or region / ZIP or postal code",
+          "meaning": "Locality, region and postal identifier for that contact.",
+          "values": "Source-supplied text, including non-US formats.",
+          "rules": "Each optional; up to 200 characters each. No state or postal-code choice is inferred."
+        },
+        {
+          "name": "Country",
+          "meaning": "Country supplied for the billing address.",
+          "values": "Free text, up to 100 characters.",
+          "rules": "Optional; no country is selected automatically."
+        },
+        {
+          "name": "Phone / Email",
+          "meaning": "Contact details supplied for billing communication.",
+          "values": "Source-supplied text, up to 200 characters per field.",
+          "rules": "Optional. Saving records the details; it does not send a message or confirm that the address or number works."
+        },
+        {
+          "name": "Payer name",
+          "meaning": "Payer named by the coverage source.",
+          "values": "Source-supplied text, up to 200 characters.",
+          "rules": "Required in Add coverage and Correct coverage; at most 32 coverages in a profile."
+        },
+        {
+          "name": "Payer identifier / Plan name / Member identifier / Group number",
+          "meaning": "Identifiers and plan details used to distinguish this coverage.",
+          "values": "Source-supplied text, up to 200 characters each.",
+          "rules": "Each optional. Keep exact identifiers, including leading zeroes; the application does not verify coverage with the payer."
+        },
+        {
+          "name": "Coverage starts / Coverage ends",
+          "meaning": "Coverage effective period from the source.",
+          "values": "Real dates in YYYY-MM-DD format.",
+          "rules": "Each optional; end cannot precede start."
+        },
+        {
+          "name": "Coverage checked on",
+          "meaning": "Date the source says the coverage was checked.",
+          "values": "Real date in YYYY-MM-DD format.",
+          "rules": "Optional. A recorded check date is not a promise of payment."
+        },
+        {
+          "name": "Coverage information source",
+          "meaning": "Where this coverage information was obtained.",
+          "values": "Source reference, up to 1000 characters.",
+          "rules": "Required independently of the overall Information source for the profile revision."
+        },
+        {
+          "name": "Subscriber details",
+          "meaning": "Whether the insurance source supplied a subscriber.",
+          "values": "Subscriber supplied; Not supplied.",
+          "rules": "Required for a coverage. Supplied shows the subscriber name, relationship, birth date and contact fields."
+        },
+        {
+          "name": "Patient coverages: payer, member identifier, Plan, Payer identifier, Group, Subscriber, Coverage dates, Source, Checked on",
+          "meaning": "Read-only facts for each retained coverage.",
+          "values": "Source values or explicit Not supplied indicators.",
+          "rules": "Expand each coverage to inspect it; Correct coverage changes that coverage in a new profile revision."
+        },
+        {
+          "name": "Evidence type",
+          "meaning": "Which financial event or document this record describes.",
+          "values": "Eligibility; Prior authorization; Advance notice (including ABN); Good faith estimate; Provider enrollment.",
+          "rules": "Required; initially blank. These are manually recorded source facts, not automated determinations."
+        },
+        {
+          "name": "Source status",
+          "meaning": "The status stated by the source for this evidence.",
+          "values": "Not checked; Unknown; Not required; Pending; Recorded; Approved; Denied.",
+          "rules": "Required; initially blank. Approved here describes the source response and does not guarantee payment."
+        },
+        {
+          "name": "Evidence reference",
+          "meaning": "How to locate the retained source document or external record.",
+          "values": "Source reference text, up to 1000 characters.",
+          "rules": "Required. Use a reference to evidence handled under laboratory procedures; this field does not upload a document."
+        },
+        {
+          "name": "Services and circumstances covered",
+          "meaning": "The scope to which the evidence applies.",
+          "values": "Source-supplied description, up to 2000 characters.",
+          "rules": "Required. State actual service scope; do not broaden an authorization or notice."
+        },
+        {
+          "name": "Source event time (UTC)",
+          "meaning": "When the documented event actually happened.",
+          "values": "UTC timestamp such as 2026-10-14T14:30:00Z.",
+          "rules": "Required; must not be in the future. This is separate from the automatic time the record is saved."
+        },
+        {
+          "name": "Authorization or reference number",
+          "meaning": "A payer or source reference associated with the evidence.",
+          "values": "Source-supplied text, up to 200 characters.",
+          "rules": "Optional."
+        },
+        {
+          "name": "Valid from / Valid until",
+          "meaning": "The dates over which the source states this evidence applies.",
+          "values": "Real dates in YYYY-MM-DD format.",
+          "rules": "Each optional; an end date cannot precede the start date."
+        },
+        {
+          "name": "Related coverage",
+          "meaning": "Coverage to which the evidence relates.",
+          "values": "A coverage from the patient profile being edited, or one already selected for the order.",
+          "rules": "Optional. An order evidence record cannot reference a coverage that the order has not selected."
+        },
+        {
+          "name": "Related provider NPI",
+          "meaning": "The provider identified by this evidence.",
+          "values": "A valid ten-digit NPI with a valid check digit.",
+          "rules": "Required for Provider enrollment; optional for other evidence. For order enrollment evidence it must identify the ordering practitioner."
+        },
+        {
+          "name": "Authorized units",
+          "meaning": "The quantity stated by the authorization source.",
+          "values": "A whole number from 1 through 4,294,967,295.",
+          "rules": "Optional; zero is rejected. Do not calculate units from results or infer authorization."
+        },
+        {
+          "name": "Notice or estimate details",
+          "meaning": "Whether detailed notice or estimate evidence was supplied.",
+          "values": "Notice details supplied; Not supplied.",
+          "rules": "Required only for Advance notice or Good faith estimate. Choosing supplied reveals the notice fields."
+        },
+        {
+          "name": "Notice or estimate form version",
+          "meaning": "Version of the actual source form used.",
+          "values": "Source text, up to 100 characters.",
+          "rules": "Optional; shown for supplied notice details."
+        },
+        {
+          "name": "Notice or estimate reason",
+          "meaning": "The documented reason for the notice or estimate.",
+          "values": "Source-supplied text, up to 2000 characters.",
+          "rules": "Required when notice details are supplied."
+        },
+        {
+          "name": "Estimated amount / Currency",
+          "meaning": "The source estimate and its currency.",
+          "values": "Nonnegative exact decimal without a currency symbol; currency is three uppercase letters, such as USD.",
+          "rules": "Both are optional together; supplying either requires the other. An estimate is not a collected payment."
+        },
+        {
+          "name": "Patient choice as documented",
+          "meaning": "The choice recorded on the source notice or estimate.",
+          "values": "Source text, up to 1000 characters.",
+          "rules": "Optional; do not select or infer a choice for the patient."
+        },
+        {
+          "name": "Provided to patient at (UTC) / Signed at (UTC)",
+          "meaning": "Actual delivery and signature times documented by the source.",
+          "values": "UTC timestamps.",
+          "rules": "Each optional and not in the future. Recording these values does not itself deliver or sign a notice."
+        },
+        {
+          "name": "Signer as documented",
+          "meaning": "Name of the signer stated on the source.",
+          "values": "Source text, up to 200 characters.",
+          "rules": "Optional."
+        },
+        {
+          "name": "Evidence notes",
+          "meaning": "Additional supplied context needed to understand the evidence.",
+          "values": "Free text, up to 2000 characters.",
+          "rules": "Optional. Does not replace the evidence reference, source event time or service scope."
+        },
+        {
+          "name": "Information source",
+          "meaning": "The document or external record used to confirm this revision.",
+          "values": "Source reference, up to 1000 characters.",
+          "rules": "Required for every patient billing edit and order billing selection/evidence change; blank at the start of each edit."
+        },
+        {
+          "name": "Reason for change",
+          "meaning": "Why this revision is being recorded.",
+          "values": "Meaningful explanation, up to 1000 characters.",
+          "rules": "Required even for an initial financial profile. Earlier revisions remain available to the application."
+        },
+        {
+          "name": "Correct demographics: family name, given names, birth date, administrative sex",
+          "meaning": "A new source-backed assertion; existing values are shown for correction.",
+          "values": "Family name required, maximum200characters; given names optional maximum200; complete calendar birth date YYYY-MM-DD; administrative sex as supplied.",
+          "rules": "Quality authority required. Never fabricate a date. Earlier assertions remain in demographic history. Unknown or partial birth information goes to Incomplete identity intake."
+        },
+        {
+          "name": "Correct demographics: source and reason",
+          "meaning": "Where corrected facts came from and why the assertion changes.",
+          "values": "Required source and reason text; start blank.",
+          "rules": "No correction saves until current possible matches are reviewed. A genuine duplicate is not resolved by confirming distinct people."
+        },
+        {
+          "name": "Correction candidate acknowledgement",
+          "meaning": "Acknowledges the possible matching records shown after checking corrected identity.",
+          "values": "Unchecked initially; required when other name/date candidates exist.",
+          "rules": "Does not merge identities or remove holds. The engine rechecks the exact candidates and subject revision."
+        },
+        {
+          "name": "Identifier history",
+          "meaning": "Original values, authority, type, addition time, active state, deactivation reason/time.",
+          "values": "All active and inactive identifiers, read-only.",
+          "rules": "Historical ownership remains reserved; deactivation does not transfer the identifier to another patient."
+        },
+        {
+          "name": "Add patient identifier: identifier, assigning authority and type",
+          "meaning": "Supplied identifier and its exact namespace.",
+          "values": "All three required; start blank.",
+          "rules": "Order-entry authority adds. A conflicting active or historical owner is refused. Correct by deactivating the mistaken entry and adding supplied evidence on the correct record; transfers are unsupported."
+        },
+        {
+          "name": "Deactivate identifier: reason",
+          "meaning": "Explains why this identifier is no longer active.",
+          "values": "Required text, initially blank.",
+          "rules": "Quality authority and reviewed subject revision required. Original value remains in history."
+        },
+        {
+          "name": "Standing authority: ordering practitioner and authorized tests",
+          "meaning": "Patient-specific source authorization, independent of a practice template.",
+          "values": "Explicit active practitioner selected by name/NPI; one or more configured tests selected from current catalog. Nothing preselected.",
+          "rules": "Record only the scope the practitioner supplied for this patient; this does not create an order or select tests in a new order."
+        },
+        {
+          "name": "Standing authority: first and last valid collection date",
+          "meaning": "Inclusive collection-date validity, not the UTC intake date.",
+          "values": "Required YYYY-MM-DD; end on or after start.",
+          "rules": "Date-only evidence keeps its calendar date. A timestamp uses its original supplied offset. Unknown dates block testing/release; correction re-evaluates validity even after quality assessment."
+        },
+        {
+          "name": "Standing authority: visit limit and source approval reference",
+          "meaning": "Maximum accepted order uses and the source of authority.",
+          "values": "Blank limit means no limit supplied; positive decimal whole number1–4294967295 otherwise. Required source reference.",
+          "rules": "Exponents, fractions, nonfinite numbers and zero are refused. Acceptance reserves a use; cancellation does not replenish it. Record renewal separately."
+        },
+        {
+          "name": "Standing authority history",
+          "meaning": "Source, practitioner/NPI, date interval, accepted uses/limit and authorized scope.",
+          "values": "Read-only registered patient-specific authorizations.",
+          "rules": "The source string is a reference, not a stored source-document attachment. Retired catalog items may be described as previously offered tests."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Orders",
+          "does": "Opens orders restricted to this patient.",
+          "availableWhen": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
+          "result": "Shows the patient’s orders with the identity banner."
+        },
+        {
+          "name": "New order",
+          "does": "Starts a new order for the displayed patient.",
+          "availableWhen": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
+          "result": "Opens a blank requisition with this patient selected."
+        },
+        {
+          "name": "Confirm different people",
+          "does": "Resolves an open possible-duplicate hold with evidence.",
+          "availableWhen": "Quality authority and an open hold.",
+          "result": "The records remain separate; this identity hold is resolved. Other holds remain applicable."
+        },
+        {
+          "name": "Previous / Next",
+          "does": "Moves through patients from the list that opened the record.",
+          "availableWhen": "A previous or next record exists in that navigation sequence.",
+          "result": "Loads the other patient; verify the identity banner before acting."
+        },
+        {
+          "name": "Open patient billing profile",
+          "does": "Loads the reusable financial profile for the displayed patient.",
+          "availableWhen": "Order-entry or billing authority is required for patient financial facts, order billing and follow-up. Opening a clinical patient or order record also requires its own access permission.",
+          "result": "Shows profile facts, coverages, guarantor and evidence; does not select these facts for any order."
+        },
+        {
+          "name": "Refresh patient billing profile",
+          "does": "Reads the latest saved profile.",
+          "availableWhen": "After the financial profile is open.",
+          "result": "Refreshes facts; close a stale editor before reopening it with fresh facts."
+        },
+        {
+          "name": "Edit billing contact / Edit guarantor",
+          "does": "Opens a focused editor for the selected part of the profile.",
+          "availableWhen": "When financial-edit authority is offered.",
+          "result": "Save billing details creates a new profile revision while retaining the other financial sections."
+        },
+        {
+          "name": "Add coverage / Correct coverage",
+          "does": "Adds a coverage or changes the expanded coverage.",
+          "availableWhen": "When profile editing is permitted.",
+          "result": "Save billing details preserves other coverages and creates a new revision. Orders do not change automatically."
+        },
+        {
+          "name": "Add patient evidence",
+          "does": "Opens the financial evidence form.",
+          "availableWhen": "When profile editing is permitted; maximum 64 evidence records.",
+          "result": "Save billing details appends the supplied evidence to a new patient profile revision."
+        },
+        {
+          "name": "Save billing details",
+          "does": "Validates the open profile editor and saves the revision with source and reason.",
+          "availableWhen": "All required fields supplied and the profile revision is still current.",
+          "result": "Success closes the dialog and refreshes financial data. A validation or stale-revision failure leaves the editor open."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes the current unsaved editor or pending action dialog.",
+          "availableWhen": "In an open editor when no save is pending.",
+          "result": "Unsaved dialog entries are deliberately discarded when Cancel is chosen; saved records remain."
+        },
+        {
+          "name": "Correct demographics / Check corrected identity / Save corrected demographics",
+          "does": "Enter changed source facts, check possible matches, then explicitly save a new assertion.",
+          "availableWhen": "Quality authority; required fields; reviewed current revision and candidate set.",
+          "result": "Previous assertions and issued reports remain unchanged; identity/report impact gates still apply. Change details repeats matching; Cancel abandons unsaved correction."
+        },
+        {
+          "name": "Add identifier / Deactivate identifier",
+          "does": "Append a supplied identifier or mark an existing one inactive with a reason.",
+          "availableWhen": "Add: order-entry authority. Deactivate: quality authority and active identifier.",
+          "result": "History remains. On conflict, cancel, refresh the patient, compare current evidence and reopen; do not repeatedly resubmit a stale form."
+        },
+        {
+          "name": "Record standing authority",
+          "does": "Record immutable patient/practitioner/source/scope/date/use authorization.",
+          "availableWhen": "Order-entry authority; configured practitioner/tests and supplied evidence.",
+          "result": "New authority appears in patient history and can be explicitly selected on a new order. No test or diagnosis is inferred."
+        },
+        {
+          "name": "Refresh",
+          "does": "Read current patient data and display its read time.",
+          "availableWhen": "Patient read authority.",
+          "result": "Sensitive read is audited. Open edits retain the revision originally reviewed; close and reopen after a conflict."
+        }
+      ],
+      "restrictions": [
+        "Patient-profile edits never silently rewrite existing orders. Explicitly confirm or correct each order’s billing selection.",
+        "Financial profile and demographic history are separate records; changing a guarantor does not change the clinical patient.",
+        "Financial evidence may contain up to 64 records and profile coverage up to 32; use the actual source values.",
+        "In editable dialogs, Escape and an outside click close only an unchanged form with no command running. Cancel deliberately discards unsaved dialog entries and is disabled while saving.",
+        "A genuine duplicate remains held; these actions do not implement a patient merge. Configuration approval does not grant quality or order-entry authority.",
+        "Out-of-period or unknown standing collection evidence cannot be overridden by a quality receipt decision. Verify source evidence or retain the hold and reconcile the request."
+      ],
+      "workflow": [
+        "Check the identity banner and any possible-duplicate holds.",
+        "Review source history when resolving identity questions.",
+        "Open billing profile for financial work, or use Orders/New order for the clinical request.",
+        "For corrected identity, enter the source and reason, check candidates, review them, then save. Verify the new assertion/identifier history and any holds.",
+        "Record standing authority only from the supplied patient-specific document. On a new order, explicitly select it for the same practitioner and independently enter the requested tests."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The record changed while the dialog was open.",
+          "recovery": "Keep the source document available. Cancel the dialog, refresh or reopen the record, compare the current facts, then reopen the action. Do not repeatedly submit a decision based on an older revision."
+        },
+        {
+          "problem": "A save fails or a field is rejected.",
+          "recovery": "Read the message and correct the indicated value. The open form retains entered values after failure; success is shown only after the application accepts the save. Cancel abandons an unsaved dialog."
+        },
+        {
+          "problem": "A quality action is missing.",
+          "recovery": "Ask a staff member with quality authority to review the identity evidence; administrative access alone does not resolve clinical identity."
+        },
+        {
+          "problem": "Identity or order changed during an edit",
+          "recovery": "Cancel the open edit, use Refresh, compare the new evidence and reopen. The engine refuses the stale reviewed revision. If demographic evidence is unavailable, correction stays disabled; refresh the patient record and resolve the missing evidence instead of inventing values."
+        },
+        {
+          "problem": "Only age, partial birth date or unknown birth date supplied",
+          "recovery": "Use Incomplete identity intake. Preserve the supplied text and source; obtain verified identity before registering a testable patient."
+        }
+      ]
+    }
+  ]
+}

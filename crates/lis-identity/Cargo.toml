@@ -1,0 +1,27 @@
+[package]
+name = "lis-identity"
+description = "Subjects and identifiers by assigning authority, identity holds, clients and practitioners"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+jiff = { workspace = true }
+lis-audit = { workspace = true }
+lis-core = { workspace = true }
+lis-store = { workspace = true }
+rusqlite = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+ts-rs = { workspace = true }
+unicode-normalization = { workspace = true }
+
+[dev-dependencies]
+lis-store = { workspace = true, features = ["testing"] }
+serde_json = { workspace = true }
+
+[lints]
+workspace = true

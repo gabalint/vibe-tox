@@ -1,0 +1,426 @@
+{
+  "id": "users",
+  "title": "Users and access",
+  "summary": "Manage individual accounts and roles, and maintain your own security keys and optional unlock PIN from the signed-in menu.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/users"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Open an account to inspect its status and roles. The available actions include creating accounts, changing roles, resetting credentials and changing account status. Sensitive actions require your password or security key and a reason where requested.",
+        "Clinical-role changes require quality authority after the first quality manager exists. Resetting credentials for a clinical account requires the corresponding administrative and quality authority. Set up for one person is offered only under the application’s eligibility rules."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Use one account per person so actions remain attributable. Assign roles according to the laboratory’s approved responsibilities. Administrator approves and activates application configuration under the configured separation-of-duties policy. Formal laboratory approval may be retained externally. Administration alone does not grant order entry, technical review or report release.",
+        "Review the consequences of a role change before confirming it. One-person setup assigns broad authority and changes separation-of-duties settings; use it only for the laboratory arrangement the action describes."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "You cannot change your own roles or reset your own sign-in through account administration. The last active administrator and quality manager are protected from disabling. Read the refusal and involve an appropriately authorized person rather than sharing an account to bypass the restriction."
+      ]
+    },
+    {
+      "title": "Set your personal unlock PIN",
+      "paragraphs": [
+        "The personal unlock PIN is optional and separate from a physical security key’s PIN. It is available to password and key accounts after normal sign-in. Follow the laboratory’s approved workstation and session policy; keep using your own account."
+      ],
+      "steps": [
+        "Open Signed in as … → Unlock PIN and choose Enable PIN or Change PIN.",
+        "Enter and confirm a personal six-digit PIN, then confirm with your password or registered security key. Read the success message and reopen Unlock PIN to verify Enabled.",
+        "When your session locks, enter the PIN or choose your normal unlock method. Choose Disable PIN in the settings dialog when you no longer want this option."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Users",
+      "routes": ["/users"],
+      "purpose": "Create individual accounts, assign authorized roles and manage sign-in access.",
+      "access": "Manage users administers accounts and nonclinical roles; Manage quality assigns clinical roles. Resetting a clinical account requires both. The engine checks each action even when a button is visible. Every signed-in person can manage their own keys from Signed in as … → Security keys; this does not grant access to another person’s credentials or to the Users directory. Every signed-in person can also manage their own optional personal PIN through Signed in as … → Unlock PIN; user-administration permission is not required.",
+      "fields": [
+        {
+          "name": "Find users",
+          "meaning": "Locate accounts by the person’s name or sign-in name.",
+          "values": "Name or username text; blank shows all in the selected status.",
+          "rules": "Optional; directory filter only."
+        },
+        {
+          "name": "Status (filter and record)",
+          "meaning": "Distinguish enabled accounts from accounts prohibited from signing in.",
+          "values": "Filter: Any status, Active, Disabled. Record: Active or Disabled.",
+          "rules": "Read-only on the row; change using Enable user or Disable user."
+        },
+        {
+          "name": "Username",
+          "meaning": "Account’s sign-in identifier.",
+          "values": "3–64 ASCII letters, digits, periods, hyphens or underscores; first character must be a letter.",
+          "rules": "Required at creation; trimmed, stored lowercase and unique without regard to case. This screen offers no username edit."
+        },
+        {
+          "name": "Display name",
+          "meaning": "Name shown in the app and audit trail.",
+          "values": "Person’s name, 1–100 characters without control characters.",
+          "rules": "Required at creation; use an individual identity, not a shared role name."
+        },
+        {
+          "name": "Roles",
+          "meaning": "Capabilities granted to this account.",
+          "values": "Accessioner, Analyst, Technical reviewer, Releaser, Quality manager, Billing, Auditor and Administrator; only roles assignable by your account are offered.",
+          "rules": "May be empty. The checklist displays what each role allows. Clinical roles need Manage quality. Administrator holds configuration approval, subject to configured separation of duties, without order-entry, technical-review or report-release authority. Quality manager holds quality decisions, not application configuration approval unless also assigned Administrator."
+        },
+        {
+          "name": "Also holds roles you cannot change",
+          "meaning": "Existing grants outside your role-assignment authority.",
+          "values": "Read-only role names.",
+          "rules": "Review these alongside the selected roles; lack of a checkbox is not evidence the user lacks that role."
+        },
+        {
+          "name": "Temporary password",
+          "meaning": "Initial or replacement sign-in secret the user must change.",
+          "values": "12–128 characters; must not contain the username, case-insensitively.",
+          "rules": "Required for Create user and Reset sign-in. Share privately; the user chooses a personal password at next sign-in."
+        },
+        {
+          "name": "Your password",
+          "meaning": "Fresh confirmation by the signed-in person.",
+          "values": "Your current password.",
+          "rules": "Password accounts only. Required for account creation, role changes, credential reset and Set up for one person. It is separate from Temporary password. Also required to enable, change or disable your own unlock PIN; your old unlock PIN cannot confirm these changes."
+        },
+        {
+          "name": "Security key",
+          "meaning": "Fresh confirmation by the signed-in person using their registered security key.",
+          "values": "The active personal keys registered to your account; the first returned key is selected initially.",
+          "rules": "Security-key accounts only; replaces Your password. Select one key, review and submit the action, then follow its PIN or biometric verification and touch prompt. Sensitive actions require that verification even when the laboratory allows touch-only sign-in. The key confirms only that submitted action. Permissions, reasons and record-state gates still apply. Use your own key; a selected label alone does not authorize anything. This also confirms enabling, changing or disabling your unlock PIN."
+        },
+        {
+          "name": "Authenticator",
+          "meaning": "Whether the account has enrolled an authenticator app or an active security key.",
+          "values": "Set up; Not set up.",
+          "rules": "Read-only enrollment status. It does not distinguish the credential method; use Sign-in method for that."
+        },
+        {
+          "name": "Sign-in lockout",
+          "meaning": "Whether failed sign-ins have temporarily locked the username.",
+          "values": "Locked out; None.",
+          "rules": "Read-only. Lockout is different from a disabled account."
+        },
+        {
+          "name": "Also remove the authenticator app",
+          "meaning": "Remove the existing authenticator during a credential reset, for a lost or replaced device.",
+          "values": "Unchecked by default; check only when authenticator re-enrollment is intended.",
+          "rules": "The user must enroll a new authenticator at the next sign-in if selected."
+        },
+        {
+          "name": "Reason",
+          "meaning": "Explain an account change or one-person setup.",
+          "values": "Specific explanation up to 500 characters.",
+          "rules": "Required for role changes, Enable/Disable, Reset sign-in and Set up for one person; not requested for initial account creation."
+        },
+        {
+          "name": "Sign-in method",
+          "meaning": "The credential policy for the listed account.",
+          "values": "Password + authenticator app; Security key.",
+          "rules": "Read-only in Users. Change your own password account to a key through Signed in as … → Security keys. A key account does not silently fall back to password sign-in."
+        },
+        {
+          "name": "Security keys: account and key names",
+          "meaning": "Identifies the person and active keys you are managing.",
+          "values": "Your display name, username and active key labels. Recovery availability states whether an unused recovery code exists.",
+          "rules": "Your own account only. The saved recovery code cannot be displayed again. Your roles are unchanged by enrollment or revocation."
+        },
+        {
+          "name": "Key name",
+          "meaning": "Recognizable label for the new key, such as Everyday key or Spare key.",
+          "values": "Required, trimmed, 1–80 characters without control characters; initially blank.",
+          "rules": "Used for migration and spare-key enrollment. Use a different physical key for a spare. This label does not prove hardware identity."
+        },
+        {
+          "name": "Laboratory policy (key enrollment)",
+          "meaning": "Explains whether a new key may be registered without configured PIN or biometric verification for sign-in and key unlock.",
+          "values": "The current laboratory security policy: PIN or biometric verification required by default, or a warning that sign-in without a key PIN is allowed.",
+          "rules": "Read-only in your key dialog; Manage users can change it under Operations settings. Allowing touch-only sign-in applies to new enrollment from a signed-in account. Keys with a PIN or biometric check may still ask for it, and previously verified keys retain that protection. Sensitive actions, first-account setup and saved-code recovery always require verification."
+        },
+        {
+          "name": "Security key PIN",
+          "meaning": "Activates verification on the connected physical key when that key requests it.",
+          "values": "Your key’s existing PIN; initially blank. The key controls its format and retry limits.",
+          "rules": "Required only when prompted. By default configure a PIN using key management software before enrollment unless the key supports biometric verification. The laboratory can allow compatible new keys without a configured PIN for later sign-in, but sensitive actions still need verification. The LIS does not set the physical key’s PIN. This is separate from the optional personal unlock PIN. Windows may prompt in its own security dialog. A fresh assertion does not guarantee a new PIN entry each time."
+        },
+        {
+          "name": "Recovery code / I saved this code away from this computer",
+          "meaning": "One-time account recovery material displayed after successful key enrollment.",
+          "values": "Read-only 64-character code; confirmation checkbox unchecked initially.",
+          "rules": "Save it in secure custody before checking the box and choosing Continue. Each enrollment invalidates the previous code. This is separate from the installation recovery kit; anyone with the current code can replace the account’s keys."
+        },
+        {
+          "name": "Unlock PIN status",
+          "meaning": "Whether your account has enabled the optional PIN for resuming its current locked session.",
+          "values": "Enabled or Disabled; disabled by default.",
+          "rules": "Read-only in the Unlock PIN dialog. Changes require your password or registered security key. This setting is personal, not shared by the workstation."
+        },
+        {
+          "name": "New unlock PIN",
+          "meaning": "Personal secret used only to unlock your existing session.",
+          "values": "Required six ASCII digits (0–9); initially blank and masked. Leading zeros are preserved.",
+          "rules": "Identical digits, ascending or descending sequences including wraparound, repeated two- or three-digit blocks and the patterns 112233, 123321, 159753, 147258, 258369 and 102030 are rejected. Choose a personal value you do not share. The field clears after submission; the saved PIN cannot be displayed again."
+        },
+        {
+          "name": "Confirm unlock PIN",
+          "meaning": "Checks that you entered the intended new PIN.",
+          "values": "Required; initially blank and masked.",
+          "rules": "Must match New unlock PIN exactly. A mismatch prevents submission. Both PIN fields clear after submission."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Create user",
+          "does": "Register a new active account with the chosen roles and temporary password.",
+          "availableWhen": "Manage users; granting clinical roles also needs Manage quality, subject to first-quality-manager setup.",
+          "result": "The user must change the temporary password and set up an authenticator at first sign-in. Additional staff cannot register a key directly in this creation dialog; after completing their first sign-in they can switch their own account to a security key."
+        },
+        {
+          "name": "Edit roles / Save roles",
+          "does": "Replace the authorized set of roles for another account.",
+          "availableWhen": "Authority for each role granted or revoked, fresh account confirmation, reason and current revision.",
+          "result": "New privileges are recorded; earlier grants/revocations remain in history."
+        },
+        {
+          "name": "Disable user",
+          "does": "Prevent the account from signing in while retaining attribution and records.",
+          "availableWhen": "Manage users, reason and a current active account; last active administrator/quality-manager protections must pass.",
+          "result": "Account becomes Disabled; it can be enabled again."
+        },
+        {
+          "name": "Enable user",
+          "does": "Restore sign-in access to a disabled account.",
+          "availableWhen": "Manage users, reason and current revision.",
+          "result": "The existing credential method and registered credentials remain in use."
+        },
+        {
+          "name": "Reset sign-in",
+          "does": "Replace another user’s password and optionally remove their authenticator.",
+          "availableWhen": "Manage users; also Manage quality if the target holds a clinical role; reason and confirmation with your password or security key. Password accounts only; key accounts use their spare key or saved recovery code.",
+          "result": "Ends the user’s sessions, invalidates sign-in steps started with the previous credentials, clears sign-in lockout and requires a new personal password; optionally requires new MFA enrollment. Also disables the user’s optional unlock PIN."
+        },
+        {
+          "name": "Set up for one person",
+          "does": "Give the sole active account every role and permit each separation duty to be done by one person.",
+          "availableWhen": "You are the only active account, hold Manage users, and supply a reason and confirmation with your password or security key.",
+          "result": "Roles and policy update immediately. Each self-approval still requires its own confirmation and is audited."
+        },
+        {
+          "name": "Reload users",
+          "does": "Refresh current account state after a conflict.",
+          "availableWhen": "An account-change dialog offers it after a conflict.",
+          "result": "Closes the stale dialog; review the new row before retrying."
+        },
+        {
+          "name": "Open row / Previous / Next / Close / Clear filters",
+          "does": "Inspect account facts, move through the list, or restore all statuses.",
+          "availableWhen": "A row or applied filter is available.",
+          "result": "Navigation/filtering only."
+        },
+        {
+          "name": "Signed in as … / Security keys",
+          "does": "Opens your account menu and personal key inventory.",
+          "availableWhen": "Any signed-in user.",
+          "result": "Shows active keys, current sign-in method and recovery-code availability. It does not grant user-administration authority."
+        },
+        {
+          "name": "Switch to a security key / Register key and switch sign-in",
+          "does": "Verifies your current password and registers a new key under the laboratory’s sign-in policy, then replaces password and authenticator-app sign-in for your account.",
+          "availableWhen": "Signed in with a password account; key name and current password required. Connect a compatible key before submitting.",
+          "result": "The account uses its key for sign-in and for unlock unless you choose your separately enabled personal unlock PIN. Sensitive confirmation still requires the key’s PIN or biometric check; if you enroll a touch-only key, configure verification or use an existing registered verified key for those actions. Save the new recovery code. Your current session remains open; migration ends other sessions. Future sign-ins use the key."
+        },
+        {
+          "name": "Add security key / Register another key",
+          "does": "Verifies an existing key using its PIN or biometric check, then registers a different physical spare under the laboratory’s sign-in policy.",
+          "availableWhen": "Signed in to a key account; provide the new key name and select an existing key capable of PIN or biometric verification for confirmation. Touch-only sign-in does not authorize adding a key.",
+          "result": "The new key joins your active keys. A new recovery code supersedes the old one; save it before continuing."
+        },
+        {
+          "name": "Continue with the new key",
+          "does": "Continues spare enrollment after the existing key was verified.",
+          "availableWhen": "The replacement-key prompt is open. Disconnect the old key and connect only the different key to add.",
+          "result": "Starts registration of that connected key. A duplicate credential is refused."
+        },
+        {
+          "name": "Revoke [key name] / Revoke key",
+          "does": "Revokes the selected key after a reason and fresh key confirmation.",
+          "availableWhen": "Your own active key, a current revision and another active key remaining.",
+          "result": "The key stops working and all sessions for your account end, including the current session. Sign in again with a remaining key."
+        },
+        {
+          "name": "Continue (recovery code)",
+          "does": "Acknowledges that you saved the newly issued recovery code.",
+          "availableWhen": "I saved this code away from this computer is checked.",
+          "result": "Leaves the one-time code display. The code is not shown again."
+        },
+        {
+          "name": "Continue / Cancel (key verification)",
+          "does": "Submits the requested PIN or cancels the pending key operation.",
+          "availableWhen": "A native key operation is in progress; Continue for PIN appears only when the key requests it.",
+          "result": "Verification proceeds or the action fails as cancelled. Also cancel any separate Windows security dialog. A timeout needs a new deliberate attempt."
+        },
+        {
+          "name": "Close / Cancel (Security keys)",
+          "does": "Leaves the key inventory or unsent enrollment form.",
+          "availableWhen": "Close is unavailable while enrolling or while a new recovery code is awaiting acknowledgment; cancel the native operation first if needed.",
+          "result": "Closing the inventory does not revoke keys. Cancelling before successful enrollment leaves the previous credentials usable."
+        },
+        {
+          "name": "Signed in as … / Unlock PIN",
+          "does": "Opens the status and controls for your personal unlock PIN.",
+          "availableWhen": "Any signed-in user with an unlocked session.",
+          "result": "Shows Enabled or Disabled. This does not change your initial sign-in method or grant account-administration authority."
+        },
+        {
+          "name": "Enable PIN / Change PIN",
+          "does": "Opens the PIN form and then saves or replaces your personal unlock PIN when submitted.",
+          "availableWhen": "Enable PIN when disabled; Change PIN when enabled. Supply New unlock PIN, matching Confirm unlock PIN and fresh password or security-key confirmation. No reason is requested.",
+          "result": "A success message confirms the change. Your current session stays open, other sessions end, and your current PIN attempt budget resets. Reopen Unlock PIN to verify Enabled."
+        },
+        {
+          "name": "Disable PIN",
+          "does": "Opens a confirmation and removes your personal unlock PIN when confirmed.",
+          "availableWhen": "PIN is enabled; fresh password or registered security-key confirmation required. The PIN itself cannot authorize removal.",
+          "result": "A success message confirms removal. Future unlocks require your normal password or key. Other sessions end; the current session stays open. Reopen Unlock PIN to verify Disabled."
+        },
+        {
+          "name": "Close / Cancel (Unlock PIN)",
+          "does": "Closes the status dialog or abandons an unsent PIN configuration form.",
+          "availableWhen": "The dialog is open; form cancellation is unavailable while its command is pending.",
+          "result": "An unsent form does not change the PIN. Submitted changes take effect only on success."
+        },
+        {
+          "name": "Try again (Unlock PIN status)",
+          "does": "Checks your PIN configuration again after a status error.",
+          "availableWhen": "The status could not be read.",
+          "result": "Enable, Change and Disable controls appear only after a successful status read."
+        }
+      ],
+      "restrictions": [
+        "You cannot use normal administration to change your own roles or reset your own sign-in. Set up for one person is the explicit exception for the only active account.",
+        "An administrator may appoint the first quality manager while none is active; subsequent clinical-role administration requires quality authority.",
+        "Do not disable the last active administrator or quality manager. The engine refuses those changes.",
+        "Account roles describe software access, not laboratory qualifications or clinical authorization supplied outside the application.",
+        "Security-key accounts cannot be reset to a temporary password through Users. If all keys are lost, use Recover with a saved code on the sign-in screen. There is no administrator bypass if both all keys and the current recovery code are unavailable.",
+        "Windows Hello and synced passkeys are not supported by this key flow. The optional personal unlock PIN is a separate session convenience, not a security-key credential. Real-device and operating-system qualification remains pending. On macOS/Linux connect exactly one USB key before starting; Windows uses its native security dialog.",
+        "A lost or unattended touch-only key may let its holder sign in as the owner. Keep personal custody of your key. Laboratory permission for touch-only sign-in never bypasses a wrong or blocked key PIN, sensitive-action verification, first-account setup or recovery. Saved-code recovery requires a replacement key with PIN or biometric verification. Turning off the laboratory exception also requires verification on subsequent sign-in and key unlock; personal unlock-PIN settings are unchanged.",
+        "The optional unlock PIN cannot create an account, sign in, switch users, recover an account or confirm a sensitive action. Restart, sign-out and the 12-hour session limit require normal sign-in. Unlocking does not extend that limit.",
+        "Five incorrect submitted PIN attempts end the current session and require normal sign-in. A successful PIN unlock or confirmed PIN configuration change resets the current budget; using password or key to unlock does not reset failed PIN attempts. Credential reset and saved-code key recovery disable the PIN."
+      ],
+      "workflow": [
+        "Find the intended person and confirm username, display name and existing roles.",
+        "Choose the action and read its consequences before entering credentials.",
+        "Give only the approved roles, record the reason where required, and save.",
+        "For new/reset accounts, privately deliver the temporary password and have the person complete their own sign-in setup."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Reset sign-in is offered but refused",
+          "recovery": "A clinical-role target also requires Manage quality. Have a person holding both required capabilities complete the reset."
+        },
+        {
+          "problem": "A username or password is rejected",
+          "recovery": "Use the stated username syntax and a unique name; choose a 12–128-character password that does not contain that username."
+        },
+        {
+          "problem": "A stale-account or last-holder conflict occurs",
+          "recovery": "Reload users and inspect the current roles/status. Arrange another active authorized holder before disabling the last holder; do not create a shared account to bypass the guard."
+        },
+        {
+          "problem": "An in-progress sign-in expires after the account changes",
+          "recovery": "Restart sign-in with the current credentials after a password, role or account-status change. After Reset sign-in, use the new temporary password and choose a personal password before completing the authenticator step."
+        },
+        {
+          "problem": "No key is found, a key lacks a PIN, or verification fails",
+          "recovery": "Connect the intended key before submitting. On macOS/Linux leave only that USB key connected. Configure its PIN using the key’s management software if required, then start again. A compatible new key without a PIN can be enrolled only when the laboratory allows touch-only sign-in; a configured, wrong or blocked PIN is not bypassed. Follow the key’s retry limits; cancellation and timeout do not authorize the action."
+        },
+        {
+          "problem": "A key signs in but cannot confirm an action",
+          "recovery": "Sensitive actions always require the key’s PIN or biometric verification, including adding or revoking keys and changing your personal unlock PIN. Configure verification on that key using its management software, or select another existing registered key that supports it. If none can verify, saved-code recovery can replace the account’s keys with a verified key; save the new recovery code and sign in again."
+        },
+        {
+          "problem": "A key or recovery code is lost",
+          "recovery": "Sign in with a spare key if available, add a replacement, save the new recovery code and revoke the lost key. Without a spare, use Recover with a saved code at sign-in. The installation recovery kit cannot substitute for the saved account code."
+        },
+        {
+          "problem": "A key changed while its revoke dialog was open",
+          "recovery": "Close and reopen Security keys, review the current inventory and repeat the intended action. Do not reuse an earlier confirmation."
+        },
+        {
+          "problem": "The new PIN is rejected or the confirmation does not match",
+          "recovery": "Enter exactly six digits in both fields. Choose a less predictable PIN if the engine rejects its pattern. After a submitted failure the secret fields clear; enter them again and confirm with your normal credential."
+        },
+        {
+          "problem": "You forgot your personal unlock PIN",
+          "recovery": "Use password or security key instead on the lock screen. After unlocking, open Unlock PIN to change or disable it using your normal credential; the old PIN is not required."
+        },
+        {
+          "problem": "A PIN configuration change is cancelled or expires",
+          "recovery": "A session lock, sign-out, user change, expiry, timeout or clock change can invalidate confirmation. A cancelled change is not saved. Unlock or sign in again, reopen Unlock PIN, check its status and retry with a fresh confirmation."
+        },
+        {
+          "problem": "The unlock PIN disappeared after account recovery or credential reset",
+          "recovery": "This is expected. Complete normal sign-in and enable a new personal unlock PIN if you still want it."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/users/UsersPage.tsx",
+    "ui/src/features/users/UserAdministration.tsx",
+    "ui/src/features/users/UserPanel.tsx",
+    "ui/src/features/users/userColumns.tsx",
+    "ui/src/features/users/CreateUserDialog.tsx",
+    "ui/src/features/users/EditRolesDialog.tsx",
+    "ui/src/features/users/ResetCredentialsDialog.tsx",
+    "ui/src/features/users/UserStatusDialog.tsx",
+    "ui/src/features/users/OnePersonAction.tsx",
+    "ui/src/features/users/RoleChecklist.tsx",
+    "ui/src/features/users/TemporaryPasswordField.tsx",
+    "crates/lis-auth/src/admin.rs",
+    "crates/lis-auth/src/account.rs",
+    "crates/lis-auth/src/password.rs",
+    "crates/lis-auth/src/duties.rs",
+    "crates/lis-auth/src/one_person.rs",
+    "crates/lis-auth/src/roles.rs",
+    "crates/lis-auth/src/challenge.rs",
+    "crates/lis-auth/src/sign_in.rs",
+    "ui/src/lib/securityKeyAuthenticationField.tsx",
+    "ui/src/lib/securityKeyPrompt.tsx",
+    "ui/src/lib/commands.ts",
+    "crates/lis-auth/src/key_proofs.rs",
+    "ui/src/features/auth/UserMenu.tsx",
+    "ui/src/features/auth/SecurityKeysDialog.tsx",
+    "ui/src/features/auth/KeyEnrollmentForm.tsx",
+    "ui/src/features/auth/RevokeKeyDialog.tsx",
+    "ui/src/features/auth/KeyRecoveryCode.tsx",
+    "ui/src/features/auth/RecoverKeyForm.tsx",
+    "crates/lis-auth/src/credentials.rs",
+    "crates/lis-auth/src/key_registration.rs",
+    "crates/lis-auth/src/key_recovery.rs",
+    "crates/lis-auth/src/key_verifier.rs",
+    "crates/lis-auth/src/key_credential.rs",
+    "crates/lis-auth/src/policy.rs",
+    "crates/lis-security-key/src/usb.rs",
+    "ui/src/features/auth/SecurityKeysDialog.test.tsx",
+    "ui/src/features/auth/UnlockPinDialog.tsx",
+    "ui/src/features/auth/SetUnlockPinDialog.tsx",
+    "ui/src/features/auth/UnlockPinField.tsx",
+    "ui/src/features/auth/PinUnlockForm.tsx",
+    "ui/src/features/auth/LockScreen.tsx",
+    "ui/src/features/auth/UnlockPinDialog.test.tsx",
+    "ui/src/features/auth/PinUnlockForm.test.tsx",
+    "ui/src/features/auth/UserMenu.test.tsx",
+    "crates/lis-auth/src/unlock_pin.rs",
+    "crates/lis-engine/src/commands/unlock_pin.rs"
+  ]
+}

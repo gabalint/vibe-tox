@@ -1,0 +1,222 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--color-surface);
+  border-inline-start: 1px solid var(--color-border);
+}
+
+.header,
+.tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+
+.header {
+  justify-content: space-between;
+}
+
+.header h2 {
+  margin-inline-end: auto;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.tools {
+  flex-wrap: wrap;
+  padding-block-start: 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.body {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-5);
+  overflow-wrap: anywhere;
+}
+
+.article,
+.topics {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 70ch;
+}
+
+.article h3,
+.topics h3 {
+  font-size: var(--font-size-xl);
+}
+
+.article section {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+}
+
+.article h4 {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.article ol {
+  padding-inline-start: var(--space-5);
+  list-style: decimal;
+}
+
+.note {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+  padding-block-start: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.topicList {
+  padding-inline-start: var(--space-4);
+  list-style: disc;
+}
+
+.topicList li {
+  margin-block-end: var(--space-4);
+}
+
+.topicList p {
+  margin-block-start: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+.article li + li {
+  margin-block-start: var(--space-3);
+}
+
+.sizeButton {
+  display: grid;
+  place-items: center;
+  min-width: var(--control-height);
+  min-height: var(--control-height);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.sizeButton svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
+
+.sizeButton:hover {
+  background: var(--color-surface-hover);
+}
+
+.sizeButton:focus-visible,
+.chapter summary:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.resize {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -5px;
+  width: 10px;
+  z-index: 1;
+  cursor: col-resize;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.resize::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 4px;
+  width: 2px;
+  background: var(--color-border-control);
+}
+
+.resize:hover::after,
+.resize[data-resizing="true"]::after,
+.resize:focus-visible::after {
+  background: var(--color-accent);
+}
+
+.resize:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.resize[data-stacked="true"] {
+  inset-inline: 0;
+  inset-block: -5px auto;
+  width: auto;
+  height: 10px;
+  cursor: row-resize;
+}
+
+.resize[data-stacked="true"]::after {
+  inset-inline: 0;
+  inset-block: 4px auto;
+  width: auto;
+  height: 2px;
+}
+
+.manual {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.chapter {
+  border-top: 1px solid var(--color-border);
+  padding-block-start: var(--space-3);
+}
+
+.chapter summary {
+  cursor: pointer;
+  font-weight: var(--font-weight-semibold);
+  padding-block: var(--space-2);
+}
+
+.chapter ul {
+  list-style: disc;
+  padding-inline-start: var(--space-5);
+}
+
+.entry {
+  border-bottom: 1px solid var(--color-border);
+  margin-inline-start: var(--space-2);
+}
+
+.entry summary {
+  font-weight: var(--font-weight-regular);
+}
+
+.reference {
+  width: 100%;
+  border-collapse: collapse;
+  margin-block-end: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.reference th,
+.reference td {
+  vertical-align: top;
+  text-align: start;
+  padding: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.reference th {
+  width: 30%;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+}

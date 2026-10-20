@@ -1,0 +1,241 @@
+{
+  "id": "report-delivery",
+  "title": "Delivery",
+  "summary": "Work through report delivery obligations and record the evidence for each attempt.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/delivery"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "The Delivery queue lists work for released reports. Open an obligation to inspect its report revision, destination, channel and recorded attempts. Use the available actions to export a report for its stated purpose or record a delivery attempt.",
+        "Reports also show their delivery history and allow additional obligations when authorized. A destination must be configured and verified before it can be used for the applicable delivery workflow."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Check the intended recipient, destination and current report revision immediately before delivery. Record the actual channel and evidence obtained. A PDF export, transport acknowledgement and confirmed receipt are different events.",
+        "Use precise outcome information when an attempt fails or needs reconciliation. If a report has been corrected or withdrawn, review the new state and related obligations before sending another copy."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Read the obligation\u2019s blocking reason. An unverified destination needs its verification workflow; a recovery gate needs recovery reconciliation. Do not mark an attempt successful without the corresponding evidence. Opening or exporting a PDF alone does not establish that the recipient received it."
+      ]
+    },
+    {
+      "title": "Exact links and retained work",
+      "paragraphs": [
+        "A delivery link names its exact obligation. If it lies outside the loaded queue pages, is excluded by the filter or is already closed, the panel reads that retained obligation directly and independently. The current list filter is preserved. The panel shows its current engine-authorized actions; closed work has no delivery mutation actions.",
+        "A failed exact lookup displays its error and a Refresh control; no first or similar obligation is substituted. Return to the report history if the linked record cannot be found. Full retained attempt notes on this exact read are audited; queue rows may omit notes. The attempted observation time is retained and is not used as a unique attempt identity."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/reports/delivery/DeliveryQueuePage.tsx",
+    "ui/src/features/reports/delivery/ObligationGrid.tsx",
+    "ui/src/features/reports/delivery/ObligationPanel.tsx",
+    "ui/src/features/reports/delivery/ObligationDialog.tsx",
+    "ui/src/features/reports/delivery/RecordAttemptDialog.tsx",
+    "ui/src/features/reports/delivery/ExportDialog.tsx",
+    "ui/src/features/reports/delivery/obligationActions.tsx",
+    "ui/src/features/reports/labels.ts",
+    "crates/lis-reporting/src/commands/obligations.rs",
+    "crates/lis-reporting/src/commands/exports.rs",
+    "crates/lis-reporting/src/delivery/labels.rs",
+    "crates/lis-engine/src/commands/reporting.rs",
+    "ui/src/features/reports/delivery/ExactObligationPanel.tsx",
+    "crates/lis-reporting/src/queries/delivery.rs",
+    "crates/lis-reporting/src/views.rs",
+    "crates/lis-reporting/src/queries/obligation.rs"
+  ],
+  "pages": [
+    {
+      "title": "Delivery",
+      "routes": ["/delivery"],
+      "purpose": "Reconcile staff-operated delivery of released reports and withdrawal notices using evidence for each destination.",
+      "access": "Requires report-delivery authority.",
+      "fields": [
+        {
+          "name": "Show",
+          "meaning": "Selects the kind of outstanding delivery work.",
+          "values": "Awaiting delivery; Failed or outcome unknown; Blocked by destination; Paused for impact review; All open.",
+          "rules": "Defaults to Awaiting delivery; retained in the page address."
+        },
+        {
+          "name": "Obligation count / freshness",
+          "meaning": "Shows the loaded extent and last read.",
+          "values": "Count, more-to-scan indicator and update time.",
+          "rules": "The list is scanned in bounded pages of up to 200 matching items; a scan can return no matches while more remain. Sorting applies only to loaded obligations."
+        },
+        {
+          "name": "Delivery status",
+          "meaning": "Names the channel and the strongest evidence recorded so far.",
+          "values": "Fax by staff, Email by staff, Mailed by staff, Handed to courier or Collected at the laboratory, followed by awaiting, failed, outcome unknown, blocked, paused, handed off with attestation, or closed with reason.",
+          "rules": "Read-only. Handed off is staff attestation; it does not prove recipient receipt."
+        },
+        {
+          "name": "Report / Sends",
+          "meaning": "Identifies the exact artifact owed to a destination.",
+          "values": "Report number and revision, or Withdrawal notice and revision.",
+          "rules": "Read-only; verify revision before using any exported file."
+        },
+        {
+          "name": "Destination",
+          "meaning": "Identifies the configured recipient endpoint.",
+          "values": "The ordering client\u2019s configured destination label.",
+          "rules": "Read-only on an obligation; redirecting creates a new obligation rather than editing this history."
+        },
+        {
+          "name": "Why",
+          "meaning": "Explains how the obligation arose.",
+          "values": "Release, Follow-up of an earlier revision, Withdrawal notice, Added by staff or Redirected, with reason when recorded.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Last attempt / Created",
+          "meaning": "Dates the obligation and its most recent attempt.",
+          "values": "Date/time or None for no attempt.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Attempts",
+          "meaning": "Preserves every attempt in order.",
+          "values": "Handed off, Failed or Outcome unknown; failure cause, observed time, recorder and note.",
+          "rules": "Read-only; a retry is another recorded attempt, not an edit to an earlier one."
+        },
+        {
+          "name": "Record attempt: What happened",
+          "meaning": "Records the actual outcome staff observed.",
+          "values": "Handed off (I attest it was sent or handed over); Failed; Outcome unknown.",
+          "rules": "Required; no default. The current interface records the attempt time automatically."
+        },
+        {
+          "name": "Record attempt: Why it failed",
+          "meaning": "Records the failure category.",
+          "values": "No answer or busy, Wrong destination, Returned, Refused, Other.",
+          "rules": "Required only for Failed. Wrong destination blocks use of that destination until it is replaced or retired and work redirected."
+        },
+        {
+          "name": "Record attempt: Note",
+          "meaning": "Adds factual supporting detail.",
+          "values": "Free text.",
+          "rules": "Optional, trimmed, at most 1,000 characters."
+        },
+        {
+          "name": "Redirect / Add destination: Destination",
+          "meaning": "Chooses the new recipient endpoint for the ordering client.",
+          "values": "Verified destinations of that client, with address when available.",
+          "rules": "Required; must still be active, verified and not reported wrong. Redirect must select a different destination."
+        },
+        {
+          "name": "Redirect / Add destination: Reason",
+          "meaning": "Explains why an obligation is added or redirected.",
+          "values": "Free text.",
+          "rules": "Required, trimmed 1\u20131,000 characters."
+        },
+        {
+          "name": "Export PDF: Purpose",
+          "meaning": "Distinguishes a delivery copy from other authorized uses.",
+          "values": "For delivery to this destination; For the laboratory\u2019s records; Internal use.",
+          "rules": "Required. Defaults to delivery when opened from an obligation. A revision page offers only records/internal use and has no default."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open obligation row",
+          "does": "Shows destination, revision, status and every recorded attempt.",
+          "availableWhen": "An obligation is loaded.",
+          "result": "Opens a panel with Previous, Next and Close."
+        },
+        {
+          "name": "Record attempt",
+          "does": "Records the chosen observed outcome and optional note.",
+          "availableWhen": "Delivery authority, an actionable obligation, usable current revision/notice and verified destination; impact and recovery gates are clear.",
+          "result": "Appends attributed evidence. Handed off ends further attempts on that obligation; Failed or Outcome unknown can be followed by another attempt."
+        },
+        {
+          "name": "Redirect",
+          "does": "Closes this obligation and creates one for another verified destination.",
+          "availableWhen": "Delivery authority and an actionable obligation; a different valid destination of the same ordering client is selected.",
+          "result": "Retains earlier attempts and the reason; the new obligation carries future delivery work."
+        },
+        {
+          "name": "Export PDF",
+          "does": "Saves the preserved issued PDF to Downloads for the selected purpose.",
+          "availableWhen": "Delivery authority and applicable artifact, obligation and delivery checks pass.",
+          "result": "Exports the exact issued bytes and records the export. A withdrawal obligation exports its notice. No attempt or delivery is recorded."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes an unsubmitted action dialog.",
+          "availableWhen": "A dialog is open.",
+          "result": "Does not record an attempt, redirect or export."
+        },
+        {
+          "name": "Show all open",
+          "does": "Removes a category restriction from the queue.",
+          "availableWhen": "An empty filtered list offers it.",
+          "result": "Searches across open obligation states; does not reopen a closed obligation."
+        },
+        {
+          "name": "Load more obligations",
+          "does": "Continues scanning beyond the loaded page.",
+          "availableWhen": "The application indicates more obligations remain to check.",
+          "result": "Appends more matches; an empty current page alone does not prove the queue empty."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reloads delivery work.",
+          "availableWhen": "The page is open.",
+          "result": "Updates statuses and the freshness time."
+        },
+        {
+          "name": "Report link",
+          "does": "Opens the report\u2019s revision, impact and delivery history.",
+          "availableWhen": "The obligation panel is open.",
+          "result": "Shows full report context and any follow-up requirements."
+        },
+        {
+          "name": "Refresh linked obligation",
+          "does": "Read the exact retained delivery record opened outside the current queue rows.",
+          "availableWhen": "An exact linked record is being retrieved or shown independently.",
+          "result": "Updates its state and attempt evidence without changing the list filter or selecting other work."
+        }
+      ],
+      "restrictions": [
+        "Delivery here is performed by staff through the stated channel. Recording an attempt does not send a fax, email or mailed copy automatically.",
+        "A PDF export is not delivery evidence. Record only what was actually handed off, failed or remains unknown.",
+        "Normal report delivery requires the current revision. Superseded or withdrawn report content cannot be sent through an old obligation; withdrawal notices have their own obligations.",
+        "A destination reported wrong is blocked for other obligations too. Replace or retire it through configuration and redirect to the verified replacement.",
+        "Unresolved post-release impact pauses report delivery; address it in report history with quality staff. Recovery gates require the recovery workflow."
+      ],
+      "workflow": [
+        "Open the obligation and verify report number, exact revision or notice, destination and channel.",
+        "Check impact/destination state, then export for delivery if needed and perform the actual handoff under the laboratory procedure.",
+        "Choose Record attempt and record the outcome supported by evidence. Use a failure code or Outcome unknown when appropriate.",
+        "For a later retry, record another attempt on the same eligible obligation; redirect only when the destination must change."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The obligation leaves the list after recording an attempt.",
+          "recovery": "Its panel stays open and reads the exact retained obligation independently. Use the panel Refresh to reconcile later changes and current permitted actions; the changed state may no longer match Show."
+        },
+        {
+          "problem": "An export fails integrity checks.",
+          "recovery": "Investigate the preservation incident on the report; do not regenerate a substitute and present it as the original issued PDF."
+        },
+        {
+          "problem": "Delivery is blocked or paused.",
+          "recovery": "Resolve the displayed destination, impact or recovery condition through its owning workflow before retrying."
+        },
+        {
+          "problem": "A linked obligation is outside the loaded pages or already closed.",
+          "recovery": "The exact panel reads it independently; review current status and permitted actions. If the read fails, use its Refresh after correcting the error or return to report history. No different obligation is selected."
+        }
+      ]
+    }
+  ]
+}

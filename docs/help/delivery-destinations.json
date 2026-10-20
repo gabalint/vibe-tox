@@ -1,0 +1,185 @@
+{
+  "id": "delivery-destinations",
+  "title": "Delivery destinations",
+  "summary": "Register, verify and replace the addresses used for a client’s reports.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/configuration/destinations"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Find a destination by client or its displayed details, then open its panel. Add destination records the client, channel and address. A new destination remains unverified until the verification action is completed.",
+        "Replacing an address creates an unverified replacement that needs its own review. Available verification and retirement actions depend on the record state and the current user. The current separation-of-duties policy controls whether the creator can verify the destination."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Check the intended client, recipient and channel using the laboratory’s approved verification process. An address that looks plausible or accepts a message is not enough to establish the intended recipient.",
+        "Record the actual verification evidence and reason requested by the workflow. Review a replacement with the same care as a new address, and keep earlier delivery history understandable."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "An unverified destination cannot be used as though it were verified. If another person is required, arrange review by an authorized colleague. If an address is wrong, use the replacement workflow rather than changing the report or recording a delivery outcome that did not occur."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Delivery destinations",
+      "routes": ["/configuration/destinations"],
+      "purpose": "Maintain verified recipient addresses for a client or client location.",
+      "access": "Manage configuration is required to add, verify, replace or retire a destination. Offered actions reflect the current record and account; the engine makes the final check.",
+      "fields": [
+        {
+          "name": "Find delivery destinations",
+          "meaning": "Locate destinations using the directory’s displayed identifiers.",
+          "values": "Text matching destination details and client information; blank shows all in scope.",
+          "rules": "Optional; combines with Client, State and Show retired."
+        },
+        {
+          "name": "Client (filter)",
+          "meaning": "Limit the list to one organization.",
+          "values": "A registered client, or no selection for all.",
+          "rules": "Optional; does not change a destination’s owner."
+        },
+        {
+          "name": "State / Show retired",
+          "meaning": "Select verification status and whether retired records are included.",
+          "values": "Any state; Not verified; Verified; Reported wrong. Show retired is off by default.",
+          "rules": "Reported wrong means delivery evidence identified a bad address. Retired records are excluded from the normal count until included."
+        },
+        {
+          "name": "Verified, Added by, Replaces and Retired because",
+          "meaning": "Show who created and verified the address, verification evidence, replacement lineage and retirement reason.",
+          "values": "Saved people, verification date/method, linked prior destination and reason, as applicable.",
+          "rules": "Read-only. Replaces opens the earlier destination; Client opens the client record."
+        },
+        {
+          "name": "Client",
+          "meaning": "Ordering organization this destination serves.",
+          "values": "A registered client chosen by name and code.",
+          "rules": "Required when adding from the directory; preset when adding from a client page. Changing it clears Location."
+        },
+        {
+          "name": "Location",
+          "meaning": "Restrict the destination to one site of that client.",
+          "values": "Registered locations belonging to the selected client; blank means Whole client.",
+          "rules": "Optional; a location from another client is refused."
+        },
+        {
+          "name": "Channel",
+          "meaning": "Staff-operated route used to send or hand over the report.",
+          "values": "Fax; Email; Mail; Courier; Pickup at the laboratory.",
+          "rules": "Required for a new destination. A replacement retains the original client, location and channel."
+        },
+        {
+          "name": "Address",
+          "meaning": "Where the report is sent or handed over.",
+          "values": "Fax: 7–20 digits with spaces, +, -, parentheses or periods. Email: one address with an @ and dotted domain. Mail: postal address. Courier: optional handover description. Pickup: blank.",
+          "rules": "Up to 500 characters. Required for Fax, Email and Mail; optional for Courier; forbidden for Pickup. Format acceptance does not verify the recipient."
+        },
+        {
+          "name": "Label",
+          "meaning": "Name staff use to distinguish this destination.",
+          "values": "Specific label such as the clinic’s authorized main fax.",
+          "rules": "Required; up to 200 characters."
+        },
+        {
+          "name": "How it was verified",
+          "meaning": "Evidence that the address reaches the intended client.",
+          "values": "Description of the actual verification method.",
+          "rules": "Required to Verify; up to 500 characters. Do not record a test or contact that did not occur."
+        },
+        {
+          "name": "Reason",
+          "meaning": "Explanation for replacing or retiring a destination.",
+          "values": "Specific explanation up to 1,000 characters.",
+          "rules": "Required for Replace and Retire."
+        },
+        {
+          "name": "Self-verification confirmation",
+          "meaning": "Acknowledgement that the destination’s creator is also its verifier.",
+          "values": "Initially unchecked confirmation shown when requested by the engine.",
+          "rules": "Only accepted when the laboratory’s separation-of-duties policy allows it."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Add destination",
+          "does": "Create a recipient address.",
+          "availableWhen": "Manage configuration and valid client/channel/address.",
+          "result": "An unverified destination is added; it cannot be used as verified until review succeeds."
+        },
+        {
+          "name": "Verify / Verify destination",
+          "does": "Record completed recipient verification.",
+          "availableWhen": "An active, unverified destination and the required independent verifier or permitted self-verification.",
+          "result": "Verification evidence is retained and the destination becomes Verified."
+        },
+        {
+          "name": "Replace / Replace destination",
+          "does": "Retire the original and create a linked replacement on the same client, location and channel.",
+          "availableWhen": "An active destination; new Label and appropriate Address plus Reason.",
+          "result": "The replacement starts unverified. Open deliveries to the old destination still need explicit redirection."
+        },
+        {
+          "name": "Retire / Retire destination",
+          "does": "Stop future use of a destination.",
+          "availableWhen": "An active destination and a required reason.",
+          "result": "Retirement is permanent; open deliveries stay blocked until redirected to another verified destination."
+        },
+        {
+          "name": "Open row / Previous / Next / Close",
+          "does": "Inspect destination facts and available actions.",
+          "availableWhen": "A listed record.",
+          "result": "The details panel opens without changing the destination."
+        },
+        {
+          "name": "Clear filters",
+          "does": "Remove client, state and retired-scope constraints.",
+          "availableWhen": "Filters are active.",
+          "result": "Returns to active destinations; clear the Find field separately if needed."
+        }
+      ],
+      "restrictions": [
+        "Verification and transport success are different: this page records recipient verification, not delivery of a particular report.",
+        "Addresses are replaced or retired, not silently edited in place.",
+        "Reported-wrong addresses require investigation and replacement or retirement; do not present them as usable simply because they were previously verified."
+      ],
+      "workflow": [
+        "Find and inspect the client, location and channel before creating or changing a destination.",
+        "Add the authorized label and address.",
+        "Complete the laboratory’s recipient-verification process and record how it was done.",
+        "For replacements, verify the new record and redirect affected open deliveries through the delivery workflow."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Verify is refused for the creator",
+          "recovery": "Have another authorized person verify it, or follow the explicit self-verification prompt only when the laboratory permits that duty."
+        },
+        {
+          "problem": "A replacement still cannot receive reports",
+          "recovery": "Open the replacement and confirm it is Verified. Creating it does not redirect existing obligations; review those separately."
+        },
+        {
+          "problem": "The destination changed while the dialog was open",
+          "recovery": "Reload the directory and review its latest state before attempting another change."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/configuration/destinations/AddDestinationDialog.tsx",
+    "ui/src/features/configuration/destinations/AddressInput.tsx",
+    "ui/src/features/configuration/destinations/DestinationActions.tsx",
+    "ui/src/features/configuration/destinations/DestinationFilters.tsx",
+    "ui/src/features/configuration/destinations/DestinationPanel.tsx",
+    "ui/src/features/configuration/destinations/ReplaceDestinationDialog.tsx",
+    "ui/src/features/configuration/destinations/VerifyDestinationDialog.tsx",
+    "ui/src/features/configuration/destinations/labels.ts",
+    "crates/lis-reporting/src/commands/destinations.rs"
+  ]
+}

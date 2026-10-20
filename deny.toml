@@ -1,0 +1,82 @@
+# cargo-deny: dependency licenses, advisories, bans and sources.
+# Policy: docs/governance/library-policy.md. Run: cargo deny check
+
+[graph]
+all-features = true
+
+[advisories]
+yanked = "deny"
+# Documented exceptions (engineering standards: dependency exceptions need a reason and a
+# revisit trigger). All are transitive; revisit at every Typst or Tauri upgrade.
+ignore = [
+  # quick-xml DoS bugs, reached only through Typst's CSL/bibliography parsing (citationberg).
+  # lis-report's sandboxed World exposes only the template and the data JSON, so no XML or
+  # CSL input can reach the parser.
+  { id = "RUSTSEC-2026-0194", reason = "Typst CSL parsing only; unreachable from lis-report's sandboxed World" },
+  { id = "RUSTSEC-2026-0195", reason = "Typst CSL parsing only; unreachable from lis-report's sandboxed World" },
+  # Unmaintained crates inside Typst 0.15.1 (syntax highlighting, YAML, bibliography, shaping).
+  { id = "RUSTSEC-2025-0141", reason = "bincode via syntect in typst-library; no maintained alternative upstream yet" },
+  { id = "RUSTSEC-2024-0436", reason = "paste via biblatex/hayagriva in typst-library" },
+  { id = "RUSTSEC-2024-0449", reason = "unsafe-libyaml via typst-library YAML loading; templates read only JSON data" },
+  { id = "RUSTSEC-2024-0320", reason = "yaml-rust via syntect in typst-library" },
+  { id = "RUSTSEC-2026-0206", reason = "rustybuzz is Typst 0.15.1's text shaper; follow Typst's replacement" },
+  { id = "RUSTSEC-2026-0192", reason = "ttf-parser is Typst 0.15.1's font parser; fonts are bundled, never user-supplied" },
+  # Unmaintained proc-macro in the GTK3 bindings that Tauri uses on Linux (build time only).
+  { id = "RUSTSEC-2024-0370", reason = "proc-macro-error via glib/gtk3 macros in Tauri's Linux stack; compile-time only" },
+]
+
+[licenses]
+# Reviewed dependency licenses; third-party terms remain in force alongside GPL-3.0-only.
+allow = [
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "MIT",
+  "MIT-0",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "Unicode-3.0",
+  "Unicode-DFS-2016",
+  "CC0-1.0",
+  "BSL-1.0",
+  "OFL-1.1",
+  "MPL-2.0",
+  "CDLA-Permissive-2.0",
+]
+confidence-threshold = 0.9
+
+# ADR 0017: allow GPLv3 only for our workspace packages, not new external dependencies.
+exceptions = [
+  { crate = "lis-analytical", allow = ["GPL-3.0-only"] },
+  { crate = "lis-astm", allow = ["GPL-3.0-only"] },
+  { crate = "lis-au", allow = ["GPL-3.0-only"] },
+  { crate = "lis-audit", allow = ["GPL-3.0-only"] },
+  { crate = "lis-auth", allow = ["GPL-3.0-only"] },
+  { crate = "lis-billing", allow = ["GPL-3.0-only"] },
+  { crate = "lis-catalog", allow = ["GPL-3.0-only"] },
+  { crate = "lis-core", allow = ["GPL-3.0-only"] },
+  { crate = "lis-desktop", allow = ["GPL-3.0-only"] },
+  { crate = "lis-engine", allow = ["GPL-3.0-only"] },
+  { crate = "lis-identity", allow = ["GPL-3.0-only"] },
+  { crate = "lis-interfaces", allow = ["GPL-3.0-only"] },
+  { crate = "lis-labels", allow = ["GPL-3.0-only"] },
+  { crate = "lis-ops", allow = ["GPL-3.0-only"] },
+  { crate = "lis-orders", allow = ["GPL-3.0-only"] },
+  { crate = "lis-report", allow = ["GPL-3.0-only"] },
+  { crate = "lis-reporting", allow = ["GPL-3.0-only"] },
+  { crate = "lis-results", allow = ["GPL-3.0-only"] },
+  { crate = "lis-security-key", allow = ["GPL-3.0-only"] },
+  { crate = "lis-specimens", allow = ["GPL-3.0-only"] },
+  { crate = "lis-store", allow = ["GPL-3.0-only"] },
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

@@ -1,0 +1,115 @@
+{
+  "id": "media-disposals",
+  "title": "Media disposals",
+  "summary": "Record the disposition of host disks and backup media.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/operations/media-disposals"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "The list records media that were wiped, destroyed, reused after wiping or returned. Open the recording action to enter the medium, its identifier where available, the method and the other requested evidence.",
+        "Use the list to inspect the recorded history and the person and time associated with each entry. The entry documents an action taken outside this screen; the application does not erase or physically destroy the medium."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Identify the actual device or medium so the record can be connected to its custody history. Record the method that was performed, using the laboratory’s approved disposal or reuse procedure.",
+        "Confirm retention, recovery and custody requirements with the responsible owner before disposal. Backup media and a host disk can hold different copies of laboratory information, so do not assume that removing one removes every copy."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "If the medium or performed method cannot be established, obtain the missing evidence before recording completion. This page cannot verify physical destruction. A successful save means the disposal record was stored, not that the disposal operation was performed."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Media disposals",
+      "routes": ["/operations/media-disposals"],
+      "purpose": "Keep an attributable record of what happened to host disks and backup media after their use.",
+      "access": "Record disposal requires Backup and restore authority.",
+      "fields": [
+        {
+          "name": "Medium",
+          "meaning": "Description of the actual disk or backup medium.",
+          "values": "PHI-free description up to 200 characters.",
+          "rules": "Required; identify the physical medium clearly."
+        },
+        {
+          "name": "Method",
+          "meaning": "What was done to the medium outside the application.",
+          "values": "Wiped; Destroyed; Reused after wiping; Returned.",
+          "rules": "Required; no method is preselected."
+        },
+        {
+          "name": "Identifier",
+          "meaning": "Serial number or asset tag linking the entry to the medium.",
+          "values": "Text up to 100 characters, or blank.",
+          "rules": "Optional; missing values show None."
+        },
+        {
+          "name": "Note",
+          "meaning": "How and by whom disposal was performed, or a certificate reference.",
+          "values": "PHI-free explanation up to 500 characters.",
+          "rules": "Required; retained as the audit reason rather than a visible table column."
+        },
+        {
+          "name": "Recorded by / Recorded",
+          "meaning": "Who entered the record and when.",
+          "values": "Recorded user identifier and laboratory-local timestamp.",
+          "rules": "Read-only. The recording time is not a separately entered disposal date."
+        },
+        {
+          "name": "Media disposals count",
+          "meaning": "Number of records displayed.",
+          "values": "Read-only count.",
+          "rules": "The list shows recorded history, newest first before user sorting."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Record disposal",
+          "does": "Open the evidence form and save a disposal entry.",
+          "availableWhen": "Backup and restore authority and valid required fields.",
+          "result": "Appends a disposal record and audit event; it does not wipe, destroy or transfer any medium."
+        },
+        {
+          "name": "Cancel",
+          "does": "Close the entry form.",
+          "availableWhen": "While the dialog is open and not submitting.",
+          "result": "No disposal entry is created."
+        }
+      ],
+      "restrictions": [
+        "Entries are append-only in this workflow; there is no edit or delete action.",
+        "Verify retention, custody and recovery requirements through laboratory policy before performing an actual disposal. Recording an action does not prove it was correctly performed."
+      ],
+      "workflow": [
+        "Identify the medium and verify the actual completed disposition.",
+        "Choose its method and enter its identifier where available.",
+        "Record a specific note and save; inspect the new row."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The selected method does not match what happened",
+          "recovery": "Cancel or correct the unsaved form and obtain the actual evidence; do not choose a convenient inaccurate category."
+        },
+        {
+          "problem": "An entry was recorded incorrectly",
+          "recovery": "Preserve the history and refer the correction to the responsible laboratory owner; this page has no in-place correction action."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/operations/disposals/MediaDisposalsPage.tsx",
+    "ui/src/features/operations/disposals/RecordDisposalDialog.tsx",
+    "ui/src/features/operations/labels.ts",
+    "crates/lis-ops/src/disposals.rs",
+    "crates/lis-ops/src/policy.rs"
+  ]
+}

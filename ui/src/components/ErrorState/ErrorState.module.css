@@ -1,0 +1,21 @@
+.reference {
+  font-size: var(--font-size-sm);
+}
+
+.id {
+  font-family: var(--font-family-mono);
+  user-select: all;
+}
+
+.retry {
+  margin-top: var(--space-2);
+}
+
+.gates {
+  padding-left: var(--space-5);
+  list-style: disc;
+}
+
+.gateLabel {
+  font-weight: var(--font-weight-semibold);
+}

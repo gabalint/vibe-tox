@@ -1,0 +1,20 @@
+/* The run page's compact parts, so the positions start within the first screen; tokens only. */
+
+/* One lot per line, close together. */
+.lots {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* The add-sample scan in one row where it fits: a short position, then the barcode and the
+   add-on check. */
+.scanRow {
+  display: grid;
+  grid-template-columns: minmax(6rem, 8rem) repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+.preparation {
+  margin-block-start: var(--space-4);
+}

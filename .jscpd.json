@@ -1,0 +1,25 @@
+{
+  "minLines": 8,
+  "minTokens": 60,
+  "threshold": 2,
+  "format": ["typescript", "tsx", "css", "rust"],
+  "path": ["ui/src", "src-tauri/src", "crates"],
+  "ignore": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/tests/**",
+    "**/lib/test/**",
+    "**/generated/**",
+    "**/target/**",
+    "**/node_modules/**",
+    "**/dist/**"
+  ],
+  "reporters": ["console"],
+  "gitignore": true,
+  "exitCode": 1,
+  "ignorePattern": [
+    "use [a-z_:{}, A-Z0-9\\n]+;",
+    "import [^;]+;",
+    "#\\[error\\(transparent\\)\\]\\s+[A-Za-z]+\\(#\\[from\\] [a-z_:]+[A-Za-z]+\\),"
+  ]
+}

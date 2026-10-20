@@ -1,0 +1,299 @@
+{
+  "id": "versions",
+  "title": "Versions and updates",
+  "summary": "Accept the detected running version, or record approval and backup evidence before installing a downloaded update.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/operations/versions/:tab?"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Installed versions shows Running version with the exact version detected by the app. To record the laboratory’s acceptance of the app already installed, choose Accept running version, complete the required checks, and enter a note with fresh identity confirmation. You do not type a version, select a package or choose a backup for this acceptance.",
+        "Update approvals records decisions made before installing a downloaded update. Review the release notes, copy their published version and risk description, and choose a recent verified manual or pre-update backup from Backups → Runs. Request pre-update backup is available on this tab and inside the approval dialog when your account has Backup and restore authority. Installation remains a separate step."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Use the laboratory’s approved update procedure and release evidence. This page does not discover, download, detect a downloaded package’s version, verify publisher signatures or install updates. About this app identifies the currently running version for support.",
+        "Review the backup completion time, retained verified destinations and package identity before approval. Record the checks actually completed when accepting a version. An approval added after an unapproved start requires a later start under that approval before acceptance is available."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "For a warning about the already installed app, inspect Running version and its acceptance status. For a missing backup choice during update approval, inspect Backups → Runs, refresh the backup list or load older runs. The list includes only qualifying retained manual or pre-update backups completed within the last 24 hours.",
+        "The App version notice can be closed with Dismiss notification for the current signed-in view. Its health finding remains available through Health in the header and Versions and updates. Closing the notice records no approval or acceptance."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Versions and updates",
+      "routes": ["/operations/versions/:tab?"],
+      "purpose": "Review the detected running version and record its acceptance, or record approval and backup evidence before installing a downloaded update.",
+      "access": "Installed versions is available to signed-in users. Manage configuration opens Update approvals and records or withdraws approval. Backup and restore is also needed to read the backup choices and request backups in this UI. Approve configuration accepts the running version.",
+      "fields": [
+        {
+          "name": "Installed versions / Update approvals tabs",
+          "meaning": "Switch between versions that have run and recorded approval decisions.",
+          "values": "Installed versions (default); Update approvals.",
+          "rules": "Update approvals is shown with Manage configuration. Tab selection is navigation only."
+        },
+        {
+          "name": "Running version / Version (installed records and detail panels)",
+          "meaning": "Identify the version already running and versions recorded by earlier starts.",
+          "values": "Read-only version strings from application startup records. Running version names the current version automatically.",
+          "rules": "No version is typed for acceptance. Inspect the running record and its status before using Accept running version. Earlier versions remain in the list."
+        },
+        {
+          "name": "Version to install (Record update approval)",
+          "meaning": "The published version of the downloaded update that will be installed.",
+          "values": "Copy the exact version from the update’s release notes: MAJOR.MINOR.PATCH, optionally followed by valid prerelease/build identifiers, such as 1.2.0 or 1.2.0-rc.1. Maximum 64 characters.",
+          "rules": "Required and initially blank; surrounding spaces are trimmed. Do not enter the currently running version unless that is the package actually being approved. The app does not extract or verify this version from the selected file. Obtain missing release information from the publisher."
+        },
+        {
+          "name": "First started / Last started / Running",
+          "meaning": "Show when a version ran on this installation and whether it is the running version.",
+          "values": "Saved times and Yes/No.",
+          "rules": "Read-only; versions are recorded on startup."
+        },
+        {
+          "name": "Status (Installed versions)",
+          "meaning": "Current approval/acceptance situation for a version.",
+          "values": "Accepted; Awaiting acceptance; Started without approval; Previous.",
+          "rules": "Read-only. Starting first and approving later does not retrospectively approve that start."
+        },
+        {
+          "name": "Approved / Accepted for clinical use",
+          "meaning": "Attributable approval and acceptance decisions.",
+          "values": "Person and time, or None.",
+          "rules": "Read-only; these are distinct decisions."
+        },
+        {
+          "name": "Risk class, as published",
+          "meaning": "Release risk description supplied with the software release.",
+          "values": "Published text up to 200 characters.",
+          "rules": "Required and initially blank; surrounding spaces are trimmed. Copy the release publisher’s description. If absent, obtain it from the publisher rather than inventing a risk class."
+        },
+        {
+          "name": "Release notes",
+          "meaning": "Attest that the release documentation was reviewed.",
+          "values": "I have reviewed the release notes for this version.",
+          "rules": "Required checkbox; initially unchecked."
+        },
+        {
+          "name": "Backup before this update (Record update approval)",
+          "meaning": "Choose a verified backup to retain as recovery evidence for the planned update.",
+          "values": "Initially blank. Choices come from this installation’s Backups → Runs history, starting with the newest 100 runs. Eligible choices show completion time and retained verified destinations. Up to 15 choices use a selector; larger lists use a searchable picker.",
+          "rules": "Required. The engine includes only successful Manual or Before an update runs with at least one verified copy not recorded as pruned, finished no more than 24 hours ago and not dated in the future. Scheduled runs, queued/failed/interrupted runs, old runs and runs with no retained verified copy are excluded. The engine rechecks eligibility when approval is saved."
+        },
+        {
+          "name": "Approval notes",
+          "meaning": "Record the review and agreement supporting update approval.",
+          "values": "Explanation up to 500 characters.",
+          "rules": "Required; retained with the audit evidence."
+        },
+        {
+          "name": "Package file / Package SHA-256",
+          "meaning": "Identify the exact package selected for approval.",
+          "values": "Native file selection, then saved filename and computed fingerprint.",
+          "rules": "The native chooser opens after confirmation. The saved filename and computed SHA-256 are read-only evidence of the selected bytes; they do not establish the package version or publisher signature. Canceling the chooser records no approval and keeps the form open."
+        },
+        {
+          "name": "Your password",
+          "meaning": "Reconfirm the person making approval or clinical acceptance.",
+          "values": "Your current password.",
+          "rules": "Required for approval or acceptance when using password sign-in. Initially blank and checked again for each decision. Security-key accounts instead receive the Security key control."
+        },
+        {
+          "name": "Note (Accept version)",
+          "meaning": "Describe the checks supporting laboratory acceptance of the running software.",
+          "values": "Specific explanation up to 500 characters.",
+          "rules": "Required; recording acceptance does not perform those checks."
+        },
+        {
+          "name": "Status / Withdrawn (Update approvals)",
+          "meaning": "Show whether a recorded approval remains usable.",
+          "values": "Not yet installed; Installed; Withdrawn, with withdrawal person/time where present.",
+          "rules": "Read-only. Approval can be withdrawn only before that version starts under the approval."
+        },
+        {
+          "name": "Reason (Withdraw approval)",
+          "meaning": "Explain why a pending approval is withdrawn.",
+          "values": "Explanation up to 500 characters.",
+          "rules": "Required; the withdrawn approval remains on record."
+        },
+        {
+          "name": "Pre-update backup run (approval details)",
+          "meaning": "Identify the backup run retained with an existing approval.",
+          "values": "Read-only run identifier, also shown with the installed version when it has approval evidence.",
+          "rules": "This is historical evidence. It is distinct from the Backup before this update selector used while creating approval."
+        },
+        {
+          "name": "Security key / Security key PIN",
+          "meaning": "Confirm approval or acceptance using the registered key for a security-key account.",
+          "values": "Security key lists your active registered keys and initially uses your current selection or the first available key. Enter that key’s PIN only if prompted, or complete the key’s supported biometric verification.",
+          "rules": "Conditional on security-key sign-in. Selecting a key does not confirm the decision; complete the prompted verification when submitting. No active registered key requires sign-in recovery. The key PIN is different from the LIS password."
+        },
+        {
+          "name": "App version notice",
+          "meaning": "Draw attention to a running version awaiting acceptance or started without approval.",
+          "values": "The engine’s current warning or alert and a Versions and updates link.",
+          "rules": "Displayed across signed-in screens while the finding applies, unless dismissed in the current signed-in view. The status remains in Host health and the version records after dismissal."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Request pre-update backup",
+          "does": "Queue a new backup marked Before an update without leaving the approval form.",
+          "availableWhen": "Backup and restore authority; offered on the Update approvals tab and inside Record update approval.",
+          "result": "A backup request is saved independently of approval. Wait for a verified retained copy in Backups → Runs, refresh the backup list if needed, and explicitly select it. Requesting a backup does not select it or approve an update; canceling the approval form does not cancel the saved backup request."
+        },
+        {
+          "name": "Record update approval / Choose the update package",
+          "does": "Open the approval form, then select the downloaded package in the native chooser and record its SHA-256 with the review evidence.",
+          "availableWhen": "Manage configuration, access to the backup choices, required version/risk/review/note fields, a qualifying backup and fresh identity confirmation. A current nonwithdrawn approval for the same version prevents another.",
+          "result": "Creates approval evidence and updates Update approvals. The selected package is not installed by this action. Canceling the chooser saves no approval and leaves entered fields available to correct or retry."
+        },
+        {
+          "name": "Accept running version / Accept this version for clinical use / Accept version",
+          "does": "Open acceptance for the automatically identified running version and record the laboratory’s completed checks.",
+          "availableWhen": "Approve configuration; the running version is Awaiting acceptance, is the first installed version or has started under a current approval, and is not already accepted. A note and fresh identity confirmation are required.",
+          "result": "The version becomes Accepted in this installation’s records. Acceptance needs no typed version, selected package or backup run. The action records the decision; it does not perform the laboratory’s checks."
+        },
+        {
+          "name": "Withdraw approval",
+          "does": "Remove permission to use a pending approval.",
+          "availableWhen": "Manage configuration, approval not withdrawn or installed, current revision and reason.",
+          "result": "Retains the approval as Withdrawn; installation without another approval raises an alert."
+        },
+        {
+          "name": "Open row / Previous / Next / Close",
+          "does": "Inspect version or approval details.",
+          "availableWhen": "A listed row.",
+          "result": "Shows recorded package, backup and decision evidence without changing it."
+        },
+        {
+          "name": "Load older backup runs",
+          "does": "Read the next page of backup history and add its eligible choices to the approval form.",
+          "availableWhen": "More history is available in Record update approval; disabled while another backup read is in progress.",
+          "result": "Adds eligible runs without changing the chosen run. No new backup or approval is created."
+        },
+        {
+          "name": "Refresh backup list / Try again",
+          "does": "Read the loaded backup history again, including current verification and eligibility.",
+          "availableWhen": "Refresh backup list is in Record update approval; Try again appears with a failed backup read except an authorization refusal.",
+          "result": "Updated eligible choices replace the previous read. Pending loaded backup jobs also refresh every five seconds while reads succeed; a failed read stops automatic polling until retried."
+        },
+        {
+          "name": "Backups → Runs",
+          "does": "Open the recorded backup history to investigate completion and copy outcomes.",
+          "availableWhen": "Shown in the approval form and after requesting a pre-update backup; the destination requires Backup and restore authority.",
+          "result": "Navigates away from the approval form. Unsubmitted approval fields are not saved; complete the backup investigation before reopening the form."
+        },
+        {
+          "name": "Cancel / Escape (approval, acceptance or withdrawal)",
+          "does": "Close the current decision dialog before submitting.",
+          "availableWhen": "The decision is not currently being recorded.",
+          "result": "Discards unsaved dialog fields without creating or withdrawing approval or recording acceptance. A backup already requested from the dialog remains queued or completed."
+        },
+        {
+          "name": "Continue / Cancel (security-key verification)",
+          "does": "Submit a requested key PIN or cancel the current verification.",
+          "availableWhen": "A security-key confirmation is active; Continue appears when the key requests its PIN.",
+          "result": "Successful verification allows the submitted decision to continue through engine checks. Cancel stops verification; if Windows has its own security dialog, finish or cancel that dialog as well."
+        },
+        {
+          "name": "Dismiss notification (App version notice)",
+          "does": "Hide the app-wide version notice while retaining its health finding and version records.",
+          "availableWhen": "The running version has a visible warning or alert notice.",
+          "result": "Dismissal lasts across page navigation and repeated reads of the same warning. The notice returns when the running version or warning changes, after a resolved warning recurs, or when the signed-in view is recreated, such as after locking/unlocking, signing in again or restarting. It records no approval or acceptance and changes no engine gate."
+        }
+      ],
+      "restrictions": [
+        "The application does not install updates or detect a downloaded package’s version from this page. Its SHA-256 record identifies bytes; it does not validate the published version or signature.",
+        "Human laboratory acceptance is not established by software tests or by an agent’s completion statement.",
+        "An approval recorded after an unapproved start requires a subsequent restart under that approval before acceptance can proceed.",
+        "Scheduled backups are excluded from update approval because automatic retention can remove them. Manual and pre-update backups are retained by the current automatic retention policy.",
+        "Dismissing the App version notice is a temporary display choice. Approval, acceptance, health findings and clinical gates retain their actual state."
+      ],
+      "workflow": [
+        "For the app already installed, inspect Running version on Installed versions. Complete the laboratory’s checks, choose Accept running version when available, enter a specific note and confirm your identity. Verify the Accepted status.",
+        "For a downloaded update, review its release notes and published risk. Inspect a recent verified manual or pre-update backup, or request one and wait for verification.",
+        "Choose Record update approval, copy Version to install and the published risk description, confirm release-note review, select Backup before this update, and enter Approval notes.",
+        "Confirm your identity, choose the exact downloaded package and verify the saved approval. Perform installation through the laboratory’s approved process outside this screen.",
+        "After the new version starts, complete the laboratory’s acceptance checks and accept the detected running version."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "I do not know which version to enter",
+          "recovery": "For acceptance of the installed app, use Accept running version; the app supplies its version. Version to install belongs to a future update approval: copy it from that download’s release notes. If the release does not supply version or risk information, obtain it from the publisher before approving."
+        },
+        {
+          "problem": "A completed backup is not listed",
+          "recovery": "The list comes from this installation’s Backups → Runs history. Refresh backup list and, when available, Load older backup runs. Check that the run is Manual or Before an update, successfully finished within the last 24 hours, and has a verified copy not recorded as pruned. Scheduled backups do not qualify. Request a new pre-update backup if no retained run qualifies."
+        },
+        {
+          "problem": "The backup list cannot be read",
+          "recovery": "Read the error and correlation ID. Backup and restore authority is required to load the choices; Manage configuration alone does not grant it. Resolve the permission or read failure, then use Try again or Refresh backup list."
+        },
+        {
+          "problem": "Backup is too old or no longer eligible at approval",
+          "recovery": "The engine checks the backup again when saving, even if it was offered earlier. Refresh the list and select a qualifying recent run, or request and verify a new pre-update backup."
+        },
+        {
+          "problem": "Started without approval remains visible",
+          "recovery": "Review the incident, record legitimate approval if appropriate and restart under it before acceptance. Adding approval or dismissing the notice does not erase the unapproved start."
+        },
+        {
+          "problem": "Approval already exists or withdrawal was refused",
+          "recovery": "Reload Update approvals and inspect the current record. A current approval prevents a duplicate. Only a nonwithdrawn approval whose version has not started under it can be withdrawn; use its current revision."
+        },
+        {
+          "problem": "No package was chosen or the package could not be read",
+          "recovery": "No approval is recorded when file selection is canceled. Keep or correct the entered review information and choose the intended readable package again. Inspect any error and correlation ID before retrying."
+        },
+        {
+          "problem": "Acceptance is unavailable or refused",
+          "recovery": "Check Approve configuration authority, the Running marker and the current status. An already accepted or previous version cannot be accepted again through this action. A later version must have started under its current approval. Refresh after another person changes the record and review any authentication error before retrying."
+        },
+        {
+          "problem": "The version notice returned after dismissal",
+          "recovery": "A changed version or warning, a recurring warning, or a recreated signed-in view shows the notice again. Inspect Versions and updates or Host health to address the finding; dismissing it only hides the notice."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/operations/updates/VersionsPage.tsx",
+    "ui/src/features/operations/updates/InstalledVersions.tsx",
+    "ui/src/features/operations/updates/ApprovalsSection.tsx",
+    "ui/src/features/operations/updates/RecordApprovalDialog.tsx",
+    "ui/src/features/operations/updates/PreUpdateRunField.tsx",
+    "ui/src/features/operations/updates/AcceptVersionDialog.tsx",
+    "ui/src/features/operations/updates/ApprovalPanel.tsx",
+    "ui/src/features/operations/updates/VersionPanel.tsx",
+    "ui/src/features/operations/updates/approvalColumns.tsx",
+    "ui/src/features/operations/updates/versionColumns.tsx",
+    "crates/lis-ops/src/updates.rs",
+    "crates/lis-ops/src/updates/versions.rs",
+    "crates/lis-ops/src/policy.rs",
+    "ui/src/features/operations/updates/RequestUpdateBackup.tsx",
+    "ui/src/features/operations/backups/useBackupLists.ts",
+    "ui/src/features/operations/frame/OperationsBanners.tsx",
+    "ui/src/features/operations/frame/VersionNotice.tsx",
+    "ui/src/features/operations/frame/OperationsFrame.test.tsx",
+    "ui/src/lib/ReauthConfirmDialog.tsx",
+    "ui/src/lib/securityKeyAuthenticationField.tsx",
+    "ui/src/lib/securityKeyPrompt.tsx",
+    "ui/src/components/ConfirmDialog/ConfirmDialog.tsx",
+    "crates/lis-engine/src/commands/operations/updates.rs",
+    "crates/lis-engine/src/commands/backup/mod.rs",
+    "crates/lis-engine/src/commands/backup/views.rs",
+    "crates/lis-ops/src/backup/retention.rs",
+    "ui/src/app/SessionRoot.tsx",
+    "ui/src/features/auth/AuthGate.tsx",
+    "ui/src/components/ErrorState/ErrorState.tsx"
+  ]
+}

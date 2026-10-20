@@ -1,0 +1,45 @@
+.listeners {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.heading {
+  font-weight: var(--font-weight-semibold);
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
+.listener {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.name {
+  color: var(--color-text);
+}
+
+.detail {
+  font-size: var(--font-size-sm);
+}
+
+.stacked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.stacked .listener {
+  flex-wrap: wrap;
+}
+
+.stacked .name {
+  white-space: nowrap;
+}

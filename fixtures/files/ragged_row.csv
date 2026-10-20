@@ -1,0 +1,5 @@
+Sample Name,Component Name,Calculated Concentration,Conc. Units
+C00000131,Morphine,22.1,ng/mL
+C00000131,Codeine,ng/mL
+C00000131,Hydrocodone,7.5,ng/mL,extra
+C00000131,Hydromorphone,3.2,ng/mL

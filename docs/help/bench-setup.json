@@ -1,0 +1,284 @@
+{
+  "id": "bench-setup",
+  "title": "Bench setup",
+  "summary": "Review instrument readiness, result sources and material lots before analytical work.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/bench/setup/:tab?"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "The Instruments tab shows service status and result-source registrations. Open an instrument to inspect its readiness and use the source actions offered for your role. For result-file instruments, the template actions lead to drafting or checking a file template.",
+        "The Lots tab lists laboratory materials. Authorized quality staff can register a lot and use the available lot actions. Runs record the lots used rather than relying only on what is currently listed here."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Keep connection settings and readiness decisions distinct. Instruments in Laboratory setup configures how data arrives; Bench setup records whether the instrument and its sources are ready for work.",
+        "Check the actual material identity and expiry details when registering a lot. Approve a source only after the laboratory’s required comparison and review. Source approval does not itself approve the results that arrive through it."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Read the service, source or lot status associated with a blocked run. An enabled connection can still lack an approved source or acceptable readiness. Configuration and quality actions require the corresponding authority; ask the responsible person to resolve the specific status shown."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/analytics/bench/BenchSetupPage.tsx",
+    "ui/src/features/analytics/bench/InstrumentsTab.tsx",
+    "ui/src/features/analytics/bench/InstrumentPanel.tsx",
+    "ui/src/features/analytics/bench/InstrumentSources.tsx",
+    "ui/src/features/analytics/bench/InstrumentStatusDialog.tsx",
+    "ui/src/features/analytics/bench/RegisterSourceDialog.tsx",
+    "ui/src/features/analytics/bench/ApproveSource.tsx",
+    "ui/src/features/analytics/bench/LotsTab.tsx",
+    "ui/src/features/analytics/bench/LotPanel.tsx",
+    "ui/src/features/analytics/bench/RegisterLotDialog.tsx",
+    "ui/src/features/analytics/bench/WithdrawLotDialog.tsx",
+    "ui/src/features/analytics/labels.ts",
+    "crates/lis-analytical/src/commands/readiness.rs",
+    "crates/lis-analytical/src/commands/lots.rs",
+    "crates/lis-analytical/src/commands/mod.rs",
+    "ui/src/components/SelfApprovalConfirm/SelfApprovalConfirm.tsx",
+    "ui/src/features/analytics/contract.ts",
+    "crates/lis-engine/src/commands/analytical.rs"
+  ],
+  "pages": [
+    {
+      "title": "Bench setup: Instruments and Lots",
+      "routes": ["/bench/setup/:tab?"],
+      "purpose": "Review service readiness and result sources, and register the materials used at the bench.",
+      "access": "Any signed-in account can read instrument readiness, lots and source registrations. Setting service status and managing lots requires quality-management authority. Registering sources requires configuration-management authority; approving requires configuration-approval authority.",
+      "fields": [
+        {
+          "name": "Tabs",
+          "meaning": "Selects the readiness list.",
+          "values": "Instruments or Lots.",
+          "rules": "Defaults to Instruments."
+        },
+        {
+          "name": "Instruments: Instrument / Service status / Status since",
+          "meaning": "Identifies the instrument and latest readiness decision.",
+          "values": "Configured name; In service, Out of service or Status not recorded; decision time when known.",
+          "rules": "Read-only; no recorded status is not ready for a run."
+        },
+        {
+          "name": "Approved result source",
+          "meaning": "Identifies the source currently used to interpret this instrument’s data.",
+          "values": "Sender/software name and version, or None approved.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Set status: Status",
+          "meaning": "Records current readiness.",
+          "values": "In service or Out of service.",
+          "rules": "Required; no default."
+        },
+        {
+          "name": "Set status / Withdraw lot: Reason",
+          "meaning": "Explains the quality decision.",
+          "values": "Free text.",
+          "rules": "Required, trimmed 1–1,000 characters; retained in the audit history."
+        },
+        {
+          "name": "Register source: Sender name",
+          "meaning": "Matches the sender named in the analyzer message header.",
+          "values": "Exact source identity supplied by the analyzer.",
+          "rules": "Required, trimmed 1–200 characters. Confirm against the actual source."
+        },
+        {
+          "name": "Register source: Sender version",
+          "meaning": "Identifies the source software version.",
+          "values": "Version text supplied by the analyzer.",
+          "rules": "Required, trimmed 1–200 characters."
+        },
+        {
+          "name": "Sample ID is read from",
+          "meaning": "Chooses which analyzer identifier carries the container label.",
+          "values": "Specimen ID field or Instrument specimen ID field.",
+          "rules": "Required; no default."
+        },
+        {
+          "name": "Corrected results",
+          "meaning": "Declares how this source identifies corrections.",
+          "values": "The analyzer does not mark corrections; Corrections carry a corrected result status.",
+          "rules": "Required; must describe the actual source behavior."
+        },
+        {
+          "name": "Reports final concentration after dilution",
+          "meaning": "Declares whether numeric values already incorporate dilution.",
+          "values": "Yes or No.",
+          "rules": "Required; no default. The application does not apply a numeric dilution correction for you."
+        },
+        {
+          "name": "Test codes: Source test code",
+          "meaning": "Maps an analyzer test identifier to the catalog.",
+          "values": "Exact source code.",
+          "rules": "At least one mapping required. Each code is 1–64 characters, unique, and must have no surrounding spaces."
+        },
+        {
+          "name": "Test codes: Analyte",
+          "meaning": "Chooses the analyte reported by that source code.",
+          "values": "Configured catalog analytes, by name and code.",
+          "rules": "Required for every test-code row."
+        },
+        {
+          "name": "Result sources: State / Registered / Approved",
+          "meaning": "Shows source version lifecycle and who authored and approved it.",
+          "values": "Draft, awaiting approval; Active; Retired; recorded people and times.",
+          "rules": "Read-only. Approval activates a draft and retires the previous active source."
+        },
+        {
+          "name": "Result sources: Sample ID read from / Corrections / Reports final concentration / Test codes",
+          "meaning": "Shows the stored mapping and source declarations.",
+          "values": "Recorded choices and source-code → analyte mappings.",
+          "rules": "Read-only; file sources show their result-file shape and open in the template workspace."
+        },
+        {
+          "name": "Lots: Show",
+          "meaning": "Controls whether unusable materials are hidden.",
+          "values": "Active lots; All lots, with withdrawn and expired.",
+          "rules": "Defaults to Active lots."
+        },
+        {
+          "name": "Material",
+          "meaning": "Classifies the material being registered.",
+          "values": "Reagent, Calibrator, Control, Internal standard.",
+          "rules": "Required; no default."
+        },
+        {
+          "name": "Product",
+          "meaning": "Identifies the product from its packaging.",
+          "values": "Free text.",
+          "rules": "Required, trimmed 1–200 characters."
+        },
+        {
+          "name": "Lot number",
+          "meaning": "Identifies the manufacturer’s lot.",
+          "values": "Text copied from packaging.",
+          "rules": "Required, trimmed 1–64 characters; material kind, product and lot number must not duplicate an existing lot."
+        },
+        {
+          "name": "Level",
+          "meaning": "Names the level used for comparison.",
+          "values": "Lab/manufacturer text such as Level 1.",
+          "rules": "Optional, trimmed, at most 64 characters; no acceptance range is inferred."
+        },
+        {
+          "name": "Sample label",
+          "meaning": "Identifies the control/calibrator label sent by the analyzer.",
+          "values": "Exact label text.",
+          "rules": "Required for Control and Calibrator, despite the form not marking it required; 1–64 characters. Leave blank for Reagent and Internal standard."
+        },
+        {
+          "name": "Expires on / Expires",
+          "meaning": "Records the stated expiry date.",
+          "values": "Valid calendar date in YYYY-MM-DD format.",
+          "rules": "Required; expired lots cannot be used for new analytical work."
+        },
+        {
+          "name": "Lot Status / Registered",
+          "meaning": "Shows eligibility and registration time.",
+          "values": "Active, Expired or Withdrawn; recorded date/time.",
+          "rules": "Read-only; withdrawal takes precedence in the display. Runs retain historical lot associations."
+        },
+        {
+          "name": "Source approval: Confirm self-approval",
+          "meaning": "Records an explicit acknowledgment when the source author approves their own draft.",
+          "values": "I confirm that no second person reviewed this.",
+          "rules": "Appears only when the laboratory separation-of-duties policy permits self-approval and requests confirmation; initially unchecked. It does not override a requirement for another approver."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open instrument or lot row",
+          "does": "Shows the record’s facts and actions.",
+          "availableWhen": "A row is present.",
+          "result": "Opens a panel with Previous, Next and Close."
+        },
+        {
+          "name": "Set status",
+          "does": "Records a service status and reason.",
+          "availableWhen": "Quality-management authority.",
+          "result": "Adds an attributed readiness event; subsequent work checks this state."
+        },
+        {
+          "name": "Register source",
+          "does": "Records the analyzer’s source declarations and mappings as a draft.",
+          "availableWhen": "Configuration-management authority on an applicable analyzer.",
+          "result": "Creates a source awaiting approval; data is not imported under the draft."
+        },
+        {
+          "name": "Add test code / Remove",
+          "does": "Adds or removes an unsaved code-to-analyte row.",
+          "availableWhen": "Register source dialog is open.",
+          "result": "Changes the draft form; at least one valid mapping is needed to register."
+        },
+        {
+          "name": "Approve source",
+          "does": "Activates the displayed draft source after confirmation.",
+          "availableWhen": "Configuration-approval authority and the separation-of-duties rule permit approval.",
+          "result": "Retires the earlier active source; applies the new mapping to subsequent import work."
+        },
+        {
+          "name": "New file template",
+          "does": "Opens the template authoring workflow.",
+          "availableWhen": "Configuration-management authority and a result-file instrument.",
+          "result": "Creates no source until Save draft is submitted there."
+        },
+        {
+          "name": "Check and approve / Open template",
+          "does": "Opens an existing file source for inspection and sample checks.",
+          "availableWhen": "A file source is listed; Check and approve is offered when approval is allowed.",
+          "result": "Opens the file-source page."
+        },
+        {
+          "name": "Register lot",
+          "does": "Records material identity and expiry.",
+          "availableWhen": "Lots tab and quality-management authority.",
+          "result": "Shows the newly registered lot; does not attach it to an existing run."
+        },
+        {
+          "name": "Withdraw lot",
+          "does": "Records withdrawal with a reason.",
+          "availableWhen": "Quality-management authority and lot is still active.",
+          "result": "Prevents future use; prior run associations remain."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes an unsubmitted dialog.",
+          "availableWhen": "A dialog is open.",
+          "result": "Leaves the stored record unchanged."
+        }
+      ],
+      "restrictions": [
+        "Service readiness does not configure serial, network or watched-folder connections; those are in Laboratory setup.",
+        "Source approval does not approve patient results. Self-approval is possible only when the laboratory separation-of-duties policy allows it and the author explicitly confirms it.",
+        "The generic source form has no AU wire-profile fields; an AU-specific profile requirement cannot be satisfied by inventing ASTM settings.",
+        "There is no lot-edit or restore-withdrawn-lot action here. Record material identity accurately before registration."
+      ],
+      "workflow": [
+        "Open the instrument and confirm its service state and active source.",
+        "If updating a source, register or draft it, verify the mapping, and have an authorized approver activate it.",
+        "In Lots, register the actual materials from their packaging. Use All lots to investigate a withdrawn or expired record."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A control or calibrator cannot be registered.",
+          "recovery": "Enter its exact Sample label and confirm the material kind; the engine requires that label."
+        },
+        {
+          "problem": "The author cannot approve a source.",
+          "recovery": "Use an authorized independent approver, or follow an already approved laboratory policy that permits and explicitly confirms self-approval."
+        },
+        {
+          "problem": "No active lot is listed.",
+          "recovery": "Choose All lots to check expiry or withdrawal; register the actual replacement material rather than reusing its identity."
+        }
+      ]
+    }
+  ]
+}

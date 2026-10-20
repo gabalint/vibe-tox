@@ -1,0 +1,563 @@
+{
+  "id": "starter-catalog",
+  "title": "Starter data and catalog review",
+  "summary": "Load selected starter items as drafts and review the laboratory’s catalog before approval.",
+  "reviewedOn": "2026-10-14",
+  "routes": [
+    "/configuration/starter-data",
+    "/configuration/starter-data/load",
+    "/configuration/catalog-review"
+  ],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Starter data offers the shipped Standard Catalog and demo-laboratory options. Load Standard Catalog lets you select tests, panels and methods; required dependencies are selected with them. Review the summary before loading the selected content as drafts.",
+        "Catalog review works with catalog content from any source. Generate a preview, inspect or save its report, then use the approval action only after the required review. The workflow identifies blank cutoffs that need explicit confirmation where applicable."
+      ]
+    },
+    {
+      "title": "Start with the prepared demo",
+      "paragraphs": [
+        "Before the laboratory has an account, Explore the demo laboratory on its setup screen restarts into a separate demo installation. Create your own account there and keep Load Standard Catalog and demo data checked to prepare the full shipped catalog and synthetic dataset automatically after successful authentication with a personal security key or password and authenticator app.",
+        "The preparation choice gives the demo account every role and enables one-person work; self-approval still needs confirmation. After preparation, 4 fictitious clinics, 8 practitioners and 12 patients are present, along with a demo laboratory profile, clinic locations and delivery destinations. Catalog methods, tests and panels remain drafts. No extra staff accounts, analyzers, lots, orders or results are created.",
+        "If you used automatic preparation, there is no need to repeat the manual loads here. Inspect the prepared records and use Catalog review before trying an order. If you unchecked the dataset option, use the manual steps below with the required account roles."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Starter content is a starting point for laboratory review. Check each selected item against the laboratory’s intended methods, units, limits, names and procedures. Loaded drafts are not automatically approved for use.",
+        "Review the generated preview as a whole, including omissions and dependencies. A blank value should not be assigned a guessed cutoff. Demo content belongs in the demo laboratory."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Missing dependencies, unsupported choices or changed catalog content can prevent loading or approval. Read the refusal and review the affected records. Regenerate the preview when needed so the review describes the catalog that will actually be approved."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/starter/StarterDataPage.tsx",
+    "ui/src/features/starter/CatalogSection.tsx",
+    "ui/src/features/starter/CatalogChooser.tsx",
+    "ui/src/features/starter/LoadCatalogPage.tsx",
+    "ui/src/features/starter/LoadSummary.tsx",
+    "ui/src/features/starter/LoadResult.tsx",
+    "ui/src/features/starter/DemoSection.tsx",
+    "ui/src/features/starter/MethodList.tsx",
+    "ui/src/features/starter/OrderableList.tsx",
+    "ui/src/features/starter/ItemCheck.tsx",
+    "ui/src/features/starter/selection.ts",
+    "ui/src/features/configuration/catalog-review/CatalogReviewPage.tsx",
+    "ui/src/features/configuration/catalog-review/PreviewList.tsx",
+    "ui/src/features/configuration/catalog-review/PreviewPanel.tsx",
+    "ui/src/features/configuration/catalog-review/ReviewDialog.tsx",
+    "ui/src/features/configuration/catalog-review/BlankCutoffChecks.tsx",
+    "crates/lis-catalog/src/commands/standard/mod.rs",
+    "crates/lis-catalog/src/commands/review.rs",
+    "crates/lis-engine/src/commands/demo.rs",
+    "crates/lis-engine/src/demo/load.rs",
+    "ui/src/features/auth/SetupScreen.tsx",
+    "ui/src/features/auth/SetupAccountFields.tsx",
+    "ui/src/features/auth/SetupDataOptions.tsx",
+    "ui/src/features/auth/SetupIntroduction.tsx",
+    "ui/src/features/auth/AuthGate.tsx",
+    "ui/src/features/auth/DemoSetupGate.test.tsx",
+    "ui/src/features/demo/DemoSetupProgress.tsx",
+    "ui/src/features/demo/DemoSetupProgress.test.tsx",
+    "ui/src/features/demo/ExploreDemo.tsx",
+    "ui/src/features/demo/DemoBanner.tsx",
+    "ui/src/features/demo/SwitchDialog.tsx",
+    "crates/lis-auth/src/setup.rs",
+    "crates/lis-engine/src/commands/sign_in.rs",
+    "crates/lis-engine/src/demo/setup.rs",
+    "crates/lis-engine/tests/scenarios/demo_setup.rs",
+    "src-tauri/src/commands/demo.rs",
+    "ui/src/features/starter/StarterBanner.tsx",
+    "ui/src/features/starter/StarterDataPage.test.tsx",
+    "ui/src/features/configuration/catalog-review/ReviewDialog.test.tsx",
+    "ui/src/components/ConfirmDialog/ConfirmDialog.tsx",
+    "ui/src/components/SelfApprovalConfirm/SelfApprovalConfirm.tsx",
+    "ui/src/components/FindField/NoResults.tsx",
+    "ui/src/components/DetailPanel/DetailPanel.tsx",
+    "ui/src/components/ErrorState/ErrorState.tsx",
+    "ui/src/lib/UnsavedChangesGuard.tsx",
+    "crates/lis-engine/src/commands/catalog/standard.rs",
+    "crates/lis-engine/src/commands/catalog/preview.rs",
+    "crates/lis-catalog/src/approval_references.rs",
+    "crates/lis-catalog/migrations/0007_external_approval_references.sql",
+    "crates/lis-catalog/src/commands/review/approve.rs",
+    "ui/src/lib/securityKeyAuthenticationField.tsx",
+    "ui/src/lib/securityKeyPrompt.tsx",
+    "ui/src/lib/commands.ts",
+    "crates/lis-auth/src/key_proofs.rs"
+  ],
+  "pages": [
+    {
+      "title": "Starter data",
+      "routes": ["/configuration/starter-data"],
+      "purpose": "Inspect shipped starter content and prior loads, then prepare drafts for laboratory review or load fictitious practice records into the separate demo laboratory.",
+      "access": "Manage configuration is required to load the Standard Catalog. Demo data also needs authority to enter orders, represented by the Administrator and Accessioner roles named on the page. Catalog review is available to accounts with Manage configuration or Approve configuration.",
+      "fields": [
+        {
+          "name": "Version shipped",
+          "meaning": "Identify the exact shipped catalog package available to load.",
+          "values": "Read-only version supplied with this app.",
+          "rules": "Shown with Manage configuration. Loading records the package version and file digest; it does not imply the package is clinically approved."
+        },
+        {
+          "name": "Content review",
+          "meaning": "Indicate whether the shipped package reports a clinical review.",
+          "values": "Reviewed by a clinical reviewer; Unreviewed starter content.",
+          "rules": "Read-only. This status never replaces the laboratory’s review and approval of its own resulting drafts."
+        },
+        {
+          "name": "Drafts awaiting review",
+          "meaning": "Count unapproved drafts originating from Standard Catalog loads.",
+          "values": "Read-only nonnegative whole number; displayed after at least one load.",
+          "rules": "This count excludes manually created drafts. Catalog review can include other open drafts as well as starter-derived ones."
+        },
+        {
+          "name": "Loads: Version, Loaded and Records",
+          "meaning": "Show prior successful Standard Catalog loads.",
+          "values": "Saved package version, load timestamp and created-record count.",
+          "rules": "Read-only history. Loading an already present selection does not create a duplicate set of records."
+        },
+        {
+          "name": "Demo data status",
+          "meaning": "Tell whether fictitious practice parties are loaded in this demo laboratory.",
+          "values": "Demo data is loaded appears once the dataset is present; no not-loaded status text is shown beforehand.",
+          "rules": "Visible only in the separate demo laboratory; the engine refuses demo-data loading into the laboratory installation."
+        },
+        {
+          "name": "Demo load result",
+          "meaning": "Explain exactly what the demo loader added or retained.",
+          "values": "Laboratory profile: Set to the demo profile or Kept as it was; counts for Clients, Client locations, Delivery destinations, Practitioners, Patients, Identity holds opened by design, Blank cutoffs filled with demo values and Blank cutoffs not filled.",
+          "rules": "Read-only result. Repeating the load does not duplicate parties but may fill still-blank method cutoffs in drafts authored by the person loading. Drafts authored by another person are not edited."
+        },
+        {
+          "name": "Demo laboratory banner",
+          "meaning": "Identifies the separate evaluation installation and provides ways to leave or reset it.",
+          "values": "DEMO LABORATORY — not for patient testing; visible throughout the demo, including before sign-in.",
+          "rules": "The demo uses its own data folder. Leaving retains the demo; resetting deletes all of its users and data."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Load Standard Catalog",
+          "does": "Open the shipped item chooser.",
+          "availableWhen": "Manage configuration.",
+          "result": "Moves to the load page; no records are created until the final acknowledged load."
+        },
+        {
+          "name": "Catalog review",
+          "does": "Open preview generation and catalog approval.",
+          "availableWhen": "Manage configuration or Approve configuration.",
+          "result": "Shows saved previews and review actions; does not approve drafts by navigation alone."
+        },
+        {
+          "name": "Load Demo Data",
+          "does": "Show a confirmation, then add the shipped fictitious practice records and eligible demo cutoff values.",
+          "availableWhen": "Demo laboratory only; required configuration and patient-registration authority.",
+          "result": "Records are saved in the demo database. Existing demo parties are not duplicated. Review the counts and any cutoffs not filled."
+        },
+        {
+          "name": "Cancel (Load demo data?)",
+          "does": "Close the confirmation before adding data.",
+          "availableWhen": "The confirmation is open and the load is not running; Escape also cancels.",
+          "result": "No demo records are added by cancellation."
+        },
+        {
+          "name": "Leave the demo laboratory",
+          "does": "Opens a confirmation with the same action label; confirming restarts the app in the laboratory’s own installation.",
+          "availableWhen": "From the permanent demo banner; switching waits for running application work to finish.",
+          "result": "The demo is retained. Cancel keeps you in the current installation."
+        },
+        {
+          "name": "Reset the demo laboratory / Delete the demo data",
+          "does": "Opens Reset the demo laboratory?; Delete the demo data confirms removal of all demo accounts and records.",
+          "availableWhen": "From the demo banner; switching is refused while application work is still running.",
+          "result": "Restarts with an empty demo laboratory. The laboratory’s own data is retained. Cancel closes the dialog without deleting anything."
+        },
+        {
+          "name": "Try again (load status)",
+          "does": "Read the previous load status again.",
+          "availableWhen": "Shown after a status-query failure other than a permissions refusal.",
+          "result": "Refreshes the history without loading new content."
+        },
+        {
+          "name": "Dismiss starter catalog notice",
+          "does": "Hide the app-wide notice about unreviewed starter drafts.",
+          "availableWhen": "While the notice is visible.",
+          "result": "It stays hidden until lock, sign-out or app restart. Dismissing the notice approves no drafts."
+        }
+      ],
+      "restrictions": [
+        "The Standard Catalog is starter content, not a validated assay menu or a source of approved clinical cutoffs. The laboratory supplies any missing values and reviews every resulting definition.",
+        "Load the Standard Catalog before Demo Data and use the same draft author when you want blank draft cutoffs filled with demo-only values. Those values are for practice, not a laboratory policy.",
+        "Loaded catalog codes are permanent. Demo practice records are removed by resetting the separate demo laboratory, not by deleting individual loaded rows on this page.",
+        "Demo data intentionally includes identity holds for practice. An opened hold is not an unexpected success condition for clinical use."
+      ],
+      "workflow": [
+        "If you kept automatic demo loading selected during account setup, the catalog and synthetic records are already loaded. Check their status here and continue to Catalog review.",
+        "Confirm whether you are in the laboratory installation or the separate demo laboratory.",
+        "Inspect the Standard Catalog version and review status, then open its chooser if starter content is needed.",
+        "Load only the relevant selection as drafts and review the result.",
+        "For practice only, load Demo Data in the demo laboratory using the same author as the method drafts.",
+        "Open Catalog review after checking and completing the drafts."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Load Demo Data is unavailable",
+          "recovery": "The section is only shown for the separate demo laboratory. Explore the demo laboratory is offered on first-run setup before the real laboratory has an account."
+        },
+        {
+          "problem": "Some demo cutoffs were not filled",
+          "recovery": "Sign in as the author of those open method drafts to fill their still-blank demo values, or inspect the drafts manually. Another person’s draft cannot be edited by the loader."
+        },
+        {
+          "problem": "A repeated load reports no new records",
+          "recovery": "Inspect the prior-load list and existing catalog or demo parties. A repeated selection is intentionally not duplicated; continue with the existing records."
+        },
+        {
+          "problem": "The loader reports partially loaded demo content",
+          "recovery": "Do not try to work around conflicting demo codes. Preserve the error information and use the demo reset/setup workflow when appropriate for disposable practice data."
+        }
+      ]
+    },
+    {
+      "title": "Load Standard Catalog",
+      "routes": ["/configuration/starter-data/load"],
+      "purpose": "Choose shipped tests, panels and methods, inspect their dependencies, and create a deliberate set of draft definitions.",
+      "access": "Manage configuration is required. Loading is refused if the shipped version changed, a required code conflicts, a dependency is blocked, or the disclaimer is not acknowledged.",
+      "fields": [
+        {
+          "name": "Catalog version, review status and LOINC version/license",
+          "meaning": "Identify the source package and its external terminology notice.",
+          "values": "Read-only shipped metadata and license text.",
+          "rules": "Review before loading. A terminology identifier is not proof that a laboratory mapping or method is appropriate."
+        },
+        {
+          "name": "Find tests, panels and methods",
+          "meaning": "Narrow visible choices while preparing the selection.",
+          "values": "Text matching code, name or analyte.",
+          "rules": "Optional. Already selected items remain visible even when they do not match Find, so selection consequences can still be checked."
+        },
+        {
+          "name": "Test / Panel checkbox",
+          "meaning": "Choose an orderable from the shipped package.",
+          "values": "An unchecked or checked item with its code, name and Test or Panel kind.",
+          "rules": "Selectable only when available as a new item. Choosing it includes its required methods. Already in your catalog, Code in use and Cannot be loaded states explain unavailable choices."
+        },
+        {
+          "name": "Test / Panel components",
+          "meaning": "Inspect what each selected orderable measures.",
+          "values": "Expandable method name/code, component purpose Analytical or Specimen validity, and analyte names/codes.",
+          "rules": "Read-only preview. Analytes removed through the method are also removed from dependent selected components and shown as excluded."
+        },
+        {
+          "name": "Method checkbox",
+          "meaning": "Choose an analytical method directly or inspect one implied by a test or panel.",
+          "values": "Unchecked or checked shipped method with code and name; Needed by names when selected through orderables.",
+          "rules": "A required method is locked while selected tests/panels need it. A method may also be chosen on its own when it is available."
+        },
+        {
+          "name": "Specimen type",
+          "meaning": "Identify the specimen matrix assigned to a shipped method.",
+          "values": "Read-only specimen type name/code in the expanded method.",
+          "rules": "Included when needed; it cannot be changed in this chooser. Review or revise the resulting draft through ordinary catalog configuration."
+        },
+        {
+          "name": "Analyte checkbox within each method",
+          "meaning": "Include or omit an individual measured item from that selected method.",
+          "values": "Shipped analyte name/code with a checked inclusion state.",
+          "rules": "At least one analyte must remain per method and per selected orderable component. The page names dependent tests/panels affected by an omission. Deselecting a method completely and selecting it again restores its complete initial analyte list."
+        },
+        {
+          "name": "Unit and Cutoff",
+          "meaning": "Inspect the supplied unit text and exact cutoff for each selected method/analyte.",
+          "values": "Shipped unit and cutoff text, or a label explaining that the laboratory must supply it.",
+          "rules": "Read-only during loading. A blank cutoff is not automatically a zero or a confirmed not-applicable value; complete or explicitly review it later."
+        },
+        {
+          "name": "Selection summary",
+          "meaning": "Count the records the current selection implies.",
+          "values": "Specimen types; Analytes; Methods; Tests; Panels; Already in your catalog and not loaded again.",
+          "rules": "Read-only and recalculated as choices change. The summary includes dependencies, not just directly checked tests."
+        },
+        {
+          "name": "Blocking items",
+          "meaning": "Show selected dependencies that cannot currently load.",
+          "values": "Item code/name and specific reason supplied by the application.",
+          "rules": "Read-only. Remove or resolve blocked choices before the load action becomes available; do not hide conflicts by inventing similar codes."
+        },
+        {
+          "name": "I have read this",
+          "meaning": "Acknowledge the displayed starter-content disclaimer and permanence notice.",
+          "values": "Checkbox, initially unchecked.",
+          "rules": "Required for Load Standard Catalog. Reading and acknowledging it does not authorize clinical use."
+        },
+        {
+          "name": "Load result counts",
+          "meaning": "Confirm what the committed load created and skipped.",
+          "values": "Specimen types, Analytes, Methods, Tests and panels, Already in your catalog; or a no-new-records result.",
+          "rules": "Read-only. New methods/orderables are drafts and retain the caller as author. No new records means the existing catalog satisfied the selection."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Expand or collapse Test/Panel components and Specimen type and analytes",
+          "does": "Inspect component scope, matrix, units, cutoffs and included analytes.",
+          "availableWhen": "The shipped item is displayed.",
+          "result": "Changes only the visible detail, not the selection."
+        },
+        {
+          "name": "Choose or remove tests, panels, methods and analytes",
+          "does": "Build an explicit load selection and inspect its dependency consequences.",
+          "availableWhen": "Items are available and the required minimum analytes remain.",
+          "result": "Counts, dependency labels and blockers update; nothing is saved yet."
+        },
+        {
+          "name": "Load Standard Catalog",
+          "does": "Create the selected definitions and needed references in one transaction.",
+          "availableWhen": "At least one method is selected directly or through an orderable; no blockers remain; I have read this is checked; Manage configuration.",
+          "result": "The result lists created/skipped records. Definitions remain drafts awaiting laboratory review and approval."
+        },
+        {
+          "name": "Reload the list",
+          "does": "Refresh availability after a version or concurrency conflict.",
+          "availableWhen": "A reload prompt or error is shown.",
+          "result": "Loads the current shipped content and catalog state. Recheck your choices and disclaimer before trying again."
+        },
+        {
+          "name": "Go to Catalog review",
+          "does": "Open review of the loaded catalog.",
+          "availableWhen": "After the load result and with configuration review access.",
+          "result": "Moves to preview generation. It does not mark the drafts approved."
+        },
+        {
+          "name": "Starter data / Leave without saving / Cancel",
+          "does": "Navigate back through the Starter data breadcrumb; if choices are selected, confirm Leave without saving or choose Cancel to keep them.",
+          "availableWhen": "The breadcrumb is available; the unsaved-selection confirmation appears when leaving with a selected method.",
+          "result": "Leave without saving discards the unsubmitted choices. Cancel retains them. Neither undoes a successful load."
+        },
+        {
+          "name": "Clear search",
+          "does": "Clear the find text.",
+          "availableWhen": "Shown when the search matches no items.",
+          "result": "All choices are shown again; the current selection is retained."
+        }
+      ],
+      "restrictions": [
+        "Nothing loaded can be removed later through this workflow: catalog codes are permanent. Choose the intended assay scope before confirming.",
+        "This chooser does not edit the shipped method’s clinical values. Use the created draft forms to supply laboratory-approved details before approval.",
+        "The engine recomputes dependencies and checks the package version and code availability. A visible selection does not guarantee a later save if another person changes the catalog first."
+      ],
+      "workflow": [
+        "Review package metadata and the disclaimer, then find the tests or panels relevant to the intended scope.",
+        "Expand each selection and inspect the implied methods, specimen type, analytes, units and cutoffs.",
+        "Remove unwanted analytes only after checking the named dependent orderables and minimum requirements.",
+        "Resolve every blocker and verify the selection summary and permanent-code implications.",
+        "Acknowledge I have read this and load once; inspect the result.",
+        "Complete and review the resulting drafts through the catalog pages, then generate a Catalog Preview."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "An item says Already in your catalog",
+          "recovery": "Inspect and use the existing record. The loader deliberately avoids creating a duplicate of a previously loaded item."
+        },
+        {
+          "problem": "A required item says Code in use or Cannot be loaded",
+          "recovery": "Read the specific reason. Remove the dependent selection or resolve the existing catalog configuration through its normal review process."
+        },
+        {
+          "problem": "An analyte cannot be removed",
+          "recovery": "Keep at least one analyte in its method and every dependent selected component, or deselect the test/panel that requires it."
+        },
+        {
+          "problem": "The load was refused because the catalog changed",
+          "recovery": "Reload the list, compare the new availability with your intended scope, and rebuild/confirm the selection before retrying."
+        },
+        {
+          "problem": "The desired cutoff is blank",
+          "recovery": "Load as a draft only if appropriate, then enter the laboratory-approved cutoff in the method draft. Catalog review requires an explicit not-applicable confirmation for every cutoff intentionally left blank."
+        }
+      ]
+    },
+    {
+      "title": "Catalog review",
+      "routes": ["/configuration/catalog-review"],
+      "purpose": "Generate a frozen catalog report, inspect exactly what it contains, and approve its listed drafts together with attributable review evidence.",
+      "access": "Manage configuration or Approve configuration permits generating, listing, viewing and saving Catalog Previews. Approve configuration, fresh account confirmation and the laboratory’s separation-of-duties policy govern final approval.",
+      "fields": [
+        {
+          "name": "Find catalog previews",
+          "meaning": "Locate a saved review report.",
+          "values": "Text matching Report ID, generator or reviewer.",
+          "rules": "Optional list filter; blank shows all previews."
+        },
+        {
+          "name": "Report ID",
+          "meaning": "Identify the exact saved preview used for review.",
+          "values": "Read-only generated report identifier.",
+          "rules": "Use the same identifier on the PDF and in the review panel; opening an old preview does not regenerate it."
+        },
+        {
+          "name": "Generated / Generated by",
+          "meaning": "Show when the snapshot report was created and who created it.",
+          "values": "Saved timestamp and person.",
+          "rules": "Read-only. Later catalog edits do not rewrite this saved PDF."
+        },
+        {
+          "name": "Drafts / Drafts listed",
+          "meaning": "Count the draft definitions included in that frozen preview.",
+          "values": "Read-only count across validity policies, methods, tests and panels.",
+          "rules": "The approval covers exactly these draft revisions; it is not limited to the most recent starter load."
+        },
+        {
+          "name": "Review status",
+          "meaning": "Tell whether approval of this particular preview has been recorded.",
+          "values": "Not reviewed, or Reviewed with timestamp and reviewer.",
+          "rules": "Read-only. A previously reviewed preview cannot be approved again."
+        },
+        {
+          "name": "Content digest",
+          "meaning": "Fingerprint of the catalog snapshot represented by the report.",
+          "values": "Read-only digest in the details panel.",
+          "rules": "Identifies content; it is not a human clinical sign-off or a substitute for reviewing the PDF."
+        },
+        {
+          "name": "Blank cutoffs to confirm",
+          "meaning": "Count method/analyte draft cutoffs that need an explicit not-applicable decision.",
+          "values": "Read-only count before review; None after their confirmed review.",
+          "rules": "Do not confirm a blank merely because the package omitted it. Supply an actual required cutoff in the method draft, then generate a fresh preview."
+        },
+        {
+          "name": "Blank cutoff confirmation (each row)",
+          "meaning": "Record that one specific method version/analyte intentionally needs no cutoff.",
+          "values": "Checkbox labeled with method code/version and analyte; initially unchecked.",
+          "rules": "Every blank cutoff in the preview must be confirmed for approval. Confirmations must match the preview’s actual blanks exactly."
+        },
+        {
+          "name": "Confirm all listed",
+          "meaning": "Select or clear all currently listed not-applicable confirmations.",
+          "values": "Unchecked, partly checked or checked according to the individual rows.",
+          "rules": "Convenience control only. Use it after reviewing every listed cutoff; it does not establish clinical appropriateness."
+        },
+        {
+          "name": "Your password",
+          "meaning": "Reauthenticate the person approving the reviewed catalog.",
+          "values": "The currently signed-in user’s password.",
+          "rules": "Password accounts only. Required for final approval; supplied only for that confirmation and not retained as catalog content."
+        },
+        {
+          "name": "Security key",
+          "meaning": "Fresh confirmation by the signed-in person using their registered security key.",
+          "values": "The active personal keys registered to your account; the first returned key is selected initially.",
+          "rules": "Security-key accounts only; replaces Your password. Select one key, review and submit the action, then follow its PIN or biometric verification and touch prompt. The key confirms only that submitted action. Permissions, reasons and record-state gates still apply. Use your own key; a selected label alone does not authorize anything."
+        },
+        {
+          "name": "I confirm that no second person reviewed this",
+          "meaning": "Declare that the approver also authored one or more listed drafts.",
+          "values": "Initially unchecked, shown if the application requests it.",
+          "rules": "Accepted only when the laboratory’s separation-of-duties policy permits configuration self-approval. Otherwise a different authorized reviewer must approve."
+        },
+        {
+          "name": "Approval result",
+          "meaning": "Show the definitions and blank-cutoff decisions approved by this review.",
+          "values": "Counts of validity policies, methods, tests/panels and blank cutoffs confirmed as not applicable.",
+          "rules": "Read-only. Each definition receives its ordinary approval checks and history; later changes require new drafts."
+        },
+        {
+          "name": "External approval reference (optional)",
+          "meaning": "Identifier or location of the laboratory approval record retained outside the LIS. The saved reference is displayed with this method approval or catalog review.",
+          "values": "Blank by default. Optional trimmed text, at most 1000 characters; control characters are refused.",
+          "rules": "Blank leaves the reference absent. The administrator, activation time and approved version are retained with the approval. A supplied reference is immutable after approval and does not supply clinical content, replace the configured separation-of-duties checks, or confer clinical permissions. It is never printed on patient reports. Cancel closes the dialog without approving. If refused, correct the field or refresh a stale draft and review it again."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Generate Catalog Preview",
+          "does": "Create and retain a PDF snapshot of the current catalog and all open drafts.",
+          "availableWhen": "Manage configuration or Approve configuration; the snapshot remains consistent while generated.",
+          "result": "A saved preview appears, its details open, and its PDF opens in a separate report window."
+        },
+        {
+          "name": "Open row / Previous / Next / Close / Back to list",
+          "does": "Inspect a stored preview’s metadata and review status.",
+          "availableWhen": "A preview is listed. Previous and Next are disabled at the ends of the row order; Back to list replaces Close in a narrow layout.",
+          "result": "Opening a row opens its details and stored report. Previous and Next change the detail panel; Close or Back to list closes the panel. None changes the snapshot."
+        },
+        {
+          "name": "View report",
+          "does": "Open the exact saved PDF for the selected preview.",
+          "availableWhen": "A preview is selected and its stored artifact is available.",
+          "result": "The application opens the verified stored PDF in a separate report window."
+        },
+        {
+          "name": "Save PDF",
+          "does": "Export the stored preview PDF for review.",
+          "availableWhen": "A preview is selected and configuration review access is held.",
+          "result": "Saves a copy to Downloads and reports the saved filename. The copy does not approve the catalog."
+        },
+        {
+          "name": "Approve reviewed catalog / Approve N drafts",
+          "does": "Open the confirmation, check the report, confirm its blank cutoffs and your identity using your password or security key, then choose Approve N drafts, where N is the report’s draft count.",
+          "availableWhen": "Approve configuration; preview is unreviewed and still matches every current open draft; applicable author/reviewer policy and dependency checks pass.",
+          "result": "Approves validity policies, then methods, then tests/panels in one transaction and records the review. Failure leaves the batch unapproved."
+        },
+        {
+          "name": "Cancel",
+          "does": "Close the approval dialog before committing.",
+          "availableWhen": "The approval dialog is open and approval is not running; Escape also cancels.",
+          "result": "The preview stays available and drafts remain unchanged; return to draft configuration if corrections are needed."
+        },
+        {
+          "name": "Clear search / Try again",
+          "does": "Clear a no-match search or reread the report list after a query failure.",
+          "availableWhen": "Shown for the corresponding search or load problem; permissions refusals do not offer Try again.",
+          "result": "Refreshes the visible list without generating a preview or recording approval."
+        }
+      ],
+      "restrictions": [
+        "Review the PDF and laboratory-approved source information before approval. Generating, opening or saving a report is not an approval.",
+        "Any edited, newly added, retired or otherwise changed listed draft can invalidate the preview; unlisted open drafts also prevent approval. Generate a new preview after correcting the catalog.",
+        "Approval must leave current tests/panels using current approved method versions. If replacing a method affects existing orderables, include appropriate updated orderable drafts in the review.",
+        "A reviewer who authored a listed draft needs either the explicit permitted self-approval path or a different authorized reviewer. Administrator status alone does not override the configured rule.",
+        "Catalog approval records configuration decisions. It does not certify clinical validation or production readiness."
+      ],
+      "workflow": [
+        "Complete the open catalog drafts and resolve missing or uncertain laboratory values.",
+        "Generate a Catalog Preview and verify its Report ID, draft count and PDF content.",
+        "Review every method, analyte scope, cutoff, unit, validity policy and test/panel relationship against the laboratory-approved source.",
+        "If changes are needed, correct drafts and generate a new preview before approval.",
+        "Open Approve reviewed catalog, explicitly confirm each intentionally blank cutoff, confirm with your password or security key and provide any permitted self-approval acknowledgement.",
+        "Inspect the approval result and resulting current versions."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The preview changed or no longer matches the catalog",
+          "recovery": "Return to the affected drafts, resolve the changes, and generate and review a fresh Catalog Preview. Do not approve the stale report."
+        },
+        {
+          "problem": "Approval names missing blank-cutoff confirmations",
+          "recovery": "Review each listed method/analyte. Confirm only those truly not applicable; cancel and enter a required cutoff in the draft otherwise."
+        },
+        {
+          "problem": "Approval would leave a test on a replaced method",
+          "recovery": "Create or update the affected orderable draft to use the appropriate method version, then regenerate and review the complete preview."
+        },
+        {
+          "problem": "Approval requires another person",
+          "recovery": "Have an account with Approve configuration that did not author the affected drafts perform the review, unless the laboratory’s explicit policy permits and records self-approval."
+        },
+        {
+          "problem": "The PDF does not open",
+          "recovery": "Read the error. A missing or damaged stored file requires a new Catalog Preview. For a display problem, try View report or Save PDF; verify the named Downloads file. A display failure does not mean approval occurred."
+        }
+      ]
+    }
+  ]
+}

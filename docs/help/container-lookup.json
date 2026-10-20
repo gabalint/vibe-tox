@@ -1,0 +1,220 @@
+{
+  "id": "container-lookup",
+  "title": "Container lookup",
+  "summary": "Scan a container barcode to find its accession and current state.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/containers"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Scan or type the label code in Container barcode, then choose Find container or press Enter. The header\u2019s scan field also opens this lookup. The input clears after submission so another label can be scanned.",
+        "A match shows the patient identity and accession together with the specimen\u2019s acceptance state, container kind, recorded volume and location, open holds and latest label-printing status. Open the accession link for receipt decisions and container actions."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Compare the scanned physical label with the displayed label code and accession. Check the identity banner before acting on the material. A successful lookup identifies a record; acceptance, holds and printing status still need review for your task.",
+        "Use the actual label code rather than a similar-looking identifier. Each lookup, including a repeated scan, is recorded."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "If no container matches, check the physical label and scan again. Do not create another accession just because a scan failed. If the record is found but the next action is unavailable, open its accession and inspect the current holds and permitted actions."
+      ]
+    },
+    {
+      "title": "Container material and label history",
+      "paragraphs": [
+        "Open Material history and actions beside a container, or scan its barcode in Container lookup. The identity banner, accession, barcode, material state, volume, location and open holds identify the material. Refresh retrieves current state before actions. Location moves and hold/release history are separate evidence streams; Previous history and Next history retrieve 50 events per stream without requiring earlier work to be resolved. New events do not shift the current history pages: Refresh starts a fresh snapshot at the first page. Snapshot boundaries control membership only; they do not establish unknown historical event order.",
+        "Move container selects an active named location and records a reason. An unresolved legacy location requires checking the physical material and recording a new attributable move; the application does not fabricate past movement order. Manage quality can place retention, legal or quality holds and release individual open holds with a reason. Excursion holds are recorded through a storage incident assessment. Open holds block testing, aliquots and disposal.",
+        "Mark depleted and Dispose container require confirmation and an attributable reason. Depletion prevents further use; disposal is permanent and requires all holds released. Engine permissions and optimistic revision checks remain authoritative. On conflict, cancel, refresh, review the updated material and reopen the action.",
+        "Label jobs show every requested print/reprint, recorded time and queued, handed-off or failed outcome. Queued after interruption does not prove printing failed or succeeded. Refresh, inspect the physical printer and material, and use a reasoned reprint only when another label is needed. A reprint preserves the barcode. The configuration link is shown only to administrators and opens local printer setup; no active printer means printing remains unavailable. Receiving staff must ask an administrator to configure a missing destination."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/accessioning/specimens/ContainerLookupPage.tsx",
+    "ui/src/features/accessioning/specimens/containerColumns.tsx",
+    "ui/src/features/accessioning/specimens/labels.ts",
+    "crates/lis-specimens/src/input.rs",
+    "crates/lis-specimens/src/commands/containers.rs",
+    "ui/src/features/accessioning/specimens/ContainerMaterial.tsx",
+    "ui/src/features/accessioning/specimens/MaterialActionDialog.tsx",
+    "ui/src/features/accessioning/specimens/MaterialHistory.tsx",
+    "ui/src/features/accessioning/specimens/LocationChoice.tsx",
+    "crates/lis-specimens/src/material_history.rs",
+    "crates/lis-specimens/src/commands/holds.rs"
+  ],
+  "pages": [
+    {
+      "title": "Container lookup",
+      "routes": ["/containers"],
+      "purpose": "Identify physical material and manage its lifecycle, holds, location and retained history.",
+      "access": "Accession or Manage quality permits audited container lookup and material-history reads. Accession is separately required for moves, depletion and disposal; Manage quality permits holds/releases. The application rechecks record revisions, specimen state and applicable holds on submission.",
+      "fields": [
+        {
+          "name": "Container barcode",
+          "meaning": "Barcode printed on the physical container.",
+          "values": "Scan or type the exact label code.",
+          "rules": "Required. Press Enter or Find container; the field clears and regains focus for the next scan."
+        },
+        {
+          "name": "Patient identity banner",
+          "meaning": "Identity attached to the located container.",
+          "values": "Read-only patient name, birth date and identifiers together with accession and barcode.",
+          "rules": "Shown only after a successful lookup. Compare it before acting on the material."
+        },
+        {
+          "name": "Barcode / Accession",
+          "meaning": "The unique container label and accession number linking it to received material.",
+          "values": "Read-only generated label and accession number.",
+          "rules": "Compare both against the physical material before a specimen or aliquot action."
+        },
+        {
+          "name": "Specimen / Acceptance",
+          "meaning": "The configured specimen type and receipt decision state.",
+          "values": "Received, not yet decided; Accepted; Accepted conditionally; Held; Rejected.",
+          "rules": "Read-only current state; completion of a receipt decision is not proof that all testing gates are clear."
+        },
+        {
+          "name": "Kind",
+          "meaning": "Whether this is original material or a derived container.",
+          "values": "Primary; Aliquot, with parent barcode on the accession.",
+          "rules": "Read-only lineage; an aliquot remains linked to its parent and specimen."
+        },
+        {
+          "name": "State",
+          "meaning": "Physical container availability recorded in the system.",
+          "values": "Available; Depleted; Disposed.",
+          "rules": "Available does not override specimen rejection or holds. Mark depleted and Dispose container require reasoned confirmation."
+        },
+        {
+          "name": "Volume",
+          "meaning": "Recorded quantity, unit and how it was obtained.",
+          "values": "Exact supplied decimal/unit with Estimated or Measured; Not recorded (unknown) when absent.",
+          "rules": "Read-only; quantities are not inferred or converted."
+        },
+        {
+          "name": "Location",
+          "meaning": "Last recorded storage location.",
+          "values": "Configured location name or Not recorded.",
+          "rules": "Move container records a verified active destination. Unresolved legacy history requires physical/source review and a new attributable move."
+        },
+        {
+          "name": "Holds",
+          "meaning": "Unresolved container holds.",
+          "values": "None/0 or a count of open holds.",
+          "rules": "Open holds block aliquoting, disposal and testing as applicable."
+        },
+        {
+          "name": "Label printing",
+          "meaning": "Latest requested print/reprint outcome.",
+          "values": "No label requested; Print or Reprint: Queued, Handed off to printer, or Failed with reason.",
+          "rules": "Handed off is a transport outcome, not proof that a usable label physically printed."
+        },
+        {
+          "name": "Move: Storage location / Reason",
+          "meaning": "Verified destination and explanation.",
+          "values": "Active configured location and required reason.",
+          "rules": "Expected revision checked; disposed containers cannot move."
+        },
+        {
+          "name": "Place hold: Hold kind / Reason",
+          "meaning": "Retention, legal or quality restriction.",
+          "values": "Choose Retention, Legal or Quality; required reason.",
+          "rules": "Manage quality; excursion holds come from incident assessment."
+        },
+        {
+          "name": "Release hold / Mark depleted / Dispose: Reason",
+          "meaning": "Attribution for the confirmed lifecycle action.",
+          "values": "Required reason.",
+          "rules": "Release needs current hold revision; depletion requires available state; disposal needs no open holds."
+        },
+        {
+          "name": "Material history / Label job history",
+          "meaning": "Retained action and print evidence.",
+          "values": "Moves by known causal sequence; hold/release stream; depletion/disposal actor/time/reason; print job outcomes/errors.",
+          "rules": "Separate streams do not invent shared chronology; unknown legacy sequence is explicit;50 events per stream per page."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Find container",
+          "does": "Looks up the entered barcode.",
+          "availableWhen": "Accessioning authority and a nonblank barcode.",
+          "result": "Displays the matching material or No container has the barcode; every submitted scan, including a repeat, is audited."
+        },
+        {
+          "name": "Accession link",
+          "does": "Opens the container\u2019s accession.",
+          "availableWhen": "A matching record was found.",
+          "result": "Provides receipt decisions, label requests and any permitted aliquot action."
+        },
+        {
+          "name": "Move container",
+          "does": "Record verified location.",
+          "availableWhen": "Accession; engine allows move.",
+          "result": "New attributable current location; older events retained."
+        },
+        {
+          "name": "Place hold / Release hold",
+          "does": "Record restriction or reasoned individual release.",
+          "availableWhen": "Manage quality and valid material/hold state.",
+          "result": "Open holds retain applicable gates until released."
+        },
+        {
+          "name": "Mark depleted / Dispose container",
+          "does": "Confirm terminal lifecycle event.",
+          "availableWhen": "Accession; current revision; state/hold gates and reason.",
+          "result": "Depleted material cannot be used; disposed material is terminal; history remains."
+        },
+        {
+          "name": "Previous history / Next history",
+          "does": "Read adjacent 50-event history pages within the retained membership snapshot.",
+          "availableWhen": "Bounded page available.",
+          "result": "Reach older moves and holds even when new events arrive. Refresh starts at the latest first page."
+        },
+        {
+          "name": "Refresh / Storage excursions",
+          "does": "Read current container state or open storage incident directory.",
+          "availableWhen": "Receiving access.",
+          "result": "Review refreshed gates before mutation; incident links reopen exact affected work."
+        }
+      ],
+      "restrictions": [
+        "Material commands are engine-authorized and revision checked. Holds, identity and specimen acceptance remain effective.",
+        "Physical output and exposure are not inferred from printer handoff or current location."
+      ],
+      "workflow": [
+        "Scan the physical barcode.",
+        "Check the identity banner, accession, acceptance and holds.",
+        "Open the accession for the permitted next action, or scan the next container."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No container has this barcode.",
+          "recovery": "Check the physical label and scan again. Do not register another accession merely because a scan failed."
+        },
+        {
+          "problem": "The lookup failed.",
+          "recovery": "Read the error, correct the cause and resubmit the barcode. No result is not proof that no record exists."
+        },
+        {
+          "problem": "Label status says Handed off to printer.",
+          "recovery": "Inspect the actual output; this status proves only transport handoff."
+        },
+        {
+          "problem": "Current location says legacy chronology unresolved.",
+          "recovery": "Verify physical material and source evidence, then record an attributable move to the actual location. Historical events remain unchanged."
+        },
+        {
+          "problem": "State changed while an action dialog was open.",
+          "recovery": "Cancel, Refresh, review new state/gates and reopen the action. Do not repeatedly submit stale confirmation."
+        }
+      ]
+    }
+  ]
+}

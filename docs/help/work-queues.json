@@ -1,0 +1,276 @@
+{
+  "id": "work-queues",
+  "title": "Work queues",
+  "summary": "Find work that needs attention and open the record where it can be resolved.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/work-queues", "/work-queues/:queue"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "The overview groups outstanding work into queues. Open a queue to see its items, age and current status, then open an item to reach the appropriate record. Some items have no record screen; use their displayed next action to identify where follow-up belongs.",
+        "Use the queue’s refresh control when you need the latest view. Work queues collect different kinds of unfinished work, so an item’s presence does not by itself identify the action you should take.",
+        "Each queue lists a record workspace once, even when it contains several pending events. For example, one import can contain many quarantined analyte rows, and one accession can contain several specimens or failed label jobs. Open the workspace to review every underlying issue; queue counts are not patient, specimen or analyte totals."
+      ]
+    },
+    {
+      "title": "Checking accumulated history",
+      "paragraphs": [
+        "Review queues check candidate specimens in bounded requests. Progress distinguishes candidate specimens checked from matching workspaces loaded; these are not patient or analyte counts. A request can find no matches while older history remains unchecked. Only Check complete establishes an empty result for that check.",
+        "The page continues checking until at least 50 matches are loaded or the history is exhausted. Pause checking stops scheduling after the active request finishes; Resume checking continues from the retained cursor. Load more requests the next group of matches without an overall browsing limit. Sorting affects only loaded rows.",
+        "If a request fails, loaded rows remain available. Try again retries the failed cursor; permission errors require an authorized account. Refresh starts a new check from the beginning and clears the earlier cursor chain. Use Refresh after completing work or when another action changes clinical state; background invalidation does not replay the historical scan.",
+        "The overview shows Open to check for stale and blocked review queues whose totals have not been counted. Navigation indicates that some counts are unknown. An unknown count is not zero and does not establish that no work is waiting."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Read the item’s reason before acting. On patient or specimen records, confirm the displayed identity and accession before making a decision.",
+        "Resolve work in its owning record. Completing an unrelated action or simply viewing an item does not clear its underlying condition. Use the updated record and queue to confirm the outcome."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "An empty queue can mean that no work matches its scope and your access. If a linked action is unavailable, review the record’s holds and permissions. A queue count is a prompt to investigate, not permission to bypass a hold."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/workqueues/WorkQueuesPage.tsx",
+    "ui/src/features/workqueues/WorkQueuePage.tsx",
+    "ui/src/features/workqueues/Age.tsx",
+    "ui/src/features/workqueues/ageText.ts",
+    "ui/src/features/workqueues/contract.ts",
+    "ui/src/features/workqueues/itemPath.ts",
+    "ui/src/lib/WorkQueueList.tsx",
+    "crates/lis-engine/src/commands/work_queues/mod.rs",
+    "crates/lis-engine/src/commands/work_queues/catalog.rs",
+    "crates/lis-engine/src/commands/work_queues/review_items.rs",
+    "ui/src/lib/useWorkQueueItems.ts",
+    "ui/src/lib/useBoundedQueue.ts",
+    "ui/src/lib/QueueScanControls.tsx"
+  ],
+  "pages": [
+    {
+      "title": "Work queues overview",
+      "routes": ["/work-queues"],
+      "purpose": "See outstanding work by responsibility, its age and the next action, then open the queue that owns it.",
+      "access": "Any signed-in user can open the overview. Only queues owned by capabilities granted to that account are listed.",
+      "fields": [
+        {
+          "name": "Queue: intake and identity",
+          "meaning": "Groups orders, identity and receipt follow-up.",
+          "values": "Orders needing a decision; Orders on hold; Identity holds; Specimens awaiting a decision; Label print failures; Collection timing review.",
+          "rules": "Read-only list filtered by order-entry, accession or quality authority; only relevant queues appear."
+        },
+        {
+          "name": "Queue: analytical and review",
+          "meaning": "Groups unfinished analysis and result decisions.",
+          "values": "QC requiring review; Open deviations; Results ready for review; Stale result reviews; Result review blocked; Open import quarantine; Performed but not ordered; Results expected from analyzers.",
+          "rules": "Read-only list filtered by quality, result-review or analysis authority."
+        },
+        {
+          "name": "Queue: reporting and delivery",
+          "meaning": "Groups release, report quality and delivery work.",
+          "values": "Reports ready for release; Report release blocked; Partial reports outstanding; Report impact review; Report corrections due; Report delivery work; Reports without a destination; Delivery destinations to verify or replace; Report preservation incidents.",
+          "rules": "Read-only list filtered by release, quality, delivery or configuration authority."
+        },
+        {
+          "name": "Queue: billing and operations",
+          "meaning": "Groups administrative follow-up.",
+          "values": "Billing work; Outbox dead letters; Health checks needing attention; Listening gaps to acknowledge; Recovery reconciliation after a restore; Version awaiting acceptance.",
+          "rules": "Read-only list filtered by billing, configuration, analysis, quality or configuration-approval authority."
+        },
+        {
+          "name": "Items",
+          "meaning": "Counts records meeting that queue’s current rules.",
+          "values": "A workspace count, a lower bound followed by or more, or Open to check when historical review has not been counted.",
+          "rules": "Read-only lower bound when capped. Multiple events leading to one workspace are grouped; one record can appear in different queues for different responsibilities."
+        },
+        {
+          "name": "Oldest item waiting",
+          "meaning": "Shows the age and start time of the oldest queued item.",
+          "values": "Recorded age and since timestamp; — when none waits or a historical review count has not been computed.",
+          "rules": "Read-only; age reflects the latest screen render, not a promised turnaround deadline."
+        },
+        {
+          "name": "Next action",
+          "meaning": "Names the responsible follow-up.",
+          "values": "Queue-specific wording such as Accept, hold or reject; Resolve gates; Assess; Reconcile delivery; Investigate.",
+          "rules": "Read-only guidance; final authority and safety checks remain on the owning record."
+        },
+        {
+          "name": "Queue count / Updated",
+          "meaning": "Shows visible queue count and last refresh.",
+          "values": "Count and time.",
+          "rules": "Read-only; zero visible queues means the account has no queue-owning capabilities."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open queue row",
+          "does": "Opens the queue’s oldest waiting items.",
+          "availableWhen": "The queue is visible to your account.",
+          "result": "Shows item states, ages and next actions."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reloads permitted queues, counts and oldest waiting times.",
+          "availableWhen": "The overview is open.",
+          "result": "Starts a fresh check at the beginning; earlier loaded pages and cursors are cleared. Updated records may have moved or left the queue."
+        },
+        {
+          "name": "Pause checking / Resume checking",
+          "does": "Pauses further history requests after the active request finishes, or resumes the same incomplete check.",
+          "availableWhen": "A check has more history to inspect.",
+          "result": "Loaded rows remain available. Pausing does not cancel laboratory work or alter any clinical gate."
+        },
+        {
+          "name": "Try again",
+          "does": "Retries the failed request with the retained cursor.",
+          "availableWhen": "A read failed with a recoverable error. Permission refusals do not offer retry.",
+          "result": "Loaded rows stay visible; a successful retry resumes the requested group."
+        }
+      ],
+      "restrictions": [
+        "A queue is a view of underlying records, not a separate editable task list. Viewing a row does not resolve its condition.",
+        "Summary scans are bounded; a capped count is a lower bound on workspaces and may be less than 500 when source events share a workspace. Visibility depends on your account. Load more reaches later work independently of this summary bound."
+      ],
+      "workflow": [
+        "Review queue counts and oldest waiting times within your responsibilities.",
+        "Read Next action before opening the queue.",
+        "Resolve work through the responsible record, then refresh to verify the change."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No work queues are visible.",
+          "recovery": "Check the capabilities assigned to the signed-in account; an administrator can confirm intended responsibilities."
+        },
+        {
+          "problem": "A queue count seems unchanged.",
+          "recovery": "Refresh after the owning action succeeds. Confirm that the specific underlying condition, rather than an unrelated record, was resolved."
+        }
+      ]
+    },
+    {
+      "title": "Work queue items",
+      "routes": ["/work-queues/:queue"],
+      "purpose": "Inspect the oldest work in one queue and open the responsible record or follow its stated next action.",
+      "access": "The account must have the capability that owns the selected queue; knowing its address does not grant access.",
+      "fields": [
+        {
+          "name": "Queue title",
+          "meaning": "Identifies the selected work category.",
+          "values": "The corresponding permitted queue name.",
+          "rules": "Read-only; a generic Work queue title can appear while loading or when unavailable."
+        },
+        {
+          "name": "Item",
+          "meaning": "Identifies the record or condition requiring attention.",
+          "values": "Order, accession, report or operational identifier and description.",
+          "rules": "Read-only. A linked identifier opens a supported screen; plain text may have no dedicated screen."
+        },
+        {
+          "name": "State",
+          "meaning": "Explains why the item remains in the queue.",
+          "values": "Queue-specific wording such as Held, Out of date, Ready, Awaiting result, Open, Not verified, Correction due or a detailed gate/failure.",
+          "rules": "Read-only; the state belongs to the underlying workflow, not an editable queue status."
+        },
+        {
+          "name": "Waiting",
+          "meaning": "Shows age and when the queue condition began.",
+          "values": "Elapsed minutes/hours/days plus a recorded since timestamp; Unknown if the time cannot be interpreted.",
+          "rules": "Read-only; displayed age updates with rendering and refresh."
+        },
+        {
+          "name": "Next action",
+          "meaning": "Names how this item is addressed.",
+          "values": "The owning workflow’s current instruction.",
+          "rules": "Read-only; follow the stated action even when the item has no direct record screen."
+        },
+        {
+          "name": "Shown / total / Updated",
+          "meaning": "Distinguishes loaded items from the full or capped count.",
+          "values": "Loaded workspaces; known count or lower bound where available; candidate specimens checked for review queues; last read time.",
+          "rules": "Use Load more to reach later work. Sorting applies to loaded rows only. The capped summary is a lower bound, not a browsing limit."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open item row",
+          "does": "Navigates to the owning order, accession, QC, result, report, delivery, billing or operations record.",
+          "availableWhen": "The item kind has an implemented target screen and your account can access it.",
+          "result": "Opens the record, sometimes its matching panel. Previous/Next there follow distinct records of the same item kind in this queue."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reloads both items and queue summary.",
+          "availableWhen": "The queue page is open.",
+          "result": "Starts a fresh check at the beginning; earlier loaded pages and cursors are cleared. Updated records may have moved or left the queue."
+        },
+        {
+          "name": "All queues",
+          "does": "Returns to the overview.",
+          "availableWhen": "The page is open.",
+          "result": "Shows every queue available to your account."
+        },
+        {
+          "name": "Sort a supported column",
+          "does": "Reorders the loaded item rows.",
+          "availableWhen": "The column offers sorting.",
+          "result": "Changes presentation only; does not resolve or reprioritize stored work."
+        },
+        {
+          "name": "Load more",
+          "does": "Continues from the engine cursor until another group of matching records is loaded or the check completes.",
+          "availableWhen": "Unchecked history remains and the requested group has finished loading.",
+          "result": "Appends matches without discarding earlier rows. A checked page may have no matches; progress remains incomplete until the engine reaches the end."
+        },
+        {
+          "name": "Pause checking / Resume checking",
+          "does": "Pauses further history requests after the active request finishes, or resumes the same incomplete check.",
+          "availableWhen": "A check has more history to inspect.",
+          "result": "Loaded rows remain available. Pausing does not cancel laboratory work or alter any clinical gate."
+        },
+        {
+          "name": "Try again",
+          "does": "Retries the failed request with the retained cursor.",
+          "availableWhen": "A read failed with a recoverable error. Permission refusals do not offer retry.",
+          "result": "Loaded rows stay visible; a successful retry resumes the requested group."
+        }
+      ],
+      "restrictions": [
+        "Opening a record preserves its normal permission, identity, quality and state gates. Queue membership grants no bypass.",
+        "The list is a snapshot. Use Refresh after another workstation action or background processing; a new item before the current cursor appears on refresh. Loading another page does not repeat or resolve work."
+      ],
+      "workflow": [
+        "Read Item, State, Waiting and Next action together.",
+        "Open the exact linked record and verify patient/specimen identity before clinical decisions. Deviations open their own record; preservation incidents focus the named incident; billing work targets the patient and collection-local service date. Handed-off billing items open their exact handoff/item directly, independently of the billing list filter.",
+        "Complete the actual decision there, then return and refresh this queue."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "An item has no clickable record.",
+          "recovery": "Refresh and check the stated Next action. Do not substitute an unrelated record when a target is missing."
+        },
+        {
+          "problem": "The queue is not permitted or is unknown.",
+          "recovery": "Return to All queues and open a queue actually offered to the signed-in account."
+        },
+        {
+          "problem": "The linked delivery obligation is not loaded.",
+          "recovery": "The delivery workspace retrieves the exact named obligation even outside the loaded pages or after closure. Read an unavailable-record error and refresh; another obligation is never selected as a substitute."
+        },
+        {
+          "problem": "Later work is not yet displayed.",
+          "recovery": "Choose Load more until the required page is available. Keep unresolved early work open; it does not need to be cleared to reach later items."
+        },
+        {
+          "problem": "The review queue cursor is invalid.",
+          "recovery": "Use Refresh to restart the queue from its first page, then load later pages again. Do not edit or guess continuation identifiers. Loaded items remain visible when a continuation request fails."
+        }
+      ]
+    }
+  ]
+}

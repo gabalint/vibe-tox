@@ -1,0 +1,9 @@
+Sample Name,Sample ID,Sample Type,Component Name,Calculated Concentration,Conc. Units,Dilution Factor,Ion Ratio
+C00000123,SYN-0001,Unknown,Morphine,152.4,ng/mL,1,0.84
+C00000123,SYN-0001,Unknown,Morphine-D3,N/A,ng/mL,1,N/A
+C00000123,SYN-0001,Unknown,Fentanyl,N/A,ng/mL,1,N/A
+C00000124,SYN-0002,Unknown,Morphine,<0,ng/mL,1,N/A
+C00000124,SYN-0002,Unknown,Fentanyl,>0,ng/mL,10,0.91
+QC-LOW-L1234,,Quality Control,Morphine,48.9,ng/mL,1,0.83
+CAL-1,,Standard,Morphine,10.2,ng/mL,1,0.85
+CAL-2,,Standard,Fentanyl,degenerate,ng/mL,1,0.80

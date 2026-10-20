@@ -1,0 +1,465 @@
+{
+  "id": "result-review",
+  "title": "Result review",
+  "summary": "Inspect specimen results, their evidence and the reasons review may be blocked.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/review/queue", "/review/specimens/:specimenId"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Open a specimen from Result review. The identity banner identifies the patient and accession, and the results table shows current values, review status and any blocking reasons. Open a result line to inspect its history and unselected evidence.",
+        "Use the offered technical-review actions after examining the exact revisions displayed. The page also presents validity, reflex work and measurements retained as measured but not ordered when those apply."
+      ]
+    },
+    {
+      "title": "Checking accumulated history",
+      "paragraphs": [
+        "Review queues check candidate specimens in bounded requests. Progress distinguishes candidate specimens checked from matching workspaces loaded; these are not patient or analyte counts. A request can find no matches while older history remains unchecked. Only Check complete establishes an empty result for that check.",
+        "The page continues checking until at least 50 matches are loaded or the history is exhausted. Pause checking stops scheduling after the active request finishes; Resume checking continues from the retained cursor. Load more requests the next group of matches without an overall browsing limit. Sorting affects only loaded rows.",
+        "If a request fails, loaded rows remain available. Try again retries the failed cursor; permission errors require an authorized account. Refresh starts a new check from the beginning and clears the earlier cursor chain. Use Refresh after completing work or when another action changes clinical state; background invalidation does not replay the historical scan.",
+        "The overview shows Open to check for stale and blocked review queues whose totals have not been counted. Navigation indicates that some counts are unknown. An unknown count is not zero and does not establish that no work is waiting."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Check the specimen identity, method version, value, comparator, precision and unit as displayed. Do not infer an interpretation from color, an absent flag or a negative screening result. Use only your laboratory’s approved criteria.",
+        "A changed result can make a previous review out of date. Retained measurements are evidence, not automatically ordered or reportable work. Using one after an accepted add-on still requires the normal review and release steps."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Read each blocking reason and resolve it in the responsible workflow, such as QC, identity or order clarification. Technical review does not release a report. If evidence changes while you work, reload and reassess the current revisions before submitting."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/analytics/review/ReviewQueuePage.tsx",
+    "ui/src/features/analytics/review/SpecimenResultsPage.tsx",
+    "ui/src/features/analytics/review/ResultLines.tsx",
+    "ui/src/features/analytics/review/ResultLineDetail.tsx",
+    "ui/src/features/analytics/review/RevisionFacts.tsx",
+    "ui/src/features/analytics/review/MeasurementList.tsx",
+    "ui/src/features/analytics/review/SelectEvidenceDialog.tsx",
+    "ui/src/features/analytics/review/DispositionDialog.tsx",
+    "ui/src/features/analytics/review/PendingAnalytes.tsx",
+    "ui/src/features/analytics/review/TechnicalReviewActions.tsx",
+    "ui/src/features/analytics/review/ValiditySection.tsx",
+    "ui/src/features/analytics/review/ValidityDialog.tsx",
+    "ui/src/features/analytics/review/ReflexSection.tsx",
+    "ui/src/features/analytics/review/ReflexDecisionDialog.tsx",
+    "ui/src/features/analytics/review/MeasuredNotOrdered.tsx",
+    "ui/src/features/analytics/review/UseMeasuredResultDialog.tsx",
+    "ui/src/features/analytics/resultLabels.ts",
+    "ui/src/features/analytics/contract.ts",
+    "crates/lis-results/src/commands/revisions.rs",
+    "crates/lis-results/src/commands/review.rs",
+    "crates/lis-results/src/queries/review.rs",
+    "crates/lis-results/migrations/0007_review_commit_order.sql",
+    "crates/lis-results/src/commands/reflex.rs",
+    "crates/lis-results/src/commands/measured.rs",
+    "crates/lis-results/src/error.rs",
+    "crates/lis-engine/src/commands/results.rs",
+    "crates/lis-results/src/queries/queues.rs",
+    "crates/lis-results/src/queries/specimen.rs",
+    "crates/lis-results/src/queries/review_chronology.rs",
+    "crates/lis-results/migrations/0008_review_causal_evidence.sql",
+    "ui/src/lib/useBoundedQueue.ts",
+    "ui/src/lib/QueueScanControls.tsx"
+  ],
+  "pages": [
+    {
+      "title": "Result review queue",
+      "routes": ["/review/queue"],
+      "purpose": "Locate specimens whose results need technical review or investigation.",
+      "access": "Requires result-review authority.",
+      "fields": [
+        {
+          "name": "Show",
+          "meaning": "Chooses the type of review work.",
+          "values": "Ready for review, Review out of date, Blocked, Quarantined rows.",
+          "rules": "Defaults to Ready for review; the selection stays in the page address."
+        },
+        {
+          "name": "Accession / Specimen type",
+          "meaning": "Identifies material before opening its patient details.",
+          "values": "Accession number and laboratory specimen-type code.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Results",
+          "meaning": "Counts existing result lines.",
+          "values": "Nonnegative count.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Waiting",
+          "meaning": "Counts ordered analytes awaiting results.",
+          "values": "Nonnegative count.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Review out of date",
+          "meaning": "Counts lines whose earlier review no longer covers current evidence or dependencies.",
+          "values": "Nonnegative count.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Blocked",
+          "meaning": "Counts lines with current review gates.",
+          "values": "Nonnegative count; open the specimen for reasons.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Specimen count / freshness",
+          "meaning": "Shows the loaded extent and last read.",
+          "values": "Count, more-items notice and refresh time.",
+          "rules": "Progress distinguishes checked candidate specimens from loaded matches. The initial target is 50 matches; bounded requests may return fewer or no matches with history still unchecked. Refresh starts a new check. Sorting applies only to loaded rows."
+        },
+        {
+          "name": "Patient / Date of birth / Patient identifiers",
+          "meaning": "Provides secondary patient context beside the accession before opening a specimen.",
+          "values": "Recorded current name, supplied birth date and identifiers with assigning authorities; None supplied when no identifier was captured.",
+          "rules": "Read-only from the audited queue query. No identity is inferred from the accession, sample label or a missing identifier."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open specimen row",
+          "does": "Opens current revisions, evidence, validity and reflex work.",
+          "availableWhen": "A row is loaded.",
+          "result": "Shows the specimen’s identity and technical-review workspace."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reloads the selected review queue.",
+          "availableWhen": "The page is open.",
+          "result": "Starts a fresh check at the beginning; earlier loaded pages and cursors are cleared. Updated records may have moved or left the queue."
+        },
+        {
+          "name": "Show",
+          "does": "Switches review categories.",
+          "availableWhen": "The page is open.",
+          "result": "Reloads the selected queue; it does not alter results."
+        },
+        {
+          "name": "Load more",
+          "does": "Continues from the engine cursor until another group of matching records is loaded or the check completes.",
+          "availableWhen": "Unchecked history remains and the requested group has finished loading.",
+          "result": "Appends matches without discarding earlier rows. A checked page may have no matches; progress remains incomplete until the engine reaches the end."
+        },
+        {
+          "name": "Pause checking / Resume checking",
+          "does": "Pauses further history requests after the active request finishes, or resumes the same incomplete check.",
+          "availableWhen": "A check has more history to inspect.",
+          "result": "Loaded rows remain available. Pausing does not cancel laboratory work or alter any clinical gate."
+        },
+        {
+          "name": "Try again",
+          "does": "Retries the failed request with the retained cursor.",
+          "availableWhen": "A read failed with a recoverable error. Permission refusals do not offer retry.",
+          "result": "Loaded rows stay visible; a successful retry resumes the requested group."
+        }
+      ],
+      "restrictions": [
+        "Queue counts do not authorize review or certify readiness; current gates are checked when a decision is submitted."
+      ],
+      "workflow": [
+        "Choose the queue that matches the task.",
+        "Open the accession and confirm the patient/specimen identity before making a decision."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No specimen is listed.",
+          "recovery": "Try the relevant Show category and refresh; a specimen may have moved to a blocked or stale-review category."
+        },
+        {
+          "problem": "An older record is outside the displayed rows",
+          "recovery": "Use Load more until the needed record appears. Check filters and Refresh after concurrent changes; do not recreate the work to make it visible."
+        }
+      ]
+    },
+    {
+      "title": "Specimen results",
+      "routes": ["/review/specimens/:specimenId"],
+      "purpose": "Inspect every result revision and its evidence; record technical review, validity, dispositions and authorized reflex decisions.",
+      "access": "Requires result-review authority. Opening patient/specimen results is audited.",
+      "fields": [
+        {
+          "name": "Identity banner / Accession",
+          "meaning": "Identifies the patient and received material.",
+          "values": "Patient identity and accession from the linked records.",
+          "rules": "Read-only; resolve identity holds in their owning workflow."
+        },
+        {
+          "name": "Specimen type / Acceptance",
+          "meaning": "Shows material type and receipt disposition.",
+          "values": "Laboratory specimen code; Received, not yet decided; Accepted; Accepted conditionally; Held; Rejected.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Analyte",
+          "meaning": "Identifies each result line by name/code and, where applicable, validity purpose.",
+          "values": "Configured analyte name/code; Specimen validity indicator.",
+          "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Result",
+          "meaning": "Shows the current assertion without changing decimal precision.",
+          "values": "Exact quantity and unit; comparator with bound; qualitative code; Invalid, Indeterminate, Missing or Not performed.",
+          "rules": "Read-only; no free-form numeric result editor is offered here."
+        },
+        {
+          "name": "Classification",
+          "meaning": "Shows the configured cutoff comparison, separate from the raw result.",
+          "values": "Meets cutoff; Does not meet cutoff; No cutoff applies; Not classifiable with reason.",
+          "rules": "Read-only; a cutoff comparison is not a clinical interpretation or universal statement of drug absence."
+        },
+        {
+          "name": "Method",
+          "meaning": "Distinguishes method certainty, output scale and testing sequence.",
+          "values": "Presumptive or Definitive; qualitative or quantitative; First-line test or Confirmation.",
+          "rules": "Read-only; these are separate properties."
+        },
+        {
+          "name": "Revision",
+          "meaning": "Preserves which assertion is under review.",
+          "values": "Sequential revision, cause, creation time and author.",
+          "rules": "Read-only; earlier revisions remain available. Causes include first import, reprocessed import, reviewer-selected evidence and reviewer-recorded disposition."
+        },
+        {
+          "name": "Review / Blocking / Why review is out of date",
+          "meaning": "Shows current approval coverage and unresolved dependencies.",
+          "values": "Reviewed, Not reviewed, Review out of date; gate count and explanatory reasons.",
+          "rules": "Read-only; changes to evidence or dependencies may invalidate previous review."
+        },
+        {
+          "name": "Evidence / Measurements not selected",
+          "meaning": "Shows measurements used or retained for possible selection.",
+          "values": "Original value, units, status, position, attempt kind and processing revision; replaced evidence is identified.",
+          "rules": "Read-only; provenance is preserved independently of which measurement is selected."
+        },
+        {
+          "name": "Select evidence: Measurements",
+          "meaning": "Chooses the evidence supporting a new revision.",
+          "values": "Current, nonsuperseded measurements from this line.",
+          "rules": "Select at least one; selected measurements must assert the same result and serve the correct ordered work. Nothing is preselected."
+        },
+        {
+          "name": "Record disposition: Disposition",
+          "meaning": "States why there is no usable source value.",
+          "values": "Invalid, Indeterminate, Missing, Not performed.",
+          "rules": "Required; no default. Creates a new result revision and preserves earlier evidence."
+        },
+        {
+          "name": "Waiting for results",
+          "meaning": "Lists ordered analytes with no result line.",
+          "values": "Analyte name/code.",
+          "rules": "Read-only until a permitted Record as missing decision is made."
+        },
+        {
+          "name": "Reason",
+          "meaning": "Explains rejection, evidence selection, disposition, missing result, reflex or use of retained evidence.",
+          "values": "Free text.",
+          "rules": "Required for those actions, trimmed 1–1,000 characters. For validity it is optional on the first assessment and required when replacing one."
+        },
+        {
+          "name": "Validity policy",
+          "meaning": "Defines the permitted validity categories and evidence requirements.",
+          "values": "Approved policy versions for this specimen type.",
+          "rules": "Required to record a validity assessment; no default."
+        },
+        {
+          "name": "Category",
+          "meaning": "Records the reviewer’s validity decision.",
+          "values": "Categories defined by the selected laboratory policy.",
+          "rules": "Required; no automatic category is inferred."
+        },
+        {
+          "name": "Validity results relied on",
+          "meaning": "Selects the current validity-result revisions supporting the assessment.",
+          "values": "Current result lines marked for specimen validity.",
+          "rules": "At least one required; evidence must remain current and belong to this specimen and the approved policy."
+        },
+        {
+          "name": "Specimen validity: current and earlier assessments",
+          "meaning": "Shows the category, policy version, assessor, time and reason.",
+          "values": "Saved laboratory categories or Not assessed.",
+          "rules": "Read-only; replacement keeps history. Required validity must be assessed before drug-result review."
+        },
+        {
+          "name": "Reflex decisions",
+          "meaning": "Lists authorized reflex triggers still requiring a decision.",
+          "values": "Parent test, requested reflex test and whether current evidence permits a decision.",
+          "rules": "Read-only status; unresolved decisions can leave the report partial."
+        },
+        {
+          "name": "Result the decision rests on",
+          "meaning": "Selects the technically reviewed revision supporting a reflex decision.",
+          "values": "Only eligible revisions with a current approved technical review.",
+          "rules": "Required; selected Result, Classification and Revision are shown read-only."
+        },
+        {
+          "name": "Reflex condition",
+          "meaning": "Records the reviewer’s decision against the authorized reflex condition.",
+          "values": "Condition met: request the reflex test; Condition not met: no reflex test.",
+          "rules": "Required; no default. Classification does not make this decision automatically."
+        },
+        {
+          "name": "Testing sequence role",
+          "meaning": "Specifies how the new reflex test is used.",
+          "values": "First-line test or Confirmation.",
+          "rules": "Required only when the condition is met; explicitly chosen, never inferred from the test."
+        },
+        {
+          "name": "Measured, not ordered",
+          "meaning": "Displays retained measurements outside the original ordered scope.",
+          "values": "Analyte, original value/unit, recorded time, instrument and run.",
+          "rules": "Read-only evidence; first 10 shown until Show all. Eligible add-on measurements appear first."
+        },
+        {
+          "name": "Use measured result: Add-on test / Measured",
+          "meaning": "Links retained evidence to actual authorized ordered work.",
+          "values": "Accepted eligible add-on components and original measured value.",
+          "rules": "Add-on required; one eligible add-on is selected and shown read-only, otherwise choose from the list. No new order authority is created by this action."
+        },
+        {
+          "name": "Approve / Reject confirmation: Revisions reviewed",
+          "meaning": "Lists the exact analyte values and revision numbers in the proposed decision.",
+          "values": "Every current result revision shown on the page.",
+          "rules": "Read-only; this confirmation is not a per-line selection checklist."
+        },
+        {
+          "name": "Completed reflex decisions: Reflex test / Decision / Evidence used / Reason / Decided / Subsequent work",
+          "meaning": "Preserves previous decisions after their pending trigger disappears.",
+          "values": "Authorized test, met/not-met outcome, evidence source and revision reference, entered reason, deciding user/time, created test state or No test activated.",
+          "rules": "Read-only. A later cancelled test does not erase the original decision. The evidence reference remains available even when the result has a newer revision."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open result row",
+          "does": "Shows evidence, gate explanations and earlier revisions for that analyte.",
+          "availableWhen": "A result line exists.",
+          "result": "Changes the open detail while retaining the specimen."
+        },
+        {
+          "name": "Earlier revisions",
+          "does": "Expands prior assertions and their provenance.",
+          "availableWhen": "Earlier revisions exist.",
+          "result": "Read-only history becomes visible."
+        },
+        {
+          "name": "Select evidence",
+          "does": "Creates a new revision from selected equivalent measurements and a reason.",
+          "availableWhen": "Unselected evidence is available; correct specimen, work and current revision checks pass.",
+          "result": "Preserves all measurements; the new revision requires review."
+        },
+        {
+          "name": "Record disposition",
+          "does": "Creates a new non-value assertion with a reason.",
+          "availableWhen": "Result-review authority and the displayed result revision is current.",
+          "result": "Preserves the prior revision and records the chosen disposition."
+        },
+        {
+          "name": "Record as missing",
+          "does": "Creates a Missing result line for an expected analyte.",
+          "availableWhen": "The analyte has no current result line and the expected work is still valid.",
+          "result": "Adds a line that must be technically reviewed like other results."
+        },
+        {
+          "name": "Record validity assessment / Record assessment",
+          "does": "Records a chosen laboratory category and cited evidence.",
+          "availableWhen": "An approved applicable policy and current validity evidence are selected.",
+          "result": "Replaces any prior assessment with retained history; gates are recomputed."
+        },
+        {
+          "name": "Record reflex decision",
+          "does": "Records whether the authorized condition is met.",
+          "availableWhen": "A pending trigger offers the action and the cited technical review remains current.",
+          "result": "Condition met requests the authorized test with the chosen sequence role. Condition not met creates no test, result or charge."
+        },
+        {
+          "name": "Use measured result",
+          "does": "Applies retained measurements to the selected accepted add-on.",
+          "availableWhen": "An eligible add-on exists, the method serves it, and specimen, order, execution and evidence checks pass.",
+          "result": "Creates result work requiring technical review and every release gate, including QC."
+        },
+        {
+          "name": "Show all",
+          "does": "Displays all retained out-of-scope measurements.",
+          "availableWhen": "More than 10 measurements are present.",
+          "result": "Expands the read-only list."
+        },
+        {
+          "name": "Approve results",
+          "does": "Confirms approval of the exact current revisions displayed.",
+          "availableWhen": "At least one current revision, review authority and all applicable gates pass.",
+          "result": "Records technical approval; it does not issue a report."
+        },
+        {
+          "name": "Reject results",
+          "does": "Records rejection of the exact displayed revisions with a reason.",
+          "availableWhen": "At least one current revision and review authority; revisions have not changed.",
+          "result": "Records the rejected review; no report is released."
+        },
+        {
+          "name": "Run link / Previous / Next",
+          "does": "Opens source run evidence or adjacent specimens in the originating list.",
+          "availableWhen": "The relevant link or adjacent record is available.",
+          "result": "Navigates without changing evidence."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes a decision dialog before submission.",
+          "availableWhen": "A dialog is open.",
+          "result": "No decision is recorded."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reloads current evidence, state and revision for this record.",
+          "availableWhen": "The detail page is open.",
+          "result": "Shows changes made by another workflow. Inspect refreshed facts before repeating any stale submission."
+        }
+      ],
+      "restrictions": [
+        "Changing evidence, dispositions or dependencies can make an earlier technical review stale. Re-review exact current revisions after resolving the cause.",
+        "Newly saved technical reviews use committed writer order even if the computer clock changes or two reviews show the same time. Legacy history is ordered only when unique matching clinical audit evidence establishes its order and attribution. Uncertain history remains out of date until an authorized reviewer examines the evidence and submits a new review of the exact current revisions. Original reviews and issued reports remain unchanged.",
+        "Retained out-of-scope measurements cannot create their own order authorization. An accepted add-on is required before using them.",
+        "Word-derived values on dilution attempts and conflicting retained measurements can be refused; do not calculate substitute values here.",
+        "The laboratory supplies validity categories, reflex authority and clinical interpretation. The software does not choose them.",
+        "When an approved method opts into Require within range, review and release require an exact quantitative final concentration within inclusive configured bounds or an appropriate invalid, indeterminate or not-performed disposition. Comparator or qualitative values are not automatically treated as in range. Preserve the original observation; perform an authorized repeat when needed."
+      ],
+      "workflow": [
+        "Confirm identity, specimen type and acceptance.",
+        "Open each result line and inspect value, comparator, unit, classification, method, evidence, gates and history.",
+        "Resolve QC, identity, order or validity requirements in their proper workflow. Record justified missing/disposition or evidence decisions.",
+        "Review the confirmation’s exact revisions, then approve or reject. Record authorized reflex decisions once their supporting review is current."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Approval reports that evidence changed.",
+          "recovery": "Reload and inspect the new revisions and dependency reasons, then review again."
+        },
+        {
+          "problem": "Validity policy or evidence is unavailable.",
+          "recovery": "Check the specimen type, approved policy and arrival of the required validity results with the responsible configuration/review staff."
+        },
+        {
+          "problem": "Use measured result is refused.",
+          "recovery": "Read the stated reason: wrong order, specimen type, method, missing retained evidence, disagreements or dilution restrictions must be resolved before reuse."
+        },
+        {
+          "problem": "A result says Not classifiable.",
+          "recovery": "Inspect the stated cutoff/rounding or censored-bound reason and the approved method. Do not infer a positive or negative classification."
+        },
+        {
+          "problem": "Historical review order or audit attribution cannot be confirmed.",
+          "recovery": "Open the specimen from Review out of date, refresh and inspect current results, original observations, prior review evidence and all gates. Submit a new technical approval or reasoned rejection of the exact current revisions. A new approval must pass existing QC, specimen, identity, order and validity requirements; it records a new attributable decision without declaring an invented order for older reviews. Technical review does not release a report."
+        }
+      ]
+    }
+  ]
+}

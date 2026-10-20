@@ -1,0 +1,141 @@
+{
+  "id": "incomplete-intake",
+  "title": "Incomplete identity intake",
+  "summary": "Retain unknown or partial birth information without fabricating a patient birth date.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/patients/incomplete-intake"],
+  "reviewSources": [
+    "ui/src/features/accessioning/patients/IncompleteIntakePage.tsx",
+    "crates/lis-identity/src/intake.rs",
+    "crates/lis-identity/migrations/0005_intake_deferrals.sql",
+    "crates/lis-identity/tests/intake.rs"
+  ],
+  "sections": [
+    {
+      "title": "Identity before testing",
+      "paragraphs": [
+        "An incomplete intake record retains supplied evidence. It is not a patient identity or test order. Source documents remain a separate custody question; typed references and text do not retain their original bytes."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Incomplete identity intake",
+      "routes": ["/patients/incomplete-intake"],
+      "purpose": "Record and reconcile intake when only unknown/partial birth date or supplied age is available.",
+      "access": "Order-entry capability and a signed-in person are required for capture/disposition; reads are audited.",
+      "fields": [
+        {
+          "name": "Include resolved and declined intake",
+          "meaning": "Whether terminal records appear alongside pending intake.",
+          "values": "Off initially.",
+          "rules": "Changing the filter starts a new bounded list; Load more reads50additional records."
+        },
+        {
+          "name": "Name as supplied",
+          "meaning": "Source name retained before patient registration.",
+          "values": "Required text, maximum400characters.",
+          "rules": "Trimmed surrounding whitespace; not a patient match or a newly registered subject."
+        },
+        {
+          "name": "Available birth information",
+          "meaning": "The kind of evidence actually available.",
+          "values": "Unknown, Partial date or Supplied age; no default.",
+          "rules": "Do not convert age to a date or complete a partial date."
+        },
+        {
+          "name": "Exact supplied date or age text",
+          "meaning": "Source text retained without deriving a complete date.",
+          "values": "Required for Partial date/Supplied age; optional for Unknown; maximum200characters.",
+          "rules": "Surrounding whitespace trimmed. Not exact source-file custody."
+        },
+        {
+          "name": "Source reference and reason intake is deferred",
+          "meaning": "Where evidence came from and why complete identity is unavailable.",
+          "values": "Both required, maximum1000characters each.",
+          "rules": "Stored on the original immutable intake record; not copied into diagnostic logs."
+        },
+        {
+          "name": "Original record and disposition details",
+          "meaning": "Original evidence/source/reason/actor/time and any terminal decision/source/reason/actor/time.",
+          "values": "Read-only. Pending, resolved or declined.",
+          "rules": "Resolution preserves original unknown/partial/age evidence. Issued artifacts and patient identity holds do not change."
+        },
+        {
+          "name": "Choose verified patient",
+          "meaning": "Explicit selection of an existing patient after obtaining source-backed complete identity.",
+          "values": "Existing patient directory search with name/date/identifiers; no patient preselected.",
+          "rules": "Register verified patient opens normal matching/registration. Return and choose it explicitly; no link is inferred from the intake name."
+        },
+        {
+          "name": "Verification or decline source and disposition reason",
+          "meaning": "Evidence for resolution to a verified patient or for declining intake.",
+          "values": "Both required, maximum1000characters each; blank initially.",
+          "rules": "Resolved must link an existing patient; declined has no patient link. Stale revisions are refused."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Record incomplete intake / Retain incomplete intake",
+          "does": "Save supplied evidence as a separate immutable intake record.",
+          "availableWhen": "Order-entry authority; valid required fields.",
+          "result": "No patient, order or test is created. The item remains pending."
+        },
+        {
+          "name": "Resolve with verified patient / Register verified patient",
+          "does": "Find a verified record or use the existing registration workflow after obtaining a full source-backed identity.",
+          "availableWhen": "Pending intake.",
+          "result": "Selection is reviewed in the identity banner; Record disposition is still required."
+        },
+        {
+          "name": "Record declined intake / Record disposition",
+          "does": "Record an attributed terminal decline or resolution with source and reason.",
+          "availableWhen": "Pending intake at reviewed revision; resolution requires selected existing patient.",
+          "result": "Original source evidence remains. This does not create an order, merge patients or remove clinical holds."
+        },
+        {
+          "name": "Refresh / Load more intake records",
+          "does": "Reconcile the list or load the next50records.",
+          "availableWhen": "Read authority; more rows for Load more.",
+          "result": "Refresh clears the selected record so current disposition must be reviewed again. Equal timestamps do not remove records from traversal."
+        },
+        {
+          "name": "Close intake / Cancel",
+          "does": "Close the selected history or abandon unsaved dialog fields.",
+          "availableWhen": "No mutation in progress.",
+          "result": "No clinical data is removed. A pending intake remains pending."
+        },
+        {
+          "name": "Open resolved patient",
+          "does": "Navigate to the explicitly linked patient.",
+          "availableWhen": "Resolved intake with patient link.",
+          "result": "Review identity and holds before entering any order."
+        }
+      ],
+      "restrictions": [
+        "No testing or order authority arises from incomplete intake. Never fabricate a full birth date.",
+        "Terminal disposition cannot be edited or reopened; the original intake is retained. Identity matching, duplicate resolution and source-document custody remain separate."
+      ],
+      "workflow": [
+        "Retain supplied name, birth evidence, source and reason.",
+        "Obtain source-backed identity or an explicit decline decision.",
+        "For resolution, register/find the verified patient, compare the identity banner, and record the disposition with evidence.",
+        "Verify terminal history and use the linked patient workflow only when appropriate."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Disposition refused because the record changed",
+          "recovery": "Cancel and Refresh; reopen the record and review its terminal state before taking another action."
+        },
+        {
+          "problem": "Patient cannot be found or identity remains incomplete",
+          "recovery": "Keep intake pending. Do not manufacture a birth date or register a duplicate to proceed."
+        },
+        {
+          "problem": "No items are shown",
+          "recovery": "Check Include resolved and declined intake, or record new incomplete intake when source evidence exists."
+        }
+      ]
+    }
+  ]
+}

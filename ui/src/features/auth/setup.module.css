@@ -1,0 +1,156 @@
+.setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.heading h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.heading p,
+.lead,
+.note,
+.next,
+.included dd {
+  color: var(--color-text-muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--space-10);
+}
+
+.introduction {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-right: var(--space-10);
+  border-right: 1px solid var(--color-border);
+}
+
+.introduction h2,
+.account h2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.lead {
+  margin-top: var(--space-3);
+}
+
+.included {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.included dt {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.included svg {
+  flex-shrink: 0;
+  width: var(--space-5);
+  height: var(--space-5);
+  color: var(--color-text-muted);
+}
+
+.included dt {
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-1);
+}
+
+.included dd {
+  padding-left: var(--space-8);
+}
+
+.note {
+  margin-top: auto;
+  font-size: var(--font-size-sm);
+}
+
+.account,
+.fields {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--space-5);
+}
+
+.fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.dataset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-sunken);
+}
+
+.dataset p,
+.next {
+  font-size: var(--font-size-sm);
+}
+
+.restore {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-6);
+}
+
+.restore:empty {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8);
+  }
+
+  .introduction {
+    padding-right: 0;
+    padding-bottom: var(--space-6);
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .grid[data-demo] .account {
+    order: -1;
+  }
+
+  .grid[data-demo] .introduction {
+    padding-top: var(--space-6);
+    padding-bottom: 0;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .fieldGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

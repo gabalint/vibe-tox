@@ -1,0 +1,30 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "operations",
+  "description": "Runtime operations commands for the main window: host health and history, app runs and listening gaps, settings, the security policy and the separation-of-duties policy, update records, media disposals, the installation key, and the shell-only startup status (REQ-OPS-002, 003, 006, 008, 013; NFR-19, NFR-31).",
+  "windows": ["main"],
+  "permissions": [
+    "allow-get-host-health",
+    "allow-refresh-host-health",
+    "allow-list-health-history",
+    "allow-attest-health-check",
+    "allow-list-app-runs",
+    "allow-acknowledge-listening-gap",
+    "allow-get-operations-settings",
+    "allow-set-operations-settings",
+    "allow-get-security-policy",
+    "allow-set-security-policy",
+    "allow-get-separation-policy",
+    "allow-set-separation-policy",
+    "allow-list-installed-versions",
+    "allow-list-update-approvals",
+    "allow-record-update-approval",
+    "allow-withdraw-update-approval",
+    "allow-accept-installed-version",
+    "allow-record-media-disposal",
+    "allow-list-media-disposals",
+    "allow-get-installation-key-state",
+    "allow-restore-installation-key",
+    "allow-startup-status"
+  ]
+}

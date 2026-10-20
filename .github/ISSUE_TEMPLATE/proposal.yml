@@ -1,0 +1,27 @@
+name: Proposal or question
+description: Suggest a change, raise a laboratory workflow or regulatory question, or ask about the design.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issues are public. Use synthetic examples only, and link primary sources rather than
+        pasting restricted standards or proprietary manuals. See CONTRIBUTING.md.
+  - type: checkboxes
+    id: synthetic-only
+    attributes:
+      label: Data check
+      options:
+        - label: This issue contains no patient information, real laboratory records or credentials.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or question
+      description: What need, gap or risk does this address? Mention affected requirement, decision or question IDs if known.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal and evidence
+      description: The proposed change and its supporting evidence, with direct source links and the date checked.

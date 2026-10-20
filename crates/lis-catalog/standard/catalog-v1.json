@@ -1,0 +1,4022 @@
+{
+  "format": "vibe-tox/standard-catalog",
+  "formatVersion": 1,
+  "catalogVersion": "1.1.0",
+  "reviewStatus": "unreviewed",
+  "disclaimer": "Starter content: check every value before use. It is not validated for your laboratory and not ready for patient testing.",
+  "loinc": {
+    "version": "2.83",
+    "notice": "This material contains content from LOINC (http://loinc.org). LOINC is copyright © Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at http://loinc.org/license. LOINC® is a registered United States trademark of Regenstrief Institute, Inc."
+  },
+  "sources": [
+    {
+      "id": "DOM-115",
+      "title": "Mandatory Guidelines for Federal Workplace Drug Testing Programs: Authorized Testing Panels (91 FR 12308)",
+      "publisher": "U.S. Department of Health and Human Services, SAMHSA (Federal Register)",
+      "url": "https://www.federalregister.gov/documents/2026/03/13/2026-04981/mandatory-guidelines-for-federal-workplace-drug-testing-programs-authorized-testing-panels",
+      "published": "2026-03-13",
+      "checked": "2026-10-13",
+      "note": "Current HHS drug testing panels for urine and oral fluid: initial and confirmatory analytes and cutoffs in ng/mL (oral fluid values are for undiluted, neat oral fluid). States no change from the panels effective 2025-07-07 (90 FR 4662). Federal workplace testing only: these are not clinical cutoffs, and a clinical laboratory must validate its own."
+    },
+    {
+      "id": "DOM-117",
+      "title": "Mandatory Guidelines for Federal Workplace Drug Testing Programs using Urine (88 FR 70768)",
+      "publisher": "U.S. Department of Health and Human Services, SAMHSA (Federal Register)",
+      "url": "https://www.federalregister.gov/documents/2023/10/12/2023-21734/mandatory-guidelines-for-federal-workplace-drug-testing-programs",
+      "published": "2023-10-12",
+      "checked": "2026-10-13",
+      "note": "Effective 2024-02-01. Section 1.5 defines a positive result as equal to or greater than the confirmatory cutoff; Section 3.1 requires creatinine, specific gravity, pH and oxidizing-adulterant tests; Section 3.6 covers nitrite. Federal workplace criteria; validity thresholds there are not adopted here."
+    },
+    {
+      "id": "DOM-118",
+      "title": "Mandatory Guidelines for Federal Workplace Drug Testing Programs using Oral Fluid (88 FR 70814)",
+      "publisher": "U.S. Department of Health and Human Services, SAMHSA (Federal Register)",
+      "url": "https://www.federalregister.gov/documents/2023/10/12/2023-21735/mandatory-guidelines-for-federal-workplace-drug-testing-programs",
+      "published": "2023-10-12",
+      "checked": "2026-10-13",
+      "note": "Effective 2023-10-10. Defines oral fluid as a specimen from the oral cavity, mainly salivary gland fluids, and a positive result as equal to or greater than the confirmatory cutoff. Federal workplace testing only."
+    },
+    {
+      "id": "DOM-024",
+      "title": "Using Clinical Laboratory Tests to Monitor Drug Therapy in Pain Management Patients (AACC, now ADLM, LMPG)",
+      "publisher": "Journal of Applied Laboratory Medicine 2018;2(4):489-526",
+      "url": "https://academic.oup.com/jalm/article/2/4/489/5587549",
+      "published": null,
+      "checked": "2026-10-13",
+      "note": "Table 6 lists example drugs and metabolites by tier for pain-management testing; the specimen section names drugs testable in oral fluid; validity testing (pH, creatinine, oxidants) is recommended; notes that federal-derived immunoassay cutoffs may not suit pain management and that laboratories should define cutoffs. Menu evidence only, not a cutoff source. Published 2018 (exact date not checked). Copyrighted; summarized."
+    },
+    {
+      "id": "DOM-119",
+      "title": "LOINC Version 2.83 Release Highlights",
+      "publisher": "Regenstrief Institute",
+      "url": "https://loinc.org/news/loinc-version-2-83-release-highlights",
+      "published": null,
+      "checked": "2026-10-13",
+      "note": "LOINC 2.83 adds about 1,260 drug/toxicology terms by immunoassay and mass spectrometry and discourages terms that use screen or confirm as the method. Basis for the LOINC choice rule. Codes were verified on the CSIRO Ontoserver public FHIR server, which reports LOINC 2.83. Released August 2026; the exact day was not read on the page."
+    },
+    {
+      "id": "DOM-122",
+      "title": "HL7 Version 2 Table 0487: Specimen Type",
+      "publisher": "HL7 International (HL7 Terminology, THO)",
+      "url": "https://terminology.hl7.org/CodeSystem-v2-0487.json",
+      "published": "2019-12-01",
+      "checked": "2026-10-13",
+      "note": "Code UR (Urine) is active. The table has SAL (Saliva) but no oral fluid code, so oral fluid uses the project code OF. Read as the JSON resource of HL7 Terminology release 7.4.0; the date is the code system resource date."
+    },
+    {
+      "id": "DOM-120",
+      "title": "Drug Profile, Targeted by Tandem Mass Spectrometry and Enzyme Immunoassay, Urine (test 2007479)",
+      "publisher": "ARUP Laboratories (Test Directory)",
+      "url": "https://ltd.aruplab.com/Tests/Pub/2007479",
+      "published": null,
+      "checked": "2026-10-13",
+      "note": "One reference laboratory's urine profile: qualitative LC-MS/MS components include norbuprenorphine, norfentanyl, noroxycodone, norhydrocodone, alpha-OH-alprazolam, 7-aminoclonazepam, nordiazepam, gabapentin and pregabalin; EMIT screens include barbiturates, methadone, tramadol, phencyclidine, cannabinoids and ethyl glucuronide. States a concentration at or above the cutoff is reported as present. Evidence of practice, not regulatory approval; its cutoffs are not adopted. Live directory page, no publication date."
+    },
+    {
+      "id": "DOM-121",
+      "title": "Drug Plasma Half-Life and Urine Detection Window (BD-TS-013, Rev 5)",
+      "publisher": "ARUP Laboratories",
+      "url": "https://www.aruplab.com/files/resources/pain-management/DrugAnalytesPlasmaUrine.pdf",
+      "published": null,
+      "checked": "2026-10-13",
+      "note": "October 2023 table naming drugs and urine metabolites, including EDDP, O-desmethyltramadol, N-desmethyltapentadol, norbuprenorphine, ethyl glucuronide and ethyl sulfate. Names analytes; not tied to a method and not a cutoff source. Month and year only (October 2023)."
+    },
+    {
+      "id": "DOM-123",
+      "title": "21 CFR Part 862 Subpart D: Clinical Toxicology Test Systems (eCFR, as of 2026-10-08)",
+      "publisher": "U.S. Food and Drug Administration (eCFR, Office of the Federal Register)",
+      "url": "https://www.ecfr.gov/api/versioner/v1/full/2026-10-08/title-21.xml?part=862&subpart=D",
+      "published": "2026-10-08",
+      "checked": "2026-10-13",
+      "note": "Device classifications whose identification includes urine for amphetamine (862.3100), barbiturate (862.3150), benzodiazepine (862.3170), cocaine and benzoylecgonine (862.3250), methamphetamine (862.3610), methadone (862.3620), opiate (862.3650, also saliva) and cannabinoid (862.3870, also saliva) test systems. Shows such test systems exist; not a cutoff source. Date is the eCFR point-in-time date."
+    },
+    {
+      "id": "DOM-124",
+      "title": "510(k) premarket notification records K221605, K182779, K141803 and K051058 (openFDA)",
+      "publisher": "U.S. Food and Drug Administration (openFDA)",
+      "url": "https://api.fda.gov/device/510k.json?search=k_number:(K221605+K182779+K141803+K051058)&limit=10",
+      "published": null,
+      "checked": "2026-10-13",
+      "note": "Cleared immunoassays: buprenorphine in urine (K221605, 2023-07-25), EDDP in urine (K182779, 2018-11-21), tramadol in urine (K141803, 2015-02-12) and methadone in oral fluid (K051058, 2006-03-29). Urine intended use read in the K221605 and K182779 summaries; K141803 and K051058 from the device names only. Specific products, not lab practice or cutoffs."
+    },
+    {
+      "id": "DOM-125",
+      "title": "Optimization of Parallel Artificial Liquid Membrane Extraction for the Determination of Over 50 Psychoactive Substances in Oral Fluid Through UHPLC-MS/MS",
+      "publisher": "Drug Testing and Analysis (Wiley), doi:10.1002/dta.3894, CC BY 4.0",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12489298/",
+      "published": "2025-04-10",
+      "checked": "2026-10-13",
+      "note": "Research method for oral fluid by UHPLC-MS/MS; its analyte table includes buprenorphine, norbuprenorphine, methadone, alprazolam, clonazepam, oxazepam and norfentanyl. A single research method, not a clinical panel recommendation. Read through the Europe PMC full-text service."
+    },
+    {
+      "id": "DOM-126",
+      "title": "A validated workflow for drug detection in oral fluid by non-targeted liquid chromatography-tandem mass spectrometry",
+      "publisher": "Analytical and Bioanalytical Chemistry (Springer), doi:10.1007/s00216-018-1504-x, CC BY 4.0",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6338695/",
+      "published": "2018-12-06",
+      "checked": "2026-10-13",
+      "note": "Oral fluid samples analysed by LC-MS/MS; detections reported include methadone, EDDP, diazepam, buprenorphine, nordiazepam (nordazepam), 7-aminoclonazepam and temazepam. Research study in one setting. Read through the Europe PMC full-text service."
+    },
+    {
+      "id": "DOM-127",
+      "title": "Opioid detection and quantification in plasma and oral fluid by LC-MS/MS",
+      "publisher": "Analytical and Bioanalytical Chemistry (Springer), doi:10.1007/s00216-026-06336-1, CC BY 4.0",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12999629/",
+      "published": "2026-01-28",
+      "checked": "2026-10-13",
+      "note": "Validated LC-MS/MS method for fentanyl, buprenorphine, oxycodone, morphine, tramadol and tapentadol in plasma and oral fluid. Metabolites named only in its references are not taken from it. Read through the Europe PMC full-text service."
+    },
+    {
+      "id": "DOM-142",
+      "title": "Drug Profile, Screen with Reflex to Quantitation",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/2012312",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical urine screening panel explicitly identifies each listed screen as immunoassay and publishes positive cutoffs in ng/mL. Clinical use, not forensic. Amphetamines 300, barbiturates 200, benzodiazepines 200, buprenorphine 5, cocaine 150, ethyl glucuronide 500, fentanyl 1, MDMA 500, methadone 150, opiates 300, oxycodone 100, PCP 25, tramadol 100, THC 50. Reflex quantitative methods vary; these values apply only to the screens."
+    },
+    {
+      "id": "DOM-143",
+      "title": "CDAU7: Drug Abuse Survey with Confirmation, Panel 9, Random, Urine",
+      "publisher": "Mayo Clinic Laboratories",
+      "url": "https://www.mayocliniclabs.com/test-catalog/overview/81410",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical monitoring/management urine immunoassay screens, explicitly not employment-related testing: amphetamines 500, barbiturates 200, benzodiazepines 100, cocaine metabolite 150, methadone metabolite 300, opiates 300, PCP 25, THC metabolite 50 ng/mL. Methadone metabolite is not parent methadone. Reflex techniques differ; use screen values only."
+    },
+    {
+      "id": "DOM-144",
+      "title": "Drug Toxicology Monitoring 6 with Confirmation, Urine (91486)",
+      "publisher": "Quest Diagnostics",
+      "url": "https://testdirectory.questdiagnostics.com/test/test-detail/91486/?cc=NEL",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical urine screen by immunoassay, confirmation by mass spectrometry (not further specified). Screen amphetamines 500, barbiturates 300, benzodiazepines 100, cocaine metabolite 150, EDDP 100, oxycodone 100, PCP 25 ng/mL. Confirmatory methadone and EDDP 100; barbiturates incl. amobarbital 100 ng/mL, but exact chromatography technique not verified for that assay; not adopted as LC-MS/MS evidence."
+    },
+    {
+      "id": "DOM-145",
+      "title": "Methadone Metabolite (EDDP), Urine, Qualitative Screen",
+      "publisher": "Michigan Medicine MLabs",
+      "url": "https://mlabs.umich.edu/tests/methadone-metabolite-eddp-urine-qualitative-screen",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical enzymatic immunoassay detects EDDP in random urine at 100 ng/mL; result is qualitative."
+    },
+    {
+      "id": "DOM-146",
+      "title": "6AM: 6-Acetylmorphine Enzyme Immunoassay",
+      "publisher": "Roche Diagnostics",
+      "url": "https://diagnostics.roche.com/global/en/products/lab/6am-cps-000001.html",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Manufacturer IVD prescription-use urine enzyme immunoassay, cutoff 10 ng/mL; presumptive result requires a more specific confirmatory method. Manufacturer example, not clinical laboratory prevalence evidence."
+    },
+    {
+      "id": "DOM-147",
+      "title": "Opiates, Urine, Quantitative",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/0090364",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Quantitative clinical urine LC-MS/MS; 20 ng/mL for codeine, morphine, hydrocodone, norhydrocodone, hydromorphone, oxycodone, noroxycodone and oxymorphone; 6-acetylmorphine 10. Explicitly measures non-glucuronidated FREE forms. Positive is concentration at or above cutoff; not forensic."
+    },
+    {
+      "id": "DOM-148",
+      "title": "OPATU: Opiates Confirmation, Random, Urine",
+      "publisher": "Mayo Clinic Laboratories",
+      "url": "https://www.mayocliniclabs.com/test-catalog/overview/8473",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS positive cutoffs 25 ng/mL for codeine, dihydrocodeine, hydrocodone, norhydrocodone, hydromorphone, morphine, oxycodone, noroxycodone and oxymorphone. Reports TOTAL urine concentration, sum of unconjugated and conjugated forms; not equivalent to ARUP free opiates. Local preparation and assay validation must match."
+    },
+    {
+      "id": "DOM-149",
+      "title": "Clinical Urine Drug Screen with Reflex to Confirmation by LCMSMS",
+      "publisher": "Saint Francis Health System",
+      "url": "https://www.saintfrancis.com/physicians/laboratory-testing/biochemical-genetics-mass-spectrometry-tests/clinical-urine-drug-screen-reflex-confirmation-lcmsms",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical random urine confirmation by LC-MS/MS; named analytes, positive cutoffs and reportable ranges. Selected examples: 6-MAM 10; opiates 50; alprazolam, alpha-OH-alprazolam, clonazepam, 7-amino-clonazepam, diazepam, nordiazepam, oxazepam, temazepam, lorazepam 50; BUP 5/norBUP 20; methadone/EDDP 50; fentanyl 2/norfentanyl 10; amphetamine/MDMA/MDA/MDEA/methamphetamine 100; BZE 50; ketamine 50; tapentadol/nortapentadol 50; tramadol/O-desmethyltramadol 50; carisoprodol/meprobamate 50; gabapentin/pregabalin 500; PCP 25; secobarbital 100; THC-COOH 25. Amobarbital/pentobarbital is a combined entry, not evidence for individual amobarbital. Sample preparation/hydrolysis for most analytes is not stated. Page explicitly excludes preemployment/legal forensic use; THC glucuronide not tested."
+    },
+    {
+      "id": "DOM-150",
+      "title": "Fentanyl and Metabolite, Urine, Quantitative",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/0092570",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS: fentanyl 1.0, norfentanyl 2.0 ng/mL, positive at or above cutoff. Current directory supersedes older samples using 1/1. Not forensic."
+    },
+    {
+      "id": "DOM-151",
+      "title": "FENTU: Fentanyl with Metabolite Confirmation, Random, Urine",
+      "publisher": "Mayo Clinic Laboratories",
+      "url": "https://www.mayocliniclabs.com/test-catalog/overview/89655",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS: fentanyl 0.2, norfentanyl 1.0 ng/mL. Demonstrates laboratory method variation compared to ARUP 1/2 and Saint Francis 2/10."
+    },
+    {
+      "id": "DOM-152",
+      "title": "Methadone and Metabolite, Urine, Quantitative",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/0090362",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS: methadone and EDDP 100 ng/mL, positive at or above cutoff. Not forensic."
+    },
+    {
+      "id": "DOM-153",
+      "title": "Buprenorphine and Metabolites, Urine, Quantitative",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/2010092",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS separately measures buprenorphine and norbuprenorphine at 2 ng/mL and their glucuronides at 5 ng/mL. Do not transpose parent/free cutoffs to total hydrolyzed buprenorphine. Catalog has only the parent and nor-metabolite analytes; glucuronide analytes not added."
+    },
+    {
+      "id": "DOM-154",
+      "title": "Tramadol and Metabolite, Urine, Quantitative",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/2002736",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS: tramadol and O-desmethyltramadol 25 ng/mL, positive at or above cutoff. Not forensic."
+    },
+    {
+      "id": "DOM-155",
+      "title": "Benzodiazepines, Urine, Quantitative",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/2008291",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS: alprazolam, alpha-hydroxyalprazolam, clonazepam and 7-aminoclonazepam 5 ng/mL; diazepam, nordiazepam, oxazepam, temazepam and lorazepam 20 ng/mL. Positive at or above cutoff. Public page does not specify hydrolysis/free-vs-total preparation; laboratory must resolve before approval."
+    },
+    {
+      "id": "DOM-156",
+      "title": "BNZU: Benzodiazepines Confirmation, Random, Urine",
+      "publisher": "Mayo Clinic Laboratories",
+      "url": "https://www.mayocliniclabs.com/test-catalog/overview/608255",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical urine LC-MS/MS: each catalog benzodiazepine analyte 10 ng/mL. Public method describes hydrolysis to liberate conjugated drug before LC-MS/MS; not interchangeable with methods that do not hydrolyze."
+    },
+    {
+      "id": "DOM-157",
+      "title": "Amphetamines, Urine, Quantitative",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/2010075",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS: amphetamine 50, methamphetamine/MDA/MDMA/MDEA 200 ng/mL. Positive at or above cutoff; not forensic. No d/l-isomer distinction claimed."
+    },
+    {
+      "id": "DOM-158",
+      "title": "AMPHU: Amphetamines Confirmation, Random, Urine",
+      "publisher": "Mayo Clinic Laboratories",
+      "url": "https://www.mayocliniclabs.com/test-catalog/overview/8257",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS: amphetamine, methamphetamine, MDA and MDMA 25 ng/mL. Does not list MDEA. Shows method variation; no national common-cutoff inference."
+    },
+    {
+      "id": "DOM-159",
+      "title": "Cocaine Metabolite, Urine, Quantitative",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/0090359",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical urine quantitative LC-MS/MS specifically detects benzoylecgonine at 50 ng/mL. Does not support cutoff for parent cocaine."
+    },
+    {
+      "id": "DOM-160",
+      "title": "Cocaine, Urine, Confirmation (COCAMS)",
+      "publisher": "The Ohio State University Wexner Medical Center",
+      "url": "https://theohiostatelabs.testcatalog.org/show/COCAMS",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS: cocaine and benzoylecgonine each 25 ng/mL; performed by Ohio State Toxicology Laboratory. The Mayo-hosted directory does not make this a Mayo-performed assay."
+    },
+    {
+      "id": "DOM-161",
+      "title": "THC Metabolite, Urine, Quantitative",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/0090369",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS: 11-nor-9-carboxy-THC 15 ng/mL, positive at or above cutoff. Public page does not state sample preparation/hydrolysis; not transferable without checking the laboratory method."
+    },
+    {
+      "id": "DOM-162",
+      "title": "Barbiturates, Urine, Quantitative",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/2012213",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS: butalbital, pentobarbital and phenobarbital each 50 ng/mL. Directory does not publish amobarbital or secobarbital as covered result analytes, despite aliases; no inferred cutoff for those."
+    },
+    {
+      "id": "DOM-163",
+      "title": "ETGC: Ethyl Glucuronide Confirmation, Random, Urine",
+      "publisher": "Mayo Clinic Laboratories",
+      "url": "https://www.testcatalog.org/show/ETGC",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS cutoffs: ethyl glucuronide 250 ng/mL and ethyl sulfate 100 ng/mL. These are reporting cutoffs, not estimates of alcohol dose or frequency."
+    },
+    {
+      "id": "DOM-164",
+      "title": "Ethyl Glucuronide and Ethyl Sulfate, Urine, Quantitative",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/2007909",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS analytical measurement range 100-10000 ng/mL. Page gives measurement range, not explicit positivity cutoffs, so do not equate 100 ng/mL lower quantification range with a clinical decision cutoff."
+    },
+    {
+      "id": "DOM-165",
+      "title": "Carisoprodol and Meprobamate, Urine, Quantitative",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/2012219",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS: carisoprodol and meprobamate each 100 ng/mL, positive at or above cutoff; not forensic."
+    },
+    {
+      "id": "DOM-166",
+      "title": "Gabapentin, Urine",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/2012227",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS positive cutoff 5.0 ug/mL. This is 5000 ng/mL; catalog recommendation uses Saint Francis published 500 ng/mL instead, avoiding unit conversion as implicit default."
+    },
+    {
+      "id": "DOM-167",
+      "title": "Pregabalin, Urine",
+      "publisher": "ARUP Laboratories",
+      "url": "https://ltd.aruplab.com/Tests/Pub/2012229",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical quantitative urine LC-MS/MS positive cutoff 5.0 ug/mL (5000 ng/mL); catalog recommendation uses Saint Francis 500 ng/mL. Large assay variation prevents a national most-common claim."
+    },
+    {
+      "id": "DOM-168",
+      "title": "Oral fluid drug testing: clinical collection brochure, SB11764 11/2022",
+      "publisher": "Quest Diagnostics",
+      "url": "https://www.questdiagnostics.com/content/dam/corporate/unrestricted/documents/oral-fluid-collection/Oral-Fluid-Collection-Brochure_FINAL.pdf",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical Quantisal oral-fluid service; page 2 specifies LC-MS/MS, page 3 table gives per-analyte cutoffs ng/mL. November 2022 document, exact publication day unknown; publicly available when checked. Reporting basis (neat versus buffered concentration) not explicitly stated, so values are copied as published with no dilution conversion. Heroin row is not used as evidence for 6-acetylmorphine. No norfentanyl, 7-aminoclonazepam or MDA-specific row."
+    },
+    {
+      "id": "DOM-169",
+      "title": "Drug Analysis,Comp,Oral Fluid (page URL 701687; displayed test 702687)",
+      "publisher": "Labcorp MedTox",
+      "url": "https://medtox.labcorp.com/tests/701687/drug-analysis-comp-oral-fluid",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical prescribed/abused drug monitoring; explicitly definitive LC-MS/MS with Quantisal collection. Published class thresholds include 6-acetylmorphine 1, fentanyl 0.1, THC 2.5, opiates and oxycodones 2.5, benzodiazepines 0.5, amphetamines 10, cocaine/metabolite 2.5, buprenorphine/metabolite 1, PCP 10, tramadol/tapentadol 5 ng/mL. Reporting dilution basis not stated; no conversion applied. Class thresholds corroborate classes only, not unidentified metabolites; missing methadone threshold is not inferred from CPT codes."
+    },
+    {
+      "id": "DOM-170",
+      "title": "CSMOF: Controlled Substance Monitoring Panel, 11 Drug Classes, Screen Only, Immunoassay, Oral Fluid",
+      "publisher": "Mayo Clinic Laboratories",
+      "url": "https://www.mayocliniclabs.com/test-catalog/Overview/621483",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical addiction/pain management only, explicitly not employment/forensic. Competitive chemiluminescent immunoassay, Quantisal collector, published cutoffs ng/mL. Specific target concentrations include amphetamine 20, methamphetamine 10, morphine/hydrocodone/oxycodone/oxymorphone 10, methadone 10, fentanyl 1, 6-acetylmorphine 5, PCP 5. THC-COOH is not the catalog THC target; benzoylecgonine-only screen does not establish cocaine/BZE composite cutoff. Dilution basis not stated, no conversion applied."
+    },
+    {
+      "id": "DOM-171",
+      "title": "K141320: LZI Oral Fluid Cannabinoids Enzyme Immunoassay decision memorandum",
+      "publisher": "U.S. Food and Drug Administration",
+      "url": "https://www.accessdata.fda.gov/cdrh_docs/reviews/K141320.pdf",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Specific prescription laboratory enzyme immunoassay example, not a universal clinical cutoff or claim of present market prevalence. Intended use explicitly 4 ng/mL delta-9-THC in neat oral fluid collected using the LZI Oral Fluid THC Collector. Supports THC-target screen without conflating THC-COOH or HHS workplace rules. Memo date not printed in inspected text."
+    },
+    {
+      "id": "DOM-172",
+      "title": "K171403: OralTox Oral Fluid Drug Test decision memorandum",
+      "publisher": "U.S. Food and Drug Administration",
+      "url": "https://www.accessdata.fda.gov/cdrh_docs/reviews/K171403.pdf",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Prescription point-of-care lateral-flow immunochromatographic assay example; dedicated OralTox collector/device. Cocaine screen cutoff 20 ng/mL with benzoylecgonine calibrator and cross-reactivity table showing cocaine and benzoylecgonine each positive at 20 ng/mL (100%). Alternative amphetamine 50, morphine 40, PCP 10 and THC 40 ng/mL apply to this particular device, not generic laboratory immunoassays. No collection dilution conversion is made."
+    },
+    {
+      "id": "DOM-173",
+      "title": "Drug Toxicology Monitoring Oral Fluid Testing, FAQ 186",
+      "publisher": "Quest Diagnostics",
+      "url": "https://www.questdiagnostics.com/healthcare-professionals/clinical-education-center/faq/faq186",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Current clinical FAQ confirms both presumptive and definitive confirmation/quantitation use LC-MS/MS, and preferred collection is Quantisal with 1 mL oral fluid in 3 mL buffer. The assay-cutoff table is an embedded image not extractable with this tool; numerical recommendations use the separate directly read brochure. Does not state whether published reported concentrations have already been corrected for dilution; do not multiply or divide source cutoffs."
+    },
+    {
+      "id": "DOM-174",
+      "title": "Benzodiazepines, Qualitative, Oral Fluid (BNDO)",
+      "publisher": "HNL Lab Medicine",
+      "url": "https://www.hnl.com/test-directory/benzodiazepines-qualitative-oral-fluid/bndo",
+      "published": null,
+      "checked": "2026-10-14",
+      "note": "Clinical LC-MS/MS with Intercept i2he device and explicitly dilution-corrected reported results. Class-level qualitative threshold 3 ng/mL; list of aliases mentions 7-aminoclonazepam but does not establish its individual definitive quantitative cutoff. Therefore not adopted for catalog OF-7ACLO."
+    }
+  ],
+  "drugClasses": [
+    {
+      "code": "OPIATE",
+      "name": "Opiates and semisynthetic opioids"
+    },
+    {
+      "code": "FENTANYL",
+      "name": "Fentanyl"
+    },
+    {
+      "code": "METHADONE",
+      "name": "Methadone"
+    },
+    {
+      "code": "BUPRENORPHINE",
+      "name": "Buprenorphine"
+    },
+    {
+      "code": "OPIOID-DUAL",
+      "name": "Tramadol and tapentadol"
+    },
+    {
+      "code": "BENZO",
+      "name": "Benzodiazepines"
+    },
+    {
+      "code": "AMPHET",
+      "name": "Amphetamine-type stimulants"
+    },
+    {
+      "code": "COCAINE",
+      "name": "Cocaine"
+    },
+    {
+      "code": "CANNABINOID",
+      "name": "Cannabinoids"
+    },
+    {
+      "code": "BARBITURATE",
+      "name": "Barbiturates"
+    },
+    {
+      "code": "DISSOCIATIVE",
+      "name": "Dissociative anesthetics"
+    },
+    {
+      "code": "ALCOHOL-MARKER",
+      "name": "Alcohol biomarkers"
+    },
+    {
+      "code": "MUSCLE-RELAXANT",
+      "name": "Carisoprodol and meprobamate"
+    },
+    {
+      "code": "GABAPENTINOID",
+      "name": "Gabapentinoids"
+    }
+  ],
+  "specimenTypes": [
+    {
+      "code": "UR",
+      "name": "Urine",
+      "sources": [
+        "DOM-122",
+        "DOM-117"
+      ]
+    },
+    {
+      "code": "OF",
+      "name": "Oral fluid",
+      "sources": [
+        "DOM-118",
+        "DOM-024"
+      ]
+    }
+  ],
+  "analytes": [
+    {
+      "code": "UR-AMP-IA",
+      "name": "Amphetamines, immunoassay",
+      "drugClass": "AMPHET",
+      "loinc": {
+        "code": "3349-8",
+        "displayName": "Amphetamines [Presence] in Urine"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-123",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-BAR-IA",
+      "name": "Barbiturates, immunoassay",
+      "drugClass": "BARBITURATE",
+      "loinc": {
+        "code": "3377-9",
+        "displayName": "Barbiturates [Presence] in Urine"
+      },
+      "sources": [
+        "DOM-123",
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-BZO-IA",
+      "name": "Benzodiazepines, immunoassay",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "3390-2",
+        "displayName": "Benzodiazepines [Presence] in Urine"
+      },
+      "sources": [
+        "DOM-123",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-BUP-IA",
+      "name": "Buprenorphine, immunoassay",
+      "drugClass": "BUPRENORPHINE",
+      "loinc": {
+        "code": "3414-0",
+        "displayName": "Buprenorphine [Presence] in Urine"
+      },
+      "sources": [
+        "DOM-124",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-THC-IA",
+      "name": "Cannabinoids (THC-COOH), immunoassay",
+      "drugClass": "CANNABINOID",
+      "loinc": {
+        "code": "113858-5",
+        "displayName": "Cannabinoids [Presence] in Urine by Immunoassay"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-123",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-COC-IA",
+      "name": "Cocaine metabolite (benzoylecgonine), immunoassay",
+      "drugClass": "COCAINE",
+      "loinc": {
+        "code": "3393-6",
+        "displayName": "Benzoylecgonine [Presence] in Urine"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-123",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-MTD-IA",
+      "name": "Methadone, immunoassay",
+      "drugClass": "METHADONE",
+      "loinc": {
+        "code": "113817-1",
+        "displayName": "Methadone [Presence] in Urine by Immunoassay"
+      },
+      "sources": [
+        "DOM-123",
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-EDDP-IA",
+      "name": "Methadone metabolite (EDDP), immunoassay",
+      "drugClass": "METHADONE",
+      "loinc": {
+        "code": "41858-2",
+        "displayName": "2-Ethylidene-1,5-Dimethyl-3,3-Diphenylpyrrolidine (EDDP) [Presence] in Urine"
+      },
+      "sources": [
+        "DOM-124",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-FEN-IA",
+      "name": "Fentanyl, immunoassay",
+      "drugClass": "FENTANYL",
+      "loinc": {
+        "code": "114025-0",
+        "displayName": "fentaNYL [Presence] in Urine by Immunoassay"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-OPI-IA",
+      "name": "Opiates, immunoassay",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "113684-5",
+        "displayName": "Opiates [Presence] in Urine by Immunoassay"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-123",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-OXY-IA",
+      "name": "Oxycodone, immunoassay",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "113659-7",
+        "displayName": "oxyCODONE [Presence] in Urine by Immunoassay"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-6AM-IA",
+      "name": "6-Acetylmorphine, immunoassay",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "114209-0",
+        "displayName": "6-Monoacetylmorphine (6-MAM) [Presence] in Urine by Immunoassay"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-PCP-IA",
+      "name": "Phencyclidine, immunoassay",
+      "drugClass": "DISSOCIATIVE",
+      "loinc": {
+        "code": "113587-0",
+        "displayName": "Phencyclidine [Presence] in Urine by Immunoassay"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-TRA-IA",
+      "name": "Tramadol, immunoassay",
+      "drugClass": "OPIOID-DUAL",
+      "loinc": {
+        "code": "113519-3",
+        "displayName": "traMADol [Presence] in Urine by Immunoassay"
+      },
+      "sources": [
+        "DOM-124",
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-MDMA-IA",
+      "name": "MDMA, immunoassay",
+      "drugClass": "AMPHET",
+      "loinc": {
+        "code": "113336-2",
+        "displayName": "Methylenedioxymethamphetamine [Presence] in Urine by Immunoassay"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-ETG-IA",
+      "name": "Ethyl glucuronide, immunoassay",
+      "drugClass": "ALCOHOL-MARKER",
+      "loinc": {
+        "code": "55349-5",
+        "displayName": "Ethyl glucuronide [Presence] in Urine"
+      },
+      "sources": [
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-AMP-IA",
+      "name": "Amphetamines, immunoassay",
+      "drugClass": "AMPHET",
+      "loinc": {
+        "code": "40799-9",
+        "displayName": "Amphetamines [Presence] in Saliva (oral fluid) by Screen method"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-THC-IA",
+      "name": "Cannabinoids (THC), immunoassay",
+      "drugClass": "CANNABINOID",
+      "loinc": {
+        "code": "113884-1",
+        "displayName": "Cannabinoids [Presence] in Saliva (oral fluid) by Immunoassay"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-123",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-COC-IA",
+      "name": "Cocaine and benzoylecgonine, immunoassay",
+      "drugClass": "COCAINE",
+      "loinc": {
+        "code": "40802-1",
+        "displayName": "Cocaine [Presence] in Saliva (oral fluid) by Screen method"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-MTD-IA",
+      "name": "Methadone, immunoassay",
+      "drugClass": "METHADONE",
+      "loinc": {
+        "code": "113831-2",
+        "displayName": "Methadone [Presence] in Saliva (oral fluid) by Immunoassay"
+      },
+      "sources": [
+        "DOM-124",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-FEN-IA",
+      "name": "Fentanyl, immunoassay",
+      "drugClass": "FENTANYL",
+      "loinc": {
+        "code": "114031-8",
+        "displayName": "fentaNYL [Presence] in Saliva (oral fluid) by Immunoassay"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-OPI-IA",
+      "name": "Opiates, immunoassay",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "113693-6",
+        "displayName": "Opiates [Presence] in Saliva (oral fluid) by Immunoassay"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-123",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-OXY-IA",
+      "name": "Oxycodone, immunoassay",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "113662-1",
+        "displayName": "oxyCODONE [Presence] in Saliva (oral fluid) by Immunoassay"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-6AM-IA",
+      "name": "6-Acetylmorphine, immunoassay",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "87816-5",
+        "displayName": "6-Monoacetylmorphine (6-MAM) [Presence] in Saliva (oral fluid) by Screen method"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-PCP-IA",
+      "name": "Phencyclidine, immunoassay",
+      "drugClass": "DISSOCIATIVE",
+      "loinc": {
+        "code": "113600-1",
+        "displayName": "Phencyclidine [Presence] in Saliva (oral fluid) by Immunoassay"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-MDMA-IA",
+      "name": "MDMA, immunoassay",
+      "drugClass": "AMPHET",
+      "loinc": {
+        "code": "114262-9",
+        "displayName": "Methylenedioxymethamphetamine [Presence] in Saliva (oral fluid) by Immunoassay"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-MOR",
+      "name": "Morphine",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "113749-6",
+        "displayName": "Morphine [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-COD",
+      "name": "Codeine",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "114122-5",
+        "displayName": "Codeine [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-6AM",
+      "name": "6-Acetylmorphine",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "114212-4",
+        "displayName": "6-Monoacetylmorphine (6-MAM) [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-DHC",
+      "name": "Dihydrocodeine",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "113395-8",
+        "displayName": "Dihydrocodeine [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-HYC",
+      "name": "Hydrocodone",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "114002-9",
+        "displayName": "HYDROcodone [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-NHYC",
+      "name": "Norhydrocodone",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "113273-7",
+        "displayName": "Norhydrocodone [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-HYM",
+      "name": "Hydromorphone",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "9835-0",
+        "displayName": "HYDROmorphone [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-OXYC",
+      "name": "Oxycodone",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "113671-2",
+        "displayName": "oxyCODONE [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-NOXYC",
+      "name": "Noroxycodone",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "113254-7",
+        "displayName": "Noroxycodone [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-OXYM",
+      "name": "Oxymorphone",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "113647-2",
+        "displayName": "oxyMORphone [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-FENT",
+      "name": "Fentanyl",
+      "drugClass": "FENTANYL",
+      "loinc": {
+        "code": "114035-9",
+        "displayName": "fentaNYL [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-NFENT",
+      "name": "Norfentanyl",
+      "drugClass": "FENTANYL",
+      "loinc": {
+        "code": "113283-6",
+        "displayName": "Norfentanyl [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-MTD",
+      "name": "Methadone",
+      "drugClass": "METHADONE",
+      "loinc": {
+        "code": "113843-7",
+        "displayName": "Methadone [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-EDDP",
+      "name": "EDDP (methadone metabolite)",
+      "drugClass": "METHADONE",
+      "loinc": {
+        "code": "50542-0",
+        "displayName": "2-Ethylidene-1,5-Dimethyl-3,3-Diphenylpyrrolidine (EDDP) [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-121",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-BUP",
+      "name": "Buprenorphine",
+      "drugClass": "BUPRENORPHINE",
+      "loinc": {
+        "code": "3415-7",
+        "displayName": "Buprenorphine [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-NBUP",
+      "name": "Norbuprenorphine",
+      "drugClass": "BUPRENORPHINE",
+      "loinc": {
+        "code": "113730-6",
+        "displayName": "Norbuprenorphine [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-TRA",
+      "name": "Tramadol",
+      "drugClass": "OPIOID-DUAL",
+      "loinc": {
+        "code": "113532-6",
+        "displayName": "traMADol [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-ODT",
+      "name": "O-Desmethyltramadol",
+      "drugClass": "OPIOID-DUAL",
+      "loinc": {
+        "code": "114438-5",
+        "displayName": "O-nortramadol [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-121",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-TAP",
+      "name": "Tapentadol",
+      "drugClass": "OPIOID-DUAL",
+      "loinc": {
+        "code": "65807-0",
+        "displayName": "Tapentadol [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-NTAP",
+      "name": "N-Desmethyltapentadol",
+      "drugClass": "OPIOID-DUAL",
+      "loinc": {
+        "code": "65808-8",
+        "displayName": "Nortapentadol [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-121",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-ALP",
+      "name": "Alprazolam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "3313-4",
+        "displayName": "ALPRAZolam [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-AOHALP",
+      "name": "alpha-Hydroxyalprazolam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "113993-0",
+        "displayName": "Hydroxyalprazolam [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-CLO",
+      "name": "Clonazepam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "114141-5",
+        "displayName": "clonazePAM [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-7ACLO",
+      "name": "7-Aminoclonazepam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "28073-5",
+        "displayName": "7-Aminoclonazepam [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-DIAZ",
+      "name": "Diazepam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "114096-1",
+        "displayName": "diazePAM [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-NORD",
+      "name": "Nordiazepam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "113308-1",
+        "displayName": "Nordiazepam [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-OXAZ",
+      "name": "Oxazepam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "3887-7",
+        "displayName": "Oxazepam [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-TEMA",
+      "name": "Temazepam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "113546-6",
+        "displayName": "Temazepam [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-LORA",
+      "name": "Lorazepam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "113885-8",
+        "displayName": "LORazepam [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-AMP",
+      "name": "Amphetamine",
+      "drugClass": "AMPHET",
+      "loinc": {
+        "code": "19346-6",
+        "displayName": "Amphetamine [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-MAMP",
+      "name": "Methamphetamine",
+      "drugClass": "AMPHET",
+      "loinc": {
+        "code": "113796-7",
+        "displayName": "Methamphetamine [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-MDMA",
+      "name": "MDMA (methylenedioxymethamphetamine)",
+      "drugClass": "AMPHET",
+      "loinc": {
+        "code": "114266-0",
+        "displayName": "Methylenedioxymethamphetamine [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-MDA",
+      "name": "MDA (methylenedioxyamphetamine)",
+      "drugClass": "AMPHET",
+      "loinc": {
+        "code": "113764-5",
+        "displayName": "Methylenedioxyamphetamine [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-MDEA",
+      "name": "MDEA (methylenedioxyethylamphetamine)",
+      "drugClass": "AMPHET",
+      "loinc": {
+        "code": "114283-5",
+        "displayName": "Methylenedioxyethylamphetamine [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-BZE",
+      "name": "Benzoylecgonine",
+      "drugClass": "COCAINE",
+      "loinc": {
+        "code": "3394-4",
+        "displayName": "Benzoylecgonine [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-COC",
+      "name": "Cocaine",
+      "drugClass": "COCAINE",
+      "loinc": {
+        "code": "3398-5",
+        "displayName": "Cocaine [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-THCA",
+      "name": "THC-COOH (11-nor-9-carboxy-delta-9-THC)",
+      "drugClass": "CANNABINOID",
+      "loinc": {
+        "code": "114182-9",
+        "displayName": "Carboxy tetrahydrocannabinol [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-BUTA",
+      "name": "Butalbital",
+      "drugClass": "BARBITURATE",
+      "loinc": {
+        "code": "11071-8",
+        "displayName": "Butalbital [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-PHENO",
+      "name": "Phenobarbital",
+      "drugClass": "BARBITURATE",
+      "loinc": {
+        "code": "114376-7",
+        "displayName": "PHENobarbital [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-PENTO",
+      "name": "Pentobarbital",
+      "drugClass": "BARBITURATE",
+      "loinc": {
+        "code": "113625-8",
+        "displayName": "PENTobarbital [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-SECO",
+      "name": "Secobarbital",
+      "drugClass": "BARBITURATE",
+      "loinc": {
+        "code": "19695-6",
+        "displayName": "Secobarbital [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-AMO",
+      "name": "Amobarbital",
+      "drugClass": "BARBITURATE",
+      "loinc": {
+        "code": "11230-0",
+        "displayName": "Amobarbital [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-PCP",
+      "name": "Phencyclidine",
+      "drugClass": "DISSOCIATIVE",
+      "loinc": {
+        "code": "113615-9",
+        "displayName": "Phencyclidine [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-KET",
+      "name": "Ketamine",
+      "drugClass": "DISSOCIATIVE",
+      "loinc": {
+        "code": "113913-8",
+        "displayName": "Ketamine [Mass/volume] in Urine by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-ETG",
+      "name": "Ethyl glucuronide",
+      "drugClass": "ALCOHOL-MARKER",
+      "loinc": {
+        "code": "45324-1",
+        "displayName": "Ethyl glucuronide [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-121",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-ETS",
+      "name": "Ethyl sulfate",
+      "drugClass": "ALCOHOL-MARKER",
+      "loinc": {
+        "code": "60676-4",
+        "displayName": "Ethyl sulfate [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-121",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-CARI",
+      "name": "Carisoprodol",
+      "drugClass": "MUSCLE-RELAXANT",
+      "loinc": {
+        "code": "10979-3",
+        "displayName": "Carisoprodol [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-MEPRO",
+      "name": "Meprobamate",
+      "drugClass": "MUSCLE-RELAXANT",
+      "loinc": {
+        "code": "3755-6",
+        "displayName": "Meprobamate [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-GABA",
+      "name": "Gabapentin",
+      "drugClass": "GABAPENTINOID",
+      "loinc": {
+        "code": "59680-9",
+        "displayName": "Gabapentin [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-PREG",
+      "name": "Pregabalin",
+      "drugClass": "GABAPENTINOID",
+      "loinc": {
+        "code": "105953-4",
+        "displayName": "Pregabalin [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-MOR",
+      "name": "Morphine",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "113752-0",
+        "displayName": "Morphine [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-COD",
+      "name": "Codeine",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "114127-4",
+        "displayName": "Codeine [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-6AM",
+      "name": "6-Acetylmorphine",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "114214-0",
+        "displayName": "6-Monoacetylmorphine (6-MAM) [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-HYC",
+      "name": "Hydrocodone",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "114008-6",
+        "displayName": "HYDROcodone [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-HYM",
+      "name": "Hydromorphone",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "72733-9",
+        "displayName": "HYDROmorphone [Mass/volume] in Saliva (oral fluid) by Confirmatory method"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-OXYC",
+      "name": "Oxycodone",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "113677-9",
+        "displayName": "oxyCODONE [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-OXYM",
+      "name": "Oxymorphone",
+      "drugClass": "OPIATE",
+      "loinc": {
+        "code": "113653-0",
+        "displayName": "oxyMORphone [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-FENT",
+      "name": "Fentanyl",
+      "drugClass": "FENTANYL",
+      "loinc": {
+        "code": "114041-7",
+        "displayName": "fentaNYL [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-NFENT",
+      "name": "Norfentanyl",
+      "drugClass": "FENTANYL",
+      "loinc": {
+        "code": "113289-3",
+        "displayName": "Norfentanyl [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-125",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-MTD",
+      "name": "Methadone",
+      "drugClass": "METHADONE",
+      "loinc": {
+        "code": "113853-6",
+        "displayName": "Methadone [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-125",
+        "DOM-126",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-EDDP",
+      "name": "EDDP (methadone metabolite)",
+      "drugClass": "METHADONE",
+      "loinc": {
+        "code": "72385-8",
+        "displayName": "2-Ethylidene-1,5-Dimethyl-3,3-Diphenylpyrrolidine (EDDP) [Mass/volume] in Saliva (oral fluid) by Confirmatory method"
+      },
+      "sources": [
+        "DOM-126",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-BUP",
+      "name": "Buprenorphine",
+      "drugClass": "BUPRENORPHINE",
+      "loinc": {
+        "code": "72762-8",
+        "displayName": "Buprenorphine [Mass/volume] in Saliva (oral fluid) by Confirmatory method"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-125",
+        "DOM-126",
+        "DOM-127",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-NBUP",
+      "name": "Norbuprenorphine",
+      "drugClass": "BUPRENORPHINE",
+      "loinc": {
+        "code": "113735-5",
+        "displayName": "Norbuprenorphine [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-125",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-TRA",
+      "name": "Tramadol",
+      "drugClass": "OPIOID-DUAL",
+      "loinc": {
+        "code": "113535-9",
+        "displayName": "traMADol [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-127",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-TAP",
+      "name": "Tapentadol",
+      "drugClass": "OPIOID-DUAL",
+      "loinc": {
+        "code": "87819-9",
+        "displayName": "Tapentadol [Mass/volume] in Saliva (oral fluid) by Confirmatory method"
+      },
+      "sources": [
+        "DOM-127",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-ALP",
+      "name": "Alprazolam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "72381-7",
+        "displayName": "ALPRAZolam [Mass/volume] in Saliva (oral fluid)"
+      },
+      "sources": [
+        "DOM-024",
+        "DOM-125",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-CLO",
+      "name": "Clonazepam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "114149-8",
+        "displayName": "clonazePAM [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-125",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-7ACLO",
+      "name": "7-Aminoclonazepam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "108282-5",
+        "displayName": "7-Aminoclonazepam [Mass/volume] in Saliva (oral fluid)"
+      },
+      "sources": [
+        "DOM-126",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-DIAZ",
+      "name": "Diazepam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "114101-9",
+        "displayName": "diazePAM [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-126",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-NORD",
+      "name": "Nordiazepam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "113312-3",
+        "displayName": "Nordiazepam [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-126",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-OXAZ",
+      "name": "Oxazepam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "72378-3",
+        "displayName": "Oxazepam [Mass/volume] in Saliva (oral fluid)"
+      },
+      "sources": [
+        "DOM-125",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-TEMA",
+      "name": "Temazepam",
+      "drugClass": "BENZO",
+      "loinc": {
+        "code": "113550-8",
+        "displayName": "Temazepam [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-126",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-AMP",
+      "name": "Amphetamine",
+      "drugClass": "AMPHET",
+      "loinc": {
+        "code": "72758-6",
+        "displayName": "Amphetamine [Mass/volume] in Saliva (oral fluid) by Confirmatory method"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-MAMP",
+      "name": "Methamphetamine",
+      "drugClass": "AMPHET",
+      "loinc": {
+        "code": "113804-9",
+        "displayName": "Methamphetamine [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-MDMA",
+      "name": "MDMA (methylenedioxymethamphetamine)",
+      "drugClass": "AMPHET",
+      "loinc": {
+        "code": "114271-0",
+        "displayName": "Methylenedioxymethamphetamine [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-MDA",
+      "name": "MDA (methylenedioxyamphetamine)",
+      "drugClass": "AMPHET",
+      "loinc": {
+        "code": "113769-4",
+        "displayName": "Methylenedioxyamphetamine [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-COC",
+      "name": "Cocaine",
+      "drugClass": "COCAINE",
+      "loinc": {
+        "code": "72737-0",
+        "displayName": "Cocaine [Mass/volume] in Saliva (oral fluid) by Confirmatory method"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-BZE",
+      "name": "Benzoylecgonine",
+      "drugClass": "COCAINE",
+      "loinc": {
+        "code": "57301-4",
+        "displayName": "Benzoylecgonine [Mass/volume] in Saliva (oral fluid)"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-THC",
+      "name": "Delta-9-tetrahydrocannabinol (THC)",
+      "drugClass": "CANNABINOID",
+      "loinc": {
+        "code": "113237-2",
+        "displayName": "Tetrahydrocannabinol [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "OF-PCP",
+      "name": "Phencyclidine",
+      "drugClass": "DISSOCIATIVE",
+      "loinc": {
+        "code": "113618-3",
+        "displayName": "Phencyclidine [Mass/volume] in Saliva (oral fluid) by Mass Spectrometry"
+      },
+      "sources": [
+        "DOM-115",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-CREAT",
+      "name": "Creatinine",
+      "drugClass": null,
+      "loinc": {
+        "code": "2161-8",
+        "displayName": "Creatinine [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-117",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-SG",
+      "name": "Specific gravity",
+      "drugClass": null,
+      "loinc": {
+        "code": "2965-2",
+        "displayName": "Specific gravity of Urine"
+      },
+      "sources": [
+        "DOM-117",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-PH",
+      "name": "pH",
+      "drugClass": null,
+      "loinc": {
+        "code": "2756-5",
+        "displayName": "pH of Urine"
+      },
+      "sources": [
+        "DOM-117",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-OXID",
+      "name": "Oxidants",
+      "drugClass": null,
+      "loinc": {
+        "code": "97204-2",
+        "displayName": "Oxidants [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-117",
+        "DOM-024",
+        "DOM-119"
+      ]
+    },
+    {
+      "code": "UR-NITRITE",
+      "name": "Nitrite",
+      "drugClass": null,
+      "loinc": {
+        "code": "2657-5",
+        "displayName": "Nitrite [Mass/volume] in Urine"
+      },
+      "sources": [
+        "DOM-117",
+        "DOM-024",
+        "DOM-119"
+      ]
+    }
+  ],
+  "methods": [
+    {
+      "code": "UR-IA-SCREEN",
+      "name": "Urine drug screen, immunoassay",
+      "specimenType": "UR",
+      "certainty": "presumptive",
+      "outputScale": "qualitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-AMP-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "500",
+            "source": "DOM-143",
+            "label": "Published clinical urine immunoassay cutoff (Mayo); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-BAR-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "200",
+            "source": "DOM-143",
+            "label": "Published clinical urine immunoassay cutoff (Mayo); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-BZO-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "100",
+            "source": "DOM-143",
+            "label": "Published clinical urine immunoassay cutoff (Mayo); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-BUP-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "5",
+            "source": "DOM-142",
+            "label": "Published clinical urine immunoassay cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-THC-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "50",
+            "source": "DOM-143",
+            "label": "Published clinical urine immunoassay cutoff (Mayo); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-COC-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "150",
+            "source": "DOM-143",
+            "label": "Published clinical urine immunoassay cutoff (Mayo); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-MTD-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "150",
+            "source": "DOM-142",
+            "label": "Published clinical urine immunoassay cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-EDDP-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "100",
+            "source": "DOM-145",
+            "label": "Published clinical urine EDDP immunoassay cutoff (Michigan MLabs); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-FEN-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "1",
+            "source": "DOM-142",
+            "label": "Published clinical urine immunoassay cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-OPI-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "300",
+            "source": "DOM-143",
+            "label": "Published clinical urine immunoassay cutoff (Mayo); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-OXY-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "100",
+            "source": "DOM-142",
+            "label": "Published clinical urine immunoassay cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-6AM-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "10",
+            "source": "DOM-146",
+            "label": "Published urine 6-AM immunoassay cutoff (Roche IVD); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-PCP-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-143",
+            "label": "Published clinical urine immunoassay cutoff (Mayo); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-TRA-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "100",
+            "source": "DOM-142",
+            "label": "Published clinical urine immunoassay cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-MDMA-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "500",
+            "source": "DOM-142",
+            "label": "Published clinical urine immunoassay cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-ETG-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "500",
+            "source": "DOM-142",
+            "label": "Published clinical urine immunoassay cutoff (ARUP); laboratory review required"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-115",
+        "DOM-123",
+        "DOM-024",
+        "DOM-143",
+        "DOM-142",
+        "DOM-145",
+        "DOM-146"
+      ]
+    },
+    {
+      "code": "OF-IA-SCREEN",
+      "name": "Oral fluid drug screen, immunoassay",
+      "specimenType": "OF",
+      "certainty": "presumptive",
+      "outputScale": "qualitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "OF-AMP-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "20",
+            "source": "DOM-170",
+            "label": "Clinical immunoassay example (Mayo, Quantisal; amphetamine target); verify dilution, cross-reactivity and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-THC-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "4",
+            "source": "DOM-171",
+            "label": "Prescription enzyme immunoassay example (LZI); neat oral fluid in LZI THC Collector; validate locally"
+          }
+        },
+        {
+          "analyte": "OF-COC-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "20",
+            "source": "DOM-172",
+            "label": "Prescription lateral-flow example (OralTox collector); cocaine/BZE target; validate local assay and collection basis"
+          }
+        },
+        {
+          "analyte": "OF-MTD-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "10",
+            "source": "DOM-170",
+            "label": "Clinical immunoassay example (Mayo, Quantisal; methadone target); verify dilution, cross-reactivity and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-FEN-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "1",
+            "source": "DOM-170",
+            "label": "Clinical immunoassay example (Mayo, Quantisal; fentanyl target); verify dilution, cross-reactivity and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-OPI-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "10",
+            "source": "DOM-170",
+            "label": "Clinical immunoassay example (Mayo, Quantisal; morphine target); verify dilution, cross-reactivity and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-OXY-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "10",
+            "source": "DOM-170",
+            "label": "Clinical immunoassay example (Mayo, Quantisal; oxycodone target); verify dilution, cross-reactivity and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-6AM-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "5",
+            "source": "DOM-170",
+            "label": "Clinical immunoassay example (Mayo, Quantisal; 6-acetylmorphine target); verify dilution, cross-reactivity and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-PCP-IA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "5",
+            "source": "DOM-170",
+            "label": "Clinical immunoassay example (Mayo, Quantisal; PCP target); verify dilution, cross-reactivity and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-MDMA-IA",
+          "unit": "ng/mL",
+          "cutoff": null
+        }
+      ],
+      "sources": [
+        "DOM-115",
+        "DOM-118",
+        "DOM-170",
+        "DOM-171",
+        "DOM-172"
+      ]
+    },
+    {
+      "code": "UR-VALIDITY",
+      "name": "Urine specimen validity",
+      "specimenType": "UR",
+      "certainty": "presumptive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-CREAT",
+          "unit": "mg/dL",
+          "cutoff": null
+        },
+        {
+          "analyte": "UR-SG",
+          "unit": "1",
+          "cutoff": null
+        },
+        {
+          "analyte": "UR-PH",
+          "unit": "[pH]",
+          "cutoff": null
+        },
+        {
+          "analyte": "UR-OXID",
+          "unit": "ug/mL",
+          "cutoff": null
+        },
+        {
+          "analyte": "UR-NITRITE",
+          "unit": "ug/mL",
+          "cutoff": null
+        }
+      ],
+      "sources": [
+        "DOM-117",
+        "DOM-024"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-OPIATE",
+      "name": "Urine opiates and semisynthetic opioids, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-MOR",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-148",
+            "label": "Published clinical urine LC-MS/MS cutoff (Mayo; total unconjugated + conjugated); verify preparation"
+          }
+        },
+        {
+          "analyte": "UR-COD",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-148",
+            "label": "Published clinical urine LC-MS/MS cutoff (Mayo; total unconjugated + conjugated); verify preparation"
+          }
+        },
+        {
+          "analyte": "UR-6AM",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "10",
+            "source": "DOM-147",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP; free 6-AM); verify preparation"
+          }
+        },
+        {
+          "analyte": "UR-DHC",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-148",
+            "label": "Published clinical urine LC-MS/MS cutoff (Mayo; total unconjugated + conjugated); verify preparation"
+          }
+        },
+        {
+          "analyte": "UR-HYC",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-148",
+            "label": "Published clinical urine LC-MS/MS cutoff (Mayo; total unconjugated + conjugated); verify preparation"
+          }
+        },
+        {
+          "analyte": "UR-NHYC",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-148",
+            "label": "Published clinical urine LC-MS/MS cutoff (Mayo; total unconjugated + conjugated); verify preparation"
+          }
+        },
+        {
+          "analyte": "UR-HYM",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-148",
+            "label": "Published clinical urine LC-MS/MS cutoff (Mayo; total unconjugated + conjugated); verify preparation"
+          }
+        },
+        {
+          "analyte": "UR-OXYC",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-148",
+            "label": "Published clinical urine LC-MS/MS cutoff (Mayo; total unconjugated + conjugated); verify preparation"
+          }
+        },
+        {
+          "analyte": "UR-NOXYC",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-148",
+            "label": "Published clinical urine LC-MS/MS cutoff (Mayo; total unconjugated + conjugated); verify preparation"
+          }
+        },
+        {
+          "analyte": "UR-OXYM",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-148",
+            "label": "Published clinical urine LC-MS/MS cutoff (Mayo; total unconjugated + conjugated); verify preparation"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-115",
+        "DOM-148",
+        "DOM-147"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-FENTANYL",
+      "name": "Urine fentanyl, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-FENT",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "1",
+            "source": "DOM-150",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-NFENT",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "2",
+            "source": "DOM-150",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-115",
+        "DOM-150"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-METHADONE",
+      "name": "Urine methadone, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-MTD",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "100",
+            "source": "DOM-152",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-EDDP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "100",
+            "source": "DOM-152",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-152"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-BUPRENORPHINE",
+      "name": "Urine buprenorphine, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-BUP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "2",
+            "source": "DOM-153",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP; unconjugated analyte, glucuronides separate); verify preparation"
+          }
+        },
+        {
+          "analyte": "UR-NBUP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "2",
+            "source": "DOM-153",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP; unconjugated analyte, glucuronides separate); verify preparation"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-153"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-OPIOID-DUAL",
+      "name": "Urine tramadol and tapentadol, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-TRA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-154",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-ODT",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-154",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-TAP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "50",
+            "source": "DOM-149",
+            "label": "Published clinical urine LC-MS/MS cutoff (Saint Francis); verify preparation"
+          }
+        },
+        {
+          "analyte": "UR-NTAP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "50",
+            "source": "DOM-149",
+            "label": "Published clinical urine LC-MS/MS cutoff (Saint Francis); verify preparation"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-154",
+        "DOM-149"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-BENZO",
+      "name": "Urine benzodiazepines, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-ALP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "5",
+            "source": "DOM-155",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); verify hydrolysis and preparation"
+          }
+        },
+        {
+          "analyte": "UR-AOHALP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "5",
+            "source": "DOM-155",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); verify hydrolysis and preparation"
+          }
+        },
+        {
+          "analyte": "UR-CLO",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "5",
+            "source": "DOM-155",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); verify hydrolysis and preparation"
+          }
+        },
+        {
+          "analyte": "UR-7ACLO",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "5",
+            "source": "DOM-155",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); verify hydrolysis and preparation"
+          }
+        },
+        {
+          "analyte": "UR-DIAZ",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "20",
+            "source": "DOM-155",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); verify hydrolysis and preparation"
+          }
+        },
+        {
+          "analyte": "UR-NORD",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "20",
+            "source": "DOM-155",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); verify hydrolysis and preparation"
+          }
+        },
+        {
+          "analyte": "UR-OXAZ",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "20",
+            "source": "DOM-155",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); verify hydrolysis and preparation"
+          }
+        },
+        {
+          "analyte": "UR-TEMA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "20",
+            "source": "DOM-155",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); verify hydrolysis and preparation"
+          }
+        },
+        {
+          "analyte": "UR-LORA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "20",
+            "source": "DOM-155",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); verify hydrolysis and preparation"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-155"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-AMPHET",
+      "name": "Urine amphetamine-type stimulants, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-AMP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "50",
+            "source": "DOM-157",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-MAMP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "200",
+            "source": "DOM-157",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-MDMA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "200",
+            "source": "DOM-157",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-MDA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "200",
+            "source": "DOM-157",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-MDEA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "200",
+            "source": "DOM-157",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-115",
+        "DOM-157"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-COCAINE",
+      "name": "Urine cocaine, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-BZE",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "50",
+            "source": "DOM-159",
+            "label": "Published clinical urine LC-MS/MS benzoylecgonine cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-COC",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-160",
+            "label": "Published clinical urine LC-MS/MS parent-cocaine cutoff (Ohio State); laboratory review required"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-115",
+        "DOM-159",
+        "DOM-160"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-CANNABINOID",
+      "name": "Urine cannabinoids, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-THCA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "15",
+            "source": "DOM-161",
+            "label": "Published clinical urine LC-MS/MS THC-COOH cutoff (ARUP); verify hydrolysis/preparation"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-115",
+        "DOM-161"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-BARBITURATE",
+      "name": "Urine barbiturates, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-BUTA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "50",
+            "source": "DOM-162",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-PHENO",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "50",
+            "source": "DOM-162",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-PENTO",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "50",
+            "source": "DOM-162",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-SECO",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "100",
+            "source": "DOM-149",
+            "label": "Published clinical urine LC-MS/MS secobarbital cutoff (Saint Francis); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-AMO",
+          "unit": "ng/mL",
+          "cutoff": null
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-162",
+        "DOM-149"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-DISSOCIATIVE",
+      "name": "Urine dissociative anesthetics, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-PCP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "25",
+            "source": "DOM-149",
+            "label": "Published clinical urine LC-MS/MS cutoff (Saint Francis); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-KET",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "50",
+            "source": "DOM-149",
+            "label": "Published clinical urine LC-MS/MS cutoff (Saint Francis); laboratory review required"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-115",
+        "DOM-149"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-ALCOHOL-MARKER",
+      "name": "Urine alcohol biomarkers, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-ETG",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "250",
+            "source": "DOM-163",
+            "label": "Published clinical urine LC-MS/MS alcohol biomarker cutoff (Mayo); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-ETS",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "100",
+            "source": "DOM-163",
+            "label": "Published clinical urine LC-MS/MS alcohol biomarker cutoff (Mayo); laboratory review required"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-163"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-MUSCLE-RELAXANT",
+      "name": "Urine carisoprodol and meprobamate, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-CARI",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "100",
+            "source": "DOM-165",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-MEPRO",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "100",
+            "source": "DOM-165",
+            "label": "Published clinical urine LC-MS/MS cutoff (ARUP); laboratory review required"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-165"
+      ]
+    },
+    {
+      "code": "UR-LCMSMS-GABAPENTINOID",
+      "name": "Urine gabapentinoids, LC-MS/MS",
+      "specimenType": "UR",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "UR-GABA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "500",
+            "source": "DOM-149",
+            "label": "Published clinical urine LC-MS/MS cutoff (Saint Francis); laboratory review required"
+          }
+        },
+        {
+          "analyte": "UR-PREG",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "500",
+            "source": "DOM-149",
+            "label": "Published clinical urine LC-MS/MS cutoff (Saint Francis); laboratory review required"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-120",
+        "DOM-149"
+      ]
+    },
+    {
+      "code": "OF-LCMSMS-OPIATE",
+      "name": "Oral fluid opiates and semisynthetic opioids, LC-MS/MS",
+      "specimenType": "OF",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "OF-MOR",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "2.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-COD",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "2.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-6AM",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "1",
+            "source": "DOM-169",
+            "label": "Published clinical LC-MS/MS example (Labcorp MedTox, Quantisal); verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-HYC",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "2.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-HYM",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "2.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-OXYC",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "2.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-OXYM",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "2.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-125",
+        "DOM-126",
+        "DOM-115",
+        "DOM-168",
+        "DOM-169"
+      ]
+    },
+    {
+      "code": "OF-LCMSMS-FENTANYL",
+      "name": "Oral fluid fentanyl, LC-MS/MS",
+      "specimenType": "OF",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "OF-FENT",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "0.1",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-NFENT",
+          "unit": "ng/mL",
+          "cutoff": null
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-125",
+        "DOM-126",
+        "DOM-115",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-LCMSMS-METHADONE",
+      "name": "Oral fluid methadone, LC-MS/MS",
+      "specimenType": "OF",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "OF-MTD",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-EDDP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-125",
+        "DOM-126",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-LCMSMS-BUPRENORPHINE",
+      "name": "Oral fluid buprenorphine, LC-MS/MS",
+      "specimenType": "OF",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "OF-BUP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "0.1",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-NBUP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "0.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-125",
+        "DOM-126",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-LCMSMS-OPIOID-DUAL",
+      "name": "Oral fluid tramadol and tapentadol, LC-MS/MS",
+      "specimenType": "OF",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "OF-TRA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-TAP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-125",
+        "DOM-126",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-LCMSMS-BENZO",
+      "name": "Oral fluid benzodiazepines, LC-MS/MS",
+      "specimenType": "OF",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "OF-ALP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "0.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-CLO",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "0.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-7ACLO",
+          "unit": "ng/mL",
+          "cutoff": null
+        },
+        {
+          "analyte": "OF-DIAZ",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "0.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-NORD",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "0.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-OXAZ",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "0.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-TEMA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "0.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-125",
+        "DOM-126",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-LCMSMS-AMPHET",
+      "name": "Oral fluid amphetamine-type stimulants, LC-MS/MS",
+      "specimenType": "OF",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "OF-AMP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "10",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-MAMP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "10",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-MDMA",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "10",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-MDA",
+          "unit": "ng/mL",
+          "cutoff": null
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-125",
+        "DOM-126",
+        "DOM-115",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-LCMSMS-COCAINE",
+      "name": "Oral fluid cocaine, LC-MS/MS",
+      "specimenType": "OF",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "OF-COC",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        },
+        {
+          "analyte": "OF-BZE",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-125",
+        "DOM-126",
+        "DOM-115",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-LCMSMS-CANNABINOID",
+      "name": "Oral fluid cannabinoids, LC-MS/MS",
+      "specimenType": "OF",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "OF-THC",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "2.5",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-125",
+        "DOM-126",
+        "DOM-115",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-LCMSMS-DISSOCIATIVE",
+      "name": "Oral fluid dissociative anesthetics, LC-MS/MS",
+      "specimenType": "OF",
+      "certainty": "definitive",
+      "outputScale": "quantitative",
+      "thresholdRule": "at_or_above",
+      "thresholdRounding": "before_rounding",
+      "analytes": [
+        {
+          "analyte": "OF-PCP",
+          "unit": "ng/mL",
+          "cutoff": {
+            "value": "10",
+            "source": "DOM-168",
+            "label": "Published clinical LC-MS/MS example (Quest, Quantisal); use source reporting basis; verify collection dilution and validate locally"
+          }
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-125",
+        "DOM-126",
+        "DOM-115",
+        "DOM-168"
+      ]
+    }
+  ],
+  "orderables": [
+    {
+      "code": "UR-OPIATE-DEF",
+      "name": "Opiates and semisynthetic opioids, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-OPIATE",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-MOR",
+            "UR-COD",
+            "UR-6AM",
+            "UR-DHC",
+            "UR-HYC",
+            "UR-NHYC",
+            "UR-HYM",
+            "UR-OXYC",
+            "UR-NOXYC",
+            "UR-OXYM"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-115",
+        "DOM-148",
+        "DOM-147"
+      ]
+    },
+    {
+      "code": "UR-FENTANYL-DEF",
+      "name": "Fentanyl, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-FENTANYL",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-FENT",
+            "UR-NFENT"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-115",
+        "DOM-150"
+      ]
+    },
+    {
+      "code": "UR-METHADONE-DEF",
+      "name": "Methadone, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-METHADONE",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-MTD",
+            "UR-EDDP"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-152"
+      ]
+    },
+    {
+      "code": "UR-BUPRENORPHINE-DEF",
+      "name": "Buprenorphine, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-BUPRENORPHINE",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-BUP",
+            "UR-NBUP"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-153"
+      ]
+    },
+    {
+      "code": "UR-OPIOID-DUAL-DEF",
+      "name": "Tramadol and tapentadol, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-OPIOID-DUAL",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-TRA",
+            "UR-ODT",
+            "UR-TAP",
+            "UR-NTAP"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-154",
+        "DOM-149"
+      ]
+    },
+    {
+      "code": "UR-BENZO-DEF",
+      "name": "Benzodiazepines, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-BENZO",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-ALP",
+            "UR-AOHALP",
+            "UR-CLO",
+            "UR-7ACLO",
+            "UR-DIAZ",
+            "UR-NORD",
+            "UR-OXAZ",
+            "UR-TEMA",
+            "UR-LORA"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-155"
+      ]
+    },
+    {
+      "code": "UR-AMPHET-DEF",
+      "name": "Amphetamine-type stimulants, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-AMPHET",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-AMP",
+            "UR-MAMP",
+            "UR-MDMA",
+            "UR-MDA",
+            "UR-MDEA"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-115",
+        "DOM-157"
+      ]
+    },
+    {
+      "code": "UR-COCAINE-DEF",
+      "name": "Cocaine, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-COCAINE",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-BZE",
+            "UR-COC"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-115",
+        "DOM-159",
+        "DOM-160"
+      ]
+    },
+    {
+      "code": "UR-CANNABINOID-DEF",
+      "name": "Cannabinoids, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-CANNABINOID",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-THCA"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-115",
+        "DOM-161"
+      ]
+    },
+    {
+      "code": "UR-BARBITURATE-DEF",
+      "name": "Barbiturates, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-BARBITURATE",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-BUTA",
+            "UR-PHENO",
+            "UR-PENTO",
+            "UR-SECO",
+            "UR-AMO"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-162",
+        "DOM-149"
+      ]
+    },
+    {
+      "code": "UR-DISSOCIATIVE-DEF",
+      "name": "Dissociative anesthetics, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-DISSOCIATIVE",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-PCP",
+            "UR-KET"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-115",
+        "DOM-149"
+      ]
+    },
+    {
+      "code": "UR-ALCOHOL-MARKER-DEF",
+      "name": "Alcohol biomarkers, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-ALCOHOL-MARKER",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-ETG",
+            "UR-ETS"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-163"
+      ]
+    },
+    {
+      "code": "UR-MUSCLE-RELAXANT-DEF",
+      "name": "Carisoprodol and meprobamate, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-MUSCLE-RELAXANT",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-CARI",
+            "UR-MEPRO"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-165"
+      ]
+    },
+    {
+      "code": "UR-GABAPENTINOID-DEF",
+      "name": "Gabapentinoids, definitive, urine",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-LCMSMS-GABAPENTINOID",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-GABA",
+            "UR-PREG"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-149"
+      ]
+    },
+    {
+      "code": "OF-OPIATE-DEF",
+      "name": "Opiates and semisynthetic opioids, definitive, oral fluid",
+      "kind": "test",
+      "components": [
+        {
+          "method": "OF-LCMSMS-OPIATE",
+          "purpose": "analytical",
+          "analytes": [
+            "OF-MOR",
+            "OF-COD",
+            "OF-6AM",
+            "OF-HYC",
+            "OF-HYM",
+            "OF-OXYC",
+            "OF-OXYM"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-115",
+        "DOM-168",
+        "DOM-169"
+      ]
+    },
+    {
+      "code": "OF-FENTANYL-DEF",
+      "name": "Fentanyl, definitive, oral fluid",
+      "kind": "test",
+      "components": [
+        {
+          "method": "OF-LCMSMS-FENTANYL",
+          "purpose": "analytical",
+          "analytes": [
+            "OF-FENT",
+            "OF-NFENT"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-115",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-METHADONE-DEF",
+      "name": "Methadone, definitive, oral fluid",
+      "kind": "test",
+      "components": [
+        {
+          "method": "OF-LCMSMS-METHADONE",
+          "purpose": "analytical",
+          "analytes": [
+            "OF-MTD",
+            "OF-EDDP"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-BUPRENORPHINE-DEF",
+      "name": "Buprenorphine, definitive, oral fluid",
+      "kind": "test",
+      "components": [
+        {
+          "method": "OF-LCMSMS-BUPRENORPHINE",
+          "purpose": "analytical",
+          "analytes": [
+            "OF-BUP",
+            "OF-NBUP"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-OPIOID-DUAL-DEF",
+      "name": "Tramadol and tapentadol, definitive, oral fluid",
+      "kind": "test",
+      "components": [
+        {
+          "method": "OF-LCMSMS-OPIOID-DUAL",
+          "purpose": "analytical",
+          "analytes": [
+            "OF-TRA",
+            "OF-TAP"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-BENZO-DEF",
+      "name": "Benzodiazepines, definitive, oral fluid",
+      "kind": "test",
+      "components": [
+        {
+          "method": "OF-LCMSMS-BENZO",
+          "purpose": "analytical",
+          "analytes": [
+            "OF-ALP",
+            "OF-CLO",
+            "OF-7ACLO",
+            "OF-DIAZ",
+            "OF-NORD",
+            "OF-OXAZ",
+            "OF-TEMA"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-AMPHET-DEF",
+      "name": "Amphetamine-type stimulants, definitive, oral fluid",
+      "kind": "test",
+      "components": [
+        {
+          "method": "OF-LCMSMS-AMPHET",
+          "purpose": "analytical",
+          "analytes": [
+            "OF-AMP",
+            "OF-MAMP",
+            "OF-MDMA",
+            "OF-MDA"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-115",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-COCAINE-DEF",
+      "name": "Cocaine, definitive, oral fluid",
+      "kind": "test",
+      "components": [
+        {
+          "method": "OF-LCMSMS-COCAINE",
+          "purpose": "analytical",
+          "analytes": [
+            "OF-COC",
+            "OF-BZE"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-115",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-CANNABINOID-DEF",
+      "name": "Cannabinoids, definitive, oral fluid",
+      "kind": "test",
+      "components": [
+        {
+          "method": "OF-LCMSMS-CANNABINOID",
+          "purpose": "analytical",
+          "analytes": [
+            "OF-THC"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-115",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "OF-DISSOCIATIVE-DEF",
+      "name": "Dissociative anesthetics, definitive, oral fluid",
+      "kind": "test",
+      "components": [
+        {
+          "method": "OF-LCMSMS-DISSOCIATIVE",
+          "purpose": "analytical",
+          "analytes": [
+            "OF-PCP"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-115",
+        "DOM-168"
+      ]
+    },
+    {
+      "code": "UR-SCREEN",
+      "name": "Urine drug screen, immunoassay, with specimen validity",
+      "kind": "panel",
+      "components": [
+        {
+          "method": "UR-IA-SCREEN",
+          "purpose": "analytical",
+          "analytes": [
+            "UR-AMP-IA",
+            "UR-BAR-IA",
+            "UR-BZO-IA",
+            "UR-BUP-IA",
+            "UR-THC-IA",
+            "UR-COC-IA",
+            "UR-MTD-IA",
+            "UR-EDDP-IA",
+            "UR-FEN-IA",
+            "UR-OPI-IA",
+            "UR-OXY-IA",
+            "UR-6AM-IA",
+            "UR-PCP-IA",
+            "UR-TRA-IA",
+            "UR-MDMA-IA",
+            "UR-ETG-IA"
+          ]
+        },
+        {
+          "method": "UR-VALIDITY",
+          "purpose": "validity",
+          "analytes": [
+            "UR-CREAT",
+            "UR-SG",
+            "UR-PH",
+            "UR-OXID",
+            "UR-NITRITE"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-117",
+        "DOM-115",
+        "DOM-143",
+        "DOM-142",
+        "DOM-145",
+        "DOM-146"
+      ]
+    },
+    {
+      "code": "OF-SCREEN",
+      "name": "Oral fluid drug screen, immunoassay",
+      "kind": "test",
+      "components": [
+        {
+          "method": "OF-IA-SCREEN",
+          "purpose": "analytical",
+          "analytes": [
+            "OF-AMP-IA",
+            "OF-THC-IA",
+            "OF-COC-IA",
+            "OF-MTD-IA",
+            "OF-FEN-IA",
+            "OF-OPI-IA",
+            "OF-OXY-IA",
+            "OF-6AM-IA",
+            "OF-PCP-IA",
+            "OF-MDMA-IA"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-024",
+        "DOM-118",
+        "DOM-115",
+        "DOM-170",
+        "DOM-171",
+        "DOM-172"
+      ]
+    },
+    {
+      "code": "UR-VALIDITY-TEST",
+      "name": "Urine specimen validity",
+      "kind": "test",
+      "components": [
+        {
+          "method": "UR-VALIDITY",
+          "purpose": "validity",
+          "analytes": [
+            "UR-CREAT",
+            "UR-SG",
+            "UR-PH",
+            "UR-OXID",
+            "UR-NITRITE"
+          ]
+        }
+      ],
+      "sources": [
+        "DOM-117",
+        "DOM-024"
+      ]
+    }
+  ]
+}

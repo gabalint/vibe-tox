@@ -1,0 +1,60 @@
+/* Starter data layout (ui-standards: tokens only, no component internals). */
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.items,
+.subItems {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  padding: 0;
+}
+
+.items {
+  gap: var(--space-3);
+}
+
+.subItems {
+  gap: var(--space-1);
+  padding-left: var(--space-6);
+}
+
+.itemRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+
+.note {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.details {
+  padding-left: var(--space-6);
+}
+
+.details > summary {
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+.removed {
+  text-decoration: line-through;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.value {
+  white-space: nowrap;
+}

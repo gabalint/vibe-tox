@@ -1,0 +1,66 @@
+Vibe Toxicology LIS — original presentation transcript
+
+Video: vibe-tox-overview.mp4. Duration: 2 minutes 1 second.
+Synthetic English narration with soft instrumental music underneath; the music fades out at the end.
+
+About the recording
+This is a recording of the real React user interface with a mocked engine and fictitious synthetic data. The displayed actions and outcomes are simulated for the demonstration; no live clinical operation is shown. The application scenes are labelled “Synthetic demo data · not clinically validated.” This recording does not establish clinical validation or production readiness.
+
+Visual descriptions below describe what is shown. Narration reproduces the original script; “L-I-S” is written as “LIS”.
+
+00:00:00.593 — Introduction
+Visual: A test-tube icon and the Vibe Toxicology LIS title appear. The card introduces a free laboratory information system for small toxicology labs, from order to delivered report, on one computer the lab owns.
+Narration: Meet Vibe Toxicology LIS: a free lab system for small toxicology labs, on one computer you own.
+
+00:00:08.652 — Work queues
+Visual: The Work queues screen lists pending work. The cursor highlights reports ready for release and opens that queue to show a synthetic accession.
+Narration: The day starts with the work queues: orders to decide, specimens to receive, results to review, and reports to release.
+
+00:00:16.802 — Orders
+Visual: The Orders screen opens a synthetic clinic order. The recording highlights requested tests and evidence as supplied, then shows the Accept order action and its confirmation.
+Narration: At the front desk, orders are recorded exactly as the clinic sent them: the tests, the diagnoses, and the medication list. Nothing is guessed or filled in. Accepting the order takes one click.
+
+00:00:29.598 — Accessioning
+Visual: A specimen-receipt form shows collection information. A synthetic accession is created; the label-printing dialog and specimen barcode are shown.
+Narration: Receiving the specimen creates the accession, records when it was collected, and prints a barcode label for the container.
+
+00:00:40.684 — Bench and quality control
+Visual: The bench worklist leads to a run with blank, calibrator, control and patient-sample positions. The recording opens the run’s analyte-level quality-control assessments.
+Narration: On the bench, worklists gather the waiting specimens for each method. Every run tracks its calibrators and controls, and quality control is assessed for each analyte.
+
+00:00:51.498 — Result imports
+Visual: The import list shows analyzer and result-file sources, including a refused import. A synthetic mass-spectrometry file’s details are opened.
+Narration: Results arrive straight from the analyzers and from mass spectrometry result files. Anything that doesn't fit is set aside, with the reason.
+
+00:01:00.743 — Technical review
+Visual: The review queue opens synthetic result lines with measurements and classifications. An approval dialog is shown, followed by the recorded review status.
+Narration: Every result is technically reviewed. Values are shown against the laboratory's cutoffs, and each approval records who reviewed it, and when.
+
+00:01:12.550 — Report release
+Visual: The release queue opens a report workspace and candidate. The recording highlights expected tests, shows a password confirmation, and opens the released report’s revision history. These are mocked demonstration transitions.
+Narration: Release rechecks every quality-control and identity hold at the moment of release, and asks for the releaser's password. The report becomes a versioned record that corrections never overwrite.
+
+00:01:25.244 — Delivery evidence
+Visual: The delivery list opens a courier attempt whose outcome is unknown. Its evidence and follow-up state are highlighted.
+Narration: Each delivery is logged with the evidence it has. Never just, delivered.
+
+00:01:30.665 — Billing
+Visual: A synthetic accession is selected in Billing work. The Derive services dialog is confirmed, then the resulting billing-class detail is highlighted.
+Narration: Billable services come from the work actually performed, not from positive results.
+
+00:01:37.395 — Audit trail
+Visual: The Clinical audit events screen demonstrates Verify chain and a Chain intact message, then switches to Access audit events. These displayed outcomes come from the demonstration’s mocked engine.
+Narration: A tamper-evident audit trail records every change and every view of sensitive data, and can verify its own chain.
+
+00:01:45.475 — Backup, restore and export
+Visual: The recording highlights backup targets, restore-test records and completed exit-export records in the operations screens.
+Narration: And your data stays yours: encrypted backups to the drives you choose, restore tests, and a complete export whenever you want it.
+
+00:01:54.114 — Closing card
+Visual: The closing card lists orders and accessioning; analyzer and result-file interfaces; QC, review and release; delivery and billing; a tamper-evident audit trail; and encrypted backup and exit export. It says: “Free and open source. Runs on Windows, macOS and Linux, with or without internet.” The final note says: “Shown with synthetic demo data. Not yet clinically validated: each laboratory validates it before clinical use.”
+Narration: Vibe Toxicology LIS. Free, offline-first, and yours.
+
+00:01:58.416 — Music fades out
+The closing card remains visible as the instrumental music ends.
+
+Production sources: demo-video/audio/narration.json, demo-video/out/timeline.json, demo-video/audio/voice/durations.json, and the original scene scripts. Caption phrase boundaries use local speech-recognition word timing; narration-clip offsets come from the original production timeline.

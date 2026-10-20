@@ -1,0 +1,29 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "reporting",
+  "description": "Report workspace, release, withdrawal, history, impact, delivery, destination and preservation-incident commands for the main window (REQ-RPT-001/002/003/005/011/012/013, REQ-OPS-004).",
+  "windows": ["main"],
+  "permissions": [
+    "allow-get-delivery-obligation",
+    "allow-get-report-workspace",
+    "allow-prepare-report-candidate",
+    "allow-get-report-candidate",
+    "allow-release-report",
+    "allow-withdraw-report",
+    "allow-list-reports",
+    "allow-get-report",
+    "allow-get-report-revision",
+    "allow-export-report-pdf",
+    "allow-record-impact-assessment",
+    "allow-list-delivery-obligations",
+    "allow-record-delivery-attempt",
+    "allow-add-delivery-obligation",
+    "allow-redirect-delivery-obligation",
+    "allow-list-delivery-destinations",
+    "allow-create-delivery-destination",
+    "allow-verify-delivery-destination",
+    "allow-replace-delivery-destination",
+    "allow-retire-delivery-destination",
+    "allow-close-preservation-incident"
+  ]
+}

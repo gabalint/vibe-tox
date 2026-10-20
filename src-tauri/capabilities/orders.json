@@ -1,0 +1,24 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "orders",
+  "description": "Order-entry commands available only to the main clinical window (REQ-ORD-001–007; NFR-31).",
+  "windows": ["main"],
+  "permissions": [
+    "allow-register-order",
+    "allow-get-order",
+    "allow-list-orders",
+    "allow-amend-order-evidence",
+    "allow-accept-order",
+    "allow-reject-order",
+    "allow-place-clarification-hold",
+    "allow-resolve-clarification-hold",
+    "allow-create-billing-review-item",
+    "allow-request-follow-on",
+    "allow-decide-follow-on",
+    "allow-record-trigger-not-met",
+    "allow-request-cancellation",
+    "allow-decide-cancellation",
+    "allow-register-standing-order",
+    "allow-list-standing-orders"
+  ]
+}

@@ -1,0 +1,252 @@
+# Quality gate in CI. Mirrors .ai/skills/quality-gate/SKILL.md; keep the two in sync.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # The locked vendored OpenSSL is linked statically, including on Windows/macOS.
+  OPENSSL_NO_VENDOR: "0"
+
+jobs:
+  select:
+    name: select checks
+    runs-on: ubuntu-24.04
+    outputs:
+      base: ${{ steps.select.outputs.base }}
+      full: ${{ steps.select.outputs.full }}
+      rust: ${{ steps.select.outputs.rust }}
+      ui: ${{ steps.select.outputs.ui }}
+      help: ${{ steps.select.outputs.help }}
+      policy: ${{ steps.select.outputs.policy }}
+      licenses: ${{ steps.select.outputs.licenses }}
+      website: ${{ steps.select.outputs.website }}
+      tooling: ${{ steps.select.outputs.tooling }}
+      docs: ${{ steps.select.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Select checks for the tested revision
+        id: select
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
+        run: |
+          base=""
+          args=(--head "$GITHUB_SHA" --github-output "$GITHUB_OUTPUT" --github-summary "$GITHUB_STEP_SUMMARY")
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            args+=(--full)
+          else
+            if [[ "$EVENT_NAME" == "pull_request" ]]; then
+              base="$PR_BASE_SHA"
+            else
+              base="$PUSH_BASE_SHA"
+            fi
+            if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+              base=""
+              args+=(--full)
+            else
+              args+=(--base "$base")
+            fi
+          fi
+          python3 scripts/select_checks.py "${args[@]}"
+
+  rust:
+    name: rust (${{ matrix.os }})
+    needs: select
+    if: needs.select.outputs.rust == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # libudev-dev and pkg-config: serialport's libudev-sys build script links libudev.
+      - name: Linux webview, serial port and vendored crypto build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential perl libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libudev-dev pkg-config
+      - name: Select native Windows Perl for vendored OpenSSL
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $perl = 'C:\Strawberry\perl\bin\perl.exe'
+          if (!(Test-Path $perl)) { $perl = (Get-Command perl.exe -ErrorAction Stop).Source }
+          & $perl -e 'exit($^O eq "MSWin32" ? 0 : 1)'
+          if ($LASTEXITCODE -ne 0) { throw 'Vendored OpenSSL requires native Windows Perl, such as Strawberry Perl.' }
+          "OPENSSL_SRC_PERL=$perl" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      # The Tauri build script needs the bundled UI to exist.
+      - run: npm ci
+      - run: npm run build
+      - name: Toolchain from rust-toolchain.toml
+        run: rustup show active-toolchain
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --locked
+      # NFR-12: an exit export produced by the scenario test reads with the independent
+      # standard-library verifier (scripts/verify_exit_export.py).
+      - name: Exit export passes the independent verifier
+        if: runner.os == 'Linux'
+        env:
+          VIBE_TOX_RUN_PY_VERIFIER: "1"
+        run: cargo test -p lis-engine --locked --test scenarios m4_anchors::an_exit_export_passes_the_independent_verifier
+      - name: Generated TypeScript bindings are committed
+        if: runner.os == 'Linux'
+        run: git diff --exit-code -- ui/src/generated
+      - name: Unused Rust dependencies
+        if: runner.os == 'Linux'
+        run: |
+          cargo install cargo-machete --locked
+          cargo machete
+      - name: Rust duplication and file-length limits
+        if: runner.os == 'Linux' && needs.select.outputs.ui != 'true'
+        run: |
+          npm run dup
+          npm run lines
+
+  policy:
+    needs: select
+    if: needs.select.outputs.policy == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+
+  ui:
+    needs: select
+    if: needs.select.outputs.ui == 'true' || needs.select.outputs.help == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+        if: needs.select.outputs.ui == 'true'
+      - name: Bundled help coverage and metadata
+        if: needs.select.outputs.help == 'true' && needs.select.outputs.ui != 'true'
+        run: npx vitest run ui/src/app/help/articles.test.ts
+      - run: npm run build
+
+  website:
+    needs: select
+    if: needs.select.outputs.website == 'true' && needs.select.outputs.ui != 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx biome check website
+
+  checks:
+    name: repository checks
+    needs: select
+    if: needs.select.outputs.docs == 'true' || needs.select.outputs.licenses == 'true' || needs.select.outputs.tooling == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Repository metadata and local documentation links
+        env:
+          CHECK_BASE: ${{ needs.select.outputs.base }}
+          CHECK_FULL: ${{ needs.select.outputs.full }}
+        run: |
+          if [[ "$CHECK_FULL" != "true" && -n "$CHECK_BASE" ]]; then
+            python3 scripts/check_repository_metadata.py --base "$CHECK_BASE" --head "$GITHUB_SHA"
+          else
+            python3 scripts/check_repository_metadata.py --full
+          fi
+      - name: Check selection and metadata regression tests
+        if: needs.select.outputs.tooling == 'true'
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
+      - name: GitHub Actions workflow syntax and expressions
+        if: needs.select.outputs.tooling == 'true'
+        uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: -color
+      - name: Dependency license policy
+        if: needs.select.outputs.licenses == 'true' && needs.select.outputs.policy != 'true'
+        uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+        with:
+          command: check
+          command-arguments: licenses
+
+  quality-gate:
+    name: quality-gate
+    needs: [select, rust, policy, ui, website, checks]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every selected check to succeed
+        env:
+          CHECK_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          results = json.loads(os.environ["CHECK_RESULTS"])
+          if results["select"]["result"] != "success":
+              raise SystemExit("Check selection did not succeed")
+          flags = results["select"]["outputs"]
+          names = ("rust", "ui", "help", "policy", "licenses", "website", "tooling", "docs", "full")
+          if any(flags.get(name) not in ("true", "false") for name in names):
+              raise SystemExit("Check selection returned incomplete or invalid flags")
+          required = {
+              "rust": flags["rust"] == "true",
+              "policy": flags["policy"] == "true",
+              "ui": flags["ui"] == "true" or flags["help"] == "true",
+              "website": flags["website"] == "true" and flags["ui"] != "true",
+              "checks": any(flags[name] == "true" for name in ("docs", "licenses", "tooling")),
+          }
+          failed = []
+          for job, selected in required.items():
+              result = results[job]["result"]
+              print(f"{job}: {result} (selected={selected})")
+              allowed = ("success",) if selected else ("success", "skipped")
+              if result not in allowed:
+                  failed.append(job)
+          if failed:
+              raise SystemExit("Required checks did not succeed: " + ", ".join(failed))
+          PY

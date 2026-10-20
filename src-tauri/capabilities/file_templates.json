@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "file_templates",
+  "description": "File template commands for the main window: open a sample result file, preview and check a layout, and register a result-file source (result files brief §7; NFR-31). The engine checks each command's capability.",
+  "windows": ["main"],
+  "permissions": [
+    "allow-open-layout-sample",
+    "allow-preview-layout-sample",
+    "allow-check-file-layout",
+    "allow-register-file-source"
+  ]
+}

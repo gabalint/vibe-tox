@@ -1,0 +1,18 @@
+/* A list beside the open row's detail, for review screens; tokens only. When the window is
+   too narrow for both, the detail moves below the list. */
+.split {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.list {
+  flex: 3 1 52rem;
+  min-width: 0;
+}
+
+.detail {
+  flex: 1 1 20rem;
+  min-width: 0;
+}

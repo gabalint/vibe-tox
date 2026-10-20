@@ -1,0 +1,290 @@
+{
+  "id": "material-configuration",
+  "title": "Printers, storage and excursions",
+  "summary": "Configure local label printers and storage locations, then record and assess observed storage incidents.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/setup/material", "/specimens/storage"],
+  "sections": [
+    {
+      "title": "Printer and storage configuration",
+      "paragraphs": [
+        "Administrators with Manage configuration add and edit records in the Label printers and Storage locations tabs. Find narrows the visible directory; Refresh retrieves current settings. Empty directories provide an explicit add action. Inactive records remain available for historical reference. Cancelling a dialog discards unsaved edits.",
+        "Printer Code is unique, 1\u201364 lowercase letters, digits, dots, dashes or underscores. Name is operator-facing, up to 200 characters. Transport defaults to TCP: supply a numeric private or link-local IP address and TCP port 1\u201365535 (default 9100). CUPS instead requires an existing raw queue name using letters, digits, dots, dashes or underscores, without a leading dash. Only fields for the selected transport are sent. Active defaults to yes; inactive printers cannot receive new label requests.",
+        "Saving records the destination and acting administrator; it does not certify physical output. Return to an accession and print a synthetic label to qualify the printer, barcode scanner, media and physical layout. Failed/unavailable destinations retain typed errors and label jobs. Check queued or handed-off jobs and physical output before a reasoned reprint; never assume a delivery acknowledgement proves printing.",
+        "Storage Code and Name use the same limits as printer records. Storage condition is optional laboratory-defined text up to 1,000 characters. Available for moves defaults to Active. Deactivation prevents selection for new moves; changing a location record does not move containers or assess an excursion. No temperature threshold is invented."
+      ]
+    },
+    {
+      "title": "Record a storage excursion",
+      "paragraphs": [
+        "Open Storage excursions from configuration or a container. The list retains open and assessed incidents and offers Previous excursions and Next excursions in 50-record pages. Opening a row preserves its incident ID in the address, so a refresh or restart reopens the same record. The detail panel has its own Refresh and shows observed and recorded times separately. The Storage locations setup link is shown only with Manage configuration; quality-only empty pages describe review availability without offering incident registration.",
+        "Receiving staff can Record excursion. Select an active storage location; enter Observed start as an ISO date/time with seconds and explicit UTC offset or Z, for example 2026-10-14T09:30:00-04:00. No time is assumed. Observed end is optional when unknown, and cannot precede start. Start cannot be in the future. Observed condition describes what happened, up to 1,000 characters. Fractional seconds and explicit offsets are preserved as an equivalent UTC instant. Saving creates an open incident."
+      ]
+    },
+    {
+      "title": "Assess and recover",
+      "paragraphs": [
+        "Manage quality can Assess excursion. Choose No impact or Place holds on identified containers; neither is preselected. For holds, scan or enter each affected barcode, Find affected container, verify returned patient/accession/container identity, then Add this container. Remove an incorrect selection before saving. At least one and at most 500 unique containers are required for holds; no-impact submits none. The application does not infer historical exposure from current location.",
+        "The reason records the assessment rationale and supporting evidence. Saving records actor/time/outcome and places holds atomically. An assessed incident remains in the directory and cannot be silently reassessed. Open each affected container by barcode to review and release individual holds when authorized.",
+        "Errors remain visible in the dialog. Permission denial requires an authorized operator; validation identifies invalid input; stale revision conflicts require cancel, refresh and renewed review. Loading and read errors do not imply an empty directory. Hardware availability, native print execution and physical label quality require local qualification."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/accessioning/material-config/MaterialConfigurationPage.tsx",
+    "ui/src/features/accessioning/material-config/PrinterDialog.tsx",
+    "ui/src/features/accessioning/material-config/LocationDialog.tsx",
+    "ui/src/features/accessioning/specimens/StorageExcursionsPage.tsx",
+    "ui/src/features/accessioning/specimens/labels.ts",
+    "ui/src/features/accessioning/specimens/RecordExcursionDialog.tsx",
+    "ui/src/features/accessioning/specimens/AssessExcursionDialog.tsx",
+    "ui/src/features/accessioning/specimens/ObservedTimeInput.tsx",
+    "ui/src/features/accessioning/specimens/LocationChoice.tsx",
+    "crates/lis-specimens/src/material_history.rs",
+    "crates/lis-specimens/src/commands/holds.rs",
+    "crates/lis-specimens/src/commands/configuration.rs"
+  ],
+  "pages": [
+    {
+      "title": "Printers and storage",
+      "routes": ["/setup/material"],
+      "purpose": "Maintain local label destinations and named storage locations.",
+      "access": "Manage configuration changes records; receiving staff can follow configuration links when their role permits opening setup.",
+      "fields": [
+        {
+          "name": "Label printers / Storage locations tabs",
+          "meaning": "Choose directory.",
+          "values": "Printers by default; locations when selected.",
+          "rules": "Tab stays in address; switching does not save an open form."
+        },
+        {
+          "name": "Find",
+          "meaning": "Narrows the displayed configured records.",
+          "values": "Case-insensitive code/name; printer destination also searched. Blank shows all.",
+          "rules": "Directory contains active and inactive records."
+        },
+        {
+          "name": "Code / Name",
+          "meaning": "Stable configuration code and operator-facing label.",
+          "values": "Code 1\u201364 lowercase letters/digits/dot/dash/underscore; Name up to 200 characters.",
+          "rules": "Both required; code unique."
+        },
+        {
+          "name": "Transport",
+          "meaning": "Printer delivery mechanism.",
+          "values": "TCP network printer (default) or CUPS raw queue.",
+          "rules": "Only selected transport fields apply."
+        },
+        {
+          "name": "Printer IP address / TCP port",
+          "meaning": "Local destination.",
+          "values": "Numeric private or link-local IP; port1\u201365535, default9100.",
+          "rules": "IP required for TCP; no hostname. Blank port uses9100."
+        },
+        {
+          "name": "Raw queue name",
+          "meaning": "Host printing queue.",
+          "values": "Existing CUPS raw queue; letters/digits/dots/dashes/underscores, no leading dash.",
+          "rules": "Required for CUPS; configuring does not install the host queue."
+        },
+        {
+          "name": "Available for printing / Available for moves",
+          "meaning": "Whether new actions may choose the record.",
+          "values": "Active default; Inactive.",
+          "rules": "Inactive records retained in history."
+        },
+        {
+          "name": "Storage condition",
+          "meaning": "Laboratory-defined description.",
+          "values": "Optional text up to 1,000 characters.",
+          "rules": "No threshold or monitoring policy inferred."
+        },
+        {
+          "name": "Directory columns",
+          "meaning": "Current configuration evidence.",
+          "values": "Code, name, destination or storage condition, active state.",
+          "rules": "Read-only until authorized edit; no physical printer proof."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Add label printer / Add storage location",
+          "does": "Open new configuration form.",
+          "availableWhen": "Manage configuration.",
+          "result": "Save creates record; Cancel discards it."
+        },
+        {
+          "name": "Open directory row",
+          "does": "Edit the selected configuration.",
+          "availableWhen": "Manage configuration.",
+          "result": "Save carries expected revision and records actor/time."
+        },
+        {
+          "name": "Save printer / Save location",
+          "does": "Validate and persist supplied configuration.",
+          "availableWhen": "Valid required fields and current revision.",
+          "result": "Refresh directory; qualify physical printer output separately."
+        },
+        {
+          "name": "Refresh",
+          "does": "Read current settings.",
+          "availableWhen": "Directory open.",
+          "result": "Updated time changes; no clinical state changed."
+        },
+        {
+          "name": "Storage excursions",
+          "does": "Open retained storage incident directory.",
+          "availableWhen": "Authorized receiving/quality role.",
+          "result": "Record or assess an observed incident."
+        }
+      ],
+      "restrictions": [
+        "Configuration approval does not grant order, technical-review or clinical-release permission.",
+        "Host transports, label stock, physical printers/scanners and actual output require local qualification."
+      ],
+      "workflow": [
+        "Choose directory and add or open a record.",
+        "Enter explicit destination or named storage condition and active state; save.",
+        "For printing, return to accession, request a synthetic label and inspect physical output."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Save is refused or the revision changed.",
+          "recovery": "Read the typed error. Correct validation fields, or cancel, Refresh and reopen the current record before resubmitting. Permission denial needs an authorized operator."
+        },
+        {
+          "problem": "The list is loading or failed.",
+          "recovery": "Wait for loading or use Refresh after correcting the reported problem. A failed read does not establish an empty directory."
+        },
+        {
+          "problem": "No active printer or printer unavailable.",
+          "recovery": "Configure/activate the correct local destination. Inspect label job state and physical output before reasoned reprint; queued or handed-off does not prove printing."
+        }
+      ]
+    },
+    {
+      "title": "Storage excursions",
+      "routes": ["/specimens/storage"],
+      "purpose": "Retain observed incidents and attributable quality assessment with material links.",
+      "access": "Accession or Manage quality can read incidents and find affected material by barcode. Accession records incidents. Manage quality assesses open incidents and releases individual holds; read access alone does not grant accession mutations.",
+      "fields": [
+        {
+          "name": "Incident list",
+          "meaning": "Retained open and assessed incidents.",
+          "values": "Location, observed start, supplied condition, state; 50 per page.",
+          "rules": "Open row records exact incident ID in address; dates are observed, not intake."
+        },
+        {
+          "name": "Storage location",
+          "meaning": "Location named in observation.",
+          "values": "Active configured locations; none preselected.",
+          "rules": "Required to record; an administrator must configure a missing location first."
+        },
+        {
+          "name": "Observed start / Observed end",
+          "meaning": "Source-backed interval.",
+          "values": "ISO date/time with seconds and explicit UTC offset or Z, optional 1\u20139 fractional digits. Start required; end blank means unknown.",
+          "rules": "No default time; start cannot be future; end cannot precede start; offset converted preserving exact instant."
+        },
+        {
+          "name": "Observed condition",
+          "meaning": "What happened.",
+          "values": "Required 1\u20131,000 characters.",
+          "rules": "Does not infer affected material or threshold."
+        },
+        {
+          "name": "Assessment outcome",
+          "meaning": "Quality conclusion.",
+          "values": "No impact or Place holds on identified containers; none preselected.",
+          "rules": "No impact submits no containers; holds require 1\u2013500 distinct material IDs."
+        },
+        {
+          "name": "Affected container barcode",
+          "meaning": "Find material through its printed identity.",
+          "values": "Exact scanned/typed barcode.",
+          "rules": "Find returns patient, accession, label and state; check before Add this container. Remove wrong selections."
+        },
+        {
+          "name": "Reason",
+          "meaning": "Assessment rationale and source evidence.",
+          "values": "Required nonblank reason, up to 1,000 characters.",
+          "rules": "Actor and time retained with assessment."
+        },
+        {
+          "name": "Excursion detail",
+          "meaning": "Retained evidence and current assessment.",
+          "values": "Observed interval; recorded actor/time; Open or Assessed state; No impact or Holds placed assessment; assessed actor/time/reason; affected material links.",
+          "rules": "Recorded and observed dates are separate; assessed incidents stay accessible. Unrecognized state or outcome values remain visible as received; refresh and request support rather than assuming their meaning."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Record excursion / Record excursion dialog Save",
+          "does": "Record supplied incident evidence.",
+          "availableWhen": "Accession, active configured location, valid source interval/description.",
+          "result": "Creates open incident and selects its exact detail."
+        },
+        {
+          "name": "Previous excursions / Next excursions",
+          "does": "Load bounded adjacent pages.",
+          "availableWhen": "Previous after first page; Next while more remain.",
+          "result": "Later work is reachable without resolving prior incidents. Newly appended incidents do not shift the current pages; Refresh starts again at the first page with current membership."
+        },
+        {
+          "name": "Open incident / Refresh",
+          "does": "Open exact incident and refresh current evidence.",
+          "availableWhen": "Read permission.",
+          "result": "URL restores selected incident after navigation/restart; detail has its own refresh."
+        },
+        {
+          "name": "Assess excursion",
+          "does": "Open assessment form.",
+          "availableWhen": "Manage quality and open state.",
+          "result": "No outcome preselected."
+        },
+        {
+          "name": "Find affected container / Add this container / Remove",
+          "does": "Verify and build affected material selection.",
+          "availableWhen": "Holds outcome; valid unique barcode; at most500.",
+          "result": "Only explicitly added containers receive holds."
+        },
+        {
+          "name": "Record assessment",
+          "does": "Persist conclusion and holds atomically.",
+          "availableWhen": "Authorized actor, reason, current revision, required material selection.",
+          "result": "Incident becomes assessed; exact affected-container links support follow-up/release."
+        },
+        {
+          "name": "Cancel",
+          "does": "Discard unsaved record or assessment.",
+          "availableWhen": "Dialog open and no pending mutation.",
+          "result": "Saved incident/holds remain unchanged."
+        }
+      ],
+      "restrictions": [
+        "No clinical thresholds, automatic exposure inference or monitoring integration is supplied.",
+        "Assessed incidents cannot be silently replaced. Individual hold releases remain separately attributable.",
+        "Incident browsing retains a snapshot boundary across 50-row pages so new incidents cannot shift the page positions. Refresh starts a fresh snapshot at the first page; an exact incident link still opens its retained record independently."
+      ],
+      "workflow": [
+        "Record observed location, interval and condition.",
+        "Quality staff reopen exact incident, investigate source evidence and verify each selected container.",
+        "Record assessment; follow material links to inspect holds and release them only when authorized."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Save is refused or the revision changed.",
+          "recovery": "Read the typed error. Correct validation fields, or cancel, Refresh and reopen the current record before resubmitting. Permission denial needs an authorized operator."
+        },
+        {
+          "problem": "The list is loading or failed.",
+          "recovery": "Wait for loading or use Refresh after correcting the reported problem. A failed read does not establish an empty directory."
+        },
+        {
+          "problem": "An affected barcode is not found or has the wrong identity.",
+          "recovery": "Check physical label and source evidence; retry lookup or remove selection. Never recreate clinical records or guess IDs."
+        }
+      ]
+    }
+  ]
+}

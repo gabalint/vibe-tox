@@ -1,0 +1,19 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "billing-intake",
+  "description": "Financial intake and source-backed collection corrections (REQ-ORD-005, REQ-BIL-002, REQ-SPC-002).",
+  "windows": ["main"],
+  "permissions": [
+    "allow-get-patient-billing-profile",
+    "allow-set-patient-billing-profile",
+    "allow-get-order-billing",
+    "allow-set-order-billing-context",
+    "allow-update-billing-review-item",
+    "allow-get-collection-history",
+    "allow-correct-collection-time",
+    "allow-resolve-collection-correction",
+    "allow-resolve-billing-context-conflict",
+    "allow-record-handoff-followup",
+    "allow-list-billing-review-items"
+  ]
+}

@@ -1,0 +1,36 @@
+[package]
+name = "lis-billing"
+description = "Class mapping versions, performed-service derivation and billing handoff"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+hex = { workspace = true }
+jiff = { workspace = true }
+lis-audit = { workspace = true }
+lis-analytical = { workspace = true }
+lis-auth = { workspace = true }
+lis-catalog = { workspace = true }
+lis-core = { workspace = true }
+lis-identity = { workspace = true }
+lis-orders = { workspace = true }
+lis-reporting = { workspace = true }
+lis-results = { workspace = true }
+lis-specimens = { workspace = true }
+lis-store = { workspace = true }
+rusqlite = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+ts-rs = { workspace = true }
+
+[dev-dependencies]
+lis-store = { workspace = true, features = ["testing"] }
+proptest = { workspace = true }
+
+[lints]
+workspace = true

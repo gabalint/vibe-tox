@@ -1,0 +1,32 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "identity",
+  "description": "The identity commands the main window may call (NFR-31).",
+  "windows": ["main"],
+  "permissions": [
+    "allow-search-subjects",
+    "allow-match-subject-candidates",
+    "allow-register-subject",
+    "allow-get-subject",
+    "allow-assert-demographics",
+    "allow-add-subject-identifier",
+    "allow-deactivate-subject-identifier",
+    "allow-list-identity-holds",
+    "allow-resolve-identity-hold",
+    "allow-list-clients",
+    "allow-create-client",
+    "allow-add-client-location",
+    "allow-list-practitioners",
+    "allow-register-practitioner",
+    "allow-get-laboratory-profile",
+    "allow-set-laboratory-profile",
+    "allow-update-client",
+    "allow-update-client-location",
+    "allow-update-practitioner",
+    "allow-directory-history",
+    "allow-record-intake-deferral",
+    "allow-resolve-intake-deferral",
+    "allow-list-intake-deferrals",
+    "allow-list-laboratory-profiles"
+  ]
+}

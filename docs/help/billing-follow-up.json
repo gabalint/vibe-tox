@@ -1,0 +1,731 @@
+{
+  "id": "billing-follow-up",
+  "title": "Billing follow-up and order billing",
+  "summary": "Review supplied financial information and track missing evidence for an order.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/billing/review", "/billing/orders/:orderId"],
+  "sections": [
+    {
+      "title": "How to use these pages",
+      "paragraphs": [
+        "Billing follow-up lists financial documentation needing review, oldest first. Choose Open follow-up or Resolved follow-up, use the paging controls, and open an item’s order billing link to inspect its context.",
+        "Order billing shows the selected billing facts, financial evidence, follow-up items and patient billing profile. Confirm or correct the order’s billing selection using the available action. Add supplied evidence and use Open billing follow-up when information needs further work."
+      ]
+    },
+    {
+      "title": "Patient facts and order selections",
+      "paragraphs": [
+        "Open patient billing profile to review billing contact, guarantor, coverages and supplied financial evidence. Each focused edit requires an information source and reason. These changes preserve earlier profile revisions; they do not update orders automatically.",
+        "Confirm order billing selection or Correct order billing selection selects a patient profile revision, coverages in payment priority and a guarantor when supplied. Select patient evidence explicitly for the order. Add order evidence records manual eligibility, authorization, provider enrollment, advance notice or good faith estimate evidence. Record actual source event, delivery and signature times; do not backdate them or infer a payer decision.",
+        "If a save reports a changed revision, keep the source details, cancel the dialog, refresh the record, review the current facts and reopen the correction."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Check the patient identity and the order’s selected profile revision before changing financial information. Record diagnoses and supporting documents as supplied; do not invent evidence or change requested tests to satisfy billing rules.",
+        "Financial follow-up is separate from clinical testing and release decisions. Record the responsible person or team, the action evidence reference and the reason when resolving a follow-up item."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Review the financial information issues shown on the order. Missing actions may reflect your authority or the record’s state. A changed revision requires a fresh review before retrying. Resolving a follow-up records the action taken; it does not establish payer acceptance or payment."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/accessioning/billing/BillingReviewPage.tsx",
+    "ui/src/features/accessioning/billing/BillingOrderPage.tsx",
+    "ui/src/features/accessioning/billing/OrderBillingSection.tsx",
+    "ui/src/features/accessioning/billing/OrderBillingFacts.tsx",
+    "ui/src/features/accessioning/billing/OrderContextDialog.tsx",
+    "ui/src/features/accessioning/billing/OrderEvidenceDialog.tsx",
+    "ui/src/features/accessioning/billing/ReviewItems.tsx",
+    "ui/src/features/accessioning/billing/labels.ts",
+    "crates/lis-orders/src/billing_context.rs",
+    "crates/lis-orders/src/billing_reviews.rs",
+    "crates/lis-engine/src/commands/billing_intake.rs",
+    "ui/src/features/accessioning/billing/PatientBillingSection.tsx",
+    "ui/src/features/accessioning/billing/PatientProfileDialog.tsx",
+    "ui/src/features/accessioning/billing/PatientProfileFacts.tsx",
+    "ui/src/features/accessioning/billing/ContactDialog.tsx",
+    "ui/src/features/accessioning/billing/GuarantorDialog.tsx",
+    "ui/src/features/accessioning/billing/CoverageDialog.tsx",
+    "ui/src/features/accessioning/billing/FinancialFields.tsx",
+    "ui/src/features/accessioning/billing/contactValues.ts",
+    "ui/src/features/accessioning/billing/EvidenceFields.tsx",
+    "ui/src/features/accessioning/billing/evidenceValues.ts",
+    "ui/src/features/accessioning/billing/EvidenceList.tsx",
+    "ui/src/features/accessioning/billing/BillingFacts.tsx",
+    "crates/lis-identity/src/billing_validation.rs",
+    "crates/lis-identity/src/model.rs",
+    "ui/src/components/FormDialog/FormDialog.tsx",
+    "crates/lis-identity/src/billing_model.rs",
+    "crates/lis-identity/src/billing.rs"
+  ],
+  "pages": [
+    {
+      "title": "Billing follow-up",
+      "routes": ["/billing/review"],
+      "purpose": "Find financial documentation tasks that need an owner, evidence or resolution.",
+      "access": "Order-entry or billing authority is required for patient financial facts, order billing and follow-up. Opening a clinical patient or order record also requires its own access permission.",
+      "fields": [
+        {
+          "name": "Open follow-up / Resolved follow-up",
+          "meaning": "Filter determining which task status is listed.",
+          "values": "Open follow-up (default); Resolved follow-up.",
+          "rules": "Changing status returns to the first page. These buttons filter the list; the similarly named action inside an order creates a task."
+        },
+        {
+          "name": "Financial follow-up",
+          "meaning": "Order link and the missing-evidence category.",
+          "values": "Supplied diagnosis; Medical necessity documentation; Payer-required signature; Provider enrollment; Other financial evidence.",
+          "rules": "Read-only; follow the link to inspect that order’s financial context."
+        },
+        {
+          "name": "Owner",
+          "meaning": "Person or team assigned to the financial task.",
+          "values": "Recorded text or Unassigned.",
+          "rules": "Read-only in the list; edit from order billing."
+        },
+        {
+          "name": "Opened / Status",
+          "meaning": "Task opening time and latest state.",
+          "values": "Timestamp; Open or Resolved.",
+          "rules": "Oldest tasks first. A page contains at most 50 tasks."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Refresh follow-up",
+          "does": "Reloads the current status/page.",
+          "availableWhen": "Order-entry or billing authority is required for patient financial facts, order billing and follow-up. Opening a clinical patient or order record also requires its own access permission.",
+          "result": "Shows the latest recorded task states."
+        },
+        {
+          "name": "Open follow-up / Resolved follow-up",
+          "does": "Switches the status filter.",
+          "availableWhen": "Order-entry or billing authority is required for patient financial facts, order billing and follow-up. Opening a clinical patient or order record also requires its own access permission.",
+          "result": "Returns to the first page of that status."
+        },
+        {
+          "name": "First page / Next page",
+          "does": "Navigates the bounded task list.",
+          "availableWhen": "First page after advancing; Next page when the current response has 50 rows; disabled during fetch.",
+          "result": "Next page may be empty if the preceding page was exactly full."
+        },
+        {
+          "name": "Order link / Open order billing",
+          "does": "Opens the financial record associated with the task.",
+          "availableWhen": "Order-entry or billing authority is required for patient financial facts, order billing and follow-up. Opening a clinical patient or order record also requires its own access permission.",
+          "result": "Shows identity, billing selection, evidence and follow-up editors."
+        }
+      ],
+      "restrictions": [
+        "This financial queue does not approve tests, release reports or create claims.",
+        "The list is paged; an empty page does not imply that other statuses have no work."
+      ],
+      "workflow": [
+        "Choose Open follow-up and review the oldest tasks.",
+        "Open the order billing link and verify identity and context.",
+        "Record evidence and assign, resolve or reopen the task using the order’s follow-up controls."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No follow-up on this page.",
+          "recovery": "Use First page or the other status filter. Create new financial follow-up from an order’s billing section."
+        },
+        {
+          "problem": "A task remains open after obtaining information.",
+          "recovery": "Open the order and record an explicit follow-up update with owner, action evidence and reason."
+        }
+      ]
+    },
+    {
+      "title": "Order billing",
+      "routes": ["/billing/orders/:orderId"],
+      "purpose": "Confirm order-specific financial facts, capture source evidence and manage financial follow-up.",
+      "access": "Order-entry or billing authority is required for patient financial facts, order billing and follow-up. Opening a clinical patient or order record also requires its own access permission.",
+      "fields": [
+        {
+          "name": "Patient identity banner",
+          "meaning": "The person whose financial record is being changed.",
+          "values": "Read-only patient identity supplied with the scoped order billing record.",
+          "rules": "Verify before editing; this page does not require opening the broader clinical order."
+        },
+        {
+          "name": "Financial information to review",
+          "meaning": "Readiness issues in this order’s financial selection.",
+          "values": "Messages may request a billing selection, payment responsibility, bill-to account, coverage, member identifier, subscriber, billing address or resolution of open follow-up.",
+          "rules": "Read-only. These issues affect financial readiness and must not be treated as clinical release permission."
+        },
+        {
+          "name": "Billing revision / Responsibility / Patient profile revision / Coverage priority / Guarantor / Bill-to client account",
+          "meaning": "The exact financial facts selected for this order.",
+          "values": "Read-only revision and selected values, with None selected where absent.",
+          "rules": "Coverage order indicates payment priority. Expand Selected financial details for contact, guarantor and coverage facts."
+        },
+        {
+          "name": "Source / Reason / Confirmed",
+          "meaning": "Who supplied the selected facts, why they were recorded and the save time.",
+          "values": "Read-only supplied source, change reason and timestamp.",
+          "rules": "Distinct from a financial evidence event time."
+        },
+        {
+          "name": "Who is responsible for payment",
+          "meaning": "Payment arrangement confirmed for this order.",
+          "values": "Third party (insurance); Patient (self-pay); Client (ordering clinic); Not supplied.",
+          "rules": "Required; no initial default for a new selection. Switching away from third-party billing clears the selected coverages."
+        },
+        {
+          "name": "Bill-to client account",
+          "meaning": "Configured client account responsible for payment.",
+          "values": "Configured client names.",
+          "rules": "Required by the editor for Client billing; hidden and not saved for other arrangements."
+        },
+        {
+          "name": "Patient financial facts to use",
+          "meaning": "Profile revision whose supplied facts will be copied into the order.",
+          "values": "Do not select patient profile facts, or the currently selected and latest available Profile revision choices.",
+          "rules": "Required choice. Switching revision clears coverage priority, newly selected evidence and guarantor choice, so review them again."
+        },
+        {
+          "name": "Coverage priority 1, 2, …",
+          "meaning": "Coverages explicitly confirmed for this order, in payment order.",
+          "values": "Coverage records from the selected profile, identified by payer, member identifier and plan.",
+          "rules": "For Third party (insurance) only. Each added row is required; select each coverage once, at most eight. Do not assume the first available payer applies."
+        },
+        {
+          "name": "Use guarantor …",
+          "meaning": "Whether to copy the supplied guarantor from the chosen profile.",
+          "values": "Yes; No.",
+          "rules": "Required when that profile contains a guarantor. Choosing a profile without a guarantor shows that absence."
+        },
+        {
+          "name": "Evidence to copy",
+          "meaning": "Patient evidence that applies to this order.",
+          "values": "Checkboxes for evidence in the selected patient profile.",
+          "rules": "Optional explicit selection; no new patient evidence is selected automatically. Coverage references must match the order selection."
+        },
+        {
+          "name": "Order evidence retained in this revision",
+          "meaning": "Existing order financial evidence to retain when correcting the selection.",
+          "values": "Checkboxes for currently recorded order evidence; initially all checked.",
+          "rules": "Deselect items that no longer apply. Earlier order revisions retain them; changing the profile does not automatically remove them."
+        },
+        {
+          "name": "Order billing — Evidence type",
+          "meaning": "Which financial event or document this record describes.",
+          "values": "Eligibility; Prior authorization; Advance notice (including ABN); Good faith estimate; Provider enrollment.",
+          "rules": "Required; initially blank. These are manually recorded source facts, not automated determinations."
+        },
+        {
+          "name": "Order billing — Source status",
+          "meaning": "The status stated by the source for this evidence.",
+          "values": "Not checked; Unknown; Not required; Pending; Recorded; Approved; Denied.",
+          "rules": "Required; initially blank. Approved here describes the source response and does not guarantee payment."
+        },
+        {
+          "name": "Order billing — Evidence reference",
+          "meaning": "How to locate the retained source document or external record.",
+          "values": "Source reference text, up to 1000 characters.",
+          "rules": "Required. Use a reference to evidence handled under laboratory procedures; this field does not upload a document."
+        },
+        {
+          "name": "Order billing — Services and circumstances covered",
+          "meaning": "The scope to which the evidence applies.",
+          "values": "Source-supplied description, up to 2000 characters.",
+          "rules": "Required. State actual service scope; do not broaden an authorization or notice."
+        },
+        {
+          "name": "Order billing — Source event time (UTC)",
+          "meaning": "When the documented event actually happened.",
+          "values": "UTC timestamp such as 2026-10-14T14:30:00Z.",
+          "rules": "Required; must not be in the future. This is separate from the automatic time the record is saved."
+        },
+        {
+          "name": "Order billing — Authorization or reference number",
+          "meaning": "A payer or source reference associated with the evidence.",
+          "values": "Source-supplied text, up to 200 characters.",
+          "rules": "Optional."
+        },
+        {
+          "name": "Order billing — Valid from / Valid until",
+          "meaning": "The dates over which the source states this evidence applies.",
+          "values": "Real dates in YYYY-MM-DD format.",
+          "rules": "Each optional; an end date cannot precede the start date."
+        },
+        {
+          "name": "Order billing — Related coverage",
+          "meaning": "Coverage to which the evidence relates.",
+          "values": "A coverage from the patient profile being edited, or one already selected for the order.",
+          "rules": "Optional. An order evidence record cannot reference a coverage that the order has not selected."
+        },
+        {
+          "name": "Order billing — Related provider NPI",
+          "meaning": "The provider identified by this evidence.",
+          "values": "A valid ten-digit NPI with a valid check digit.",
+          "rules": "Required for Provider enrollment; optional for other evidence. For order enrollment evidence it must identify the ordering practitioner."
+        },
+        {
+          "name": "Order billing — Authorized units",
+          "meaning": "The quantity stated by the authorization source.",
+          "values": "A whole number from 1 through 4,294,967,295.",
+          "rules": "Optional; zero is rejected. Do not calculate units from results or infer authorization."
+        },
+        {
+          "name": "Order billing — Notice or estimate details",
+          "meaning": "Whether detailed notice or estimate evidence was supplied.",
+          "values": "Notice details supplied; Not supplied.",
+          "rules": "Required only for Advance notice or Good faith estimate. Choosing supplied reveals the notice fields."
+        },
+        {
+          "name": "Order billing — Notice or estimate form version",
+          "meaning": "Version of the actual source form used.",
+          "values": "Source text, up to 100 characters.",
+          "rules": "Optional; shown for supplied notice details."
+        },
+        {
+          "name": "Order billing — Notice or estimate reason",
+          "meaning": "The documented reason for the notice or estimate.",
+          "values": "Source-supplied text, up to 2000 characters.",
+          "rules": "Required when notice details are supplied."
+        },
+        {
+          "name": "Order billing — Estimated amount / Currency",
+          "meaning": "The source estimate and its currency.",
+          "values": "Nonnegative exact decimal without a currency symbol; currency is three uppercase letters, such as USD.",
+          "rules": "Both are optional together; supplying either requires the other. An estimate is not a collected payment."
+        },
+        {
+          "name": "Order billing — Patient choice as documented",
+          "meaning": "The choice recorded on the source notice or estimate.",
+          "values": "Source text, up to 1000 characters.",
+          "rules": "Optional; do not select or infer a choice for the patient."
+        },
+        {
+          "name": "Order billing — Provided to patient at (UTC) / Signed at (UTC)",
+          "meaning": "Actual delivery and signature times documented by the source.",
+          "values": "UTC timestamps.",
+          "rules": "Each optional and not in the future. Recording these values does not itself deliver or sign a notice."
+        },
+        {
+          "name": "Order billing — Signer as documented",
+          "meaning": "Name of the signer stated on the source.",
+          "values": "Source text, up to 200 characters.",
+          "rules": "Optional."
+        },
+        {
+          "name": "Order billing — Evidence notes",
+          "meaning": "Additional supplied context needed to understand the evidence.",
+          "values": "Free text, up to 2000 characters.",
+          "rules": "Optional. Does not replace the evidence reference, source event time or service scope."
+        },
+        {
+          "name": "Order billing — Information source",
+          "meaning": "The document or external record used to confirm this revision.",
+          "values": "Source reference, up to 1000 characters.",
+          "rules": "Required for every patient billing edit and order billing selection/evidence change; blank at the start of each edit."
+        },
+        {
+          "name": "Order billing — Reason for change",
+          "meaning": "Why this revision is being recorded.",
+          "values": "Meaningful explanation, up to 1000 characters.",
+          "rules": "Required even for an initial financial profile. Earlier revisions remain available to the application."
+        },
+        {
+          "name": "Missing financial evidence",
+          "meaning": "The deficiency for a new follow-up item.",
+          "values": "Supplied diagnosis; Medical necessity documentation; Payer-required signature; Provider enrollment; Other financial evidence.",
+          "rules": "Required. This opens a financial task; it does not invent a diagnosis or modify tests."
+        },
+        {
+          "name": "Source note",
+          "meaning": "Context for a new financial follow-up.",
+          "values": "Optional source text, up to 1000 characters.",
+          "rules": "Retained as Original note when the item is later updated."
+        },
+        {
+          "name": "Follow-up status",
+          "meaning": "Whether the financial task is still open.",
+          "values": "Open; Resolved.",
+          "rules": "Required, starting with the current status. Reopening is allowed through an attributed update."
+        },
+        {
+          "name": "Responsible person or team",
+          "meaning": "Owner of the follow-up action.",
+          "values": "Free text, up to 200 characters.",
+          "rules": "Optional while open; required to resolve."
+        },
+        {
+          "name": "Action evidence reference",
+          "meaning": "Evidence supporting the follow-up action.",
+          "values": "Source reference, up to 1000 characters.",
+          "rules": "Optional while open; required to resolve. A fresh value is requested for each update."
+        },
+        {
+          "name": "Reason for this action",
+          "meaning": "Explanation of the follow-up update.",
+          "values": "Text, up to 1000 characters.",
+          "rules": "Required for every update, including reopening."
+        },
+        {
+          "name": "Billing follow-up: Original note, Opened, Owner, Evidence reference, Latest reason",
+          "meaning": "Read-only context and latest action for each financial task.",
+          "values": "Open or Resolved; owner or Unassigned; source reference or Not supplied.",
+          "rules": "Open tasks expand automatically. Resolving a task preserves the prior actions; it does not establish payer acceptance."
+        },
+        {
+          "name": "Profile revision / Source / Change reason / Recorded",
+          "meaning": "Provenance of the current reusable patient billing profile.",
+          "values": "Read-only revision number, supplied source and reason, and saved timestamp.",
+          "rules": "A missing profile is shown explicitly. Editing creates a new revision; existing orders retain their previously selected facts."
+        },
+        {
+          "name": "Address / Phone / Email",
+          "meaning": "Read-only summary of the selected contact.",
+          "values": "Recorded address and contact details, or Not supplied.",
+          "rules": "Expand Guarantor details or Subscriber details to inspect the relevant party separately."
+        },
+        {
+          "name": "Responsible party details",
+          "meaning": "Whether a guarantor or responsible party was supplied.",
+          "values": "Responsible party supplied; Not supplied.",
+          "rules": "Required in Edit guarantor. Not supplied clears the current guarantor in a new profile revision; earlier revisions remain retained."
+        },
+        {
+          "name": "Guarantor name / Subscriber name",
+          "meaning": "The named person responsible for payment or named by the coverage source.",
+          "values": "Source-supplied name, up to 200 characters.",
+          "rules": "Required when responsible-party or subscriber details are marked supplied."
+        },
+        {
+          "name": "Patient's relationship to guarantor / Patient's relationship to subscriber",
+          "meaning": "How the patient is related to the person being recorded.",
+          "values": "Self; Spouse; Child; Parent; Other; Unknown.",
+          "rules": "Required when the person is supplied; no initial selection. Do not infer a relationship from a shared name."
+        },
+        {
+          "name": "Guarantor birth date / Subscriber birth date",
+          "meaning": "Birth date supplied for that party.",
+          "values": "A real calendar date in YYYY-MM-DD format.",
+          "rules": "Optional. It does not change the clinical patient birth date."
+        },
+        {
+          "name": "Address line 1 / Address line 2 / Address line 3",
+          "meaning": "The mailing address supplied for the patient, guarantor or subscriber whose editor is open.",
+          "values": "Up to three text lines; blank lines are omitted.",
+          "rules": "Each line is optional and limited to 200 characters. These fields record supplied facts; they do not verify deliverability."
+        },
+        {
+          "name": "City / State or region / ZIP or postal code",
+          "meaning": "Locality, region and postal identifier for that contact.",
+          "values": "Source-supplied text, including non-US formats.",
+          "rules": "Each optional; up to 200 characters each. No state or postal-code choice is inferred."
+        },
+        {
+          "name": "Country",
+          "meaning": "Country supplied for the billing address.",
+          "values": "Free text, up to 100 characters.",
+          "rules": "Optional; no country is selected automatically."
+        },
+        {
+          "name": "Phone / Email",
+          "meaning": "Contact details supplied for billing communication.",
+          "values": "Source-supplied text, up to 200 characters per field.",
+          "rules": "Optional. Saving records the details; it does not send a message or confirm that the address or number works."
+        },
+        {
+          "name": "Payer name",
+          "meaning": "Payer named by the coverage source.",
+          "values": "Source-supplied text, up to 200 characters.",
+          "rules": "Required in Add coverage and Correct coverage; at most 32 coverages in a profile."
+        },
+        {
+          "name": "Payer identifier / Plan name / Member identifier / Group number",
+          "meaning": "Identifiers and plan details used to distinguish this coverage.",
+          "values": "Source-supplied text, up to 200 characters each.",
+          "rules": "Each optional. Keep exact identifiers, including leading zeroes; the application does not verify coverage with the payer."
+        },
+        {
+          "name": "Coverage starts / Coverage ends",
+          "meaning": "Coverage effective period from the source.",
+          "values": "Real dates in YYYY-MM-DD format.",
+          "rules": "Each optional; end cannot precede start."
+        },
+        {
+          "name": "Coverage checked on",
+          "meaning": "Date the source says the coverage was checked.",
+          "values": "Real date in YYYY-MM-DD format.",
+          "rules": "Optional. A recorded check date is not a promise of payment."
+        },
+        {
+          "name": "Coverage information source",
+          "meaning": "Where this coverage information was obtained.",
+          "values": "Source reference, up to 1000 characters.",
+          "rules": "Required independently of the overall Information source for the profile revision."
+        },
+        {
+          "name": "Subscriber details",
+          "meaning": "Whether the insurance source supplied a subscriber.",
+          "values": "Subscriber supplied; Not supplied.",
+          "rules": "Required for a coverage. Supplied shows the subscriber name, relationship, birth date and contact fields."
+        },
+        {
+          "name": "Patient coverages: payer, member identifier, Plan, Payer identifier, Group, Subscriber, Coverage dates, Source, Checked on",
+          "meaning": "Read-only facts for each retained coverage.",
+          "values": "Source values or explicit Not supplied indicators.",
+          "rules": "Expand each coverage to inspect it; Correct coverage changes that coverage in a new profile revision."
+        },
+        {
+          "name": "Patient billing profile — Evidence type",
+          "meaning": "Which financial event or document this record describes.",
+          "values": "Eligibility; Prior authorization; Advance notice (including ABN); Good faith estimate; Provider enrollment.",
+          "rules": "Required; initially blank. These are manually recorded source facts, not automated determinations."
+        },
+        {
+          "name": "Patient billing profile — Source status",
+          "meaning": "The status stated by the source for this evidence.",
+          "values": "Not checked; Unknown; Not required; Pending; Recorded; Approved; Denied.",
+          "rules": "Required; initially blank. Approved here describes the source response and does not guarantee payment."
+        },
+        {
+          "name": "Patient billing profile — Evidence reference",
+          "meaning": "How to locate the retained source document or external record.",
+          "values": "Source reference text, up to 1000 characters.",
+          "rules": "Required. Use a reference to evidence handled under laboratory procedures; this field does not upload a document."
+        },
+        {
+          "name": "Patient billing profile — Services and circumstances covered",
+          "meaning": "The scope to which the evidence applies.",
+          "values": "Source-supplied description, up to 2000 characters.",
+          "rules": "Required. State actual service scope; do not broaden an authorization or notice."
+        },
+        {
+          "name": "Patient billing profile — Source event time (UTC)",
+          "meaning": "When the documented event actually happened.",
+          "values": "UTC timestamp such as 2026-10-14T14:30:00Z.",
+          "rules": "Required; must not be in the future. This is separate from the automatic time the record is saved."
+        },
+        {
+          "name": "Patient billing profile — Authorization or reference number",
+          "meaning": "A payer or source reference associated with the evidence.",
+          "values": "Source-supplied text, up to 200 characters.",
+          "rules": "Optional."
+        },
+        {
+          "name": "Patient billing profile — Valid from / Valid until",
+          "meaning": "The dates over which the source states this evidence applies.",
+          "values": "Real dates in YYYY-MM-DD format.",
+          "rules": "Each optional; an end date cannot precede the start date."
+        },
+        {
+          "name": "Patient billing profile — Related coverage",
+          "meaning": "Coverage to which the evidence relates.",
+          "values": "A coverage from the patient profile being edited, or one already selected for the order.",
+          "rules": "Optional. An order evidence record cannot reference a coverage that the order has not selected."
+        },
+        {
+          "name": "Patient billing profile — Related provider NPI",
+          "meaning": "The provider identified by this evidence.",
+          "values": "A valid ten-digit NPI with a valid check digit.",
+          "rules": "Required for Provider enrollment; optional for other evidence. For order enrollment evidence it must identify the ordering practitioner."
+        },
+        {
+          "name": "Patient billing profile — Authorized units",
+          "meaning": "The quantity stated by the authorization source.",
+          "values": "A whole number from 1 through 4,294,967,295.",
+          "rules": "Optional; zero is rejected. Do not calculate units from results or infer authorization."
+        },
+        {
+          "name": "Patient billing profile — Notice or estimate details",
+          "meaning": "Whether detailed notice or estimate evidence was supplied.",
+          "values": "Notice details supplied; Not supplied.",
+          "rules": "Required only for Advance notice or Good faith estimate. Choosing supplied reveals the notice fields."
+        },
+        {
+          "name": "Patient billing profile — Notice or estimate form version",
+          "meaning": "Version of the actual source form used.",
+          "values": "Source text, up to 100 characters.",
+          "rules": "Optional; shown for supplied notice details."
+        },
+        {
+          "name": "Patient billing profile — Notice or estimate reason",
+          "meaning": "The documented reason for the notice or estimate.",
+          "values": "Source-supplied text, up to 2000 characters.",
+          "rules": "Required when notice details are supplied."
+        },
+        {
+          "name": "Patient billing profile — Estimated amount / Currency",
+          "meaning": "The source estimate and its currency.",
+          "values": "Nonnegative exact decimal without a currency symbol; currency is three uppercase letters, such as USD.",
+          "rules": "Both are optional together; supplying either requires the other. An estimate is not a collected payment."
+        },
+        {
+          "name": "Patient billing profile — Patient choice as documented",
+          "meaning": "The choice recorded on the source notice or estimate.",
+          "values": "Source text, up to 1000 characters.",
+          "rules": "Optional; do not select or infer a choice for the patient."
+        },
+        {
+          "name": "Patient billing profile — Provided to patient at (UTC) / Signed at (UTC)",
+          "meaning": "Actual delivery and signature times documented by the source.",
+          "values": "UTC timestamps.",
+          "rules": "Each optional and not in the future. Recording these values does not itself deliver or sign a notice."
+        },
+        {
+          "name": "Patient billing profile — Signer as documented",
+          "meaning": "Name of the signer stated on the source.",
+          "values": "Source text, up to 200 characters.",
+          "rules": "Optional."
+        },
+        {
+          "name": "Patient billing profile — Evidence notes",
+          "meaning": "Additional supplied context needed to understand the evidence.",
+          "values": "Free text, up to 2000 characters.",
+          "rules": "Optional. Does not replace the evidence reference, source event time or service scope."
+        },
+        {
+          "name": "Patient billing profile — Information source",
+          "meaning": "The document or external record used to confirm this revision.",
+          "values": "Source reference, up to 1000 characters.",
+          "rules": "Required for every patient billing edit and order billing selection/evidence change; blank at the start of each edit."
+        },
+        {
+          "name": "Patient billing profile — Reason for change",
+          "meaning": "Why this revision is being recorded.",
+          "values": "Meaningful explanation, up to 1000 characters.",
+          "rules": "Required even for an initial financial profile. Earlier revisions remain available to the application."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open order billing / Refresh order billing",
+          "does": "Loads or refreshes the selected order’s financial facts and follow-up.",
+          "availableWhen": "Order-entry or billing authority is required for patient financial facts, order billing and follow-up. Opening a clinical patient or order record also requires its own access permission.",
+          "result": "Shows the order-specific selection and financial evidence."
+        },
+        {
+          "name": "Confirm order billing selection / Correct order billing selection",
+          "does": "Opens the order financial selection editor.",
+          "availableWhen": "Financial-edit authority; label is Confirm before the first selection and Correct afterwards.",
+          "result": "Save order billing selection creates a versioned selection of source facts and advances the order revision."
+        },
+        {
+          "name": "Add coverage to order / Remove coverage priority …",
+          "does": "Adds or removes a coverage-priority row.",
+          "availableWhen": "Third-party responsibility and a patient profile with coverage choices.",
+          "result": "Changes the unsaved selection only; removing a row changes the priority of later rows."
+        },
+        {
+          "name": "Save order billing selection",
+          "does": "Stores the chosen profile facts, retained/new evidence, source and reason.",
+          "availableWhen": "Valid current order and billing revisions.",
+          "result": "Refreshes the saved order facts; future patient-profile changes still require an explicit order correction."
+        },
+        {
+          "name": "Add order evidence / Save financial evidence",
+          "does": "Appends supplied financial evidence to the existing order selection.",
+          "availableWhen": "An order-specific selection exists and editing is allowed.",
+          "result": "Creates a new billing revision without changing the selected responsibility, coverages or guarantor."
+        },
+        {
+          "name": "Open billing follow-up / Open follow-up",
+          "does": "Records a financial deficiency and optional source note.",
+          "availableWhen": "Financial follow-up creation is allowed.",
+          "result": "Adds an open follow-up item associated with this order."
+        },
+        {
+          "name": "Update billing follow-up / Save follow-up",
+          "does": "Assigns, resolves or reopens a follow-up item with an attributed reason.",
+          "availableWhen": "Financial update authority; current item revision.",
+          "result": "Appends the action. Resolution needs both an owner and retained evidence reference."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes the current unsaved editor or pending action dialog.",
+          "availableWhen": "An editor is open and not saving.",
+          "result": "Unsaved dialog entries are deliberately discarded when Cancel is chosen; saved records remain."
+        },
+        {
+          "name": "Open patient billing profile",
+          "does": "Loads the reusable financial profile for the displayed patient.",
+          "availableWhen": "Order-entry or billing authority is required for patient financial facts, order billing and follow-up. Opening a clinical patient or order record also requires its own access permission.",
+          "result": "Shows profile facts, coverages, guarantor and evidence; does not select these facts for any order."
+        },
+        {
+          "name": "Refresh patient billing profile",
+          "does": "Reads the latest saved profile.",
+          "availableWhen": "After the financial profile is open.",
+          "result": "Refreshes facts; close a stale editor before reopening it with fresh facts."
+        },
+        {
+          "name": "Edit billing contact / Edit guarantor",
+          "does": "Opens a focused editor for the selected part of the profile.",
+          "availableWhen": "When financial-edit authority is offered.",
+          "result": "Save billing details creates a new profile revision while retaining the other financial sections."
+        },
+        {
+          "name": "Add coverage / Correct coverage",
+          "does": "Adds a coverage or changes the expanded coverage.",
+          "availableWhen": "When profile editing is permitted.",
+          "result": "Save billing details preserves other coverages and creates a new revision. Orders do not change automatically."
+        },
+        {
+          "name": "Add patient evidence",
+          "does": "Opens the financial evidence form.",
+          "availableWhen": "When profile editing is permitted; maximum 64 evidence records.",
+          "result": "Save billing details appends the supplied evidence to a new patient profile revision."
+        },
+        {
+          "name": "Save billing details",
+          "does": "Validates the open profile editor and saves the revision with source and reason.",
+          "availableWhen": "All required fields supplied and the profile revision is still current.",
+          "result": "Success closes the dialog and refreshes financial data. A validation or stale-revision failure leaves the editor open."
+        }
+      ],
+      "restrictions": [
+        "Order billing facts are snapshots selected explicitly from a patient profile revision. Later profile corrections do not silently change the order.",
+        "At most eight unique coverages may be selected for third-party billing; a profile may hold at most 32 coverages and 64 financial evidence records.",
+        "A source’s eligibility, authorization or recorded notice does not guarantee payment. This page records evidence and does not contact payers, submit claims or obtain signatures.",
+        "Provider enrollment evidence on an order must identify that order’s practitioner. Evidence referring to coverage must use a selected coverage.",
+        "All financial edit text must respect the displayed lengths and must not contain control characters.",
+        "In editable dialogs, Escape and an outside click close only an unchanged form with no command running. Cancel deliberately discards unsaved dialog entries and is disabled while saving."
+      ],
+      "workflow": [
+        "Verify identity, read Financial information to review and inspect the existing selection.",
+        "Open patient billing profile to correct reusable source facts if needed.",
+        "Confirm or correct the order selection explicitly, choosing profile revision, coverages in payment order, guarantor and relevant evidence.",
+        "Add order-specific source evidence and open follow-up for unresolved financial questions.",
+        "Resolve a follow-up only after recording the responsible owner, action evidence and reason."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The record changed while the dialog was open.",
+          "recovery": "Keep the source document available. Cancel the dialog, refresh or reopen the record, compare the current facts, then reopen the action. Do not repeatedly submit a decision based on an older revision."
+        },
+        {
+          "problem": "A save fails or a field is rejected.",
+          "recovery": "Read the message and correct the indicated value. The open form retains entered values after failure; success is shown only after the application accepts the save. Cancel abandons an unsaved dialog."
+        },
+        {
+          "problem": "Evidence references a coverage that is not selected.",
+          "recovery": "Correct the order’s coverage selection or deselect evidence that no longer applies. Earlier revisions retain prior evidence."
+        },
+        {
+          "problem": "Provider enrollment evidence is rejected.",
+          "recovery": "Check the supplied NPI against the ordering practitioner; a valid but different provider NPI is not accepted for this order."
+        },
+        {
+          "problem": "Resolving follow-up is rejected.",
+          "recovery": "Supply both Responsible person or team and Action evidence reference, plus Reason for this action."
+        },
+        {
+          "problem": "Order still shows older profile facts after profile correction.",
+          "recovery": "Open Correct order billing selection and explicitly choose the new profile revision and applicable facts."
+        }
+      ]
+    }
+  ]
+}

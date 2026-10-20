@@ -1,0 +1,12 @@
+.frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* The screens below size themselves to the remaining height, as they do to the window. */
+.screen {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}

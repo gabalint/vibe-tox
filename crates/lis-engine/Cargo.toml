@@ -1,0 +1,50 @@
+[package]
+name = "lis-engine"
+description = "Composition root: command and query pipeline, sessions, workers and startup"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+hex = { workspace = true }
+keepawake = { workspace = true }
+keyring = { workspace = true }
+lis-audit = { workspace = true }
+lis-auth = { workspace = true }
+lis-catalog = { workspace = true }
+lis-core = { workspace = true }
+lis-identity = { workspace = true }
+lis-interfaces = { workspace = true }
+lis-labels = { workspace = true }
+lis-orders = { workspace = true }
+lis-specimens = { workspace = true }
+lis-analytical = { workspace = true }
+lis-results = { workspace = true }
+lis-reporting = { workspace = true }
+lis-billing = { workspace = true }
+lis-ops = { workspace = true }
+lis-report = { workspace = true }
+lis-store = { workspace = true }
+rusqlite = { workspace = true }
+secrecy = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+subtle = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+ts-rs = { workspace = true }
+
+[dev-dependencies]
+webauthn-authenticator-rs = { workspace = true, features = ["softpasskey"] }
+webauthn-rs = { workspace = true }
+lis-au = { workspace = true }
+tempfile = { workspace = true }
+totp-rs = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,122 @@
+name: package
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  OPENSSL_NO_VENDOR: "0"
+  # Tauri runs Cargo from src-tauri; keep build, cache and upload paths aligned.
+  CARGO_TARGET_DIR: ${{ github.workspace }}/target/packaging-ci
+
+jobs:
+  build:
+    name: unsigned bundle (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-nsis
+            os: windows-latest
+            bundles: nsis
+            artifact-path: target/packaging-ci/release/bundle/nsis/
+          - name: macos-app-dmg
+            os: macos-latest
+            bundles: app,dmg
+            artifact-path: |
+              target/packaging-ci/release/bundle/macos/
+              target/packaging-ci/release/bundle/dmg/
+          - name: linux-deb-appimage
+            os: ubuntu-22.04
+            bundles: deb,appimage
+            artifact-path: |
+              target/packaging-ci/release/bundle/deb/
+              target/packaging-ci/release/bundle/appimage/
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libudev-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            patchelf \
+            pkg-config \
+            perl \
+            wget
+      - name: Select native Windows Perl for vendored OpenSSL
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $perl = 'C:\Strawberry\perl\bin\perl.exe'
+          if (!(Test-Path $perl)) { $perl = (Get-Command perl.exe -ErrorAction Stop).Source }
+          & $perl -e 'exit($^O eq "MSWin32" ? 0 : 1)'
+          if ($LASTEXITCODE -ne 0) { throw 'Vendored OpenSSL requires native Windows Perl, such as Strawberry Perl.' }
+          "OPENSSL_SRC_PERL=$perl" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Toolchain from rust-toolchain.toml
+        run: rustup show active-toolchain
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: ". -> target/packaging-ci"
+      - run: npm ci
+      - name: Build unsigned bundles
+        run: npx tauri build --bundles ${{ matrix.bundles }} -- --locked
+      - name: Check macOS executable has no dynamic OpenSSL dependency
+        if: runner.os == 'macOS'
+        run: |
+          otool -L "$CARGO_TARGET_DIR/release/lis-desktop" > "$RUNNER_TEMP/lis-libraries.txt"
+          cat "$RUNNER_TEMP/lis-libraries.txt"
+          if grep -E 'lib(ssl|crypto)[^/]*\.dylib' "$RUNNER_TEMP/lis-libraries.txt"; then
+            exit 1
+          fi
+      - name: Check Linux executable has no dynamic OpenSSL dependency
+        if: runner.os == 'Linux'
+        run: |
+          readelf -d "$CARGO_TARGET_DIR/release/lis-desktop" > "$RUNNER_TEMP/lis-libraries.txt"
+          if grep -E 'NEEDED.*lib(ssl|crypto)' "$RUNNER_TEMP/lis-libraries.txt"; then
+            exit 1
+          fi
+      - name: Check Windows executable has no OpenSSL DLL dependency
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $dumpbin = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -find 'VC\Tools\MSVC\**\bin\Hostx64\x64\dumpbin.exe' | Select-Object -First 1
+          if (!$dumpbin) { throw 'MSVC dumpbin is required to inspect the packaged executable.' }
+          $libraries = & $dumpbin /DEPENDENTS "$env:CARGO_TARGET_DIR/release/lis-desktop.exe"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect executable dependencies.' }
+          $libraries
+          if ($libraries -match '(?i)(libcrypto|libssl|ssleay32|libeay32).*\.dll') {
+            throw 'OpenSSL must be statically linked into the desktop executable.'
+          }
+      - name: Upload unsigned bundles
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.artifact-path }}
+          if-no-files-found: error
+          retention-days: 14

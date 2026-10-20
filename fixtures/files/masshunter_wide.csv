@@ -1,0 +1,7 @@
+,,Sample,,,,,Morphine Results,,,Qualifier (286.1 -> 165.1) Results,Morphine-D6 (ISTD) Results,,Fentanyl Results,
+,,Name,Data File,Type,Dil.,Acq. Date-Time,RT,Final Conc.,MI,Ratio,RT,Area,RT,Final Conc.
+!,,C00000123,C00000123.d,Sample,1,10/12/2026 9:14 AM,2.31,152.4,FALSE,0.82,2.30,105233,4.12,
+,,C00000126,C00000126.d,Sample,10,10/12/2026 9:22 AM,2.31,1520.5,FALSE,0.81,2.30,98211,4.11,2.07
+,,QC-LOW-L1234,QC-LOW-L1234.d,QC,1,10/12/2026 9:30 AM,2.30,48.9,FALSE,0.83,2.29,101877,4.12,1.98
+,!,CAL-1,CAL-1.d,Cal,1,10/12/2026 8:50 AM,2.31,10.2,TRUE,0.84,2.30,99012,4.12,0.51
+,,BLANK-1,BLANK-1.d,Blank,1,10/12/2026 8:45 AM,,,,,2.30,100420,,

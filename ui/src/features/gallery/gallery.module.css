@@ -1,0 +1,35 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.heading {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 40rem;
+}
+
+/* A flex column of fixed height, like a list page, for the grid's `fill` option. */
+.fillBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: 24rem;
+  padding: var(--space-2);
+  border: 1px dashed var(--color-border-control);
+  border-radius: var(--radius-md);
+}

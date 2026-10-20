@@ -1,0 +1,21 @@
+.hint {
+  color: var(--color-text-muted);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.choiceDetail {
+  padding-left: var(--space-6);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}

@@ -1,0 +1,296 @@
+{
+  "id": "audit",
+  "title": "Audit trail and anchors",
+  "summary": "Inspect recorded activity and check audit history against retained evidence.",
+  "reviewedOn": "2026-10-14",
+  "routes": ["/audit", "/audit/anchors"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Audit trail lists events newest first. Use the available filters to narrow the stream, action or record, and open an event for its details. Self-approvals only isolates those events. Verify chain checks the selected stream for changed or missing events.",
+        "Audit anchors shows seals copied to backup targets. Use its verification view to compare anchor evidence and its file view to inspect export history. Exporting anchors now requires backup authority in addition to viewing access."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Use filters to answer a specific review question, and retain the relevant event identifiers and verification findings through your laboratory’s process. Viewing the trail is itself recorded.",
+        "A chain check establishes consistency of the records examined. Separately held anchors provide an additional comparison point. Neither a successful local check nor an anchor copied from the same restored data establishes that all activity was appropriate."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "Investigate mismatches and missing anchors before drawing a conclusion. After restore, later anchors may describe the lost interval; compare times and the recovery record. Do not remove or rewrite evidence to obtain a passing result."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Audit trail",
+      "routes": ["/audit"],
+      "purpose": "Find attributable activity and verify the consistency of a selected audit stream.",
+      "access": "View audit authority is required. Viewing the trail is itself recorded as an access event.",
+      "fields": [
+        {
+          "name": "Stream",
+          "meaning": "Category of activity under review.",
+          "values": "Security (default); Clinical; Access.",
+          "rules": "Required selection. Changing stream clears Action and Record type because their choices belong to the stream."
+        },
+        {
+          "name": "Find by record ID",
+          "meaning": "Find events concerning one internal record identifier.",
+          "values": "Exact record ID supplied by the relevant record/evidence, or blank for all.",
+          "rules": "Optional; this is not a patient-name search. Use up to 128 lowercase letters, digits, periods, colons, hyphens or underscores. Applies after a typing pause or Enter."
+        },
+        {
+          "name": "Action",
+          "meaning": "Narrow events to one recorded operation.",
+          "values": "Any action or actions actually recorded in the chosen stream.",
+          "rules": "Optional; choices come from the recorded event vocabulary."
+        },
+        {
+          "name": "Record type (More filters)",
+          "meaning": "Narrow events by the kind of affected record.",
+          "values": "Any record type or the chosen stream’s recorded types.",
+          "rules": "Optional."
+        },
+        {
+          "name": "Self-approvals only",
+          "meaning": "Isolate actions where one person performed both steps under policy.",
+          "values": "Unchecked (all matching events); checked (self-approvals only).",
+          "rules": "Optional; use for review of permitted exceptions, not as evidence that every approval required two people."
+        },
+        {
+          "name": "Seq. / Outcome",
+          "meaning": "Stream sequence and result of the recorded action.",
+          "values": "Increasing sequence number within its stream; Succeeded, Denied or Failed.",
+          "rules": "Read-only; denied/failed events are evidence, not completed business changes."
+        },
+        {
+          "name": "Occurred / Recorded",
+          "meaning": "When activity occurred and when its event was recorded.",
+          "values": "Recorded timestamps shown to seconds.",
+          "rules": "Read-only; the two times have distinct meanings."
+        },
+        {
+          "name": "By / Principal ID",
+          "meaning": "Actor responsible for the event and its stable identifier.",
+          "values": "User, Instrument, Partner or System with displayed name/ID.",
+          "rules": "Read-only; use the identifier when names alone are ambiguous."
+        },
+        {
+          "name": "Action / Record / Record ID",
+          "meaning": "Operation and affected record identity.",
+          "values": "Display labels plus recorded action code and record identifier where available.",
+          "rules": "Read-only; a dash means no value was recorded."
+        },
+        {
+          "name": "Reason / Authority / Correlation ID",
+          "meaning": "Explanation, authorization context and identifier linking related diagnostics.",
+          "values": "Stored text or dash; correlation identifier.",
+          "rules": "Read-only; opening the panel shows full unclipped evidence."
+        },
+        {
+          "name": "Chain intact / The chain is not intact",
+          "meaning": "Outcome of recomputing the selected stream’s chain.",
+          "values": "Count checked and findings such as hash mismatch, broken link, missing events, unknown algorithm or seal mismatch.",
+          "rules": "Read-only result for the checked stream, not merely the filtered rows."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open event / Previous / Next / Close",
+          "does": "Inspect the full details of already-loaded events.",
+          "availableWhen": "A row is displayed.",
+          "result": "Read-only panel; events cannot be edited or deleted here."
+        },
+        {
+          "name": "Verify chain",
+          "does": "Recompute the selected stream’s local integrity evidence.",
+          "availableWhen": "View audit authority.",
+          "result": "Shows checked count and findings; it does not repair or rewrite events."
+        },
+        {
+          "name": "Load older events",
+          "does": "Fetch the next older page matching the selected filters.",
+          "availableWhen": "Another page may exist.",
+          "result": "Appends up to 100 events. A failed older-page load preserves rows already read."
+        },
+        {
+          "name": "Clear filters / Show all events",
+          "does": "Remove all constraints except Stream.",
+          "availableWhen": "A filter is applied or no matching events are found.",
+          "result": "Reloads events for the selected stream."
+        },
+        {
+          "name": "Audit anchors",
+          "does": "Open separately retained seal evidence.",
+          "availableWhen": "View audit authority.",
+          "result": "Navigates to anchor status and comparison."
+        }
+      ],
+      "restrictions": [
+        "A local chain check cannot detect every rewritten chain or events removed from its end; compare separately held anchors.",
+        "Audit consistency does not establish that each recorded action was appropriate.",
+        "Do not remove or rewrite evidence to obtain a passing check."
+      ],
+      "workflow": [
+        "Choose the stream and narrow the review by record ID, action and record type.",
+        "Open relevant events and retain their sequence, actor, time and correlation identifiers.",
+        "Verify chain, then use Audit anchors when independent retained evidence is needed.",
+        "Investigate findings through the laboratory’s documented review process."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No event matches",
+          "recovery": "Clear filters and verify the stream and internal record identifier; load older events where available."
+        },
+        {
+          "problem": "Older events could not be loaded",
+          "recovery": "Retry Load older events; current rows remain visible."
+        },
+        {
+          "problem": "The chain is not intact",
+          "recovery": "Preserve the result and event/sequence details and escalate through the laboratory’s incident process; do not alter evidence."
+        }
+      ]
+    },
+    {
+      "title": "Audit anchors",
+      "routes": ["/audit/anchors"],
+      "purpose": "Compare the local audit trail with retained seal fingerprints and inspect anchor export history.",
+      "access": "View audit authority reads and verifies anchors; Export anchors now additionally requires Backup and restore authority.",
+      "fields": [
+        {
+          "name": "Verify anchors / Anchor files tabs",
+          "meaning": "Switch between comparison results and export history.",
+          "values": "Verify anchors (default); Anchor files.",
+          "rules": "Tabs do not modify evidence."
+        },
+        {
+          "name": "Anchor lag / Off-host targets / Last export",
+          "meaning": "Current delay in off-computer evidence, destination count and latest export.",
+          "values": "Minutes or Not reported; target count; timestamp/target or None yet.",
+          "rules": "Read-only. No off-host target means evidence is held only on this computer’s disks."
+        },
+        {
+          "name": "Stream / Newest event / Sealed through event / Anchored through event",
+          "meaning": "Compare each stream’s latest event with its sealed and copied evidence boundaries.",
+          "values": "Security, Clinical and Access stream sequence numbers.",
+          "rules": "Read-only. Sealed locally is not the same as anchored off this computer."
+        },
+        {
+          "name": "Oldest event not anchored off this computer",
+          "meaning": "Beginning of the unanchored interval.",
+          "values": "Timestamp or None.",
+          "rules": "Read-only; investigate prolonged lag."
+        },
+        {
+          "name": "Anchors read / Anchors compared / Matching / Not matching",
+          "meaning": "Counts read and compared against the audit trail.",
+          "values": "Nonnegative counts.",
+          "rules": "Read-only; zero compared is not proof of a successful independent comparison."
+        },
+        {
+          "name": "Covering events missing here / Conflicting anchors / Missing between others",
+          "meaning": "Potential missing local records, conflicting evidence or gaps in anchor sequence.",
+          "values": "Nonnegative counts with findings by stream and seal.",
+          "rules": "Read-only; these require investigation, not automatic dismissal."
+        },
+        {
+          "name": "Explained by a restore / Explained by a restore not yet anchored / Seals not yet anchored",
+          "meaning": "Restore-related differences and evidence not yet exported.",
+          "values": "Nonnegative counts.",
+          "rules": "Read-only. Restore explanation does not itself account for the lost clinical work."
+        },
+        {
+          "name": "Security / Clinical / Access chain",
+          "meaning": "Local-chain status checked during anchor verification.",
+          "values": "Intact; Not intact.",
+          "rules": "Read-only and distinct from anchor matching."
+        },
+        {
+          "name": "Findings",
+          "meaning": "Meaning and location of each verification difference.",
+          "values": "Needs investigation or For information, with stream/seal range when known.",
+          "rules": "Includes mismatches, missing events, gaps, conflicts, lost interval, unanchored seals, foreign-installation evidence, invalid lines and unreadable files."
+        },
+        {
+          "name": "Target / File name / Exported / Seals (Anchor files)",
+          "meaning": "Retained export destination, filename, time and seal ranges per stream.",
+          "values": "Recorded export facts; newest 100 files with an indication if older history exists.",
+          "rules": "Read-only; files are not modified after export."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Export anchors now",
+          "does": "Write pending seal evidence to available targets.",
+          "availableWhen": "Backup and restore authority and configured targets.",
+          "result": "Reports seals/targets written and any failed or unavailable targets; missed anchors remain pending."
+        },
+        {
+          "name": "Verify anchors",
+          "does": "Compare anchors on available targets with the local audit trail.",
+          "availableWhen": "View audit authority and reachable target evidence.",
+          "result": "Displays comparison counts, chain states and findings; verification is audited."
+        },
+        {
+          "name": "Verify with anchors from another folder",
+          "does": "Use independently retained evidence from a chosen native folder.",
+          "availableWhen": "View audit authority; readable folder selected.",
+          "result": "Runs comparison; canceling folder selection verifies nothing."
+        },
+        {
+          "name": "Audit trail",
+          "does": "Return to event inspection.",
+          "availableWhen": "View audit authority.",
+          "result": "Navigates without altering the evidence."
+        }
+      ],
+      "restrictions": [
+        "Anchor lag raises operational findings but does not itself block report release.",
+        "Anchors held on the same host provide limited protection against privileged changes on that host.",
+        "Anchors from another installation are reported and excluded from comparison; unreadable or invalid evidence is not silently a match."
+      ],
+      "workflow": [
+        "Review lag and off-host target count.",
+        "Export pending anchors after confirming destination availability.",
+        "Verify against retained targets or another evidence folder and inspect both counts and findings.",
+        "Correlate restore-related differences with recovery records and investigate all unexplained differences."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No targets are available or a folder is unreadable",
+          "recovery": "Connect the expected media/share or choose the correct readable folder, then retry; preserve original evidence."
+        },
+        {
+          "problem": "Not every target was written",
+          "recovery": "Read the failed/unavailable target counts, resolve access and retry export; pending anchors remain outstanding."
+        },
+        {
+          "problem": "Anchors mismatch or local events are missing",
+          "recovery": "Preserve the retained files and comparison result, identify the stream/seal interval and involve the responsible investigator."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/audit/AuditTrailPage.tsx",
+    "ui/src/features/audit/AuditFilters.tsx",
+    "ui/src/features/audit/AuditEvents.tsx",
+    "ui/src/features/audit/AuditEventDetails.tsx",
+    "ui/src/features/audit/ChainCheck.tsx",
+    "ui/src/features/audit/auditColumns.tsx",
+    "ui/src/features/audit/streams.ts",
+    "ui/src/features/audit/anchors/AnchorsPage.tsx",
+    "ui/src/features/audit/anchors/AnchorStatusSection.tsx",
+    "ui/src/features/audit/anchors/VerifyAnchorsSection.tsx",
+    "ui/src/features/audit/anchors/AnchorExportsSection.tsx",
+    "ui/src/features/audit/anchors/anchorText.ts",
+    "crates/lis-engine/src/commands/audit.rs"
+  ]
+}

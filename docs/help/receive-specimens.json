@@ -1,0 +1,876 @@
+{
+  "id": "receive-specimens",
+  "title": "Receiving specimens",
+  "summary": "Register material for an accepted order, then verify labels and record receipt decisions.",
+  "reviewedOn": "2026-10-15",
+  "routes": ["/orders/:orderId/accession", "/accessions/:accessionId"],
+  "sections": [
+    {
+      "title": "How to use this page",
+      "paragraphs": [
+        "Receive specimens shows tests eligible for new material and any existing accessions. Select the relevant tests, enter the supplied collection information and describe the specimens and containers that arrived. Saving opens the new accession.",
+        "The accession page shows collection details, each specimen’s receipt decisions and its containers. Use the available actions to print labels, record a receipt decision or create an aliquot. Check label status refreshes the printing outcome."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Registration and acceptance are separate steps. Check the patient, accession and physical container labels before recording the receipt decision. Record collection time as supplied, including uncertainty where the form supports it.",
+        "Review existing accessions before receiving material again. Check the label job’s outcome before reprinting; use the explicit reprint action when another copy is needed. Each specimen keeps its decision history."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "If no tests are available to receive, review the order’s acceptance, test status and existing accessions. Missing specimen types need catalog configuration. A label job that is queued or failed is not evidence of a usable printed label; investigate its status before continuing."
+      ]
+    },
+    {
+      "title": "Receipt chronology recovery",
+      "paragraphs": [
+        "Receipt history follows committed causal order, preserving original recorded times. A legacy chronology warning means the original evidence cannot establish current receipt state; testing and release remain blocked. A user with Manage quality can open Review receipt chronology, review source records, and select every decision exactly once from oldest to newest. No order is preselected.",
+        "The review reason must identify the source evidence and explain the ordering. Duplicate, contradictory or stale sequences are refused. Cancel when evidence is insufficient; never use clock timestamps alone to infer order. Refresh the accession after a conflict, then review again. Original decisions, observations and times remain intact."
+      ]
+    },
+    {
+      "title": "Container material and label history",
+      "paragraphs": [
+        "Open Material history and actions beside a container, or scan its barcode in Container lookup. The identity banner, accession, barcode, material state, volume, location and open holds identify the material. Refresh retrieves current state before actions. Location moves and hold/release history are separate evidence streams; Previous history and Next history retrieve 50 events per stream without requiring earlier work to be resolved.",
+        "Move container selects an active named location and records a reason. An unresolved legacy location requires checking the physical material and recording a new attributable move; the application does not fabricate past movement order. Manage quality can place retention, legal or quality holds and release individual open holds with a reason. Excursion holds are recorded through a storage incident assessment. Open holds block testing, aliquots and disposal.",
+        "Mark depleted and Dispose container require confirmation and an attributable reason. Depletion prevents further use; disposal is permanent and requires all holds released. Engine permissions and optimistic revision checks remain authoritative. On conflict, cancel, refresh, review the updated material and reopen the action.",
+        "Label jobs show every requested print/reprint, recorded time and queued, handed-off or failed outcome. Queued after interruption does not prove printing failed or succeeded. Refresh, inspect the physical printer and material, and use a reasoned reprint only when another label is needed. A reprint preserves the barcode. The configuration link is shown only to administrators and opens local printer setup; no active printer means printing remains unavailable. Receiving staff must ask an administrator to configure a missing destination."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/accessioning/specimens/AccessionForm.tsx",
+    "ui/src/features/accessioning/specimens/CollectionFields.tsx",
+    "ui/src/features/accessioning/specimens/SpecimenList.tsx",
+    "ui/src/features/accessioning/specimens/AccessionTestSelection.tsx",
+    "ui/src/features/accessioning/specimens/accessionValues.ts",
+    "ui/src/features/accessioning/specimens/labels.ts",
+    "ui/src/features/accessioning/specimens/AccessionPage.tsx",
+    "ui/src/features/accessioning/specimens/AccessionProgress.tsx",
+    "ui/src/features/accessioning/specimens/SpecimenPanel.tsx",
+    "ui/src/features/accessioning/specimens/ReceiptDecisionDialog.tsx",
+    "ui/src/features/accessioning/specimens/LabelCheckDialog.tsx",
+    "ui/src/features/accessioning/specimens/PrintLabelsDialog.tsx",
+    "ui/src/features/accessioning/specimens/AliquotDialog.tsx",
+    "ui/src/features/accessioning/specimens/containerColumns.tsx",
+    "crates/lis-specimens/src/input.rs",
+    "crates/lis-specimens/src/commands/accessioning.rs",
+    "crates/lis-specimens/src/commands/receipt.rs",
+    "crates/lis-specimens/src/commands/containers.rs",
+    "crates/lis-specimens/src/commands/labels.rs",
+    "ui/src/features/accessioning/billing/CollectionHistorySection.tsx",
+    "ui/src/features/accessioning/billing/CollectionReviewPage.tsx",
+    "crates/lis-specimens/src/commands/collection.rs",
+    "crates/lis-engine/src/commands/collection_corrections.rs",
+    "ui/src/features/accessioning/billing/BillingOrderPage.tsx",
+    "ui/src/features/accessioning/billing/OrderBillingSection.tsx",
+    "ui/src/features/accessioning/billing/OrderBillingFacts.tsx",
+    "ui/src/features/accessioning/billing/OrderContextDialog.tsx",
+    "ui/src/features/accessioning/billing/OrderEvidenceDialog.tsx",
+    "ui/src/features/accessioning/billing/ReviewItems.tsx",
+    "ui/src/features/accessioning/billing/labels.ts",
+    "crates/lis-orders/src/billing_context.rs",
+    "crates/lis-orders/src/billing_reviews.rs",
+    "crates/lis-engine/src/commands/billing_intake.rs",
+    "ui/src/features/accessioning/billing/PatientBillingSection.tsx",
+    "ui/src/features/accessioning/billing/PatientProfileDialog.tsx",
+    "ui/src/features/accessioning/billing/PatientProfileFacts.tsx",
+    "ui/src/features/accessioning/billing/ContactDialog.tsx",
+    "ui/src/features/accessioning/billing/GuarantorDialog.tsx",
+    "ui/src/features/accessioning/billing/CoverageDialog.tsx",
+    "ui/src/features/accessioning/billing/FinancialFields.tsx",
+    "ui/src/features/accessioning/billing/contactValues.ts",
+    "ui/src/features/accessioning/billing/EvidenceFields.tsx",
+    "ui/src/features/accessioning/billing/evidenceValues.ts",
+    "ui/src/features/accessioning/billing/EvidenceList.tsx",
+    "ui/src/features/accessioning/billing/BillingFacts.tsx",
+    "crates/lis-identity/src/billing_validation.rs",
+    "crates/lis-identity/src/model.rs",
+    "ui/src/components/FormDialog/FormDialog.tsx",
+    "ui/src/features/accessioning/specimens/NewAccessionPage.tsx",
+    "crates/lis-engine/src/commands/orders.rs",
+    "crates/lis-engine/src/commands/specimens.rs",
+    "crates/lis-identity/src/billing_model.rs",
+    "crates/lis-identity/src/billing.rs",
+    "ui/src/features/accessioning/specimens/AccessionTestPicker.tsx",
+    "ui/src/components/RecordPicker/RecordPicker.tsx",
+    "ui/src/components/RecordPicker/RecordPicker.test.tsx",
+    "ui/src/features/accessioning/specimens/ReceiptChronologyDialog.tsx",
+    "ui/src/features/accessioning/specimens/ContainerMaterial.tsx",
+    "ui/src/features/accessioning/specimens/MaterialActionDialog.tsx",
+    "ui/src/features/accessioning/specimens/MaterialHistory.tsx",
+    "ui/src/features/accessioning/specimens/ContainerLookupPage.tsx"
+  ],
+  "pages": [
+    {
+      "title": "Receive specimens",
+      "routes": ["/orders/:orderId/accession"],
+      "purpose": "Register the material received for selected eligible tests on an accepted order.",
+      "access": "This page loads the clinical order using order-entry authority and registers material using accessioning authority. Both are needed for the complete on-screen receiving flow; submitted receipt is checked again against current eligibility.",
+      "fields": [
+        {
+          "name": "Patient identity / Order / Existing accessions",
+          "meaning": "Identity and saved request to which the material will be linked.",
+          "values": "Read-only patient banner, order link and existing accession links with specimen and pending-review counts.",
+          "rules": "Review these before creating new material; follow existing accession links for work already received."
+        },
+        {
+          "name": "Tests for this material / selected count",
+          "meaning": "Order items being associated with this accession.",
+          "values": "Eligible ordered tests, initially none selected. Up to 15 choices use checkboxes; more than 15 use Find ordered tests with Selected tests for this material below it.",
+          "rules": "Choose at least one, each once. Selection does not change the order’s requested work. Existing accessions and blocked tests are shown separately with reasons. The displayed count follows all chosen items, including those outside the current search."
+        },
+        {
+          "name": "Find ordered tests",
+          "meaning": "Finds an eligible item on this order to associate with the received material.",
+          "values": "Part of the ordered test code, historical name or required specimen-type code.",
+          "rules": "Shown when more than 15 eligible tests are available. Type to narrow the popup, then choose an option or use Arrow Down and Enter. The search clears after a choice so you can find the next one; Escape closes the popup. The selected list stays visible after searches. Free text never creates an order item. Ctrl+A (Command+A on macOS) selects the search text for replacement. Enter in the search does not save the form."
+        },
+        {
+          "name": "Required specimen types for the selected tests",
+          "meaning": "Exact material types needed by the selected catalog tests.",
+          "values": "Read-only configured specimen-type codes.",
+          "rules": "Register exactly one specimen row per required type; duplicate, missing and extra types are refused."
+        },
+        {
+          "name": "Collection time known",
+          "meaning": "Precision of the collection timing actually supplied.",
+          "values": "Date and time (UTC offset supplied); Date and time (named timezone); Date only; time not recorded; Unknown.",
+          "rules": "Required; no default. Choose Unknown if neither date nor time is supplied; do not substitute receipt time."
+        },
+        {
+          "name": "Collection date",
+          "meaning": "Local calendar date at the collection site.",
+          "values": "Real date in YYYY-MM-DD format.",
+          "rules": "Required except when Unknown. Date-only entry cannot exceed the current UTC date by more than one day; this accommodates timezone differences and is not permission to invent a date."
+        },
+        {
+          "name": "Collection time",
+          "meaning": "Local clock time at collection.",
+          "values": "24-hour HH:MM, without seconds.",
+          "rules": "Required for either date-and-time choice; hidden for date-only or Unknown. The resulting instant cannot be in the future."
+        },
+        {
+          "name": "Collection timezone (UTC offset)",
+          "meaning": "Offset supplied with the collection-site clock time.",
+          "values": "Signed HH:MM, from -12:00 through +14:00, such as -05:00.",
+          "rules": "Required for the UTC-offset choice. Use the offset at the collection event, not today’s offset."
+        },
+        {
+          "name": "Collection site timezone",
+          "meaning": "Named timezone for the collection site.",
+          "values": "A recognized named zone such as America/New_York, up to 200 characters.",
+          "rules": "Required for named-timezone entry. Ambiguous or nonexistent daylight-saving clock times are refused; verify the supplied time/offset."
+        },
+        {
+          "name": "Collected by",
+          "meaning": "Collector as supplied on the requisition.",
+          "values": "Optional source text, up to 200 characters.",
+          "rules": "Present during new receipt; collection-time correction does not change the collector."
+        },
+        {
+          "name": "Specimen type",
+          "meaning": "Configured material type received.",
+          "values": "Configured specimen types listed by name.",
+          "rules": "Required in each row; there must be 1–10 specimen rows and exactly the types required by the selected tests."
+        },
+        {
+          "name": "Containers",
+          "meaning": "Number of primary containers received for this specimen.",
+          "values": "Whole number from 1 through 10.",
+          "rules": "Required in each specimen row. The form starts with one blank specimen row, without assuming a count."
+        },
+        {
+          "name": "Volume / Volume unit / Volume is",
+          "meaning": "Quantity and measurement provenance recorded for the primary containers in this specimen row.",
+          "values": "Positive exact decimal and a unit up to 16 characters; Estimated, Measured or Unknown.",
+          "rules": "Choose how the volume was obtained. Estimated/Measured require amount and unit together; Unknown requires both blank. The row’s volume applies to each generated container, not a split total."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Use all eligible tests",
+          "does": "Selects every currently eligible test.",
+          "availableWhen": "The receiving form is available.",
+          "result": "Selects the complete eligible set, including items outside the current search. Updates the unsaved choice; review the required material types before saving."
+        },
+        {
+          "name": "Clear selected tests",
+          "does": "Clears the test allocation in this unsaved accession.",
+          "availableWhen": "At least one eligible test is selected.",
+          "result": "No tests remain selected. Collection and specimen entries remain available; choose the applicable tests and recheck required specimen types before saving."
+        },
+        {
+          "name": "Remove — selected test for this material",
+          "does": "Removes one item from the visible selected list.",
+          "availableWhen": "The long-list picker is shown and that item is selected.",
+          "result": "Changes only the unsaved allocation, updates the required specimen types and returns focus to Find ordered tests. Other selected tests remain; saved order items are not cancelled."
+        },
+        {
+          "name": "Add specimen / Remove specimen …",
+          "does": "Adds or removes a material row.",
+          "availableWhen": "During receipt entry.",
+          "result": "Only changes unsaved material; maintain exactly one row per required type."
+        },
+        {
+          "name": "Use laboratory timezone (…)",
+          "does": "Copies the configured laboratory timezone into the collection-site field.",
+          "availableWhen": "Named-timezone entry and a laboratory timezone is configured.",
+          "result": "Changes only the unsaved timezone value; use it only when it is the collection site’s correct zone."
+        },
+        {
+          "name": "Receive specimens",
+          "does": "Creates the accession, specimens and uniquely labeled primary containers.",
+          "availableWhen": "Accessioning authority, eligible accepted items, valid collection information and matching material types.",
+          "result": "Opens the new accession. Specimens are Received, not yet decided; labels and receipt decisions remain to be completed."
+        },
+        {
+          "name": "Cancel / Order or accession link",
+          "does": "Returns to the saved order or opens existing material.",
+          "availableWhen": "The form is not saving.",
+          "result": "Unsaved changes require confirmation before leaving."
+        }
+      ],
+      "restrictions": [
+        "A failed command leaves entered values available for correction. Eligibility is checked again on submission.",
+        "No test may be accessioned twice; an existing accession must be used for its already registered work.",
+        "This form records supplied collection timing, not automatically the current clock."
+      ],
+      "workflow": [
+        "Review the patient, order and existing accession list.",
+        "Choose the tests that this material covers, using Find ordered tests for a long list or Use all eligible tests when all apply. Review the selected count and required specimen types, then record collection precision and source values.",
+        "Add exactly the required specimen types with their actual containers and quantity provenance.",
+        "Choose Receive specimens; finish the label and receipt steps on the new accession."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A save fails or a field is rejected.",
+          "recovery": "Read the message and correct the indicated value. The open form retains entered values after failure; success is shown only after the application accepts the save. Cancel abandons an unsaved dialog."
+        },
+        {
+          "problem": "No tests available to receive.",
+          "recovery": "Review the order state and per-test explanation. Accept the request when eligible, resolve clarification, or open the linked existing accession."
+        },
+        {
+          "problem": "Specimen types do not match the selected tests.",
+          "recovery": "Compare Required specimen types with your specimen rows. Keep exactly one row per required type and no unrelated material."
+        },
+        {
+          "problem": "A named-timezone time is ambiguous or nonexistent.",
+          "recovery": "Verify the source clock time at the collection site. Use the supplied UTC offset if it disambiguates the event; do not let the computer guess."
+        },
+        {
+          "problem": "No matches in Find ordered tests.",
+          "recovery": "Clear or shorten the search and try the ordered code, name or specimen-type code. The picker only lists this order’s eligible items. Review Tests unavailable for this accession for blocked or already received work; changing the search cannot make those items eligible."
+        }
+      ]
+    },
+    {
+      "title": "Accession",
+      "routes": ["/accessions/:accessionId"],
+      "purpose": "Finish receipt review, inspect container lineage and request labels for registered material.",
+      "access": "Accession or Manage quality permits audited accession reads. Receipt decisions, label printing and aliquots separately require Accession; chronology and collection review require Manage quality. Order billing is shown only with order-entry or billing authority. The application rechecks record revisions, specimen state and applicable holds when an action is submitted.",
+      "fields": [
+        {
+          "name": "Receipt decisions / Held / Rejected",
+          "meaning": "Progress of receipt review for this accession.",
+          "values": "Read-only decisions recorded out of total specimens, held count and rejected count.",
+          "rules": "A completed decision may be a hold or rejection; the count does not mean all material is ready for testing."
+        },
+        {
+          "name": "Collected / Collected by / Tests in this accession",
+          "meaning": "Saved collection facts and order items linked to the material.",
+          "values": "Read-only supplied timing/collector and test list.",
+          "rules": "Use Collection timing review for evidence-backed timing corrections."
+        },
+        {
+          "name": "Barcode / Accession",
+          "meaning": "The unique container label and accession number linking it to received material.",
+          "values": "Read-only generated label and accession number.",
+          "rules": "Compare both against the physical material before a specimen or aliquot action."
+        },
+        {
+          "name": "Specimen / Acceptance",
+          "meaning": "The configured specimen type and receipt decision state.",
+          "values": "Received, not yet decided; Accepted; Accepted conditionally; Held; Rejected.",
+          "rules": "Read-only current state; completion of a receipt decision is not proof that all testing gates are clear."
+        },
+        {
+          "name": "Kind",
+          "meaning": "Whether this is original material or a derived container.",
+          "values": "Primary; Aliquot, with parent barcode on the accession.",
+          "rules": "Read-only lineage; an aliquot remains linked to its parent and specimen."
+        },
+        {
+          "name": "State",
+          "meaning": "Physical container availability recorded in the system.",
+          "values": "Available; Depleted; Disposed.",
+          "rules": "Read-only here. Available does not override specimen rejection or an open hold."
+        },
+        {
+          "name": "Volume",
+          "meaning": "Recorded quantity, unit and how it was obtained.",
+          "values": "Exact supplied decimal/unit with Estimated or Measured; Not recorded (unknown) when absent.",
+          "rules": "Read-only; quantities are not inferred or converted."
+        },
+        {
+          "name": "Location",
+          "meaning": "Last recorded storage location.",
+          "values": "Configured location name or Not recorded.",
+          "rules": "Read-only; this screen has no move-container editor."
+        },
+        {
+          "name": "Holds",
+          "meaning": "Unresolved container holds.",
+          "values": "None/0 or a count of open holds.",
+          "rules": "Open holds block aliquoting, disposal and testing as applicable."
+        },
+        {
+          "name": "Label printing",
+          "meaning": "Latest requested print/reprint outcome.",
+          "values": "No label requested; Print or Reprint: Queued, Handed off to printer, or Failed with reason.",
+          "rules": "Handed off is a transport outcome, not proof that a usable label physically printed."
+        },
+        {
+          "name": "Receipt decisions history",
+          "meaning": "Earlier receipt decisions for each specimen.",
+          "values": "Decision, staff member, time, discrepancies, policy reference/scope and reason when present.",
+          "rules": "Oldest first; earlier decisions remain retained."
+        },
+        {
+          "name": "Container label",
+          "meaning": "Physical label check before receipt or aliquot entry.",
+          "values": "Scan or type the actual barcode; surrounding spaces are ignored.",
+          "rules": "Must exactly match a container of the specimen for receipt, or the selected parent for aliquoting. A mismatch clears the input and does not continue."
+        },
+        {
+          "name": "Decision",
+          "meaning": "Receipt decision for the identified specimen.",
+          "values": "Accept; Accept conditionally; Hold; Reject.",
+          "rules": "Required; initially blank. Only Received or Held specimens can receive another decision. Accepted, conditionally accepted and rejected states are final in this workflow."
+        },
+        {
+          "name": "Discrepancies found",
+          "meaning": "Problems observed during receipt.",
+          "values": "Unlabeled; Label does not match the requisition; Leaking; Insufficient volume; Temperature or stability concern; Container damaged; Other.",
+          "rules": "Optional checklist; each discrepancy once. Choose observed problems only."
+        },
+        {
+          "name": "Note on …",
+          "meaning": "Details for each checked discrepancy.",
+          "values": "Text, up to 1000 characters.",
+          "rules": "Optional except Note on other, which is required. This is retained receipt evidence, not automatically patient-report text. At report preparation, an authorized releaser explicitly decides which descriptions and historical conditions are clinically relevant to include; current condition codes remain mandatory."
+        },
+        {
+          "name": "Laboratory policy reference",
+          "meaning": "Approved policy permitting conditional acceptance.",
+          "values": "Required text for Accept conditionally, up to 200 characters.",
+          "rules": "Does not create laboratory policy or approve an exception on its own."
+        },
+        {
+          "name": "Scope of the condition",
+          "meaning": "Tests or results covered by conditional acceptance.",
+          "values": "Required text for Accept conditionally, up to 1000 characters.",
+          "rules": "Keep the scope limited to the approved exception."
+        },
+        {
+          "name": "Reason — receipt decision",
+          "meaning": "Why the material is being held or rejected.",
+          "values": "Required text for Hold or Reject, up to 1000 characters.",
+          "rules": "Rejection requires a second confirmation and cannot be undone through this screen."
+        },
+        {
+          "name": "Printer",
+          "meaning": "Configured active destination for label jobs.",
+          "values": "Active printer name, code and destination.",
+          "rules": "Required in Print labels or Reprint labels. Inactive printers are not offered."
+        },
+        {
+          "name": "Reason — reprint",
+          "meaning": "Why another copy of the existing container label is needed.",
+          "values": "Required text, up to 1000 characters.",
+          "rules": "Required for reprints only; the barcode remains the same."
+        },
+        {
+          "name": "Containers — printing selection",
+          "meaning": "Physical container labels that will be included in a print request.",
+          "values": "Read-only barcodes from selected rows, one row menu action, or all printable containers in the specimen.",
+          "rules": "Review selection before submitting; at most 50 labels per command."
+        },
+        {
+          "name": "Parent volume",
+          "meaning": "Recorded quantity of the parent container before an aliquot.",
+          "values": "Read-only exact quantity/unit and Estimated, Measured or Unknown.",
+          "rules": "The system refuses taking more than the known available amount and does not convert unlike units."
+        },
+        {
+          "name": "Volume taken / Volume unit / Volume taken is",
+          "meaning": "Quantity transferred into a new aliquot and measurement provenance.",
+          "values": "Positive exact decimal and source unit of up to 16 characters; Estimated, Measured or Unknown.",
+          "rules": "For Estimated/Measured supply quantity and unit together. For Unknown leave both blank. Known arithmetic requires identical unit text; reaching zero depletes the parent."
+        },
+        {
+          "name": "Original collection / Current collection / Collection revision",
+          "meaning": "Original source timing, latest correction and the version reviewed.",
+          "values": "Read-only known date/time, date-only or Unknown and a revision number.",
+          "rules": "Original timing is retained even after corrections."
+        },
+        {
+          "name": "Correction history: Revision / Collection time / Source reference / Reason / Recorded / Quality review",
+          "meaning": "Provenance and quality-review status for every correction.",
+          "values": "Read-only values; quality review is Pending or Resolved with the recorded reason.",
+          "rules": "A corrected collection time and a completed quality review are distinct events."
+        },
+        {
+          "name": "Collection time known",
+          "meaning": "Precision of the collection timing actually supplied.",
+          "values": "Date and time (UTC offset supplied); Date and time (named timezone); Date only; time not recorded; Unknown.",
+          "rules": "Required; no default. Choose Unknown if neither date nor time is supplied; do not substitute receipt time."
+        },
+        {
+          "name": "Collection date",
+          "meaning": "Local calendar date at the collection site.",
+          "values": "Real date in YYYY-MM-DD format.",
+          "rules": "Required except when Unknown. Date-only entry cannot exceed the current UTC date by more than one day; this accommodates timezone differences and is not permission to invent a date."
+        },
+        {
+          "name": "Collection time",
+          "meaning": "Local clock time at collection.",
+          "values": "24-hour HH:MM, without seconds.",
+          "rules": "Required for either date-and-time choice; hidden for date-only or Unknown. The resulting instant cannot be in the future."
+        },
+        {
+          "name": "Collection timezone (UTC offset)",
+          "meaning": "Offset supplied with the collection-site clock time.",
+          "values": "Signed HH:MM, from -12:00 through +14:00, such as -05:00.",
+          "rules": "Required for the UTC-offset choice. Use the offset at the collection event, not today’s offset."
+        },
+        {
+          "name": "Collection site timezone",
+          "meaning": "Named timezone for the collection site.",
+          "values": "A recognized named zone such as America/New_York, up to 200 characters.",
+          "rules": "Required for named-timezone entry. Ambiguous or nonexistent daylight-saving clock times are refused; verify the supplied time/offset."
+        },
+        {
+          "name": "Source document reference — collection correction",
+          "meaning": "Retained source supporting the new timing.",
+          "values": "Required reference, up to 1000 characters.",
+          "rules": "Must describe actual source evidence; no upload occurs here."
+        },
+        {
+          "name": "Correction reason",
+          "meaning": "Why the recorded timing needs correction.",
+          "values": "Required text, up to 1000 characters.",
+          "rules": "The new timing must differ from the current timing."
+        },
+        {
+          "name": "Quality review and resolution reason",
+          "meaning": "Review performed and effect on testing or released reports.",
+          "values": "Required explanation, up to 1000 characters.",
+          "rules": "Quality authority required. Separate report-impact reviews remain applicable."
+        },
+        {
+          "name": "Financial information to review",
+          "meaning": "Readiness issues in this order’s financial selection.",
+          "values": "Messages may request a billing selection, payment responsibility, bill-to account, coverage, member identifier, subscriber, billing address or resolution of open follow-up.",
+          "rules": "Read-only. These issues affect financial readiness and must not be treated as clinical release permission."
+        },
+        {
+          "name": "Billing revision / Responsibility / Patient profile revision / Coverage priority / Guarantor / Bill-to client account",
+          "meaning": "The exact financial facts selected for this order.",
+          "values": "Read-only revision and selected values, with None selected where absent.",
+          "rules": "Coverage order indicates payment priority. Expand Selected financial details for contact, guarantor and coverage facts."
+        },
+        {
+          "name": "Source / Reason / Confirmed",
+          "meaning": "Who supplied the selected facts, why they were recorded and the save time.",
+          "values": "Read-only supplied source, change reason and timestamp.",
+          "rules": "Distinct from a financial evidence event time."
+        },
+        {
+          "name": "Who is responsible for payment",
+          "meaning": "Payment arrangement confirmed for this order.",
+          "values": "Third party (insurance); Patient (self-pay); Client (ordering clinic); Not supplied.",
+          "rules": "Required; no initial default for a new selection. Switching away from third-party billing clears the selected coverages."
+        },
+        {
+          "name": "Bill-to client account",
+          "meaning": "Configured client account responsible for payment.",
+          "values": "Configured client names.",
+          "rules": "Required by the editor for Client billing; hidden and not saved for other arrangements."
+        },
+        {
+          "name": "Patient financial facts to use",
+          "meaning": "Profile revision whose supplied facts will be copied into the order.",
+          "values": "Do not select patient profile facts, or the currently selected and latest available Profile revision choices.",
+          "rules": "Required choice. Switching revision clears coverage priority, newly selected evidence and guarantor choice, so review them again."
+        },
+        {
+          "name": "Coverage priority 1, 2, …",
+          "meaning": "Coverages explicitly confirmed for this order, in payment order.",
+          "values": "Coverage records from the selected profile, identified by payer, member identifier and plan.",
+          "rules": "For Third party (insurance) only. Each added row is required; select each coverage once, at most eight. Do not assume the first available payer applies."
+        },
+        {
+          "name": "Use guarantor …",
+          "meaning": "Whether to copy the supplied guarantor from the chosen profile.",
+          "values": "Yes; No.",
+          "rules": "Required when that profile contains a guarantor. Choosing a profile without a guarantor shows that absence."
+        },
+        {
+          "name": "Evidence to copy",
+          "meaning": "Patient evidence that applies to this order.",
+          "values": "Checkboxes for evidence in the selected patient profile.",
+          "rules": "Optional explicit selection; no new patient evidence is selected automatically. Coverage references must match the order selection."
+        },
+        {
+          "name": "Order evidence retained in this revision",
+          "meaning": "Existing order financial evidence to retain when correcting the selection.",
+          "values": "Checkboxes for currently recorded order evidence; initially all checked.",
+          "rules": "Deselect items that no longer apply. Earlier order revisions retain them; changing the profile does not automatically remove them."
+        },
+        {
+          "name": "Evidence type",
+          "meaning": "Which financial event or document this record describes.",
+          "values": "Eligibility; Prior authorization; Advance notice (including ABN); Good faith estimate; Provider enrollment.",
+          "rules": "Required; initially blank. These are manually recorded source facts, not automated determinations."
+        },
+        {
+          "name": "Source status",
+          "meaning": "The status stated by the source for this evidence.",
+          "values": "Not checked; Unknown; Not required; Pending; Recorded; Approved; Denied.",
+          "rules": "Required; initially blank. Approved here describes the source response and does not guarantee payment."
+        },
+        {
+          "name": "Evidence reference",
+          "meaning": "How to locate the retained source document or external record.",
+          "values": "Source reference text, up to 1000 characters.",
+          "rules": "Required. Use a reference to evidence handled under laboratory procedures; this field does not upload a document."
+        },
+        {
+          "name": "Services and circumstances covered",
+          "meaning": "The scope to which the evidence applies.",
+          "values": "Source-supplied description, up to 2000 characters.",
+          "rules": "Required. State actual service scope; do not broaden an authorization or notice."
+        },
+        {
+          "name": "Source event time (UTC)",
+          "meaning": "When the documented event actually happened.",
+          "values": "UTC timestamp such as 2026-10-14T14:30:00Z.",
+          "rules": "Required; must not be in the future. This is separate from the automatic time the record is saved."
+        },
+        {
+          "name": "Authorization or reference number",
+          "meaning": "A payer or source reference associated with the evidence.",
+          "values": "Source-supplied text, up to 200 characters.",
+          "rules": "Optional."
+        },
+        {
+          "name": "Valid from / Valid until",
+          "meaning": "The dates over which the source states this evidence applies.",
+          "values": "Real dates in YYYY-MM-DD format.",
+          "rules": "Each optional; an end date cannot precede the start date."
+        },
+        {
+          "name": "Related coverage",
+          "meaning": "Coverage to which the evidence relates.",
+          "values": "A coverage from the patient profile being edited, or one already selected for the order.",
+          "rules": "Optional. An order evidence record cannot reference a coverage that the order has not selected."
+        },
+        {
+          "name": "Related provider NPI",
+          "meaning": "The provider identified by this evidence.",
+          "values": "A valid ten-digit NPI with a valid check digit.",
+          "rules": "Required for Provider enrollment; optional for other evidence. For order enrollment evidence it must identify the ordering practitioner."
+        },
+        {
+          "name": "Authorized units",
+          "meaning": "The quantity stated by the authorization source.",
+          "values": "A whole number from 1 through 4,294,967,295.",
+          "rules": "Optional; zero is rejected. Do not calculate units from results or infer authorization."
+        },
+        {
+          "name": "Notice or estimate details",
+          "meaning": "Whether detailed notice or estimate evidence was supplied.",
+          "values": "Notice details supplied; Not supplied.",
+          "rules": "Required only for Advance notice or Good faith estimate. Choosing supplied reveals the notice fields."
+        },
+        {
+          "name": "Notice or estimate form version",
+          "meaning": "Version of the actual source form used.",
+          "values": "Source text, up to 100 characters.",
+          "rules": "Optional; shown for supplied notice details."
+        },
+        {
+          "name": "Notice or estimate reason",
+          "meaning": "The documented reason for the notice or estimate.",
+          "values": "Source-supplied text, up to 2000 characters.",
+          "rules": "Required when notice details are supplied."
+        },
+        {
+          "name": "Estimated amount / Currency",
+          "meaning": "The source estimate and its currency.",
+          "values": "Nonnegative exact decimal without a currency symbol; currency is three uppercase letters, such as USD.",
+          "rules": "Both are optional together; supplying either requires the other. An estimate is not a collected payment."
+        },
+        {
+          "name": "Patient choice as documented",
+          "meaning": "The choice recorded on the source notice or estimate.",
+          "values": "Source text, up to 1000 characters.",
+          "rules": "Optional; do not select or infer a choice for the patient."
+        },
+        {
+          "name": "Provided to patient at (UTC) / Signed at (UTC)",
+          "meaning": "Actual delivery and signature times documented by the source.",
+          "values": "UTC timestamps.",
+          "rules": "Each optional and not in the future. Recording these values does not itself deliver or sign a notice."
+        },
+        {
+          "name": "Signer as documented",
+          "meaning": "Name of the signer stated on the source.",
+          "values": "Source text, up to 200 characters.",
+          "rules": "Optional."
+        },
+        {
+          "name": "Evidence notes",
+          "meaning": "Additional supplied context needed to understand the evidence.",
+          "values": "Free text, up to 2000 characters.",
+          "rules": "Optional. Does not replace the evidence reference, source event time or service scope."
+        },
+        {
+          "name": "Information source",
+          "meaning": "The document or external record used to confirm this revision.",
+          "values": "Source reference, up to 1000 characters.",
+          "rules": "Required for every patient billing edit and order billing selection/evidence change; blank at the start of each edit."
+        },
+        {
+          "name": "Reason for change",
+          "meaning": "Why this revision is being recorded.",
+          "values": "Meaningful explanation, up to 1000 characters.",
+          "rules": "Required even for an initial financial profile. Earlier revisions remain available to the application."
+        },
+        {
+          "name": "Missing financial evidence",
+          "meaning": "The deficiency for a new follow-up item.",
+          "values": "Supplied diagnosis; Medical necessity documentation; Payer-required signature; Provider enrollment; Other financial evidence.",
+          "rules": "Required. This opens a financial task; it does not invent a diagnosis or modify tests."
+        },
+        {
+          "name": "Source note",
+          "meaning": "Context for a new financial follow-up.",
+          "values": "Optional source text, up to 1000 characters.",
+          "rules": "Retained as Original note when the item is later updated."
+        },
+        {
+          "name": "Follow-up status",
+          "meaning": "Whether the financial task is still open.",
+          "values": "Open; Resolved.",
+          "rules": "Required, starting with the current status. Reopening is allowed through an attributed update."
+        },
+        {
+          "name": "Responsible person or team",
+          "meaning": "Owner of the follow-up action.",
+          "values": "Free text, up to 200 characters.",
+          "rules": "Optional while open; required to resolve."
+        },
+        {
+          "name": "Action evidence reference",
+          "meaning": "Evidence supporting the follow-up action.",
+          "values": "Source reference, up to 1000 characters.",
+          "rules": "Optional while open; required to resolve. A fresh value is requested for each update."
+        },
+        {
+          "name": "Reason for this action",
+          "meaning": "Explanation of the follow-up update.",
+          "values": "Text, up to 1000 characters.",
+          "rules": "Required for every update, including reopening."
+        },
+        {
+          "name": "Billing follow-up: Original note, Opened, Owner, Evidence reference, Latest reason",
+          "meaning": "Read-only context and latest action for each financial task.",
+          "values": "Open or Resolved; owner or Unassigned; source reference or Not supplied.",
+          "rules": "Open tasks expand automatically. Resolving a task preserves the prior actions; it does not establish payer acceptance."
+        },
+        {
+          "name": "Review receipt chronology: decision order",
+          "meaning": "Source-reviewed oldest-to-newest order of every retained receipt decision.",
+          "values": "One explicit selection per ordinal; none preselected. Choices show decision, original time, actor and retained identifier.",
+          "rules": "Manage quality only when chronology unresolved. Every decision exactly once; known committed order and legal transitions must remain consistent."
+        },
+        {
+          "name": "Review receipt chronology: Reason",
+          "meaning": "Attributable source evidence and explanation of ordering.",
+          "values": "Required nonblank reason up to1,000 characters.",
+          "rules": "Do not infer equal-time or rollback chronology from clocks alone. Cancel if sources cannot establish it."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Check label status",
+          "does": "Refreshes accession data including latest print outcomes.",
+          "availableWhen": "The accession has loaded and no refresh is pending.",
+          "result": "Shows current job results; does not send another label job."
+        },
+        {
+          "name": "Print labels / Print label",
+          "does": "Requests labels for all printable, selected, or one container.",
+          "availableWhen": "Accessioning authority and container printing offered.",
+          "result": "Choose a printer and submit Print labels; label jobs are queued."
+        },
+        {
+          "name": "Reprint labels / Reprint label",
+          "does": "Requests another copy of the same barcode with a reason.",
+          "availableWhen": "Selected or row container is printable.",
+          "result": "Queues an attributed reprint; inspect prior printing outcome first."
+        },
+        {
+          "name": "Record receipt decision / Check label / Record decision",
+          "does": "Checks the physical label and records acceptance, conditional acceptance, hold or rejection.",
+          "availableWhen": "Receipt decision offered for a Received or Held specimen.",
+          "result": "Updates the specimen state and appends its decision history. Reject leads to a separate Reject specimen confirmation."
+        },
+        {
+          "name": "Reject specimen",
+          "does": "Confirms a rejection after completing its receipt form.",
+          "availableWhen": "Reject chosen with a reason.",
+          "result": "Final rejection; the specimen will not be tested and its containers/history remain."
+        },
+        {
+          "name": "Create aliquot / Check label",
+          "does": "Checks the parent label and records a derived container.",
+          "availableWhen": "Parent Available, specimen usable and no open container hold.",
+          "result": "Creates a unique new label linked to the parent; known quantity is deducted only with matching units."
+        },
+        {
+          "name": "Collection timing review",
+          "does": "Opens the dedicated collection history and quality-review page.",
+          "availableWhen": "Collection history access is permitted.",
+          "result": "Shows original/current timing and correction actions according to authority."
+        },
+        {
+          "name": "Review collection history / Refresh collection history",
+          "does": "Opens or refreshes original timing, corrections and review states.",
+          "availableWhen": "Accessioning or quality authority.",
+          "result": "Shows the latest collection revision and pending reviews."
+        },
+        {
+          "name": "Correct collection time / Record correction",
+          "does": "Records a source-backed new collection timing.",
+          "availableWhen": "Accessioning authority, current collection revision and different timing.",
+          "result": "Preserves original timing and opens a quality review. Dependent work and billing must be reviewed."
+        },
+        {
+          "name": "Use laboratory timezone (…)",
+          "does": "Copies the configured laboratory timezone into the collection-site field.",
+          "availableWhen": "Named-timezone entry and a laboratory timezone is configured.",
+          "result": "Changes only the unsaved timezone value; use it only when it is the collection site’s correct zone."
+        },
+        {
+          "name": "Resolve collection review / Resolve review",
+          "does": "Records the quality decision for a pending correction.",
+          "availableWhen": "Quality authority and an unresolved correction.",
+          "result": "Completes that timing review with a reason; separate result/report impact assessment is not automatically completed."
+        },
+        {
+          "name": "Cancel",
+          "does": "Closes the current unsaved editor or pending action dialog.",
+          "availableWhen": "An editor is open and not saving.",
+          "result": "Unsaved dialog entries are deliberately discarded when Cancel is chosen; saved records remain."
+        },
+        {
+          "name": "Open order billing / Refresh order billing",
+          "does": "Loads or refreshes the selected order’s financial facts and follow-up.",
+          "availableWhen": "Order-entry or billing authority is required for patient financial facts, order billing and follow-up. Opening a clinical patient or order record also requires its own access permission.",
+          "result": "Shows the order-specific selection and financial evidence."
+        },
+        {
+          "name": "Confirm order billing selection / Correct order billing selection",
+          "does": "Opens the order financial selection editor.",
+          "availableWhen": "Financial-edit authority; label is Confirm before the first selection and Correct afterwards.",
+          "result": "Save order billing selection creates a versioned selection of source facts and advances the order revision."
+        },
+        {
+          "name": "Add coverage to order / Remove coverage priority …",
+          "does": "Adds or removes a coverage-priority row.",
+          "availableWhen": "Third-party responsibility and a patient profile with coverage choices.",
+          "result": "Changes the unsaved selection only; removing a row changes the priority of later rows."
+        },
+        {
+          "name": "Save order billing selection",
+          "does": "Stores the chosen profile facts, retained/new evidence, source and reason.",
+          "availableWhen": "Valid current order and billing revisions.",
+          "result": "Refreshes the saved order facts; future patient-profile changes still require an explicit order correction."
+        },
+        {
+          "name": "Add order evidence / Save financial evidence",
+          "does": "Appends supplied financial evidence to the existing order selection.",
+          "availableWhen": "An order-specific selection exists and editing is allowed.",
+          "result": "Creates a new billing revision without changing the selected responsibility, coverages or guarantor."
+        },
+        {
+          "name": "Open billing follow-up / Open follow-up",
+          "does": "Records a financial deficiency and optional source note.",
+          "availableWhen": "Financial follow-up creation is allowed.",
+          "result": "Adds an open follow-up item associated with this order."
+        },
+        {
+          "name": "Update billing follow-up / Save follow-up",
+          "does": "Assigns, resolves or reopens a follow-up item with an attributed reason.",
+          "availableWhen": "Financial update authority; current item revision.",
+          "result": "Appends the action. Resolution needs both an owner and retained evidence reference."
+        },
+        {
+          "name": "Review receipt chronology / Record reviewed chronology",
+          "does": "Append an attributable causal-order resolution without rewriting original evidence.",
+          "availableWhen": "Manage quality and unresolved legacy receipt chronology; current specimen revision.",
+          "result": "Testing/release chronology gate clears only after valid complete order is recorded. Other gates remain effective."
+        },
+        {
+          "name": "Material history and actions",
+          "does": "Open the exact container by immutable barcode.",
+          "availableWhen": "Container shown on accession.",
+          "result": "Inspect moves, holds/releases, terminal states and label history; see Container lookup help for actions."
+        }
+      ],
+      "restrictions": [
+        "Receipt decisions require the actual physical label. The check is an on-screen confirmation, not independent instrument verification.",
+        "Print handoff does not prove physical output; inspect the label and use explicit reprint when needed.",
+        "This accession page does not offer container moving, depletion or disposal forms even when a recorded state is displayed.",
+        "In editable dialogs, Escape and an outside click close only an unchanged form with no command running. Cancel deliberately discards unsaved dialog entries and is disabled while saving.",
+        "Print is only for a container with no earlier label request. Once any job exists, including a failed or queued job, use Reprint with a reason after checking the outcome; disposed containers cannot be printed."
+      ],
+      "workflow": [
+        "Check identity, accession number and receipt progress.",
+        "Request the needed labels, verify output and scan the correct container for each receipt decision.",
+        "Record any observed discrepancy and laboratory-approved conditional scope.",
+        "Review outstanding holds, collection corrections and order billing separately."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "The record changed while the dialog was open.",
+          "recovery": "Keep the source document available. Cancel the dialog, refresh or reopen the record, compare the current facts, then reopen the action. Do not repeatedly submit a decision based on an older revision."
+        },
+        {
+          "problem": "A save fails or a field is rejected.",
+          "recovery": "Read the message and correct the indicated value. The open form retains entered values after failure; success is shown only after the application accepts the save. Cancel abandons an unsaved dialog."
+        },
+        {
+          "problem": "No active label printer is set up or a print job failed.",
+          "recovery": "Ask configuration staff to verify the printer and destination. Check label status for its actual outcome before deciding whether to reprint."
+        },
+        {
+          "problem": "Create aliquot is unavailable.",
+          "recovery": "Review specimen acceptance, parent state and open holds. Do not create a replacement accession to bypass them."
+        },
+        {
+          "problem": "Receipt decision cannot be changed.",
+          "recovery": "Accepted, conditionally accepted and rejected decisions are final in this workflow. Escalate an erroneous decision through the laboratory’s correction procedure."
+        }
+      ]
+    }
+  ]
+}

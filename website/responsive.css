@@ -1,0 +1,143 @@
+@media (max-width: 1000px) {
+  .wrap {
+    width: calc(100% - 48px);
+  }
+  .hero {
+    gap: 32px;
+    padding-block: 60px;
+  }
+  .workflow-preview {
+    padding: 24px;
+  }
+  .preview-heading {
+    flex-direction: column;
+    gap: 3px;
+  }
+  .workflow-preview :where(li) strong {
+    font-size: 20px;
+  }
+  .ownership-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .screens {
+    gap: 44px 28px;
+  }
+  .start-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .footer-layout {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  body {
+    font-size: 16px;
+  }
+  .wrap {
+    width: calc(100% - 36px);
+  }
+  .site-header {
+    flex-direction: column;
+    align-items: start;
+    gap: 20px;
+    padding-block: 22px;
+  }
+  nav {
+    gap: 26px;
+  }
+  nav a {
+    padding-block: 8px;
+  }
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding-block: 42px;
+  }
+  h1 {
+    font-size: clamp(40px, 9.7vw, 60px);
+  }
+  .intro,
+  .hero .intro {
+    font-size: 17px;
+  }
+  .actions {
+    gap: 20px;
+  }
+  .preview-heading {
+    flex-direction: row;
+  }
+  .workflow-preview :where(li) strong {
+    font-size: 22px;
+  }
+  .section-heading {
+    flex-direction: column;
+    align-items: start;
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+  .section-heading > p {
+    max-width: 60ch;
+  }
+  .presentation-section,
+  .workflow-section,
+  .ownership-section,
+  .start-section,
+  .status-section {
+    padding-block: 44px;
+  }
+  figcaption {
+    font-size: 12px;
+    gap: 14px;
+  }
+  figcaption a {
+    display: inline-block;
+    padding-block: 5px;
+  }
+  th,
+  td {
+    padding: 16px 10px;
+  }
+  .status-table td {
+    font-size: 14px;
+  }
+  .screens,
+  .principles,
+  .notices {
+    grid-template-columns: 1fr;
+  }
+  .screens {
+    gap: 40px;
+  }
+  .screens h3 {
+    font-size: 20px;
+  }
+  .terminal pre {
+    font-size: 13px;
+  }
+  .closing {
+    margin-top: 40px;
+  }
+  .closing > p {
+    font-size: 21px;
+  }
+  .footer-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+  .site-footer {
+    padding-block: 32px 40px;
+  }
+}
+
+@media (forced-colors: active) {
+  .button,
+  .workflow-preview,
+  .terminal {
+    border: 1px solid ButtonText;
+  }
+}
