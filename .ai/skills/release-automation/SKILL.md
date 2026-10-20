@@ -29,13 +29,14 @@ The operator's prompt supplies these values:
    and record the `origin/develop` and `origin/main` SHAs. List recent package runs:
    `gh run list -R "$REPO" --workflow package.yml -L 20 --json databaseId,status,conclusion,displayTitle,headSha,createdAt,url`.
    Run titles read `package <channel> from <branch>`. If a run for a channel is
-   queued or in progress, watch that run instead of dispatching another.
+   queued or in progress, watch that run instead of dispatching another. If the
+   latest completed run for a channel used the same SHA you would dispatch now and
+   failed for a non-infrastructure reason, do not dispatch that channel again.
+   Report that the failure persists and link that run.
 2. **Nightly decision.** Read the published nightly commit with
    `gh release view nightly -R "$REPO" --json targetCommitish --jq .targetCommitish`.
    An error means no nightly exists. Dispatch when `origin/develop` differs from
-   that commit. Do not dispatch when the latest nightly run for the same
-   `develop` SHA failed for a non-infrastructure reason. Report that the failure
-   persists instead.
+   that commit.
 3. **Release decision.** Run `git -C "$CLONE" checkout --detach --force origin/main`,
    then `python3 scripts/release_version.py release` from `CLONE`.
    - If it prints a version, dispatch a release.
