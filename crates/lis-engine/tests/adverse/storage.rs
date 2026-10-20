@@ -5,7 +5,7 @@
 
 use std::fs::{self, OpenOptions};
 use std::io::{Seek, SeekFrom, Write};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -82,6 +82,13 @@ async fn a_database_damaged_while_closed_is_refused_at_start_and_left_in_place()
 struct Backups {
     t: TestEngine,
     target_id: TargetId,
+    #[cfg_attr(
+        not(unix),
+        expect(
+            dead_code,
+            reason = "keeps the folder alive; only the Unix permission test reads it"
+        )
+    )]
     folder: TempDir,
 }
 
@@ -194,7 +201,7 @@ async fn an_unwritable_target_fails_each_run_visibly_and_counts_nothing() {
     use std::os::unix::fs::PermissionsExt;
 
     let backups = Backups::start().await;
-    let root: PathBuf = backups.folder.path().join("VibeToxLIS");
+    let root = backups.folder.path().join("VibeToxLIS");
     let set_folder = root.join("sets");
     for folder in [&root, &set_folder] {
         fs::set_permissions(folder, fs::Permissions::from_mode(0o555)).unwrap();
