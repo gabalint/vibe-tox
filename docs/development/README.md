@@ -105,7 +105,11 @@ For a focused Rust change, run format, Clippy, tests and unused-dependency check
 affected crate and affected dependents from the
 [quality-gate skill](../../.ai/skills/quality-gate/SKILL.md). CI deliberately uses a broader
 Rust workspace matrix on Linux, macOS and Windows when the `rust` flag is selected, including
-the independent export verifier and generated-binding check on Linux. Its UI build is needed
+the independent export verifier and generated-binding check on Linux. It runs every test
+binary (`--no-fail-fast`) so one run reports all failures. Windows skips doc tests, which
+rustdoc links against a stub `msvcrt.lib` from the Tauri build output; Linux and macOS run
+them. `.gitattributes` checks text out with LF on every OS, so templates compiled into the
+application keep their pinned bytes on Windows. Its UI build is needed
 by the Tauri build script. The Linux Rust job also runs `cargo machete`, plus duplication
 and file-length checks unless the full UI check already covers them.
 
