@@ -36,6 +36,8 @@ class ClassificationTests(unittest.TestCase):
             "scripts/release_version.py": {"tooling"},
             ".github/ISSUE_TEMPLATE/bug-report.yml": {"docs"},
             "scripts/select_checks.py": {"tooling"},
+            ".impeccable/config.json": {"tooling"},
+            ".impeccable/unknown.json": set(CHECKS),
             "Cargo.lock": set(CHECKS),
             "rust-toolchain.toml": set(CHECKS),
             "unexpected/runtime.data": set(CHECKS),
@@ -126,6 +128,16 @@ class GitSelectionTests(unittest.TestCase):
         self.assertIn("crates/example/src/lib.rs", plan["changed_files"])
         self.assertIn("notes.md", plan["changed_files"])
         self.assertEqual(self.selected(), {"rust", "help", "docs"})
+
+    def test_design_settings_keep_website_checks_scoped_and_preserve_runtime_checks(self):
+        self.write(".impeccable/config.json", '{"detector":{"ignoreValues":[]}}\n')
+        self.assertEqual(self.selected(), {"tooling"})
+        self.write("website/index.html", '<a href="https://example.invalid/releases">Download</a>\n')
+        self.assertEqual(self.selected(), {"tooling", "website", "docs"})
+        self.write("ui/src/example.ts", "export const value = 1;\n")
+        self.assertEqual(self.selected(), {"tooling", "website", "docs", "ui"})
+        self.write("crates/example/src/lib.rs", "pub fn changed() {}\n")
+        self.assertEqual(self.selected(), {"tooling", "website", "docs", "ui", "rust", "help"})
 
     def test_commit_comparison_ignores_worktree_and_compares_all_commits(self):
         self.write("package.json", '{"license":"GPL-3.0-only"}\n')

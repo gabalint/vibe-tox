@@ -121,6 +121,8 @@ def classify(path, before=None, after=None):
         return {"licenses", "docs"}, "license or notice changed"
     if path in TOOLING:
         return {"tooling"}, "check selection or CI wiring changed"
+    if path == ".impeccable/config.json":
+        return {"tooling"}, "design-review tooling configuration changed"
     if path.startswith("website/"):
         return {"website", "docs"}, "standalone presentation changed"
     if path.startswith(".github/ISSUE_TEMPLATE/"):
