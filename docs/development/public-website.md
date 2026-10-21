@@ -32,9 +32,14 @@ The canonical product copy is [the overview](../overview.md), checked against th
 [operator guide](../operations/README.md). The intended readers are laboratory owners,
 potential collaborators, and developers evaluating the project. The page moves from
 the single-computer proposition to the video, the workflow shown through application
-screens, data ownership, building from source, development status with the license and
-disclaimer, and the repository. Its actions open the presentation, documentation,
-contribution and security guidance, or source.
+screens, data ownership, downloading installers or building from source, development
+status with the license and disclaimer, and the repository. Its actions open the
+latest development release, presentation, documentation, contribution and security
+guidance, or source. The hero's “Download development build” action and the
+getting-started section link to the [latest release](https://github.com/gabalint/vibe-tox/releases/latest),
+where visitors choose their platform's installer and read its release notes. Keep
+the destination independent of versioned asset filenames; [branches and releases](releases.md)
+describes the unsigned development builds and the separate nightly channel.
 
 The website inherits the application's blue/neutral palette and system typography
 from `ui/src/styles/tokens.css`, with larger type and spacing for reading. It uses

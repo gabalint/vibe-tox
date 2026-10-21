@@ -93,6 +93,7 @@ another path filter.
 | Rust, Tauri shell or runtime/test fixtures | Rust checks plus bundled-help coverage/build; embedded export documentation and verifier changes also select Rust |
 | Generated IPC bindings | Rust, UI and help checks |
 | Selector, its checks or CI wiring | Python check tests, repository metadata and workflow validation |
+| `.impeccable/config.json` | Design-review tooling settings: Python check tests, repository metadata and workflow validation; no application compilation or UI suite |
 | Dependency/build configuration or an unclassified change | Full verification; manifest edits that change only license metadata are identified by parsed values |
 
 Markdown is not always documentation-only: `docs/architecture/backup-and-export-formats.md`

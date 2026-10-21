@@ -11,6 +11,24 @@
         ],
         "createdAt": "2026-10-14T20:12:15.088Z",
         "reason": "Agent review: browser measurements confirm 24px top/bottom padding on all three workflow list items; presentation and ownership sections have 44px mobile block padding and 18px wrapper inset, with 64px/76px desktop block padding. The detector misses logical padding and inner wrappers."
+      },
+      {
+        "rule": "all-caps-body",
+        "value": "*",
+        "files": [
+          "website/index.html"
+        ],
+        "createdAt": "2026-10-21T12:55:45.995Z",
+        "reason": "Agent review: the only uppercase paragraph is the short license label Free and open source · GPL-3.0-only, not body prose; present unchanged in HEAD."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "website/index.html"
+        ],
+        "createdAt": "2026-10-21T12:55:46.067Z",
+        "reason": "Agent review: the single accent border distinguishes the Development disclaimer section from the adjacent License section; it is intentional notice emphasis, not a repeated decorative card treatment, and is unchanged from HEAD."
       }
     ]
   }
