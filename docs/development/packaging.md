@@ -2,7 +2,7 @@
 
 Status: M5 developer configuration for unsigned bundles. They are published as development
 builds ([branches and releases](releases.md)). They are not a production release and are not
-validated for clinical use. Code signing, notarization and the updater remain blocked on the
+validated for clinical use. Publisher signing, notarization and the updater remain blocked on the
 publisher and supported-release decisions in [Q-19 and Q-34](../planning/open-questions.md).
 
 ## Configured bundles
@@ -16,7 +16,7 @@ and [bundle configuration](https://v2.tauri.app/reference/config/#bundleconfig),
 | OS | Outputs | Installation and contents | Deliberate constraints |
 | --- | --- | --- | --- |
 | Windows x64 | NSIS `-setup.exe` | Installs for the current user under `%LOCALAPPDATA%`, so routine installation does not require administrator privileges. It includes the WebView2 offline installer. | The offline WebView2 choice permits installation without internet and adds about 127 MB. Tauri recommends it for offline environments. No Authenticode certificate, timestamp server or signing command is configured. |
-| macOS Apple silicon or x64 | `.app` and `.dmg` | The `.app` is the application bundle. The `.dmg` wraps it in the usual drag-to-Applications window. `LSMinimumSystemVersion` is 15.0, matching the current-plus-two-previous-major table in `lis-ops` as of 2026-10-13. | No Developer ID identity or notarization provider is configured. Tauri may apply an identity-free ad-hoc signature, which supplies no distribution trust. A downloaded artifact may be refused by Gatekeeper; it is for build verification only. |
+| macOS Apple silicon or x64 | `.app` and `.dmg` | The `.app` is the application bundle. The `.dmg` wraps it in the usual drag-to-Applications window. `LSMinimumSystemVersion` is 15.0, matching the current-plus-two-previous-major table in `lis-ops` as of 2026-10-13. | `signingIdentity: "-"` applies an ad-hoc signature to the complete app bundle. No Developer ID identity or notarization provider is configured; the signature supplies no publisher trust. See [macOS development signatures](#macos-development-signatures). |
 | Linux x64 | `.deb` and AppImage | The Debian package explicitly depends on `libwebkit2gtk-4.1-0` and `libgtk-3-0`. The AppImage carries most application libraries for a portable launch, but still inherits compatibility constraints from the build host. | Build on Ubuntu 22.04, the oldest CI baseline used here, to avoid unnecessarily raising the glibc floor. The supported deployment baseline remains the project OS-support policy, such as Ubuntu 24.04 LTS. |
 
 The Windows choices follow Tauri's [NSIS install-mode and WebView2 guidance](https://v2.tauri.app/distribute/windows-installer/).
@@ -30,6 +30,36 @@ intended compatible base system; see the [Debian](https://v2.tauri.app/distribut
 RPM is not configured. The project has not selected a supported RPM-family distribution, and its
 WebKitGTK 4.1 runtime package name is distribution-specific. Add RPM only after choosing that
 baseline and verifying the generated requirements on a real supported host.
+
+## macOS development signatures
+
+The macOS overlay explicitly selects Tauri's [ad-hoc signing](https://v2.tauri.app/distribute/sign/macos/#ad-hoc-signing)
+with `bundle.macOS.signingIdentity: "-"`. This seals the complete application bundle,
+including its resources and `Info.plist`, without an Apple certificate. A linker's
+executable-only signature does not cover those bundle contents. Tauri's [GitHub
+distribution guide](https://v2.tauri.app/distribute/pipelines/github/) recommends
+ad-hoc signing to avoid downloaded Apple silicon apps being treated as damaged
+(ENG-301, checked 2026-10-22).
+
+The package workflow verifies the completed `.app` before uploading:
+
+```bash
+codesign --verify --deep --strict --verbose=2 \
+  "$CARGO_TARGET_DIR/release/bundle/macos/Vibe Tox LIS.app"
+```
+
+This follows Apple's [signature verification guidance](https://developer.apple.com/forums/thread/706379)
+(ENG-302). Failure blocks publication. Passing proves bundle signature integrity,
+not Developer ID trust, notarization or successful installation. A browser-downloaded
+DMG still needs a clean-host launch check; a command-line download may lack the
+quarantine metadata that triggers Gatekeeper ([Apple testing guidance](https://developer.apple.com/forums/thread/706442)).
+
+For synthetic-data evaluation, compare the download with `SHA256SUMS.txt`, copy the
+app into Applications and attempt to open it. If macOS blocks it as unverified,
+use **Open Anyway** in System Settings → Privacy & Security. If macOS reports it as
+damaged, verify the checksum and bundle signature and report the failure; do not
+treat that message as an ordinary unsigned-app prompt. Ad-hoc signing does not
+close the publisher-signing or supported-release gates (Q-19, Q-34).
 
 ## Local builds
 
@@ -92,7 +122,7 @@ part of [G2-09](../quality/open-items-g1-g2.md), not a waiver of that gate.
 | Project licence | GPL-3.0-only adopted ([ADR 0017](../architecture/decisions/0017-gplv3-license.md)); the canonical [LICENSE](../../LICENSE) defines the project license. Third-party material retains its applicable terms and notices. | Include license texts and applicable notices; verify dependency compatibility and provide corresponding source for each covered binary under GPLv3 section 6. Ownership administration remains Q-11. |
 | Publisher identity | The plain metadata publisher is “Vibe Toxicology LIS project,” not a legal publisher or signing identity. | Decide the legal publisher entity and name (Q-19/Q-34). |
 | Windows signing | Certificate thumbprint, digest algorithm, timestamp URL and custom signing command are explicitly empty. | Authenticode-sign and verify both the executable and NSIS installer. |
-| macOS trust | Developer ID identity and notarization provider are explicitly empty. An ad-hoc signature is not release signing. | Sign, notarize, staple and verify on a clean host. |
+| macOS trust | The complete app bundle is ad-hoc signed and its signature checked during packaging. Developer ID signing and notarization are not configured. | Sign with Developer ID, notarize, staple and verify on a clean host. |
 | Linux signing | Packages and repository metadata are unsigned. | Choose the release channel and signing method, then verify on each supported distribution. |
 | Updater | Updater artifacts are disabled; no endpoint, public key or private key is configured. | After Q-19/Q-34, retain lab approval and verified pre-update snapshot requirements (NFR-24). |
 | File associations | None. | Add only if a user workflow and safe parser boundary are approved. |
