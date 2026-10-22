@@ -70,6 +70,12 @@ adds `SHA256SUMS.txt`, and writes notes with the development-build warning, the
 unsigned-installer prompts and the workflow-run link. A release is created as a
 draft and becomes visible only with every asset attached.
 
+The macOS app uses an [ad-hoc bundle signature](packaging.md#macos-development-signatures),
+and packaging fails if `codesign --verify --deep --strict` rejects it. This is still
+an unsigned development channel in the publisher-trust sense: no Developer ID
+certificate or notarization is configured, and the manual Gatekeeper exception
+remains necessary. Browser-download and clean-host launch checks remain separate.
+
 | Asset | Built on |
 | --- | --- |
 | `windows-x64-setup.exe` (NSIS, per-user) | `windows-latest` |
