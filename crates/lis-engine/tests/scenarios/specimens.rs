@@ -67,6 +67,24 @@ async fn order_accession_context_is_audited_and_changes_no_clinical_state() {
     assert_eq!(linked.items[0].accession_id, Some(accession.accession_id));
     assert_eq!(linked.accessions[0].pending_receipt_count, 1);
     assert!(linked.allowed_actions.is_empty());
+    let listed = t
+        .engine
+        .list_orders(lis_orders::ListOrdersInput {
+            filter: lis_orders::OrderFilter::All,
+            subject_id: None,
+            before_received_at: None,
+            before_order_id: None,
+            limit: 10,
+        })
+        .await
+        .unwrap();
+    let barcodes: Vec<_> = accession.specimens[0]
+        .containers
+        .iter()
+        .map(|container| container.label_code.clone())
+        .collect();
+    assert!(!barcodes.is_empty());
+    assert_eq!(listed[0].sample_barcodes, barcodes);
     staff.admin(&t).await;
     assert_eq!(
         t.engine

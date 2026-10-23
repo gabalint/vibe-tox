@@ -247,6 +247,9 @@ pub struct OrderSummary {
     pub placer_order_id: Option<String>,
     /// Display name of the ordering client organization.
     pub client_name: String,
+    /// Label codes of the order's primary sample containers, in accession order;
+    /// filled by the engine from the specimens module, empty before receipt.
+    pub sample_barcodes: Vec<String>,
     /// Items on the order in any state: requested, add-on and reflex items included.
     #[ts(type = "number")]
     pub item_count: i64,
