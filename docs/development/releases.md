@@ -96,8 +96,12 @@ code, versions, branches, tags, settings or signing. Failures and unreleased
 `main` commits wait for a person.
 
 The computer needs `git`, Python 3.11 or newer, and `gh` authenticated with the
-`repo` and `workflow` scopes. Builds run on GitHub-hosted runners, so the agent does
-not compile locally.
+`repo` and `workflow` scopes. Preflight uses
+`gh auth status --active --hostname github.com` to verify the active account;
+when the operator names an account, it must match. Unrelated inactive credentials
+do not block the run. The agent does not switch accounts or manually change credentials.
+See [GitHub CLI authentication behavior](../research/sources-engineering.md#release-maintenance-sources-2026-10-23)
+(ENG-305). Builds run on GitHub-hosted runners, so the agent does not compile locally.
 
 ## Source and license
 

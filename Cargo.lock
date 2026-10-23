@@ -1206,9 +1206,9 @@ checksum = "914a755b7c2d4af2bdcff7ce1739e2db9a1b81a9b07123d8015786ae03c0980d"
 
 [[package]]
 name = "ctutils"
-version = "0.4.3"
+version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03bb0e1cc970d482d121d9a1744999169b69a07470b3d644a7894e53fcaf4574"
+checksum = "12218662ccac37d9714f2191252553d67585b97df8c839cbe49e0bde278dc865"
 dependencies = [
  "cmov",
 ]
@@ -3473,7 +3473,7 @@ dependencies = [
 
 [[package]]
 name = "lis-analytical"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "jiff",
  "lis-astm",
@@ -3497,7 +3497,7 @@ dependencies = [
 
 [[package]]
 name = "lis-astm"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "proptest",
  "thiserror 2.0.21",
@@ -3505,7 +3505,7 @@ dependencies = [
 
 [[package]]
 name = "lis-au"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "lis-core",
  "proptest",
@@ -3517,7 +3517,7 @@ dependencies = [
 
 [[package]]
 name = "lis-audit"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hex",
  "lis-core",
@@ -3531,7 +3531,7 @@ dependencies = [
 
 [[package]]
 name = "lis-auth"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "argon2",
  "chacha20poly1305",
@@ -3556,7 +3556,7 @@ dependencies = [
 
 [[package]]
 name = "lis-billing"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hex",
  "jiff",
@@ -3582,7 +3582,7 @@ dependencies = [
 
 [[package]]
 name = "lis-catalog"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "lis-audit",
  "lis-auth",
@@ -3597,7 +3597,7 @@ dependencies = [
 
 [[package]]
 name = "lis-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "jiff",
  "proptest",
@@ -3612,7 +3612,7 @@ dependencies = [
 
 [[package]]
 name = "lis-desktop"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "lis-auth",
  "lis-core",
@@ -3636,7 +3636,7 @@ dependencies = [
 
 [[package]]
 name = "lis-engine"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hex",
  "keepawake",
@@ -3677,7 +3677,7 @@ dependencies = [
 
 [[package]]
 name = "lis-identity"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "jiff",
  "lis-audit",
@@ -3693,7 +3693,7 @@ dependencies = [
 
 [[package]]
 name = "lis-interfaces"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hex",
  "lis-astm",
@@ -3714,7 +3714,7 @@ dependencies = [
 
 [[package]]
 name = "lis-labels"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "proptest",
  "thiserror 2.0.21",
@@ -3722,7 +3722,7 @@ dependencies = [
 
 [[package]]
 name = "lis-ops"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "chacha20poly1305",
  "fs4",
@@ -3748,7 +3748,7 @@ dependencies = [
 
 [[package]]
 name = "lis-orders"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "jiff",
  "lis-audit",
@@ -3767,7 +3767,7 @@ dependencies = [
 
 [[package]]
 name = "lis-report"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hex",
  "jiff",
@@ -3783,7 +3783,7 @@ dependencies = [
 
 [[package]]
 name = "lis-reporting"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hex",
  "jiff",
@@ -3810,7 +3810,7 @@ dependencies = [
 
 [[package]]
 name = "lis-results"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "csv",
  "lis-analytical",
@@ -3835,7 +3835,7 @@ dependencies = [
 
 [[package]]
 name = "lis-security-key"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "ciborium",
@@ -3852,7 +3852,7 @@ dependencies = [
 
 [[package]]
 name = "lis-specimens"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hex",
  "jiff",
@@ -3874,7 +3874,7 @@ dependencies = [
 
 [[package]]
 name = "lis-store"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "hex",
  "lis-audit",
@@ -6787,9 +6787,9 @@ checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
 
 [[package]]
 name = "tokio"
-version = "1.53.2"
+version = "1.53.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e95f91fcc7a621e8b030f6aa23c71fe9838ae2fb4d8118b75602a328f5144044"
+checksum = "ce3335fa71841cda333a58d7615b03901380ecf09d59b3296d21f8bbac0dde4e"
 dependencies = [
  "bytes",
  "libc",
