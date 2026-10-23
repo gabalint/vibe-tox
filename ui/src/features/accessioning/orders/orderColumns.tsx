@@ -10,6 +10,8 @@ export const orderPath = (orderId: string) => `/orders/${orderId}`;
 const patientName = (order: OrderSummary) =>
   subjectName({ familyName: order.patientFamilyName, givenNames: order.patientGivenNames });
 
+const sampleBarcodes = (order: OrderSummary) => order.sampleBarcodes.join("; ");
+
 /** Patient identity and source context remain visible before opening an order. */
 export const ORDER_COLUMNS: readonly DataGridColumn<OrderSummary>[] = [
   {
@@ -34,6 +36,13 @@ export const ORDER_COLUMNS: readonly DataGridColumn<OrderSummary>[] = [
     cell: (order) => order.placerOrderId ?? "Not supplied",
     sortValue: (order) => order.placerOrderId ?? "",
     width: 130,
+  },
+  {
+    id: "sampleBarcodes",
+    header: "Sample barcode",
+    cell: (order) => sampleBarcodes(order) || "None received",
+    sortValue: sampleBarcodes,
+    width: 150,
   },
   {
     id: "client",
