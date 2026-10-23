@@ -95,6 +95,7 @@ const QC: RunQcView = {
       disposition: null,
       closeReason: null,
       openedBy: "quality-1",
+      openedByDisplay: "Synthetic Quality Reviewer",
       openedAt: "2026-10-12T11:40:00Z",
       closedBy: null,
       closedAt: null,
@@ -313,6 +314,8 @@ describe("RunQcPage (REQ-ANA-004, REQ-ANA-005)", { timeout: WALKTHROUGH_TIMEOUT_
     expect(await rowActionLabels(user, description)).toEqual(["Close deviation"]);
     await openRow(user, description);
     expect(within(panel(description)).getByText("SYN-AMP")).toBeTruthy();
+    expect(within(panel(description)).getByText(/by Synthetic Quality Reviewer/)).toBeTruthy();
+    expect(within(panel(description)).queryByText(/quality-1/)).toBeNull();
     await user.click(within(panel(description)).getByRole("button", { name: "Close deviation" }));
     const closing = await screen.findByRole("dialog", { name: "Close deviation" });
     await user.type(

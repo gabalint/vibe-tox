@@ -9,6 +9,9 @@ import { renderRoutes } from "@/lib/test/router";
 import { SUMMARY, sessionWith } from "../testData";
 import { IncompleteIntakePage } from "./IncompleteIntakePage";
 
+const CLERK = "00000000-0000-7000-8000-000000000e31";
+const REVIEWER = "00000000-0000-7000-8000-000000000e32";
+
 const INTAKE: IntakeDeferralView = {
   intakeId: "synthetic-intake",
   revision: 1,
@@ -17,7 +20,8 @@ const INTAKE: IntakeDeferralView = {
   birthEvidenceText: null,
   sourceReference: "Synthetic source 42",
   reason: "Complete birth date not supplied",
-  recordedBy: "Synthetic intake user",
+  recordedBy: CLERK,
+  recordedByDisplay: "Test Intake Clerk",
   recordedAt: "2026-10-14T10:00:00Z",
   disposition: null,
   subjectId: null,
@@ -120,7 +124,8 @@ describe("Incomplete identity intake mocked IPC", { timeout: WALKTHROUGH_TIMEOUT
           disposition: "declined",
           dispositionReason: "Source withdrew intake",
           dispositionSource: "Synthetic source",
-          disposedBy: "Another user",
+          disposedBy: REVIEWER,
+          disposedByDisplay: "Test Intake Reviewer",
           disposedAt: "2026-10-14T11:00:00Z",
         },
       ]);
@@ -135,5 +140,9 @@ describe("Incomplete identity intake mocked IPC", { timeout: WALKTHROUGH_TIMEOUT
     await openRow(user, "Incomplete Person");
     expect(await screen.findByText(/Source withdrew intake/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Record declined intake" })).toBeNull();
+    // Both actors show by account name, never by account ID.
+    expect(screen.getByText(/Recorded by Test Intake Clerk/)).toBeTruthy();
+    expect(screen.getByText(/Recorded by Test Intake Reviewer/)).toBeTruthy();
+    expect(screen.queryByText(new RegExp(`${CLERK}|${REVIEWER}`))).toBeNull();
   });
 });

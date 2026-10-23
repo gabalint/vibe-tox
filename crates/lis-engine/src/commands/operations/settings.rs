@@ -19,8 +19,12 @@ impl Engine {
     /// version and the defaults.
     pub async fn get_operations_settings(&self) -> Result<OperationsSettingsView, CommandError> {
         self.run(&GET_OPERATIONS_SETTINGS, |call| async move {
-            self.read(&call, lis_ops::settings::get_operations_settings)
-                .await
+            self.read(&call, |conn| {
+                let mut view = lis_ops::settings::get_operations_settings(conn)?;
+                view.set_by_display = set_by_display(conn, view.set_by.as_deref())?;
+                Ok::<_, lis_ops::RuntimeError>(view)
+            })
+            .await
         })
         .await
     }
@@ -43,7 +47,12 @@ impl Engine {
     /// `get_security_policy` (`manage_users`): the idle timeout and lockout in force.
     pub async fn get_security_policy(&self) -> Result<SecurityPolicyView, CommandError> {
         self.run(&GET_SECURITY_POLICY, |call| async move {
-            self.read(&call, lis_auth::get_security_policy).await
+            self.read(&call, |conn| {
+                let mut view = lis_auth::get_security_policy(conn)?;
+                view.set_by_display = set_by_display(conn, view.set_by.as_deref())?;
+                Ok::<_, lis_auth::AuthError>(view)
+            })
+            .await
         })
         .await
     }
@@ -79,7 +88,12 @@ impl Engine {
     /// do alone.
     pub async fn get_separation_policy(&self) -> Result<SeparationPolicyView, CommandError> {
         self.run(&GET_SEPARATION_POLICY, |call| async move {
-            self.read(&call, lis_auth::get_separation_policy).await
+            self.read(&call, |conn| {
+                let mut view = lis_auth::get_separation_policy(conn)?;
+                view.set_by_display = set_by_display(conn, view.set_by.as_deref())?;
+                Ok::<_, lis_auth::AuthError>(view)
+            })
+            .await
         })
         .await
     }
@@ -101,4 +115,13 @@ impl Engine {
         })
         .await
     }
+}
+
+/// Who set the version in force, named on every read.
+fn set_by_display(
+    conn: &rusqlite::Connection,
+    set_by: Option<&str>,
+) -> Result<Option<String>, lis_store::StoreError> {
+    let names = crate::commands::people::display_names(conn, set_by)?;
+    Ok(set_by.and_then(|id| crate::commands::people::name_of(&names, id)))
 }

@@ -112,13 +112,17 @@ function KitStatus({ status }: { status: RecoveryKitStatus }) {
             items={[
               { label: "Kit number", value: String(lastExport.kitNo) },
               { label: "Exported", value: <Timestamp value={lastExport.exportedAt} /> },
-              { label: "Exported by", value: <Person id={lastExport.exportedBy} /> },
+              {
+                label: "Exported by",
+                value: <Person id={lastExport.exportedBy} display={lastExport.exportedByDisplay} />,
+              },
               { label: "File name", value: lastExport.fileName },
               {
                 label: "Storage last confirmed",
                 value: lastConfirmation ? (
                   <>
-                    <Timestamp value={lastConfirmation.at} /> by <Person id={lastConfirmation.by} />
+                    <Timestamp value={lastConfirmation.at} /> by{" "}
+                    <Person id={lastConfirmation.by} display={lastConfirmation.byDisplay} />
                   </>
                 ) : (
                   "Never confirmed"

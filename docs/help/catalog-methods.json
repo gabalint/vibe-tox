@@ -2,7 +2,7 @@
   "id": "catalog-methods",
   "title": "Methods",
   "summary": "Review method definitions and preserve the versions used for analytical work.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-10-22",
   "routes": ["/configuration/methods", "/configuration/methods/:methodId"],
   "sections": [
     {
@@ -106,7 +106,7 @@
         {
           "name": "Drafted, Approved by, Effective, Retired and Retirement reason",
           "meaning": "Show who authored and authorized the definition, when it applied and why it ended.",
-          "values": "Recorded people, laboratory-local times, effective period and reason; Not approved or Not yet effective when applicable.",
+          "values": "Recorded people, laboratory-local times, effective period and reason; Not approved or Not yet effective when applicable. Staff appear by their current account display name, including the signed-in user; an account that cannot be found shows as user followed by its identifier.",
           "rules": "Read-only. Replacement ends the earlier effective period without deleting its content."
         },
         {
@@ -322,6 +322,8 @@
     "ui/src/features/configuration/methods/MethodPage.test.tsx",
     "crates/lis-catalog/src/commands/methods.rs",
     "crates/lis-catalog/src/approval_references.rs",
-    "crates/lis-catalog/migrations/0007_external_approval_references.sql"
+    "crates/lis-catalog/migrations/0007_external_approval_references.sql",
+    "ui/src/lib/person.ts",
+    "crates/lis-engine/src/commands/catalog/versions.rs"
   ]
 }

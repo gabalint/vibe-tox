@@ -10,6 +10,7 @@
 
 pub(crate) mod directories;
 pub(crate) mod intake;
+mod profile;
 
 use lis_audit::AuditDetail;
 use lis_core::{Capability, CommandError};
@@ -359,8 +360,7 @@ impl Engine {
         &self,
     ) -> Result<Option<LaboratoryProfileView>, CommandError> {
         self.run(&GET_LABORATORY_PROFILE, |call| async move {
-            self.read(&call, lis_identity::current_laboratory_profile)
-                .await
+            self.read(&call, profile::current).await
         })
         .await
     }
@@ -370,8 +370,7 @@ impl Engine {
         &self,
     ) -> Result<Vec<LaboratoryProfileView>, CommandError> {
         self.run(&LIST_LABORATORY_PROFILES, |call| async move {
-            self.read(&call, lis_identity::list_laboratory_profiles)
-                .await
+            self.read(&call, profile::list).await
         })
         .await
     }

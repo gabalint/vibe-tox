@@ -58,7 +58,8 @@ export function AppRunPanel({ run, actions, ...navigation }: AppRunPanelProps) {
             label: "Gaps acknowledged",
             value: acknowledged ? (
               <>
-                <Person id={acknowledged.by} />, <Timestamp value={acknowledged.at} />
+                <Person id={acknowledged.by} display={acknowledged.byDisplay} />,{" "}
+                <Timestamp value={acknowledged.at} />
               </>
             ) : (
               NONE

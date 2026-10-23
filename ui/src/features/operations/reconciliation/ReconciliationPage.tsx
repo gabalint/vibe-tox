@@ -76,7 +76,7 @@ function ReconciliationContent({ reconciliation }: { reconciliation: RecoveryRec
       {/* While it is open, the frame's banner says what waits; the sentence is shown once. */}
       {closed && (
         <Alert tone="info" title="Recovery reconciliation closed">
-          Closed {formatTime(closed.at)} by <Person id={closed.by} />.
+          Closed {formatTime(closed.at)} by <Person id={closed.by} display={closed.byDisplay} />.
         </Alert>
       )}
       <Section title="Restore">

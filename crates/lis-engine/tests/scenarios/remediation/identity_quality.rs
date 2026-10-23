@@ -40,6 +40,15 @@ async fn quality_reads_separation_policy_but_only_administrator_activates_it() {
         .unwrap();
     assert_eq!(set.version, Some(shown.version.unwrap_or(0) + 1));
     assert_eq!(set.set_by, Some(administrator.user_id.to_string()));
+    assert_eq!(
+        t.engine
+            .get_separation_policy()
+            .await
+            .unwrap()
+            .set_by_display
+            .as_deref(),
+        Some("Test policyadmin")
+    );
     assert!(set.set_at.is_some());
     assert!(set.values.self_approve_configuration);
     assert_eq!(

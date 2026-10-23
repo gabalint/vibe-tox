@@ -2,7 +2,8 @@
 //! `perform_analysis`. Batches and steps carry no patient sample labels.
 
 use lis_analytical::{
-    CompletePrepBatchInput, CreatePrepBatchInput, PrepBatchView, RecordPrepStepInput, actions,
+    AnalyticalError, CompletePrepBatchInput, CreatePrepBatchInput, PrepBatchView,
+    RecordPrepStepInput, actions,
 };
 use lis_analytical::{ListPrepBatchesInput, PrepBatchId, PrepBatchSummary};
 use lis_core::CommandError;
@@ -29,6 +30,7 @@ pub(crate) const LIST_PREP_BATCHES: CommandSpec = spec(
 );
 
 use super::PERFORM_ANALYSIS;
+use super::names::name_prep_batch;
 use crate::engine::Engine;
 use crate::registry::{CommandSpec, spec};
 
@@ -56,7 +58,9 @@ impl Engine {
     ) -> Result<PrepBatchView, CommandError> {
         self.run(&GET_PREP_BATCH, |call| async move {
             self.read(&call, move |conn| {
-                lis_analytical::prep_batch(conn, input.prep_batch_id)
+                let mut batch = lis_analytical::prep_batch(conn, input.prep_batch_id)?;
+                name_prep_batch(conn, &mut batch)?;
+                Ok::<_, AnalyticalError>(batch)
             })
             .await
         })
@@ -84,7 +88,9 @@ impl Engine {
     ) -> Result<PrepBatchView, CommandError> {
         self.run(&CREATE_PREP_BATCH, |call| async move {
             self.write(&call, move |ctx| {
-                lis_analytical::create_prep_batch(ctx, input)
+                let mut batch = lis_analytical::create_prep_batch(ctx, input)?;
+                name_prep_batch(ctx.tx(), &mut batch)?;
+                Ok::<_, AnalyticalError>(batch)
             })
             .await
         })
@@ -98,7 +104,9 @@ impl Engine {
     ) -> Result<PrepBatchView, CommandError> {
         self.run(&RECORD_PREP_STEP, |call| async move {
             self.write(&call, move |ctx| {
-                lis_analytical::record_prep_step(ctx, input)
+                let mut batch = lis_analytical::record_prep_step(ctx, input)?;
+                name_prep_batch(ctx.tx(), &mut batch)?;
+                Ok::<_, AnalyticalError>(batch)
             })
             .await
         })
@@ -112,7 +120,9 @@ impl Engine {
     ) -> Result<PrepBatchView, CommandError> {
         self.run(&COMPLETE_PREP_BATCH, |call| async move {
             self.write(&call, move |ctx| {
-                lis_analytical::complete_prep_batch(ctx, input)
+                let mut batch = lis_analytical::complete_prep_batch(ctx, input)?;
+                name_prep_batch(ctx.tx(), &mut batch)?;
+                Ok::<_, AnalyticalError>(batch)
             })
             .await
         })

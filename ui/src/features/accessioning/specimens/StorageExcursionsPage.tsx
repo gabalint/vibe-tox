@@ -14,6 +14,7 @@ import type { ExcursionView } from "@/generated/ExcursionView";
 import type { StorageLocationView } from "@/generated/StorageLocationView";
 import { labelOf } from "@/lib/choices";
 import { useCommandQuery, useHasCapability } from "@/lib/commands";
+import { usePersonText } from "@/lib/person";
 import { AssessExcursionDialog } from "./AssessExcursionDialog";
 import { EXCURSION_OUTCOMES, EXCURSION_STATES } from "./labels";
 import { RecordExcursionDialog } from "./RecordExcursionDialog";
@@ -127,6 +128,7 @@ function ExcursionDetail({
 }) {
   const query = useCommandQuery<ExcursionView>("get_excursion", { input: { excursionId: id } });
   const quality = useHasCapability("manage_quality");
+  const person = usePersonText();
   const [assess, setAssess] = useState(false);
   return (
     <Section title="Excursion details">
@@ -140,7 +142,8 @@ function ExcursionDetail({
             <p>
               Observed <Timestamp value={entry.observedFrom} /> to{" "}
               {entry.observedTo ? <Timestamp value={entry.observedTo} /> : "end unknown"}. Recorded
-              by {entry.recordedBy}, <Timestamp value={entry.recordedAt} />.
+              by {person(entry.recordedBy, entry.recordedByDisplay)},{" "}
+              <Timestamp value={entry.recordedAt} />.
             </p>
             <p>
               State: {labelOf(EXCURSION_STATES, entry.state)}.{" "}
@@ -149,7 +152,9 @@ function ExcursionDetail({
             </p>
             {entry.assessedAt && (
               <p>
-                Assessed by {entry.assessedBy}, <Timestamp value={entry.assessedAt} />.
+                Assessed
+                {entry.assessedBy && ` by ${person(entry.assessedBy, entry.assessedByDisplay)}`},{" "}
+                <Timestamp value={entry.assessedAt} />.
               </p>
             )}
             {entry.state === "open" && quality && (

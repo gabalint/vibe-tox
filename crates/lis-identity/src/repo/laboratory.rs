@@ -75,6 +75,7 @@ fn profile_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<LaboratoryProfileVie
         tax_id: row.get(11)?,
         reason: row.get(12)?,
         set_by: row.get(13)?,
+        set_by_display: None,
         set_at: row.get(14)?,
     })
 }

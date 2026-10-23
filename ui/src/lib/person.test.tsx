@@ -1,5 +1,5 @@
 import { screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { SessionInfo } from "@/generated/SessionInfo";
 import { usePersonText } from "./person";
 import { mockCommands } from "./test/ipc";
@@ -24,8 +24,10 @@ function People({ unnamed }: { unnamed?: string }) {
   return (
     <ul>
       <li>{person(ME, "Synthetic User")}</li>
+      <li>{person(ME)}</li>
       <li>{person(OTHER, "Synthetic Reviewer")}</li>
       <li>{person(OTHER)}</li>
+      <li>{person("result-import")}</li>
     </ul>
   );
 }
@@ -33,17 +35,30 @@ function People({ unnamed }: { unnamed?: string }) {
 const shown = () => screen.getAllByRole("listitem").map((item) => item.textContent);
 
 describe("usePersonText", () => {
-  it("says you for the signed-in person, others by display name, else by user ID", async () => {
+  it("names everyone by display name, the signed-in person included, else by user ID or component", async () => {
     mockCommands({ current_session: () => SESSION });
     renderWithProviders(<People />);
-    expect(await screen.findByText("you")).toBeTruthy();
-    expect(shown()).toEqual(["you", "Synthetic Reviewer", `user ${OTHER}`]);
+    expect(await screen.findByText("Synthetic Reviewer")).toBeTruthy();
+    await vi.waitFor(() => expect(shown()[1]).toBe("Synthetic User"));
+    expect(shown()).toEqual([
+      "Synthetic User",
+      "Synthetic User",
+      "Synthetic Reviewer",
+      `user ${OTHER}`,
+      "result-import",
+    ]);
   });
 
   it("says the screen's wording for someone the engine sent no name for", async () => {
     mockCommands({ current_session: () => SESSION });
     renderWithProviders(<People unnamed="another user" />);
-    expect(await screen.findByText("you")).toBeTruthy();
-    expect(shown()).toEqual(["you", "Synthetic Reviewer", "another user"]);
+    await vi.waitFor(() => expect(shown()[1]).toBe("Synthetic User"));
+    expect(shown()).toEqual([
+      "Synthetic User",
+      "Synthetic User",
+      "Synthetic Reviewer",
+      "another user",
+      "another user",
+    ]);
   });
 });

@@ -13,6 +13,7 @@
 //! signed-in user may list them; the same holds for reading runs, which QC
 //! review starts from.
 
+pub(crate) mod names;
 pub(crate) mod performing_site;
 pub(crate) mod prep;
 pub(crate) mod qc;
@@ -172,9 +173,10 @@ fn run_access(action: &'static str, run: &RunDetail) -> lis_audit::AuditEvent {
 fn audit_run_response(
     ctx: &mut CommandContext<'_>,
     action: &'static str,
-    run: RunDetail,
+    mut run: RunDetail,
 ) -> Result<RunDetail, AnalyticalError> {
     ctx.audit(run_access(action, &run))?;
+    names::name_run(ctx.tx(), &mut run)?;
     Ok(run)
 }
 
@@ -197,7 +199,10 @@ impl Engine {
     ) -> Result<Vec<SourceRegistrationView>, CommandError> {
         self.run(&LIST_SOURCE_REGISTRATIONS, |call| async move {
             self.read(&call, move |conn| {
-                lis_analytical::list_source_registrations(conn, input.instrument_id)
+                let mut sources =
+                    lis_analytical::list_source_registrations(conn, input.instrument_id)?;
+                names::name_sources(conn, &mut sources)?;
+                Ok::<_, AnalyticalError>(sources)
             })
             .await
         })
@@ -298,7 +303,11 @@ impl Engine {
         self.run(&GET_RUN, |call| async move {
             self.audited_read(
                 &call,
-                move |conn| lis_analytical::get_run(conn, input.run_id, now),
+                move |conn| {
+                    let mut run = lis_analytical::get_run(conn, input.run_id, now)?;
+                    names::name_run(conn, &mut run)?;
+                    Ok::<_, AnalyticalError>(run)
+                },
                 |run| run_access(GET_RUN.action, run),
             )
             .await

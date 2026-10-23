@@ -31,6 +31,10 @@ reason: string | null,
  */
 assessedBy: string, 
 /**
+ * Current display name resolved by the engine from the account owner.
+ */
+assessedByDisplay?: string, 
+/**
  * When.
  */
 assessedAt: string, 

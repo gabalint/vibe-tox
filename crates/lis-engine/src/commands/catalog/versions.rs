@@ -289,16 +289,10 @@ pub(super) fn resolve_version_names<K>(
     conn: &rusqlite::Connection,
     versions: &mut [VersionSummary<K>],
 ) -> Result<(), lis_catalog::CatalogError> {
-    let mut users = BTreeSet::new();
-    for version in versions.iter() {
-        users.insert(version.lifecycle.created_by);
-        users.extend(version.lifecycle.approved_by);
-    }
-    let names = display_names(conn, &users)?;
-    for version in versions {
-        set_lifecycle_names(&mut version.lifecycle, &names);
-    }
-    Ok(())
+    resolve_lifecycles_names(
+        conn,
+        versions.iter_mut().map(|version| &mut version.lifecycle),
+    )
 }
 
 pub(super) fn resolve_lifecycle_names<K>(
@@ -317,6 +311,7 @@ pub(super) fn resolve_lifecycles_names<'a, K: 'a>(
     for lifecycle in &lifecycles {
         users.insert(lifecycle.created_by);
         users.extend(lifecycle.approved_by);
+        users.extend(lifecycle.retired_by);
     }
     let names = display_names(conn, &users)?;
     for lifecycle in &mut lifecycles {
@@ -339,8 +334,8 @@ fn set_lifecycle_names<K>(
     lifecycle: &mut VersionLifecycle<K>,
     names: &std::collections::HashMap<lis_core::UserId, String>,
 ) {
-    lifecycle.created_by_display = names.get(&lifecycle.created_by).cloned();
-    lifecycle.approved_by_display = lifecycle
-        .approved_by
-        .and_then(|approved_by| names.get(&approved_by).cloned());
+    let name = |user: Option<lis_core::UserId>| user.and_then(|user| names.get(&user).cloned());
+    lifecycle.created_by_display = name(Some(lifecycle.created_by));
+    lifecycle.approved_by_display = name(lifecycle.approved_by);
+    lifecycle.retired_by_display = name(lifecycle.retired_by);
 }

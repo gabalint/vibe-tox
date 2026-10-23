@@ -20,6 +20,7 @@ pub(crate) fn decisions(
             scope: row.get(3)?,
             reason: row.get(4)?,
             decided_by: row.get(5)?,
+            decided_by_display: None,
             decided_at: row.get(6)?,
             causal_sequence: row.get(7)?,
             discrepancies: Vec::new(),

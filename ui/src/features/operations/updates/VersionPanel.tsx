@@ -33,7 +33,13 @@ export function VersionPanel({ version, actions, ...navigation }: VersionPanelPr
             label: "Approved",
             value: (
               <Decision
-                decision={approval && { by: approval.approvedBy, at: approval.approvedAt }}
+                decision={
+                  approval && {
+                    by: approval.approvedBy,
+                    byDisplay: approval.approvedByDisplay,
+                    at: approval.approvedAt,
+                  }
+                }
               />
             ),
           },

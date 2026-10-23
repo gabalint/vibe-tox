@@ -12,6 +12,7 @@ import { allowedActionItems, allowedRowActions, type OfferedAction } from "@/lib
 import { gateLabel } from "@/lib/errors";
 import { useOpenRecord } from "@/lib/openRecord";
 import { openRecordPanel } from "@/lib/openRecordPanel";
+import { usePersonText } from "@/lib/person";
 import styles from "@/styles/layout.module.css";
 import { receivedValueText } from "../labels";
 import { ConflictPanel } from "./ConflictPanel";
@@ -52,7 +53,7 @@ const COLUMNS: readonly DataGridColumn<ConflictRow>[] = [
     cell: (row) =>
       row.resolvedAt ? (
         <>
-          {row.reason ?? ""} ({row.resolvedBy ?? ""}, <Timestamp value={row.resolvedAt} />)
+          {row.reason ?? ""} (<DecidedBy row={row} />, <Timestamp value={row.resolvedAt} />)
         </>
       ) : (
         <>
@@ -61,6 +62,12 @@ const COLUMNS: readonly DataGridColumn<ConflictRow>[] = [
       ),
   },
 ];
+
+/** Who decided a conflict, by name; the column definitions cannot call hooks themselves. */
+function DecidedBy({ row }: { row: ConflictRow }) {
+  const person = usePersonText();
+  return row.resolvedBy ? person(row.resolvedBy, row.resolvedByDisplay) : "";
+}
 
 const getRowId = (row: ConflictRow) => row.conflictId;
 const ACTIONS: readonly OfferedAction<QcConflictResolution>[] = [

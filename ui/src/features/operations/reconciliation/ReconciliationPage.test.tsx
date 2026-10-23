@@ -158,10 +158,10 @@ describe("ReconciliationPage (REQ-OPS-002)", () => {
     expect(screen.queryByRole("button", { name: "Raise number floors" })).toBeNull();
   });
 
-  it("says you when the signed-in person closed it", async () => {
+  it("names the signed-in person who closed it", async () => {
     const closed = { ...OPEN, closed: { by: sessionWith([]).userId, at: "2026-10-13T18:00:00Z" } };
     renderPage(() => closed, {}, []);
-    expect(await screen.findByText(/by you\./)).toBeTruthy();
+    expect(await screen.findByText(/by Test Operator\./)).toBeTruthy();
   });
 
   it("explains that there is no reconciliation", async () => {

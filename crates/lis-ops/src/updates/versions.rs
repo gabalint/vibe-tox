@@ -73,6 +73,7 @@ fn acceptance(conn: &Connection, version: &str) -> Result<Option<Stamp>, Runtime
         .query_row([version], |row| {
             Ok(Stamp {
                 by: row.get(0)?,
+                by_display: None,
                 at: row.get(1)?,
             })
         })

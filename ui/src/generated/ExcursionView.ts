@@ -42,7 +42,15 @@ holds: Array<ContainerHoldView>,
 /**
  * Stable barcode links for every container named by an assessment.
  */
-affectedContainerLabels: { [key in string]: string }, recordedBy: string, recordedAt: string, assessedBy: string | null, assessedAt: string | null, assessmentReason: string | null, 
+affectedContainerLabels: { [key in string]: string }, recordedBy: string, 
+/**
+ * Current display name resolved by the engine from the account owner.
+ */
+recordedByDisplay?: string, recordedAt: string, assessedBy: string | null, 
+/**
+ * Current display name resolved by the engine from the account owner.
+ */
+assessedByDisplay?: string, assessedAt: string | null, assessmentReason: string | null, 
 /**
  * Optimistic-concurrency revision.
  */

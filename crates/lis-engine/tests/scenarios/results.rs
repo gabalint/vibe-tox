@@ -857,11 +857,7 @@ async fn superseding_validity_evidence_blocks_review_and_stales_approval() {
         })
         .await
         .unwrap();
-    let detail = lab
-        .engine()
-        .get_specimen_results(GetSpecimenResultsInput { specimen_id })
-        .await
-        .unwrap();
+    let detail = named_specimen_results(&lab, specimen_id, validity.0).await;
     assert!(
         lis_results::current_validity(&lab.t().conn(), specimen_id)
             .unwrap()
@@ -891,6 +887,60 @@ async fn superseding_validity_evidence_blocks_review_and_stales_approval() {
     );
     assert_access_actions(&lab, &["result.assess_validity", "result.submit_review"]);
     lab.engine().shutdown().await;
+}
+
+/// The specimen's results, checking that people show by their current account name, never
+/// only by user ID: the disposition and validity assessment come from signed-in
+/// accounts, while the seeded revisions' actor is not an account and stays unnamed.
+async fn named_specimen_results(
+    lab: &Lab,
+    specimen_id: lis_specimens::SpecimenId,
+    validity_result: ResultId,
+) -> lis_results::SpecimenResults {
+    let detail = lab
+        .engine()
+        .get_specimen_results(GetSpecimenResultsInput { specimen_id })
+        .await
+        .unwrap();
+    for line in &detail.lines {
+        for revision in line.current.iter().chain(&line.history) {
+            if revision.created_by == "synthetic-test" {
+                assert_eq!(revision.created_by_display, None, "{revision:?}");
+            }
+        }
+    }
+    let validity_line = detail
+        .lines
+        .iter()
+        .find(|line| line.result_id == validity_result)
+        .unwrap();
+    let disposition = validity_line.current.as_ref().unwrap();
+    assert_eq!(
+        disposition.created_by_display,
+        Some(account_name(lab, &disposition.created_by)),
+        "{disposition:?}"
+    );
+    assert!(!detail.validity_history.is_empty());
+    for assessment in &detail.validity_history {
+        assert_eq!(
+            assessment.assessed_by_display,
+            Some(account_name(lab, &assessment.assessed_by)),
+            "{assessment:?}"
+        );
+    }
+    detail
+}
+
+/// The current display name of the account `user_id`.
+fn account_name(lab: &Lab, user_id: &str) -> String {
+    lab.t()
+        .conn()
+        .query_row(
+            "SELECT display_name FROM auth_users WHERE id = ?1",
+            [user_id],
+            |r| r.get(0),
+        )
+        .unwrap()
 }
 
 fn assert_current_validity(

@@ -135,6 +135,9 @@ pub struct ResultRevisionView {
     pub sequence_role: SequenceRole,
     pub reason: Option<String>,
     pub created_by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub created_by_display: Option<String>,
     pub created_at: UtcTimestamp,
     pub evidence: Vec<MeasurementView>,
 }
@@ -157,6 +160,7 @@ pub(crate) fn result_revision_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<R
         sequence_role: row.get(13)?,
         reason: row.get(14)?,
         created_by: row.get(15)?,
+        created_by_display: None,
         created_at: row.get(16)?,
         evidence: Vec::new(),
     })
@@ -271,6 +275,9 @@ pub struct ValidityAssessmentView {
     pub supersedes_id: Option<ValidityAssessmentId>,
     pub reason: Option<String>,
     pub assessed_by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub assessed_by_display: Option<String>,
     pub assessed_at: UtcTimestamp,
     pub evidence_revision_ids: Vec<ResultRevisionId>,
 }

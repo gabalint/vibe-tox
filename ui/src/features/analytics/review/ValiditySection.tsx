@@ -6,6 +6,7 @@ import type { SpecimenResults } from "@/generated/SpecimenResults";
 import type { ValidityAssessmentView } from "@/generated/ValidityAssessmentView";
 import type { ValidityPolicyView } from "@/generated/ValidityPolicyView";
 import { useCommandQuery } from "@/lib/commands";
+import { usePersonText } from "@/lib/person";
 import { AssessmentHistory } from "../AssessmentHistory";
 import { GET_VALIDITY_POLICY } from "../contract";
 import { ValidityDialog } from "./ValidityDialog";
@@ -41,6 +42,7 @@ export function ValiditySection({ results }: { results: SpecimenResults }) {
 
 /** The category's label comes from the policy version it was assessed under. */
 function Assessment({ item }: { item: ValidityAssessmentView }) {
+  const person = usePersonText();
   const policy = useCommandQuery<ValidityPolicyView>(GET_VALIDITY_POLICY, {
     input: { policyVersionId: item.policyVersionId },
   });
@@ -51,7 +53,8 @@ function Assessment({ item }: { item: ValidityAssessmentView }) {
   return (
     <p>
       {category?.label ?? item.categoryCode}
-      {version}. <Timestamp value={item.assessedAt} /> by {item.assessedBy}
+      {version}. <Timestamp value={item.assessedAt} /> by{" "}
+      {person(item.assessedBy, item.assessedByDisplay)}
       {item.reason ? `. Reason: ${item.reason}` : ""}
     </p>
   );

@@ -7,6 +7,7 @@ import { Section } from "@/components/Section";
 import { Timestamp } from "@/components/Timestamp";
 import type { LaboratoryProfileView } from "@/generated/LaboratoryProfileView";
 import { GET_LABORATORY_PROFILE, useCommandQuery, useHasCapability } from "@/lib/commands";
+import { usePersonText } from "@/lib/person";
 import { MANAGE_CONFIGURATION } from "../contract";
 import { useDialog } from "../useDialog";
 import { ProfileDialog } from "./ProfileDialog";
@@ -59,6 +60,7 @@ export function LaboratoryPage() {
 }
 
 function ProfileSection({ profile }: { profile: LaboratoryProfileView }) {
+  const person = usePersonText();
   return (
     <Section title="Current profile">
       <Facts
@@ -77,7 +79,7 @@ function ProfileSection({ profile }: { profile: LaboratoryProfileView }) {
             label: "Set",
             value: (
               <>
-                <Timestamp value={profile.setAt} /> by {profile.setBy}
+                <Timestamp value={profile.setAt} /> by {person(profile.setBy, profile.setByDisplay)}
               </>
             ),
           },

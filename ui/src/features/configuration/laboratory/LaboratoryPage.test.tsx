@@ -20,7 +20,8 @@ const PROFILE: LaboratoryProfileView = {
   billingNpi: null,
   taxId: null,
   reason: null,
-  setBy: "Test Configurer",
+  setBy: "00000000-0000-7000-8000-000000000e09",
+  setByDisplay: "Test Profile Owner",
   setAt: "2026-10-12T14:03:00Z",
 };
 
@@ -80,6 +81,9 @@ describe("LaboratoryPage (REQ-RPT-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     expect(screen.getByText("100 Test Street, Suite 1")).toBeTruthy();
     expect(screen.getAllByText("Not set")).toHaveLength(2);
     expect(screen.getByText("2026-10-12 14:03 UTC")).toBeTruthy();
+    // Who set it shows by the engine's display name, never the internal user ID.
+    expect(screen.getByText(/by Test Profile Owner/)).toBeTruthy();
+    expect(screen.queryByText(/000000000e09/)).toBeNull();
     expect(screen.getByText("None (first version)")).toBeTruthy();
     await expectNoA11yViolations(container, { wholePage: true });
     await user.click(screen.getByRole("button", { name: "Change profile" }));

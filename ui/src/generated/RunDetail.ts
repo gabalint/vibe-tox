@@ -52,6 +52,10 @@ state: RunState,
  */
 createdBy: string, 
 /**
+ * Current display name resolved by the engine from the account owner.
+ */
+createdByDisplay?: string, 
+/**
  * When it was created.
  */
 createdAt: string, 

@@ -181,6 +181,9 @@ pub struct LaboratoryProfileView {
     pub reason: Option<String>,
     /// The user who set it.
     pub set_by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub set_by_display: Option<String>,
     /// When.
     pub set_at: UtcTimestamp,
 }

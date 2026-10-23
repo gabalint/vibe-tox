@@ -5,6 +5,7 @@ import { RecordActions } from "@/components/RowActions";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Timestamp } from "@/components/Timestamp";
 import type { DeviationView } from "@/generated/DeviationView";
+import { usePersonText } from "@/lib/person";
 import { deviationStatus } from "./deviations";
 
 interface DeviationPanelProps {
@@ -23,6 +24,7 @@ interface DeviationPanelProps {
 export function DeviationPanel(props: DeviationPanelProps) {
   const { deviation, appliesTo, analyte, actions, ...navigation } = props;
   const status = deviationStatus(deviation);
+  const person = usePersonText();
   return (
     <DetailPanel
       identifier={deviation.description}
@@ -39,25 +41,32 @@ export function DeviationPanel(props: DeviationPanelProps) {
             label: "Opened",
             value: (
               <>
-                <Timestamp value={deviation.openedAt} /> by {deviation.openedBy}
+                <Timestamp value={deviation.openedAt} /> by{" "}
+                {person(deviation.openedBy, deviation.openedByDisplay)}
               </>
             ),
           },
-          ...closingFacts(deviation),
+          ...closingFacts(deviation, person),
         ]}
       />
     </DetailPanel>
   );
 }
 
-function closingFacts(deviation: DeviationView) {
+function closingFacts(
+  deviation: DeviationView,
+  person: (userId: string, display?: string) => string,
+) {
   if (deviation.closedAt === null) return [];
   return [
     {
       label: "Closed",
       value: (
         <>
-          <Timestamp value={deviation.closedAt} /> by {deviation.closedBy ?? "Not recorded"}
+          <Timestamp value={deviation.closedAt} /> by{" "}
+          {deviation.closedBy
+            ? person(deviation.closedBy, deviation.closedByDisplay)
+            : "Not recorded"}
         </>
       ),
     },

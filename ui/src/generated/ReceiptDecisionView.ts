@@ -35,6 +35,10 @@ reason: string | null,
  */
 decidedBy: string, 
 /**
+ * Current display name resolved by the engine from the account owner.
+ */
+decidedByDisplay?: string, 
+/**
  * When.
  */
 decidedAt: string, 

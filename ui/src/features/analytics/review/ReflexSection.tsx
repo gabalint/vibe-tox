@@ -8,6 +8,7 @@ import { Toolbar } from "@/components/Toolbar";
 import type { ReflexTriggerView } from "@/generated/ReflexTriggerView";
 import type { SpecimenResults } from "@/generated/SpecimenResults";
 import { useCommandQuery } from "@/lib/commands";
+import { usePersonText } from "@/lib/person";
 import styles from "@/styles/layout.module.css";
 import { LIST_REFLEX_TRIGGERS, ReflexDecisionDialog } from "./ReflexDecisionDialog";
 
@@ -17,6 +18,7 @@ import { LIST_REFLEX_TRIGGERS, ReflexDecisionDialog } from "./ReflexDecisionDial
  * decision can be recorded; a reviewer then records whether the condition is met.
  */
 export function ReflexSection({ results }: { results: SpecimenResults }) {
+  const person = usePersonText();
   const triggers = useCommandQuery<ReflexTriggerView[]>(LIST_REFLEX_TRIGGERS, {
     input: { specimenId: results.specimenId },
   });
@@ -87,7 +89,8 @@ export function ReflexSection({ results }: { results: SpecimenResults }) {
             header: "Decided",
             cell: (r) => (
               <>
-                <Timestamp value={r.assessment.decidedAt} /> by {r.assessment.decidedBy}
+                <Timestamp value={r.assessment.decidedAt} /> by{" "}
+                {person(r.assessment.decidedBy, r.assessment.decidedByDisplay)}
               </>
             ),
           },

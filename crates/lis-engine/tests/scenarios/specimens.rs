@@ -658,7 +658,8 @@ async fn exercise_excursion_responses(t: &TestEngine, staff: &Staff) {
         .await
         .unwrap();
     staff.quality(t).await;
-    t.engine
+    let assessed = t
+        .engine
         .assess_excursion(AssessExcursionInput {
             excursion_id: excursion.excursion_id,
             expected_revision: excursion.revision,
@@ -668,6 +669,13 @@ async fn exercise_excursion_responses(t: &TestEngine, staff: &Staff) {
         })
         .await
         .unwrap();
+    assert_eq!(
+        (
+            assessed.recorded_by_display.as_deref(),
+            assessed.assessed_by_display.as_deref(),
+        ),
+        (Some("Test acc1"), Some("Test qm1"))
+    );
 }
 
 /// The app's only printer policy refuses the loopback test printer the scenarios use:
@@ -785,10 +793,18 @@ async fn accession_reads_are_audited_and_material_gates_hold() {
             .iter()
             .any(|(action, _)| action == "specimen.find_container")
     );
-    t.engine
+    staff.accessioner(&t).await;
+    let received = t
+        .engine
         .record_receipt_decision(receipt(specimen.specimen_id, 1))
         .await
         .unwrap();
+    assert_eq!(
+        received.specimens[0].decisions[0]
+            .decided_by_display
+            .as_deref(),
+        Some("Test acc1")
+    );
     exercise_hold_responses(&t, &staff, &accession).await;
     exercise_excursion_responses(&t, &staff).await;
     let access = t.events("access");

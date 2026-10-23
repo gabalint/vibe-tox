@@ -191,6 +191,9 @@ pub struct TriggerAssessmentView {
     pub created_item_id: Option<OrderItemId>,
     pub reason: String,
     pub decided_by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub decided_by_display: Option<String>,
     pub decided_at: UtcTimestamp,
 }
 

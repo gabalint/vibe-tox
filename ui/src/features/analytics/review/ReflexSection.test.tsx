@@ -200,7 +200,8 @@ describe("Reflex decisions (REQ-ORD-003, REQ-RPT-005)", {
               triggerRef: MORPHINE.revisionId,
               createdItemId: "follow-on-1",
               reason: "Synthetic approved condition met",
-              decidedBy: "Synthetic reviewer",
+              decidedBy: "reviewer-1",
+              decidedByDisplay: "Synthetic reviewer",
               decidedAt: "2026-10-12T10:00:00Z",
             },
           },
@@ -210,7 +211,8 @@ describe("Reflex decisions (REQ-ORD-003, REQ-RPT-005)", {
     const grid = await screen.findByRole("grid", { name: "Completed reflex decisions" });
     expect(within(grid).getByText("Synthetic approved condition met")).toBeTruthy();
     expect(within(grid).getByText(/result revision/)).toBeTruthy();
-    expect(within(grid).getByText(/Synthetic reviewer/)).toBeTruthy();
+    expect(within(grid).getByText(/by Synthetic reviewer/)).toBeTruthy();
+    expect(within(grid).queryByText(/reviewer-1/)).toBeNull();
     expect(within(grid).getByText("2026-10-12 10:00 UTC")).toBeTruthy();
     expect(within(grid).getByText("cancelled")).toBeTruthy();
   });

@@ -21,11 +21,14 @@ export function VersionStatus({ status }: { status: string }) {
   return <StatusBadge tone={shown.tone}>{shown.label}</StatusBadge>;
 }
 
-export function Decision({ decision }: { decision: Stamp | null }) {
+/** A decision as a stamp: who, by the name the engine resolved, and when. */
+type DecisionStamp = Omit<Stamp, "byDisplay"> & { byDisplay?: string | undefined };
+
+export function Decision({ decision }: { decision: DecisionStamp | null }) {
   if (!decision) return "None";
   return (
     <>
-      <Timestamp value={decision.at} /> by <Person id={decision.by} />
+      <Timestamp value={decision.at} /> by <Person id={decision.by} display={decision.byDisplay} />
     </>
   );
 }
@@ -63,7 +66,13 @@ export const VERSION_COLUMNS: readonly DataGridColumn<InstalledVersionView>[] = 
     header: "Approved",
     cell: (row) => (
       <Decision
-        decision={row.approval && { by: row.approval.approvedBy, at: row.approval.approvedAt }}
+        decision={
+          row.approval && {
+            by: row.approval.approvedBy,
+            byDisplay: row.approval.approvedByDisplay,
+            at: row.approval.approvedAt,
+          }
+        }
       />
     ),
   },

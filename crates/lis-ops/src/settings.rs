@@ -30,6 +30,9 @@ pub struct OperationsSettingsView {
     pub defaults: OperationsSettings,
     /// Who set the version in force (principal ID text).
     pub set_by: Option<String>,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub set_by_display: Option<String>,
     /// When it was set.
     pub set_at: Option<UtcTimestamp>,
 }
@@ -111,6 +114,7 @@ pub fn get_operations_settings(conn: &Connection) -> Result<OperationsSettingsVi
             .map_or(DEFAULT_SETTINGS, |stored| stored.values),
         defaults: DEFAULT_SETTINGS,
         set_by: stored.as_ref().map(|stored| stored.set_by.clone()),
+        set_by_display: None,
         set_at: stored.map(|stored| stored.set_at),
     })
 }

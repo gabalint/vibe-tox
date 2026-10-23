@@ -27,6 +27,8 @@
     }
   ],
   "reviewSources": [
+    "crates/lis-engine/src/commands/analytical/names.rs",
+    "ui/src/lib/person.ts",
     "ui/src/features/analytics/qc/RunQcPage.tsx",
     "ui/src/features/analytics/qc/AssessmentsTab.tsx",
     "ui/src/features/analytics/qc/ScopePanel.tsx",
@@ -86,7 +88,7 @@
         {
           "name": "Assessment history",
           "meaning": "Preserves decision, assessor, time, cited-observation count and reason.",
-          "values": "Current and earlier assessments.",
+          "values": "Current and earlier assessments; each names its assessor by the person's current account display name.",
           "rules": "Read-only; assessments are superseded, never edited in place."
         },
         {
@@ -140,7 +142,7 @@
         {
           "name": "Changed QC rows: State / Decision",
           "meaning": "Tracks whether the changed row still blocks work.",
-          "values": "Awaits a decision, Accepted as correction or Rejected; decision reason, person and time when decided.",
+          "values": "Awaits a decision, Accepted as correction or Rejected; decision reason, the person's current account display name, and time when decided.",
           "rules": "Read-only; supplied by the current record."
         },
         {
@@ -182,7 +184,7 @@
         {
           "name": "Deviations: State / Applies to / Analyte / Opened",
           "meaning": "Shows current status, scope, limitation and attribution.",
-          "values": "Open or Closed; selected target; analyte or Not limited to one analyte; person and date/time.",
+          "values": "Open or Closed; selected target; analyte or Not limited to one analyte; date/time and the person's current account display name.",
           "rules": "Read-only; supplied by the current record."
         },
         {
@@ -194,7 +196,7 @@
         {
           "name": "Deviations: Closed / Disposition / Reason for closing",
           "meaning": "Preserves the closure and its explanation.",
-          "values": "Person, date/time and recorded text; shown once closed.",
+          "values": "Date/time, the person's current account display name, and recorded text; shown once closed.",
           "rules": "Read-only; supplied by the current record."
         }
       ],
@@ -288,7 +290,7 @@
         {
           "name": "Opened / Closed",
           "meaning": "Who opened or closed the deviation and when.",
-          "values": "Recorded actor and timestamp; dash when not closed.",
+          "values": "Timestamp and the person's current account display name; dash when not closed.",
           "rules": "Original events remain retained; closing does not rewrite opening evidence."
         },
         {

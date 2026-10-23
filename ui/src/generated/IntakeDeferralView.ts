@@ -2,4 +2,12 @@
 import type { BirthEvidenceKind } from "./BirthEvidenceKind";
 import type { IntakeDisposition } from "./IntakeDisposition";
 
-export type IntakeDeferralView = { intakeId: string, revision: number, suppliedName: string, birthEvidenceKind: BirthEvidenceKind, birthEvidenceText: string | null, sourceReference: string, reason: string, recordedBy: string, recordedAt: string, disposition: IntakeDisposition | null, subjectId: string | null, dispositionSource: string | null, dispositionReason: string | null, disposedBy: string | null, disposedAt: string | null, };
+export type IntakeDeferralView = { intakeId: string, revision: number, suppliedName: string, birthEvidenceKind: BirthEvidenceKind, birthEvidenceText: string | null, sourceReference: string, reason: string, recordedBy: string, 
+/**
+ * Current display name resolved by the engine from the account owner.
+ */
+recordedByDisplay?: string, recordedAt: string, disposition: IntakeDisposition | null, subjectId: string | null, dispositionSource: string | null, dispositionReason: string | null, disposedBy: string | null, 
+/**
+ * Current display name resolved by the engine from the account owner.
+ */
+disposedByDisplay?: string, disposedAt: string | null, };

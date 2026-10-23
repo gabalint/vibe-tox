@@ -19,7 +19,11 @@ export const EXIT_EXPORT_COLUMNS: readonly DataGridColumn<ExitExportView>[] = [
     sortValue: (row) => row.requestedAt,
     width: 190,
   },
-  { id: "by", header: "By", cell: (row) => <Person id={row.requestedBy} /> },
+  {
+    id: "by",
+    header: "By",
+    cell: (row) => <Person id={row.requestedBy} display={row.requestedByDisplay} />,
+  },
   { id: "state", header: "State", cell: (row) => <State state={row.state} />, width: 130 },
   { id: "folder", header: "Folder", cell: (row) => row.folderLabel },
   { id: "package", header: "Package", cell: (row) => row.packageName ?? "Not written" },

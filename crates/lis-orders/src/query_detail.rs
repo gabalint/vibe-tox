@@ -120,7 +120,7 @@ pub(super) fn trigger_assessments(
     order_id: OrderId,
 ) -> Result<Vec<TriggerAssessmentView>, OrderError> {
     Ok(conn.prepare_cached("SELECT t.id, t.parent_item_id, t.orderable_id, t.outcome, t.trigger_source, t.trigger_ref, t.created_item_id, t.reason, t.decided_by, t.decided_at FROM ord_trigger_assessments t JOIN ord_order_items i ON i.id = t.parent_item_id WHERE i.order_id = ?1 ORDER BY t.decided_at, t.id")?
-        .query_map([order_id], |r| Ok(TriggerAssessmentView { assessment_id: r.get(0)?, parent_item_id: r.get(1)?, orderable_id: r.get(2)?, outcome: r.get(3)?, trigger_source: r.get(4)?, trigger_ref: r.get(5)?, created_item_id: r.get(6)?, reason: r.get(7)?, decided_by: r.get(8)?, decided_at: r.get(9)? }))?.collect::<Result<_, _>>()?)
+        .query_map([order_id], |r| Ok(TriggerAssessmentView { assessment_id: r.get(0)?, parent_item_id: r.get(1)?, orderable_id: r.get(2)?, outcome: r.get(3)?, trigger_source: r.get(4)?, trigger_ref: r.get(5)?, created_item_id: r.get(6)?, reason: r.get(7)?, decided_by: r.get(8)?, decided_by_display: None, decided_at: r.get(9)? }))?.collect::<Result<_, _>>()?)
 }
 
 pub(super) fn empty_evidence() -> OrderEvidenceView {

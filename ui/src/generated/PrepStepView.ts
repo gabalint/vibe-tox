@@ -29,6 +29,10 @@ note: string | null,
  */
 performedBy: string, 
 /**
+ * Current display name resolved by the engine from the account owner.
+ */
+performedByDisplay?: string, 
+/**
  * When it was recorded.
  */
 performedAt: string, };

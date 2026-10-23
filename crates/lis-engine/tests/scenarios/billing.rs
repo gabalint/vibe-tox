@@ -394,13 +394,18 @@ impl Desk {
             (Some("Test bil1"), Some("Test bil2"))
         );
         self.resync().await;
-        self.engine()
+        let confirmed = self
+            .engine()
             .confirm_class_mapping_version(ConfirmClassMappingVersion {
                 version_id,
                 expected_revision: approved.summary.revision,
             })
             .await
             .unwrap();
+        assert_eq!(
+            confirmed.summary.confirmed_by_display.as_deref(),
+            Some("Test qm1")
+        );
     }
 
     /// The order supplies a point-of-care result (and a diagnosis) on which

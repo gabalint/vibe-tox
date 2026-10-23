@@ -45,7 +45,8 @@ export const APPROVAL_COLUMNS: readonly DataGridColumn<UpdateApprovalView>[] = [
     header: "Approved",
     cell: (row) => (
       <>
-        <Timestamp value={row.approvedAt} /> by <Person id={row.approvedBy} />
+        <Timestamp value={row.approvedAt} /> by{" "}
+        <Person id={row.approvedBy} display={row.approvedByDisplay} />
       </>
     ),
     sortValue: (row) => row.approvedAt,

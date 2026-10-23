@@ -2,7 +2,7 @@
   "id": "media-disposals",
   "title": "Media disposals",
   "summary": "Record the disposition of host disks and backup media.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-10-22",
   "routes": ["/operations/media-disposals"],
   "sections": [
     {
@@ -60,8 +60,8 @@
         {
           "name": "Recorded by / Recorded",
           "meaning": "Who entered the record and when.",
-          "values": "Recorded user identifier and laboratory-local timestamp.",
-          "rules": "Read-only. The recording time is not a separately entered disposal date."
+          "values": "The recording person’s account name and laboratory-local timestamp.",
+          "rules": "Read-only. The name is the account’s current display name, looked up each time the list is shown; the record keeps only the account. Another user appears when no account name is known. The recording time is not a separately entered disposal date."
         },
         {
           "name": "Media disposals count",
@@ -110,6 +110,8 @@
     "ui/src/features/operations/disposals/RecordDisposalDialog.tsx",
     "ui/src/features/operations/labels.ts",
     "crates/lis-ops/src/disposals.rs",
+    "crates/lis-engine/src/commands/operations/updates.rs",
+    "ui/src/features/operations/Person.tsx",
     "crates/lis-ops/src/policy.rs"
   ]
 }

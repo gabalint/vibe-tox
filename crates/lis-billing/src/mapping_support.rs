@@ -120,10 +120,12 @@ pub(crate) fn summary_row(
         approved_by_display: None,
         approved_at: row.get(7)?,
         confirmed_by: row.get(8)?,
+        confirmed_by_display: None,
         confirmed_at: row.get(9)?,
         effective_from: row.get(10)?,
         effective_to: row.get(11)?,
         retired_by: row.get(12)?,
+        retired_by_display: None,
         retired_at: row.get(13)?,
         retire_reason: row.get(14)?,
     })

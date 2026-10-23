@@ -46,6 +46,8 @@
     "ui/src/features/accessioning/specimens/MaterialHistory.tsx",
     "ui/src/features/accessioning/specimens/LocationChoice.tsx",
     "crates/lis-specimens/src/material_history.rs",
+    "crates/lis-engine/src/commands/specimens/names.rs",
+    "ui/src/lib/person.ts",
     "crates/lis-specimens/src/commands/holds.rs"
   ],
   "pages": [
@@ -136,7 +138,7 @@
         {
           "name": "Material history / Label job history",
           "meaning": "Retained action and print evidence.",
-          "values": "Moves by known causal sequence; hold/release stream; depletion/disposal actor/time/reason; print job outcomes/errors.",
+          "values": "Moves by known causal sequence; hold/release stream; depletion/disposal. Each event shows who recorded it by the current account display name (an account that cannot be found shows as user followed by its identifier), the time and any reason. Print job outcomes/errors.",
           "rules": "Separate streams do not invent shared chronology; unknown legacy sequence is explicit;50 events per stream per page."
         }
       ],

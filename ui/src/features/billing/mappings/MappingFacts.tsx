@@ -17,7 +17,10 @@ export function MappingFacts({ version }: { version: BillingClassMappingVersionS
     version.retiredAt === null
       ? []
       : [
-          { label: "Retired", value: event(version.retiredAt, version.retiredBy, "") },
+          {
+            label: "Retired",
+            value: event(version.retiredAt, version.retiredBy, "", version.retiredByDisplay),
+          },
           { label: "Retirement reason", value: version.retireReason ?? "Not recorded" },
         ];
   return (
@@ -40,7 +43,12 @@ export function MappingFacts({ version }: { version: BillingClassMappingVersionS
         },
         {
           label: "Confirmed by the laboratory",
-          value: event(version.confirmedAt, version.confirmedBy, "Not confirmed"),
+          value: event(
+            version.confirmedAt,
+            version.confirmedBy,
+            "Not confirmed",
+            version.confirmedByDisplay,
+          ),
         },
         { label: "Effective", value: <EffectivePeriod version={version} /> },
         ...retirement,

@@ -9,6 +9,10 @@ export type Stamp = {
  */
 by: string, 
 /**
+ * Current display name resolved by the engine from the account owner.
+ */
+byDisplay?: string, 
+/**
  * When.
  */
 at: string, };

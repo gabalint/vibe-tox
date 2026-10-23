@@ -145,8 +145,10 @@ pub(crate) fn prep_batch(
             method_version_id: row.get(1)?,
             state: row.get(2)?,
             created_by: row.get(3)?,
+            created_by_display: None,
             created_at: row.get(4)?,
             completed_by: row.get(5)?,
+            completed_by_display: None,
             completed_at: row.get(6)?,
             revision: row.get(7)?,
             steps: Vec::new(),
@@ -230,6 +232,7 @@ pub(crate) fn prep_steps(
             lot_id: row.get(3)?,
             note: row.get(4)?,
             performed_by: row.get(5)?,
+            performed_by_display: None,
             performed_at: row.get(6)?,
         })
     })?

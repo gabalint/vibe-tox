@@ -54,6 +54,10 @@ reason: string | null,
  */
 setBy: string, 
 /**
+ * Current display name resolved by the engine from the account owner.
+ */
+setByDisplay?: string, 
+/**
  * When.
  */
 setAt: string, };

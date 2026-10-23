@@ -59,6 +59,10 @@ reason: string | null,
  */
 resolvedBy: string | null, 
 /**
+ * Current display name resolved by the engine from the account owner.
+ */
+resolvedByDisplay?: string, 
+/**
  * When.
  */
 resolvedAt: string | null, 

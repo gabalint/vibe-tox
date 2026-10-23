@@ -67,6 +67,42 @@ async fn material_and_deviation_reads_use_the_actual_granted_quality_authority()
     );
 }
 
+/// Material history names who recorded each event by the account's current display name.
+#[tokio::test]
+async fn material_history_names_who_recorded_each_event() {
+    let lab = Lab::start(lis_analytical::RevisionIndicator::None).await;
+    let container_id = lab.samples[0].container_id;
+    lab.sign_in(Role::Quality).await;
+    lab.engine()
+        .place_hold(lis_specimens::PlaceContainerHoldInput {
+            container_id,
+            kind: lis_specimens::ContainerHoldKind::Quality,
+            reason: "Synthetic leaking container".into(),
+        })
+        .await
+        .unwrap();
+    let history = lab
+        .engine()
+        .get_container_history(GetContainerHistoryInput {
+            container_id,
+            offset: 0,
+            snapshot: None,
+        })
+        .await
+        .unwrap();
+    let hold = history.holds.first().expect("the placed hold");
+    let name: String = lab
+        .t()
+        .conn()
+        .query_row(
+            "SELECT display_name FROM auth_users WHERE id = ?1",
+            [&hold.actor],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(hold.actor_display.as_deref(), Some(name.as_str()));
+}
+
 async fn setup_storage(lab: &Lab) -> lis_specimens::LocationId {
     lab.sign_in(Role::Admin).await;
     let location = lab

@@ -48,6 +48,10 @@ state: RegistrationState,
  */
 authoredBy: string, 
 /**
+ * Current display name resolved by the engine from the account owner.
+ */
+authoredByDisplay?: string, 
+/**
  * When it was recorded.
  */
 authoredAt: string, 
@@ -56,6 +60,10 @@ authoredAt: string,
  * allowed (ADR 0015).
  */
 approvedBy: string | null, 
+/**
+ * Current display name resolved by the engine from the account owner.
+ */
+approvedByDisplay?: string, 
 /**
  * When it was approved.
  */

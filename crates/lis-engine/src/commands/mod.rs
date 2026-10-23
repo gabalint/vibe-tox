@@ -61,3 +61,6 @@ mod users;
 
 pub(crate) mod billing_intake;
 pub(crate) mod collection_corrections;
+// people: begin
+pub(crate) mod people;
+// people: end

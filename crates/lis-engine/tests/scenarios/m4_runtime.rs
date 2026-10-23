@@ -872,7 +872,12 @@ async fn update_records_need_their_capability_a_backup_and_fresh_authentication(
     assert_eq!(code_of(wrong_password), ErrorCode::Validation);
     let disposal = engine.record_media_disposal(disposal()).await.unwrap();
     assert_eq!(disposal.method, DisposalMethod::Wiped);
-    assert_eq!(engine.list_media_disposals().await.unwrap().len(), 1);
+    let disposals = engine.list_media_disposals().await.unwrap();
+    assert_eq!(disposals.len(), 1);
+    assert_eq!(
+        disposals[0].recorded_by_display.as_deref(),
+        Some("Test Administrator")
+    );
 
     host.add_user(&engine, "quality1", &[RoleCode::QualityManager], PASSWORD)
         .await;

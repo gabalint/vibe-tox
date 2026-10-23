@@ -4,4 +4,8 @@ import type { TriggerSource } from "./TriggerSource";
 /**
  * An explicit trigger assessment.
  */
-export type TriggerAssessmentView = { assessmentId: string, parentItemId: string, orderableId: string, outcome: string, triggerSource: TriggerSource, triggerRef: string, createdItemId: string | null, reason: string, decidedBy: string, decidedAt: string, };
+export type TriggerAssessmentView = { assessmentId: string, parentItemId: string, orderableId: string, outcome: string, triggerSource: TriggerSource, triggerRef: string, createdItemId: string | null, reason: string, decidedBy: string, 
+/**
+ * Current display name resolved by the engine from the account owner.
+ */
+decidedByDisplay?: string, decidedAt: string, };

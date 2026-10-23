@@ -10,4 +10,8 @@ import type { SequenceRole } from "./SequenceRole";
 /**
  * One immutable result-line revision.
  */
-export type ResultRevisionView = { revisionId: string, revisionNo: number, cause: ResultCause, outcome: ResultOutcome, comparator: Comparator | null, magnitude: string | null, units: string | null, code: string | null, classification: string, classificationReason: string | null, methodVersionId: string, methodCertainty: MethodCertainty, outputScale: OutputScale, sequenceRole: SequenceRole, reason: string | null, createdBy: string, createdAt: string, evidence: Array<MeasurementView>, };
+export type ResultRevisionView = { revisionId: string, revisionNo: number, cause: ResultCause, outcome: ResultOutcome, comparator: Comparator | null, magnitude: string | null, units: string | null, code: string | null, classification: string, classificationReason: string | null, methodVersionId: string, methodCertainty: MethodCertainty, outputScale: OutputScale, sequenceRole: SequenceRole, reason: string | null, createdBy: string, 
+/**
+ * Current display name resolved by the engine from the account owner.
+ */
+createdByDisplay?: string, createdAt: string, evidence: Array<MeasurementView>, };

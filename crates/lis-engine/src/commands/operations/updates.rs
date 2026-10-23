@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
+use crate::commands::people::{display_names, name_of};
 use lis_auth::Reauthentication;
 use lis_auth::{Attempt, ReauthPurpose};
 use lis_core::CommandError;
@@ -65,8 +66,7 @@ impl Engine {
     /// `list_installed_versions` (session): every version that has run, newest first.
     pub async fn list_installed_versions(&self) -> Result<Vec<InstalledVersionView>, CommandError> {
         self.run(&LIST_INSTALLED_VERSIONS, |call| async move {
-            self.read(&call, lis_ops::updates::list_installed_versions)
-                .await
+            self.read(&call, named_installed_versions).await
         })
         .await
     }
@@ -74,8 +74,7 @@ impl Engine {
     /// `list_update_approvals` (`manage_configuration`): every approval, newest first.
     pub async fn list_update_approvals(&self) -> Result<Vec<UpdateApprovalView>, CommandError> {
         self.run(&LIST_UPDATE_APPROVALS, |call| async move {
-            self.read(&call, lis_ops::updates::list_update_approvals)
-                .await
+            self.read(&call, named_update_approvals).await
         })
         .await
     }
@@ -186,8 +185,7 @@ impl Engine {
     /// `list_media_disposals` (`backup_restore`): newest first.
     pub async fn list_media_disposals(&self) -> Result<Vec<MediaDisposalView>, CommandError> {
         self.run(&LIST_MEDIA_DISPOSALS, |call| async move {
-            self.read(&call, lis_ops::disposals::list_media_disposals)
-                .await
+            self.read(&call, named_media_disposals).await
         })
         .await
     }
@@ -225,4 +223,58 @@ fn sha256_of(path: &Path) -> io::Result<String> {
         }
         hasher.update(&buffer[..read]);
     }
+}
+
+/// Installed versions, with who accepted and approved each named on every read.
+fn named_installed_versions(
+    conn: &rusqlite::Connection,
+) -> Result<Vec<InstalledVersionView>, RuntimeError> {
+    let mut versions = lis_ops::updates::list_installed_versions(conn)?;
+    let ids = versions.iter().flat_map(|version| {
+        let accepted = version.acceptance.as_ref().map(|stamp| stamp.by.as_str());
+        let approved = version.approval.as_ref().map(|a| a.approved_by.as_str());
+        accepted.into_iter().chain(approved)
+    });
+    let names = display_names(conn, ids)?;
+    for version in &mut versions {
+        if let Some(stamp) = version.acceptance.as_mut() {
+            stamp.by_display = name_of(&names, &stamp.by);
+        }
+        if let Some(approval) = version.approval.as_mut() {
+            approval.approved_by_display = name_of(&names, &approval.approved_by);
+        }
+    }
+    Ok(versions)
+}
+
+/// Update approvals, with who approved and withdrew each named on every read.
+fn named_update_approvals(
+    conn: &rusqlite::Connection,
+) -> Result<Vec<UpdateApprovalView>, RuntimeError> {
+    let mut approvals = lis_ops::updates::list_update_approvals(conn)?;
+    let ids = approvals.iter().flat_map(|approval| {
+        std::iter::once(approval.approved_by.as_str())
+            .chain(approval.withdrawn.as_ref().map(|stamp| stamp.by.as_str()))
+    });
+    let names = display_names(conn, ids)?;
+    for approval in &mut approvals {
+        approval.approved_by_display = name_of(&names, &approval.approved_by);
+        if let Some(stamp) = approval.withdrawn.as_mut() {
+            stamp.by_display = name_of(&names, &stamp.by);
+        }
+    }
+    Ok(approvals)
+}
+
+/// Media disposals, with who recorded each named on every read.
+fn named_media_disposals(
+    conn: &rusqlite::Connection,
+) -> Result<Vec<MediaDisposalView>, RuntimeError> {
+    let mut disposals = lis_ops::disposals::list_media_disposals(conn)?;
+    let ids = disposals.iter().map(|row| row.recorded_by.as_str());
+    let names = display_names(conn, ids)?;
+    for row in &mut disposals {
+        row.recorded_by_display = name_of(&names, &row.recorded_by);
+    }
+    Ok(disposals)
 }

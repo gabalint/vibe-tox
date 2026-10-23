@@ -168,10 +168,16 @@ pub struct BillingClassMappingVersionSummary {
     pub approved_by_display: Option<String>,
     pub approved_at: Option<UtcTimestamp>,
     pub confirmed_by: Option<UserId>,
+    /// Current confirmer display name, resolved by the engine at read time.
+    #[ts(optional)]
+    pub confirmed_by_display: Option<String>,
     pub confirmed_at: Option<UtcTimestamp>,
     pub effective_from: Option<UtcTimestamp>,
     pub effective_to: Option<UtcTimestamp>,
     pub retired_by: Option<UserId>,
+    /// Current retiring user's display name, resolved by the engine at read time.
+    #[ts(optional)]
+    pub retired_by_display: Option<String>,
     pub retired_at: Option<UtcTimestamp>,
     pub retire_reason: Option<String>,
 }
