@@ -2,6 +2,7 @@
 
 use std::time::{Duration, Instant};
 
+use crate::commands::people::{display_names, name_of};
 use lis_core::{CommandError, ErrorCode, GateReason};
 use lis_ops::RuntimeError;
 use lis_ops::health::{CheckCode, CheckResult, HealthEventView};
@@ -153,9 +154,12 @@ impl Engine {
                     "Choose an exact run or a history page.",
                 ));
             }
-            self.read(&call, move |conn| match input.run_id {
-                Some(id) => lis_ops::runs::get_app_run(conn, id).map(|row| vec![row]),
-                None => lis_ops::runs::list_app_runs_page(conn, limit, input.before_run_id),
+            self.read(&call, move |conn| {
+                let runs = match input.run_id {
+                    Some(id) => vec![lis_ops::runs::get_app_run(conn, id)?],
+                    None => lis_ops::runs::list_app_runs_page(conn, limit, input.before_run_id)?,
+                };
+                name_acknowledgements(conn, runs)
             })
             .await
         })
@@ -189,4 +193,17 @@ fn checked_limit(limit: u32, max: u32) -> Result<u32, Failure> {
             &format!("Choose 1 to {max} records."),
         ))
     }
+}
+
+/// The runs, with who acknowledged each named on every read.
+fn name_acknowledgements(
+    conn: &rusqlite::Connection,
+    mut runs: Vec<AppRunView>,
+) -> Result<Vec<AppRunView>, RuntimeError> {
+    let stamps = runs.iter().filter_map(|run| run.acknowledged.as_ref());
+    let names = display_names(conn, stamps.map(|stamp| stamp.by.as_str()))?;
+    for stamp in runs.iter_mut().filter_map(|run| run.acknowledged.as_mut()) {
+        stamp.by_display = name_of(&names, &stamp.by);
+    }
+    Ok(runs)
 }

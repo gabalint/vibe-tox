@@ -8,6 +8,7 @@ import type { MaterialHistoryEntry } from "@/generated/MaterialHistoryEntry";
 import type { MaterialHistoryPage } from "@/generated/MaterialHistoryPage";
 import type { MaterialHistorySnapshot } from "@/generated/MaterialHistorySnapshot";
 import { useCommandQuery } from "@/lib/commands";
+import { usePersonText } from "@/lib/person";
 export function MaterialHistory({ containerId }: { containerId: string }) {
   const client = useQueryClient();
   const [cursor, setCursor] = useState<{
@@ -64,6 +65,7 @@ export function MaterialHistory({ containerId }: { containerId: string }) {
   );
 }
 function HistoryList({ title, entries }: { title: string; entries: MaterialHistoryEntry[] }) {
+  const person = usePersonText();
   return (
     <section aria-label={title}>
       <h4>{title}</h4>
@@ -73,8 +75,8 @@ function HistoryList({ title, entries }: { title: string; entries: MaterialHisto
         <ul>
           {entries.map((e) => (
             <li key={e.id}>
-              {e.description}. Recorded by {e.actor}, <Timestamp value={e.recordedAt} />.{" "}
-              {e.reason && `Reason: ${e.reason}.`}{" "}
+              {e.description}. Recorded by {person(e.actor, e.actorDisplay)},{" "}
+              <Timestamp value={e.recordedAt} />. {e.reason && `Reason: ${e.reason}.`}{" "}
               {e.kind === "move" &&
                 (e.causalSequence === null
                   ? "Legacy chronology unresolved."

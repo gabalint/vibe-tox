@@ -2,7 +2,7 @@
   "id": "receive-specimens",
   "title": "Receiving specimens",
   "summary": "Register material for an accepted order, then verify labels and record receipt decisions.",
-  "reviewedOn": "2026-10-15",
+  "reviewedOn": "2026-10-22",
   "routes": ["/orders/:orderId/accession", "/accessions/:accessionId"],
   "sections": [
     {
@@ -103,7 +103,8 @@
     "ui/src/features/accessioning/specimens/ContainerMaterial.tsx",
     "ui/src/features/accessioning/specimens/MaterialActionDialog.tsx",
     "ui/src/features/accessioning/specimens/MaterialHistory.tsx",
-    "ui/src/features/accessioning/specimens/ContainerLookupPage.tsx"
+    "ui/src/features/accessioning/specimens/ContainerLookupPage.tsx",
+    "ui/src/lib/person.ts"
   ],
   "pages": [
     {
@@ -338,7 +339,7 @@
         {
           "name": "Receipt decisions history",
           "meaning": "Earlier receipt decisions for each specimen.",
-          "values": "Decision, staff member, time, discrepancies, policy reference/scope and reason when present.",
+          "values": "Decision, staff member, time, discrepancies, policy reference/scope and reason when present. Staff appear by their current account display name, including the signed-in user; an account that cannot be found shows as user followed by its identifier.",
           "rules": "Oldest first; earlier decisions remain retained."
         },
         {
@@ -698,7 +699,7 @@
         {
           "name": "Review receipt chronology: decision order",
           "meaning": "Source-reviewed oldest-to-newest order of every retained receipt decision.",
-          "values": "One explicit selection per ordinal; none preselected. Choices show decision, original time, actor and retained identifier.",
+          "values": "One explicit selection per ordinal; none preselected. Choices show decision, original time, the deciding staff member (named as in Receipt decisions history) and retained identifier.",
           "rules": "Manage quality only when chronology unresolved. Every decision exactly once; known committed order and legal transitions must remain consistent."
         },
         {

@@ -7,8 +7,8 @@ use std::net::{IpAddr, Ipv4Addr, TcpListener};
 use lis_analytical::{
     AttemptKind, CompletePrepBatchInput, DeviationId, ExecutionId, InstrumentStatus, LotId,
     MaterialKind, PrepBatchId, QcConflictId, QcConflictResolution, QcOutcome, QcRole, QcScope,
-    ResolveQcConflictInput, RevisionIndicator, RunId, SampleIdField, SourceRegistrationId,
-    SourceTestCodeInput,
+    ResolveQcConflictInput, RevisionIndicator, RunDetail, RunId, RunQcView, SampleIdField,
+    SourceRegistrationId, SourceTestCodeInput,
 };
 use lis_auth::RoleCode;
 use lis_catalog::{
@@ -470,6 +470,7 @@ async fn analytical_work_runs_through_the_engine_with_separate_roles() {
         .await
         .unwrap();
     assert_eq!(qc.deviations.len(), 1);
+    assert_actor_names(&fetched, &qc);
     assert_eq!(
         qc.run_assessments.current.map(|a| a.outcome),
         Some(QcOutcome::Rejected)
@@ -510,4 +511,15 @@ async fn analytical_work_runs_through_the_engine_with_separate_roles() {
         assert!(access.iter().any(|a| a == action), "{action}");
     }
     t.engine.shutdown().await;
+}
+
+/// People show by their current account name, never only by user ID.
+fn assert_actor_names(run: &RunDetail, qc: &RunQcView) {
+    assert_eq!(run.created_by_display.as_deref(), Some("Test an1"));
+    assert_eq!(
+        qc.deviations[0].opened_by_display.as_deref(),
+        Some("Test qm1")
+    );
+    let assessment = qc.run_assessments.current.as_ref().unwrap();
+    assert_eq!(assessment.assessed_by_display.as_deref(), Some("Test qm1"));
 }

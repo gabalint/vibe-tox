@@ -4,6 +4,7 @@ import type { ActionItem } from "@/components/RowActions";
 import { RecordActions } from "@/components/RowActions";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Timestamp } from "@/components/Timestamp";
+import { usePersonText } from "@/lib/person";
 import styles from "@/styles/layout.module.css";
 import { receivedValueText } from "../labels";
 import { CONFLICT_STATES, type ConflictRow, conflictName } from "./conflictRows";
@@ -20,6 +21,7 @@ interface ConflictPanelProps {
 /** One changed QC row, exactly as received, beside the stored observation it contradicts. */
 export function ConflictPanel({ conflict, actions, ...navigation }: ConflictPanelProps) {
   const state = CONFLICT_STATES[conflict.state];
+  const person = usePersonText();
   return (
     <DetailPanel
       identifier={conflictName(conflict)}
@@ -39,21 +41,27 @@ export function ConflictPanel({ conflict, actions, ...navigation }: ConflictPane
           { label: "Flags as received", value: conflict.flagsText ?? "Not reported" },
           { label: "Status as received", value: conflict.statusText ?? "Not reported" },
           { label: "Received", value: <Timestamp value={conflict.recordedAt} /> },
-          ...decisionFacts(conflict),
+          ...decisionFacts(conflict, person),
         ]}
       />
     </DetailPanel>
   );
 }
 
-function decisionFacts(conflict: ConflictRow) {
+function decisionFacts(
+  conflict: ConflictRow,
+  person: (userId: string, display?: string) => string,
+) {
   if (conflict.resolvedAt === null) return [];
   return [
     {
       label: "Decided",
       value: (
         <>
-          <Timestamp value={conflict.resolvedAt} /> by {conflict.resolvedBy ?? "Not recorded"}
+          <Timestamp value={conflict.resolvedAt} /> by{" "}
+          {conflict.resolvedBy
+            ? person(conflict.resolvedBy, conflict.resolvedByDisplay)
+            : "Not recorded"}
         </>
       ),
     },

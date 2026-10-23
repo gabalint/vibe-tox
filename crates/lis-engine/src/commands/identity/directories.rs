@@ -1,5 +1,6 @@
 //! Same-identity directory maintenance and retained version history.
 use super::MANAGE_CONFIGURATION;
+use crate::commands::people::{display_names, name_of};
 use crate::{
     Engine,
     registry::{CommandSpec, spec},
@@ -66,11 +67,24 @@ impl Engine {
         input: DirectoryHistoryInput,
     ) -> Result<Vec<lis_identity::DirectoryHistoryEntry>, CommandError> {
         self.run(&DIRECTORY_HISTORY, |call| async move {
-            self.read(&call, move |conn| {
-                lis_identity::directory_history(conn, input)
-            })
-            .await
+            self.read(&call, move |conn| named_history(conn, input))
+                .await
         })
         .await
     }
+}
+
+/// The history, with who recorded each revision named on every read.
+fn named_history(
+    conn: &rusqlite::Connection,
+    input: DirectoryHistoryInput,
+) -> Result<Vec<lis_identity::DirectoryHistoryEntry>, lis_identity::IdentityError> {
+    let mut rows = lis_identity::directory_history(conn, input)?;
+    let ids = rows.iter().filter_map(|row| row.recorded_by.as_deref());
+    let names = display_names(conn, ids)?;
+    for row in &mut rows {
+        let recorded_by = row.recorded_by.as_deref();
+        row.recorded_by_display = recorded_by.and_then(|id| name_of(&names, id));
+    }
+    Ok(rows)
 }

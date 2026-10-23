@@ -48,6 +48,7 @@ pub fn get_run(
         method_version: method.version,
         state: run.state,
         created_by: run.created_by,
+        created_by_display: None,
         created_at: run.created_at,
         closed_at: run.closed_at,
         close_reason: run.close_reason,

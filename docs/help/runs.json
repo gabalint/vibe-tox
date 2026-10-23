@@ -27,6 +27,8 @@
     }
   ],
   "reviewSources": [
+    "crates/lis-engine/src/commands/analytical/names.rs",
+    "ui/src/lib/person.ts",
     "ui/src/features/analytics/runs/RunsPage.tsx",
     "ui/src/features/analytics/runs/RunPage.tsx",
     "ui/src/features/analytics/runs/Positions.tsx",
@@ -143,7 +145,7 @@
         {
           "name": "Run title / Created / State",
           "meaning": "Identifies the method code and version, instrument, author and creation time.",
-          "values": "Recorded identity; Open or Closed.",
+          "values": "Recorded identity, with the author shown by the person's current account display name; Open or Closed.",
           "rules": "Read-only; confirm these before adding any position."
         },
         {

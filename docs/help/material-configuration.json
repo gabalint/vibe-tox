@@ -2,7 +2,7 @@
   "id": "material-configuration",
   "title": "Printers, storage and excursions",
   "summary": "Configure local label printers and storage locations, then record and assess observed storage incidents.",
-  "reviewedOn": "2026-10-15",
+  "reviewedOn": "2026-10-22",
   "routes": ["/setup/material", "/specimens/storage"],
   "sections": [
     {
@@ -42,7 +42,10 @@
     "ui/src/features/accessioning/specimens/LocationChoice.tsx",
     "crates/lis-specimens/src/material_history.rs",
     "crates/lis-specimens/src/commands/holds.rs",
-    "crates/lis-specimens/src/commands/configuration.rs"
+    "crates/lis-specimens/src/commands/configuration.rs",
+    "ui/src/lib/person.ts",
+    "crates/lis-engine/src/commands/specimens.rs",
+    "crates/lis-engine/src/commands/specimens/material.rs"
   ],
   "pages": [
     {
@@ -213,7 +216,7 @@
         {
           "name": "Excursion detail",
           "meaning": "Retained evidence and current assessment.",
-          "values": "Observed interval; recorded actor/time; Open or Assessed state; No impact or Holds placed assessment; assessed actor/time/reason; affected material links.",
+          "values": "Observed interval; recording staff member and time; Open or Assessed state; No impact or Holds placed assessment; assessing staff member, time and reason; affected material links. Staff appear by their current account display name, including the signed-in user; an account that cannot be found shows as user followed by its identifier.",
           "rules": "Recorded and observed dates are separate; assessed incidents stay accessible. Unrecognized state or outcome values remain visible as received; refresh and request support rather than assuming their meaning."
         }
       ],

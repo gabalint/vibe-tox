@@ -237,16 +237,19 @@ fn resolve_mapping_names(
     for version in versions.iter() {
         users.insert(version.created_by);
         users.extend(version.approved_by);
+        users.extend(version.confirmed_by);
+        users.extend(version.retired_by);
     }
     let names = lis_auth::display_names(conn, &users).map_err(|error| match error {
         lis_auth::AuthError::Store(error) => BillingError::Store(error),
         _ => BillingError::Inconsistent("mapping actor"),
     })?;
+    let name = |user: Option<lis_core::UserId>| user.and_then(|user| names.get(&user).cloned());
     for version in versions {
-        version.created_by_display = names.get(&version.created_by).cloned();
-        version.approved_by_display = version
-            .approved_by
-            .and_then(|approved_by| names.get(&approved_by).cloned());
+        version.created_by_display = name(Some(version.created_by));
+        version.approved_by_display = name(version.approved_by);
+        version.confirmed_by_display = name(version.confirmed_by);
+        version.retired_by_display = name(version.retired_by);
     }
     Ok(())
 }

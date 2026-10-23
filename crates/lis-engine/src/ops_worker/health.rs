@@ -223,9 +223,25 @@ fn gather(
         outbox: outbox_facts(conn, now)?,
         version: lis_ops::updates::version_facts(conn)?,
         recovery_open: lis_ops::recovery::is_open(conn)?,
-        attestations: lis_ops::health::valid_attestations(conn, now)?,
+        attestations: named_attestations(conn, now)?,
     };
     Ok((inputs, settings))
+}
+
+/// Attestations valid now, with who attested each named on every read.
+fn named_attestations(
+    conn: &Connection,
+    now: UtcTimestamp,
+) -> Result<Vec<lis_ops::health::Attestation>, OpsError> {
+    let mut attestations = lis_ops::health::valid_attestations(conn, now)?;
+    let ids = attestations
+        .iter()
+        .map(|attestation| attestation.by.as_str());
+    let names = crate::commands::people::display_names(conn, ids)?;
+    for attestation in &mut attestations {
+        attestation.by_display = crate::commands::people::name_of(&names, &attestation.by);
+    }
+    Ok(attestations)
 }
 
 /// The newest audit `recorded_at` of any stream; a clock behind it is wrong.

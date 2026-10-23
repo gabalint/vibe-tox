@@ -18,6 +18,10 @@ version: string,
  */
 approvedBy: string, 
 /**
+ * Current display name resolved by the engine from the account owner.
+ */
+approvedByDisplay?: string, 
+/**
  * When.
  */
 approvedAt: string, 

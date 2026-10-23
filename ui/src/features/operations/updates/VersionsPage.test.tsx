@@ -420,7 +420,7 @@ describe("VersionsPage (REQ-OPS-006)", () => {
       await screen.findByRole("region", { name: "Approval of version 0.4.1" }),
     );
     expect(approval.getByText(/by another user/)).toBeTruthy();
-    expect(approval.getByText(/by you/)).toBeTruthy();
+    expect(approval.getByText(/by Test Operator/)).toBeTruthy();
     expect(document.body.textContent).not.toContain(OTHER_USER);
     expect(document.body.textContent).not.toContain(SIGNED_IN);
   });

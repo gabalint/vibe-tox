@@ -82,6 +82,9 @@ pub struct UpdateApprovalView {
     pub version: String,
     /// Who approved (principal ID text).
     pub approved_by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub approved_by_display: Option<String>,
     /// When.
     pub approved_at: UtcTimestamp,
     /// The package's file name.
@@ -326,14 +329,17 @@ fn approval_view(row: &Row<'_>) -> rusqlite::Result<UpdateApprovalView> {
         approval_id: row.get(0)?,
         version: row.get(1)?,
         approved_by: row.get(2)?,
+        approved_by_display: None,
         approved_at: row.get(3)?,
         package_file_name: row.get(4)?,
         package_sha256: row.get(5)?,
         risk_class_text: row.get(6)?,
         pre_update_run_id: row.get(7)?,
-        withdrawn: withdrawn_by
-            .zip(withdrawn_at)
-            .map(|(by, at)| Stamp { by, at }),
+        withdrawn: withdrawn_by.zip(withdrawn_at).map(|(by, at)| Stamp {
+            by,
+            by_display: None,
+            at,
+        }),
         revision: row.get(10)?,
         installed: row.get(11)?,
     })

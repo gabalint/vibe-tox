@@ -49,11 +49,11 @@ export function effectiveText(
 
 function retiredFacts(
   version: CatalogVersionSummary,
-  person: (userId: string) => string,
+  person: (userId: string, display?: string) => string,
   formatTime: (timestamp: string) => string,
 ) {
   if (version.retiredAt === null) return [];
-  const by = version.retiredBy ? ` by ${person(version.retiredBy)}` : "";
+  const by = version.retiredBy ? ` by ${person(version.retiredBy, version.retiredByDisplay)}` : "";
   return [
     { label: "Retired", value: `${formatTime(version.retiredAt)}${by}` },
     { label: "Retirement reason", value: version.retireReason ?? "Not recorded" },

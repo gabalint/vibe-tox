@@ -11,6 +11,7 @@ import type { AccessionSpecimenView } from "@/generated/AccessionSpecimenView";
 import type { ContainerView } from "@/generated/ContainerView";
 import { labelOf } from "@/lib/choices";
 import { useHasCapability } from "@/lib/commands";
+import { usePersonText } from "@/lib/person";
 import styles from "../accessioning.module.css";
 import { AliquotDialog } from "./AliquotDialog";
 import { containerColumns } from "./containerColumns";
@@ -170,12 +171,14 @@ function containerActions(
 
 /** The specimen's receipt decisions, oldest first. */
 function ReceiptDecisions({ specimen, title }: Omit<SpecimenPanelProps, "accessionNumber">) {
+  const person = usePersonText();
   return (
     <ul className={styles.list} aria-label={`Receipt decisions for ${title}`}>
       {specimen.decisions.length === 0 && <li className={styles.hint}>No receipt decision yet.</li>}
       {specimen.decisions.map((decision) => (
         <li key={decision.decisionId}>
-          {labelOf(RECEIPT_DECISIONS, decision.decision)} by {decision.decidedBy},{" "}
+          {labelOf(RECEIPT_DECISIONS, decision.decision)} by{" "}
+          {person(decision.decidedBy, decision.decidedByDisplay)},{" "}
           <Timestamp value={decision.decidedAt} />. {discrepancyText(decision.discrepancies)}.
           {decision.policyReference && ` Policy ${decision.policyReference}: ${decision.scope}.`}
           {decision.reason && ` Reason: ${decision.reason}`}

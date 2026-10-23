@@ -62,6 +62,9 @@ pub struct KitExportView {
     pub kit_no: i64,
     pub exported_at: UtcTimestamp,
     pub exported_by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub exported_by_display: Option<String>,
     pub file_name: String,
 }
 
@@ -71,6 +74,9 @@ pub struct KitExportView {
 pub struct KitConfirmationView {
     pub at: UtcTimestamp,
     pub by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub by_display: Option<String>,
 }
 
 impl Engine {
@@ -97,10 +103,11 @@ impl Engine {
                     None => lis_ops::kit::latest_key_fingerprint(conn)?.unwrap_or_default(),
                 };
                 Ok::<_, lis_ops::backup::BackupError>(kit_status(
+                    conn,
                     fingerprint,
                     key_state.as_str(),
                     status,
-                ))
+                )?)
             })
             .await
         })
@@ -185,8 +192,13 @@ impl Engine {
             let key_id = lis_ops::format::BackupKey::derive(&key).key_id();
             self.write(&call, move |ctx| {
                 lis_ops::kit::confirm_storage(ctx, input.kit_no, &input.note)?;
-                lis_ops::kit::status(ctx.tx(), key_id)
-                    .map(|status| kit_status(key_id.to_string(), "ok", status))
+                let status = lis_ops::kit::status(ctx.tx(), key_id)?;
+                Ok::<_, lis_ops::backup::BackupError>(kit_status(
+                    ctx.tx(),
+                    key_id.to_string(),
+                    "ok",
+                    status,
+                )?)
             })
             .await
         })
@@ -198,22 +210,39 @@ async fn discard(prepared: Arc<lis_ops::kit::PreparedKit>) {
     let _ = tokio::task::spawn_blocking(move || lis_ops::kit::discard_prepared(&prepared)).await;
 }
 
+/// The kit status, with who exported and confirmed it named on every read.
 fn kit_status(
+    conn: &rusqlite::Connection,
     key_fingerprint: String,
     key_state: &str,
     status: lis_ops::kit::KitStatus,
-) -> RecoveryKitStatus {
+) -> Result<RecoveryKitStatus, lis_store::StoreError> {
+    let names = crate::commands::people::display_names(
+        conn,
+        status
+            .latest
+            .iter()
+            .map(|kit| kit.exported_by.as_str())
+            .chain(
+                status
+                    .last_confirmation
+                    .iter()
+                    .map(|c| c.confirmed_by.as_str()),
+            ),
+    )?;
+    let name = |id: &str| crate::commands::people::name_of(&names, id);
     let outdated_reasons: Vec<String> = status
         .outdated_reasons
         .into_iter()
         .map(|reason| reason.as_str().to_owned())
         .collect();
-    RecoveryKitStatus {
+    Ok(RecoveryKitStatus {
         key_fingerprint,
         key_state: key_state.to_owned(),
         last_export: status.latest.map(|kit| KitExportView {
             kit_no: kit.kit_no,
             exported_at: kit.exported_at,
+            exported_by_display: name(&kit.exported_by),
             exported_by: kit.exported_by,
             file_name: kit.file_name,
         }),
@@ -221,9 +250,10 @@ fn kit_status(
             .last_confirmation
             .map(|confirmation| KitConfirmationView {
                 at: confirmation.confirmed_at,
+                by_display: name(&confirmation.confirmed_by),
                 by: confirmation.confirmed_by,
             }),
         outdated: !outdated_reasons.is_empty(),
         outdated_reasons,
-    }
+    })
 }

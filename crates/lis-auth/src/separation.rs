@@ -162,6 +162,9 @@ pub struct SeparationPolicyView {
     pub reason: Option<String>,
     /// Who set it (principal ID text).
     pub set_by: Option<String>,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub set_by_display: Option<String>,
     /// When it was set.
     pub set_at: Option<UtcTimestamp>,
 }
@@ -228,6 +231,7 @@ pub fn get_separation_policy(conn: &Connection) -> Result<SeparationPolicyView, 
             values: stored.values,
             reason: Some(stored.reason),
             set_by: Some(stored.set_by),
+            set_by_display: None,
             set_at: Some(stored.set_at),
         },
         None => SeparationPolicyView {
@@ -235,6 +239,7 @@ pub fn get_separation_policy(conn: &Connection) -> Result<SeparationPolicyView, 
             values: DEFAULT_SEPARATION_POLICY,
             reason: None,
             set_by: None,
+            set_by_display: None,
             set_at: None,
         },
     })

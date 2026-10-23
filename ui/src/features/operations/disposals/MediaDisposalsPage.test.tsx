@@ -14,7 +14,8 @@ const DISPOSAL: MediaDisposalView = {
   medium: "Removable backup drive 2",
   method: "destroyed",
   identifier: "SYN-SERIAL-0001",
-  recordedBy: "Test Operator",
+  recordedBy: "00000000-0000-7000-8000-0000000000e7",
+  recordedByDisplay: "Test Recorder",
   recordedAt: "2026-10-13T11:00:00Z",
 };
 
@@ -38,6 +39,9 @@ describe("MediaDisposalsPage (REQ-OPS-003)", () => {
     const { user, container } = renderPage({ record_media_disposal: record });
     expect(await screen.findByText("Removable backup drive 2")).toBeTruthy();
     expect(screen.getByText("Destroyed")).toBeTruthy();
+    // The engine's display name shows, never the internal user ID.
+    expect(screen.getByText("Test Recorder")).toBeTruthy();
+    expect(screen.queryByText(/0000000000e7/)).toBeNull();
     await expectNoA11yViolations(container, { wholePage: true });
     await user.click(screen.getByRole("button", { name: "Record disposal" }));
     const dialog = await screen.findByRole("dialog", { name: "Record disposal" });

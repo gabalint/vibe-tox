@@ -17,10 +17,12 @@ import { CommandDialog } from "@/lib/CommandDialog";
 import { optionalText } from "@/lib/choices";
 import { useCommandPages } from "@/lib/commands";
 import { IdentityBanner } from "@/lib/IdentityBanner";
+import { usePersonText } from "@/lib/person";
 import { PatientDirectory } from "./PatientDirectory";
 
 export function IncompleteIntakePage() {
   const navigate = useNavigate();
+  const person = usePersonText();
   const [includeClosed, setIncludeClosed] = useState(false);
   const query = useCommandPages<IntakeDeferralView, string>("list_intake_deferrals", {
     key: { includeClosed },
@@ -109,14 +111,15 @@ export function IncompleteIntakePage() {
         >
           <p>
             Original evidence: {selected.birthEvidenceText ?? "Birth information unknown"}. Source:{" "}
-            {selected.sourceReference}. Recorded by {selected.recordedBy}. Reason: {selected.reason}
-            .
+            {selected.sourceReference}. Recorded by{" "}
+            {person(selected.recordedBy, selected.recordedByDisplay)}. Reason: {selected.reason}.
           </p>
           {selected.disposition ? (
             <>
               <p>
                 {selected.disposition}: {selected.dispositionReason}. Source:{" "}
-                {selected.dispositionSource}. Recorded by {selected.disposedBy}{" "}
+                {selected.dispositionSource}. Recorded by{" "}
+                {selected.disposedBy && person(selected.disposedBy, selected.disposedByDisplay)}{" "}
                 {selected.disposedAt && <Timestamp value={selected.disposedAt} />}.
               </p>
               {selected.subjectId && (

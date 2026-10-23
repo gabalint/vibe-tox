@@ -67,6 +67,9 @@ pub struct MediaDisposalView {
     pub identifier: Option<String>,
     /// Who recorded it (principal ID text).
     pub recorded_by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub recorded_by_display: Option<String>,
     /// When.
     pub recorded_at: UtcTimestamp,
 }
@@ -96,6 +99,7 @@ pub fn record_media_disposal(
         method: input.method,
         identifier,
         recorded_by: ctx.principal().actor().id_text(),
+        recorded_by_display: None,
         recorded_at: ctx.now(),
     };
     ctx.tx()
@@ -138,6 +142,7 @@ pub fn list_media_disposals(conn: &Connection) -> Result<Vec<MediaDisposalView>,
                 method: row.get(2)?,
                 identifier: row.get(3)?,
                 recorded_by: row.get(4)?,
+                recorded_by_display: None,
                 recorded_at: row.get(5)?,
             })
         })?

@@ -1,6 +1,7 @@
 //! Result import, quarantine and technical-review engine boundary
 //! (REQ-ANA-003, REQ-RES-001–005, REQ-ORD-003, REQ-INT-003).
 
+mod names;
 mod receipt;
 pub(crate) use receipt::GET_RECEIPT_IMPORT_ATTEMPT;
 pub use receipt::GetReceiptImportAttemptInput;
@@ -168,7 +169,7 @@ impl Engine {
         self.run(&GET_SPECIMEN_RESULTS, |call| async move {
             self.audited_read(
                 &call,
-                move |conn| lis_results::get_specimen_results(conn, input.specimen_id),
+                move |conn| names::specimen_results(conn, input.specimen_id),
                 move |_| access(GET_SPECIMEN_RESULTS.action).record("specimen", input.specimen_id),
             )
             .await
@@ -330,7 +331,7 @@ impl Engine {
     ) -> Result<SpecimenResults, CommandError> {
         self.run(&USE_MEASURED_RESULT, |call| async move {
             self.write(&call, move |ctx| {
-                let results = lis_results::use_measured_result(ctx, input)?;
+                let results = names::use_measured_result(ctx, input)?;
                 ctx.audit(
                     access(USE_MEASURED_RESULT.action).record("specimen", results.specimen_id),
                 )?;

@@ -63,6 +63,9 @@ pub struct RecoveryFloorView {
 #[ts(export)]
 pub struct RecoveryClosedView {
     pub by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub by_display: Option<String>,
     pub at: UtcTimestamp,
 }
 
@@ -112,7 +115,8 @@ impl Engine {
                     [],
                     |row| row.get(0),
                 )?;
-                Ok::<_, BackupError>(view.map(|view| reconciliation_view(view, held)))
+                view.map(|view| reconciliation_view(conn, view, held))
+                    .transpose()
             })
             .await
         })
@@ -157,8 +161,15 @@ impl Engine {
     }
 }
 
-fn reconciliation_view(view: lis_ops::recovery::RecoveryView, held: i64) -> RecoveryReconciliation {
-    RecoveryReconciliation {
+/// The reconciliation, with who closed it named on every read.
+fn reconciliation_view(
+    conn: &rusqlite::Connection,
+    view: lis_ops::recovery::RecoveryView,
+    held: i64,
+) -> Result<RecoveryReconciliation, BackupError> {
+    let closed_by = view.closed.as_ref().map(|(by, _)| by.as_str());
+    let names = crate::commands::people::display_names(conn, closed_by)?;
+    Ok(RecoveryReconciliation {
         restore_id: view.restore_id,
         set_created_at: view.set_created_at,
         applied_at: view.applied_at,
@@ -178,8 +189,12 @@ fn reconciliation_view(view: lis_ops::recovery::RecoveryView, held: i64) -> Reco
             accession: view.floors.accession,
             container: view.floors.container,
         },
-        closed: view.closed.map(|(by, at)| RecoveryClosedView { by, at }),
-    }
+        closed: view.closed.map(|(by, at)| RecoveryClosedView {
+            by_display: crate::commands::people::name_of(&names, &by),
+            by,
+            at,
+        }),
+    })
 }
 
 fn close(

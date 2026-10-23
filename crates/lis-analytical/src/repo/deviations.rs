@@ -80,8 +80,10 @@ fn from_row(row: &Row<'_>) -> rusqlite::Result<DeviationView> {
         disposition: row.get(7)?,
         close_reason: row.get(8)?,
         opened_by: row.get(9)?,
+        opened_by_display: None,
         opened_at: row.get(10)?,
         closed_by: row.get(11)?,
+        closed_by_display: None,
         closed_at: row.get(12)?,
         revision: row.get(13)?,
     })

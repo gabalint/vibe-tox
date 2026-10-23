@@ -165,6 +165,9 @@ pub struct Attestation {
     pub code: AttestationCode,
     /// Who (principal ID text).
     pub by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub by_display: Option<String>,
     /// When.
     pub at: UtcTimestamp,
     /// Until when it counts.

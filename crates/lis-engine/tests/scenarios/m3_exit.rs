@@ -150,6 +150,18 @@ async fn change_cutoff(bench: &Bench) {
         })
         .await
         .unwrap();
+        let retired = e.get_orderable_version(GetOrderableVersionInput {
+            orderable_version_id,
+        });
+        assert_eq!(
+            retired
+                .await
+                .unwrap()
+                .lifecycle
+                .retired_by_display
+                .as_deref(),
+            Some("Test qm1")
+        );
     }
     lab.sign_in(Role::Admin).await;
     let method_version_id = lab.methods.drugs;

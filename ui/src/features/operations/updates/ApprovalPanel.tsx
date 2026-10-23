@@ -49,7 +49,8 @@ export function ApprovalPanel({ approval, actions, ...navigation }: ApprovalPane
             label: "Approved",
             value: (
               <>
-                <Timestamp value={approval.approvedAt} /> by <Person id={approval.approvedBy} />
+                <Timestamp value={approval.approvedAt} /> by{" "}
+                <Person id={approval.approvedBy} display={approval.approvedByDisplay} />
               </>
             ),
           },
@@ -57,7 +58,8 @@ export function ApprovalPanel({ approval, actions, ...navigation }: ApprovalPane
             label: "Withdrawn",
             value: withdrawn ? (
               <>
-                <Timestamp value={withdrawn.at} /> by <Person id={withdrawn.by} />
+                <Timestamp value={withdrawn.at} /> by{" "}
+                <Person id={withdrawn.by} display={withdrawn.byDisplay} />
               </>
             ) : (
               "No"

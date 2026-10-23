@@ -3,4 +3,8 @@
 /**
  * One specimen-validity assessment and its evidence bindings.
  */
-export type ValidityAssessmentView = { assessmentId: string, policyVersionId: string, categoryCode: string, supersedesId: string | null, reason: string | null, assessedBy: string, assessedAt: string, evidenceRevisionIds: Array<string>, };
+export type ValidityAssessmentView = { assessmentId: string, policyVersionId: string, categoryCode: string, supersedesId: string | null, reason: string | null, assessedBy: string, 
+/**
+ * Current display name resolved by the engine from the account owner.
+ */
+assessedByDisplay?: string, assessedAt: string, evidenceRevisionIds: Array<string>, };

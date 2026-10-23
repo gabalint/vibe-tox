@@ -73,7 +73,7 @@ function PolicyFacts({ view }: { view: SeparationPolicyView }) {
           value: (
             <>
               {view.setAt ? <Timestamp value={view.setAt} /> : "Unknown time"} by{" "}
-              {view.setBy ? <Person id={view.setBy} /> : "unknown"}
+              {view.setBy ? <Person id={view.setBy} display={view.setByDisplay} /> : "unknown"}
             </>
           ),
         },

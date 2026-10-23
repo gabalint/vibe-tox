@@ -8,11 +8,15 @@ import type { PrepBatchView } from "@/generated/PrepBatchView";
 import type { PrepStepView } from "@/generated/PrepStepView";
 import { useCommandQuery } from "@/lib/commands";
 import { useFormatTime } from "@/lib/format";
+import { usePersonText } from "@/lib/person";
 import styles from "@/styles/layout.module.css";
 import { LIST_LOTS } from "../contract";
 import { lotText } from "../labels";
 
-function stepColumns(lots: readonly LotView[]): DataGridColumn<PrepStepView>[] {
+function stepColumns(
+  lots: readonly LotView[],
+  person: (userId: string, display?: string) => string,
+): DataGridColumn<PrepStepView>[] {
   const lotName = (id: string | null) => {
     const lot = lots.find((candidate) => candidate.lotId === id);
     return lot ? lotText(lot) : (id ?? "—");
@@ -27,7 +31,7 @@ function stepColumns(lots: readonly LotView[]): DataGridColumn<PrepStepView>[] {
       header: "Performed",
       cell: (row) => (
         <>
-          <Timestamp value={row.performedAt} /> by {row.performedBy}
+          <Timestamp value={row.performedAt} /> by {person(row.performedBy, row.performedByDisplay)}
         </>
       ),
     },
@@ -37,9 +41,10 @@ function stepColumns(lots: readonly LotView[]): DataGridColumn<PrepStepView>[] {
 export function PrepBatchDetail({ batch }: { batch: PrepBatchView }) {
   const formatTime = useFormatTime();
   const lots = useCommandQuery<LotView[]>(LIST_LOTS, { input: { activeOnly: false } });
-  const columns = useMemo(() => stepColumns(lots.data ?? []), [lots.data]);
+  const person = usePersonText();
+  const columns = useMemo(() => stepColumns(lots.data ?? [], person), [lots.data, person]);
   const completed = batch.completedAt
-    ? `${formatTime(batch.completedAt)} by ${batch.completedBy ?? ""}`
+    ? `${formatTime(batch.completedAt)} by ${batch.completedBy ? person(batch.completedBy, batch.completedByDisplay) : ""}`
     : "Not yet";
   return (
     <>
@@ -55,7 +60,10 @@ export function PrepBatchDetail({ batch }: { batch: PrepBatchView }) {
                 <StatusBadge tone="neutral">Completed</StatusBadge>
               ),
           },
-          { label: "Started", value: `${formatTime(batch.createdAt)} by ${batch.createdBy}` },
+          {
+            label: "Started",
+            value: `${formatTime(batch.createdAt)} by ${person(batch.createdBy, batch.createdByDisplay)}`,
+          },
           { label: "Completed", value: completed },
         ]}
       />

@@ -213,4 +213,22 @@ describe("ClientPage (REQ-ORD-001 references, REQ-RPT-012)", {
     expect(await screen.findByText("Unknown — legacy baseline")).toBeTruthy();
     expect(history).toHaveBeenCalledWith({ input: { record: { kind: "client", id: CLIENT.id } } });
   });
+  it("names who recorded a correction instead of the account ID", async () => {
+    const recorder = "00000000-0000-7000-8000-000000000e21";
+    const history = vi.fn(() => [
+      {
+        revision: 1,
+        snapshot: { kind: "client", code: CLIENT.code, name: CLIENT.name, active: true },
+        recordedAt: "2026-10-12T14:03:00Z",
+        recordedBy: recorder,
+        recordedByDisplay: "Test Corrector",
+        reason: null,
+        origin: "registered",
+      },
+    ]);
+    const { user } = renderPage({ directory_history: history });
+    await user.click(await screen.findByRole("button", { name: "Show correction history" }));
+    expect(await screen.findByText("Test Corrector")).toBeTruthy();
+    expect(screen.queryByText(new RegExp(recorder))).toBeNull();
+  });
 });

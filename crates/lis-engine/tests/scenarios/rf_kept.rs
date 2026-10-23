@@ -155,6 +155,18 @@ async fn a_kept_analyte_is_used_for_an_accepted_add_on_then_reviewed_and_release
         (oxy.cause, oxy.magnitude.as_deref(), oxy.reason.as_deref()),
         (ResultCause::Selected, Some("7.5"), Some("Synthetic add-on"))
     );
+    // The response names the reviewer who kept the result.
+    let reviewer: String = f
+        .lab
+        .t()
+        .conn()
+        .query_row(
+            "SELECT display_name FROM auth_users WHERE id = ?1",
+            [&oxy.created_by],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(oxy.created_by_display.as_deref(), Some(reviewer.as_str()));
     assert!(f.lab.t().events("clinical").contains(&(
         "result.use_measured_result".to_owned(),
         "succeeded".to_owned()

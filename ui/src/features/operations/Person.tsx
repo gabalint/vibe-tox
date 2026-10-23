@@ -1,11 +1,10 @@
 import { usePersonText } from "@/lib/person";
 
 /**
- * Who did something, from the principal ID the engine sends: "you" for the signed-in person,
- * otherwise "another user". The ID itself says nothing to a reader, so it never shows.
- * Engine request: a display name beside each principal ID in the operations views, as
- * delivery destinations carry `createdBy.displayName`.
+ * Who did something, from the principal ID and the display name the engine resolved, the
+ * signed-in person included. Without a name (a system principal or a removed account),
+ * "another user"; the ID itself says nothing to a reader, so it never shows.
  */
-export function Person({ id }: { id: string }) {
-  return usePersonText("another user")(id);
+export function Person({ id, display }: { id: string; display?: string | undefined }) {
+  return usePersonText("another user")(id, display);
 }

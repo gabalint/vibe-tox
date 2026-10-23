@@ -22,6 +22,10 @@ defaults: OperationsSettings,
  */
 setBy: string | null, 
 /**
+ * Current display name resolved by the engine from the account owner.
+ */
+setByDisplay?: string, 
+/**
  * When it was set.
  */
 setAt: string | null, };

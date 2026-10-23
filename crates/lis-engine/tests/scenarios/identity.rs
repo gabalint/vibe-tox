@@ -452,10 +452,13 @@ async fn an_administrator_sets_the_laboratory_profile_every_user_reads() {
         ),
         ErrorCode::Conflict
     );
+    // Reads name who set the profile; the stored record keeps only the user ID.
+    let mut shown = t.engine.get_laboratory_profile().await.unwrap().unwrap();
     assert_eq!(
-        t.engine.get_laboratory_profile().await.unwrap(),
-        Some(second)
+        shown.set_by_display.take().as_deref(),
+        Some("Test Administrator")
     );
+    assert_eq!(shown, second);
 }
 
 #[tokio::test]

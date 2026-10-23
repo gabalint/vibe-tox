@@ -59,6 +59,10 @@ replacedBy: string | null,
  */
 retiredBy: string | null, 
 /**
+ * Current retiring user's display name, resolved by the engine at read time.
+ */
+retiredByDisplay?: string, 
+/**
  * When it was retired.
  */
 retiredAt: string | null, 

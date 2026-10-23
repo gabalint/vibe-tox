@@ -35,7 +35,8 @@ export function CheckPanel({ check, actions, ...navigation }: CheckPanelProps) {
             label: "Attested",
             value: attestation ? (
               <>
-                By <Person id={attestation.by} />, <Timestamp value={attestation.at} />; valid until{" "}
+                By <Person id={attestation.by} display={attestation.byDisplay} />,{" "}
+                <Timestamp value={attestation.at} />; valid until{" "}
                 <Timestamp value={attestation.validUntil} />
               </>
             ) : (

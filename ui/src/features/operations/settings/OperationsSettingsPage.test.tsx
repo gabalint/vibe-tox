@@ -266,7 +266,7 @@ describe("OperationsSettingsPage (REQ-OPS-007, REQ-OPS-008, NFR-19)", {
       ).toHaveLength(3);
       expect(screen.getByText(ONE_PERSON.reason ?? "")).toBeTruthy();
       expect(screen.getByText(/2026-10-14 10:00 UTC/).closest("dd")?.textContent).toBe(
-        "2026-10-14 10:00 UTC by you",
+        "2026-10-14 10:00 UTC by Test Operator",
       );
       await user.click(screen.getByRole("button", { name: "Change separation of duties" }));
       const dialog = await screen.findByRole("dialog", { name: "Change separation of duties" });

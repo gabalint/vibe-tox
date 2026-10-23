@@ -26,6 +26,10 @@ identifier: string | null,
  */
 recordedBy: string, 
 /**
+ * Current display name resolved by the engine from the account owner.
+ */
+recordedByDisplay?: string, 
+/**
  * When.
  */
 recordedAt: string, };

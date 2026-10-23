@@ -62,12 +62,14 @@ impl Engine {
             self.audited_read(
                 &call,
                 move |conn| {
-                    lis_specimens::get_container_history(
+                    let mut page = lis_specimens::get_container_history(
                         conn,
                         input.container_id,
                         input.offset,
                         input.snapshot,
-                    )
+                    )?;
+                    super::names::material_history(conn, &mut page)?;
+                    Ok::<_, lis_specimens::SpecimenError>(page)
                 },
                 move |_| {
                     access(GET_CONTAINER_HISTORY.action).record("container", input.container_id)
@@ -84,7 +86,12 @@ impl Engine {
         self.run(&LIST_EXCURSIONS, |call| async move {
             self.audited_read(
                 &call,
-                move |conn| lis_specimens::list_excursions(conn, input.offset, input.snapshot),
+                move |conn| {
+                    let mut page =
+                        lis_specimens::list_excursions(conn, input.offset, input.snapshot)?;
+                    super::names::excursions(conn, &mut page.items)?;
+                    Ok::<_, lis_specimens::SpecimenError>(page)
+                },
                 |_| access(LIST_EXCURSIONS.action),
             )
             .await
@@ -98,7 +105,11 @@ impl Engine {
         self.run(&GET_EXCURSION, |call| async move {
             self.audited_read(
                 &call,
-                move |conn| lis_specimens::excursion(conn, input.excursion_id),
+                move |conn| {
+                    let mut detail = lis_specimens::excursion(conn, input.excursion_id)?;
+                    super::names::excursions(conn, std::slice::from_mut(&mut detail))?;
+                    Ok::<_, lis_specimens::SpecimenError>(detail)
+                },
                 move |_| access(GET_EXCURSION.action).record("excursion", input.excursion_id),
             )
             .await

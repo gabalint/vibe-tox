@@ -133,6 +133,9 @@ pub struct QcConflictView {
     pub reason: Option<String>,
     /// Who resolved it.
     pub resolved_by: Option<String>,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub resolved_by_display: Option<String>,
     /// When.
     pub resolved_at: Option<UtcTimestamp>,
     /// When the row arrived.
@@ -159,6 +162,9 @@ pub struct QcAssessmentView {
     pub reason: Option<String>,
     /// Who assessed.
     pub assessed_by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub assessed_by_display: Option<String>,
     /// When.
     pub assessed_at: UtcTimestamp,
     /// The observations it cites.
@@ -190,10 +196,16 @@ pub struct DeviationView {
     pub close_reason: Option<String>,
     /// Who opened it.
     pub opened_by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub opened_by_display: Option<String>,
     /// When.
     pub opened_at: UtcTimestamp,
     /// Who closed it.
     pub closed_by: Option<String>,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub closed_by_display: Option<String>,
     /// When.
     pub closed_at: Option<UtcTimestamp>,
     /// Optimistic-concurrency revision.

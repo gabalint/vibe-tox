@@ -12,6 +12,7 @@ import { CommandConfirmDialog } from "@/lib/CommandConfirmDialog";
 import { labelOf } from "@/lib/choices";
 import { useCommandQuery, useHasCapability } from "@/lib/commands";
 import { useFormatTime } from "@/lib/format";
+import { usePersonText } from "@/lib/person";
 import { useRecordSequence } from "@/lib/recordSequence";
 import { GET_RUN, MANAGE_QUALITY, RUN_QUERIES } from "../contract";
 import { lotStatus, lotText, MATERIAL_KINDS, runStatus } from "../labels";
@@ -31,6 +32,7 @@ import runs from "./runs.module.css";
 export function RunPage() {
   const { runId = "" } = useParams();
   const formatTime = useFormatTime();
+  const person = usePersonText();
   const run = useCommandQuery<RunDetail>(GET_RUN, { input: { runId } });
   const { list, sequence } = useRecordSequence(runId, RUNS_LIST, runPath);
   const detail = run.data;
@@ -43,7 +45,10 @@ export function RunPage() {
       <PageHeader
         title={title}
         status={status && <StatusBadge tone={status.tone}>{status.label}</StatusBadge>}
-        description={detail && `Created ${formatTime(detail.createdAt)} by ${detail.createdBy}.`}
+        description={
+          detail &&
+          `Created ${formatTime(detail.createdAt)} by ${person(detail.createdBy, detail.createdByDisplay)}.`
+        }
         breadcrumbs={[list, { label: title, href: runPath(runId) }]}
         sequence={sequence}
         actions={

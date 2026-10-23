@@ -99,8 +99,8 @@ describe("Import attempt of a result file (result files brief §7)", {
   it("shows the file, the template used and the file counts", async () => {
     const { container, user, router } = renderPage(`/review/imports/${ATTEMPT_ID}`);
     expect(await screen.findByText("SYN-01 batch.csv")).toBeTruthy();
-    // The signed-in person loaded it.
-    expect(await screen.findByText("Loaded by hand by you")).toBeTruthy();
+    // The signed-in person loaded it, named like anyone else.
+    expect(await screen.findByText("Loaded by hand by Test Analyst")).toBeTruthy();
     expect(screen.getByText("48,213 bytes")).toBeTruthy();
     expect(screen.getByText("ab".repeat(32))).toBeTruthy();
     const facts = screen.getByRole("region", { name: "Outcome" });

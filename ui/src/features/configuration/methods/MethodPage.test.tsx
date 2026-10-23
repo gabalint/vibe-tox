@@ -103,7 +103,7 @@ describe("MethodPage (REQ-ANA-002, REQ-ANA-009)", { timeout: WALKTHROUGH_TIMEOUT
     expect(within(panel).getByText("25.00 ng/mL")).toBeTruthy();
     expect(within(panel).getByText("50 to 5000 ng/mL")).toBeTruthy();
     expect(within(panel).getByText("Positive at or above the cutoff")).toBeTruthy();
-    expect(within(panel).getByText(/by you$/)).toBeTruthy();
+    expect(within(panel).getByText(/by Test Configurer$/)).toBeTruthy();
     expect(within(panel).getByText("Test Approver")).toBeTruthy();
     await expectNoA11yViolations(container, { wholePage: true });
   });

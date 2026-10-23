@@ -34,6 +34,7 @@ fn attestation(code: AttestationCode, at: UtcTimestamp) -> Attestation {
     Attestation {
         code,
         by: "synthetic-user".into(),
+        by_display: None,
         at,
         valid_until: at.checked_add(90 * DAY).unwrap(),
     }

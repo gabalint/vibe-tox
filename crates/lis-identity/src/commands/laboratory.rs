@@ -79,6 +79,7 @@ pub fn set_laboratory_profile(
         tax_id: tax_id(input.tax_id.as_deref())?,
         reason: change_reason(version, input.reason.as_deref())?,
         set_by: actor.id,
+        set_by_display: None,
         set_at: ctx.now(),
     };
     repo::insert_profile(ctx.tx(), &profile)?;

@@ -18,4 +18,12 @@ createdByDisplay?: string, createdAt: string, approvedBy: string | null,
 /**
  * Current approver display name, resolved by the engine at read time.
  */
-approvedByDisplay?: string, approvedAt: string | null, confirmedBy: string | null, confirmedAt: string | null, effectiveFrom: string | null, effectiveTo: string | null, retiredBy: string | null, retiredAt: string | null, retireReason: string | null, };
+approvedByDisplay?: string, approvedAt: string | null, confirmedBy: string | null, 
+/**
+ * Current confirmer display name, resolved by the engine at read time.
+ */
+confirmedByDisplay?: string, confirmedAt: string | null, effectiveFrom: string | null, effectiveTo: string | null, retiredBy: string | null, 
+/**
+ * Current retiring user's display name, resolved by the engine at read time.
+ */
+retiredByDisplay?: string, retiredAt: string | null, retireReason: string | null, };

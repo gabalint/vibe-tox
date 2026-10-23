@@ -13,8 +13,9 @@ function Summary({ check }: { check: HealthCheckView }) {
       <div>{check.summary}</div>
       {attestation && (
         <div className={styles.hint}>
-          Attested by <Person id={attestation.by} />, <Timestamp value={attestation.at} />; valid
-          until <Timestamp value={attestation.validUntil} />
+          Attested by <Person id={attestation.by} display={attestation.byDisplay} />,{" "}
+          <Timestamp value={attestation.at} />; valid until{" "}
+          <Timestamp value={attestation.validUntil} />
         </div>
       )}
     </>

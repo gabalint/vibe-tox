@@ -95,7 +95,7 @@
         {
           "name": "Version and Set",
           "meaning": "Identify the current profile revision, who saved it and when.",
-          "values": "Increasing version number, person and recorded time.",
+          "values": "Increasing version number, recorded time and the account name of the person who set it; an account that cannot be found shows as user followed by its identifier.",
           "rules": "Read-only; each successful change appends a version."
         },
         {
@@ -298,7 +298,7 @@
         {
           "name": "Correction history: Revision / Saved facts / Recorded / Recorded by / Reason",
           "meaning": "Shows original registration and each factual correction or retirement in causal revision order.",
-          "values": "Saved code/name or NPI/names and availability; timestamp, acting user, explanation.",
+          "values": "Saved code/name or NPI/names and availability; timestamp, the acting person’s account name (an account that cannot be found shows as user followed by its identifier), explanation.",
           "rules": "Read-only and immutable. Migrated baseline shows Unknown — legacy baseline: its retained creation time does not establish earlier edit chronology or an author. No historical attribution is invented."
         }
       ],
@@ -416,7 +416,7 @@
         {
           "name": "Correction history: Revision / Saved facts / Recorded / Recorded by / Reason",
           "meaning": "Shows original registration and each factual correction or retirement in causal revision order.",
-          "values": "Saved code/name or NPI/names and availability; timestamp, acting user, explanation.",
+          "values": "Saved code/name or NPI/names and availability; timestamp, the acting person’s account name (an account that cannot be found shows as user followed by its identifier), explanation.",
           "rules": "Read-only and immutable. Migrated baseline shows Unknown — legacy baseline: its retained creation time does not establish earlier edit chronology or an author. No historical attribution is invented."
         }
       ],

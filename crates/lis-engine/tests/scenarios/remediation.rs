@@ -197,6 +197,10 @@ async fn directory_correction_preserves_facts_actor_and_revision_and_rejects_sta
     assert_eq!(rows[0].recorded_by, rows[1].recorded_by);
     assert!(rows[1].recorded_by.is_some());
     assert_eq!(
+        rows[1].recorded_by_display.as_deref(),
+        Some("Test Administrator")
+    );
+    assert_eq!(
         rows[1].reason.as_deref(),
         Some("Verified organization rename, retired for new work")
     );

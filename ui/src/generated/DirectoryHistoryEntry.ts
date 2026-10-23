@@ -22,6 +22,10 @@ recordedAt: string,
  */
 recordedBy: string | null, 
 /**
+ * Current display name resolved by the engine from the account owner.
+ */
+recordedByDisplay?: string, 
+/**
  * Required explanation for correction/retirement.
  */
 reason: string | null, 

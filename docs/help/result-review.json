@@ -36,6 +36,8 @@
     }
   ],
   "reviewSources": [
+    "crates/lis-engine/src/commands/results/names.rs",
+    "ui/src/lib/person.ts",
     "ui/src/features/analytics/review/ReviewQueuePage.tsx",
     "ui/src/features/analytics/review/SpecimenResultsPage.tsx",
     "ui/src/features/analytics/review/ResultLines.tsx",
@@ -226,7 +228,7 @@
         {
           "name": "Revision",
           "meaning": "Preserves which assertion is under review.",
-          "values": "Sequential revision, cause, creation time and author.",
+          "values": "Sequential revision, cause, creation time and author, shown by the person's current account display name. Revisions written by automatic result import show the import component's name (result-import); an account that cannot be found shows as user followed by its identifier.",
           "rules": "Read-only; earlier revisions remain available. Causes include first import, reprocessed import, reviewer-selected evidence and reviewer-recorded disposition."
         },
         {
@@ -286,7 +288,7 @@
         {
           "name": "Specimen validity: current and earlier assessments",
           "meaning": "Shows the category, policy version, assessor, time and reason.",
-          "values": "Saved laboratory categories or Not assessed.",
+          "values": "Saved laboratory categories or Not assessed; the assessor is shown by the person's current account display name; an account that cannot be found shows as user followed by its identifier.",
           "rules": "Read-only; replacement keeps history. Required validity must be assessed before drug-result review."
         },
         {
@@ -334,7 +336,7 @@
         {
           "name": "Completed reflex decisions: Reflex test / Decision / Evidence used / Reason / Decided / Subsequent work",
           "meaning": "Preserves previous decisions after their pending trigger disappears.",
-          "values": "Authorized test, met/not-met outcome, evidence source and revision reference, entered reason, deciding user/time, created test state or No test activated.",
+          "values": "Authorized test, met/not-met outcome, evidence source and revision reference, entered reason, decision time and the person's current account display name (an account that cannot be found shows as user followed by its identifier), created test state or No test activated.",
           "rules": "Read-only. A later cancelled test does not erase the original decision. The evidence reference remains available even when the result has a newer revision."
         }
       ],

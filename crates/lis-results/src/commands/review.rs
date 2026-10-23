@@ -183,6 +183,7 @@ pub fn record_validity_assessment(
         supersedes_id: input.supersedes_id,
         reason: input.reason,
         assessed_by: actor,
+        assessed_by_display: None,
         assessed_at: ctx.now(),
         evidence_revision_ids: evidence.into_iter().collect(),
     })

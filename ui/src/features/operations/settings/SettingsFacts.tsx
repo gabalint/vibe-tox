@@ -1,6 +1,7 @@
 import { Alert } from "@/components/Alert";
 import { Facts } from "@/components/Facts";
 import { Timestamp } from "@/components/Timestamp";
+import { Person } from "../Person";
 import type { SettingField, SettingsView } from "./settingFields";
 
 interface SettingsFactsProps<Values extends Record<keyof Values, number>> {
@@ -42,7 +43,8 @@ export function SettingsFacts<Values extends Record<keyof Values, number>>({
           label: "Set",
           value: (
             <>
-              {setAt} by {view.setBy ?? "Unknown"}
+              {setAt} by{" "}
+              {view.setBy ? <Person id={view.setBy} display={view.setByDisplay} /> : "Unknown"}
             </>
           ),
         },

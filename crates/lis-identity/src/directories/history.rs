@@ -66,6 +66,9 @@ pub struct DirectoryHistoryEntry {
     pub recorded_at: UtcTimestamp,
     /// Acting user; absent only for migrated legacy baselines.
     pub recorded_by: Option<String>,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub recorded_by_display: Option<String>,
     /// Required explanation for correction/retirement.
     pub reason: Option<String>,
     /// `legacy_baseline`, `registered` or `corrected`.
@@ -93,7 +96,7 @@ pub fn directory_history(
             DirectoryRecord::Location(_)=>DirectorySnapshot::Location{code,name,active},
             DirectoryRecord::Practitioner(_)=>DirectorySnapshot::Practitioner{npi:code,family_name:name,given_names:row.get(3)?,active},
         };
-        Ok(DirectoryHistoryEntry{revision:row.get(0)?,snapshot,recorded_at:row.get(5)?,recorded_by:row.get(6)?,reason:row.get(7)?,origin:row.get(8)?})
+        Ok(DirectoryHistoryEntry{revision:row.get(0)?,snapshot,recorded_at:row.get(5)?,recorded_by:row.get(6)?,recorded_by_display:None,reason:row.get(7)?,origin:row.get(8)?})
     })?.collect::<Result<Vec<_>,_>>()?;
     if rows.is_empty() {
         return Err(IdentityError::NotFound("directory record"));

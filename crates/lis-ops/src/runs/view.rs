@@ -51,8 +51,13 @@ const VIEW_COLUMNS: &str = "r.id, r.started_at, r.stopped_at, r.stop_kind, r.app
      (SELECT max(j.acknowledged_at) FROM ops_clock_jumps j WHERE j.run_id = r.id)";
 
 fn run_view(row: &Row<'_>) -> rusqlite::Result<AppRunView> {
-    let stamp =
-        |by: Option<String>, at: Option<UtcTimestamp>| by.zip(at).map(|(by, at)| Stamp { by, at });
+    let stamp = |by: Option<String>, at: Option<UtcTimestamp>| {
+        by.zip(at).map(|(by, at)| Stamp {
+            by,
+            by_display: None,
+            at,
+        })
+    };
     let start_ack = stamp(row.get(8)?, row.get(9)?);
     let clock_ack = stamp(row.get(12)?, row.get(13)?);
     let gap_seconds: Option<i64> = row.get(6)?;

@@ -12,12 +12,16 @@ import type { RunQcView } from "@/generated/RunQcView";
 import { allowedActionItems, allowedRowActions, type OfferedAction } from "@/lib/allowedActions";
 import { useOpenRecord } from "@/lib/openRecord";
 import { openRecordPanel } from "@/lib/openRecordPanel";
+import { usePersonText } from "@/lib/person";
 import { CloseDeviationDialog } from "./CloseDeviationDialog";
 import { DeviationPanel } from "./DeviationPanel";
 import { analyteText, deviationStatus, scopeText } from "./deviations";
 import { OpenDeviationDialog, type QcTargets, qcTargets } from "./OpenDeviationDialog";
 
-function deviationColumns(targets: QcTargets): DataGridColumn<DeviationView>[] {
+function deviationColumns(
+  targets: QcTargets,
+  person: (userId: string, display?: string) => string,
+): DataGridColumn<DeviationView>[] {
   return [
     {
       id: "description",
@@ -40,7 +44,7 @@ function deviationColumns(targets: QcTargets): DataGridColumn<DeviationView>[] {
       header: "Opened",
       cell: (row) => (
         <>
-          <Timestamp value={row.openedAt} /> by {row.openedBy}
+          <Timestamp value={row.openedAt} /> by {person(row.openedBy, row.openedByDisplay)}
         </>
       ),
     },
@@ -72,7 +76,8 @@ export function DeviationsTab({
   lotName: (lotId: string | null) => string;
 }) {
   const targets = useMemo(() => qcTargets(view, lotName), [view, lotName]);
-  const columns = useMemo(() => deviationColumns(targets), [targets]);
+  const person = usePersonText();
+  const columns = useMemo(() => deviationColumns(targets, person), [targets, person]);
   const record = useOpenRecord();
   const [dialog, setDialog] = useState<DeviationDialog>(null);
   const close = () => setDialog(null);

@@ -30,6 +30,7 @@ pub(crate) fn lifecycle_at<K>(
         effective_to: row.get(start + 6)?,
         replaced_by: row.get(start + 7)?,
         retired_by: row.get(start + 8)?,
+        retired_by_display: None,
         retired_at: row.get(start + 9)?,
         retire_reason: row.get(start + 10)?,
     })

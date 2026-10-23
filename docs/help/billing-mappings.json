@@ -2,7 +2,7 @@
   "id": "billing-mappings",
   "title": "Billing class mappings",
   "summary": "Manage the versioned association between analytes and billing classes.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-10-22",
   "routes": ["/billing/class-mappings", "/billing/class-mappings/:versionId"],
   "sections": [
     {
@@ -42,7 +42,9 @@
     "crates/lis-billing/src/mapping.rs",
     "crates/lis-billing/src/mapping_support.rs",
     "ui/src/components/FormDialog/FormDialog.tsx",
-    "crates/lis-engine/src/commands/billing/mod.rs"
+    "crates/lis-engine/src/commands/billing/mod.rs",
+    "ui/src/lib/person.ts",
+    "crates/lis-billing/src/model.rs"
   ],
   "pages": [
     {
@@ -66,7 +68,7 @@
         {
           "name": "Lifecycle: Status / Drafted / Approved / Confirmed by the laboratory / Effective / Retired / Retirement reason",
           "meaning": "Detailed provenance of the displayed version.",
-          "values": "Read-only staff/time facts and any retirement reason.",
+          "values": "Read-only staff/time facts and any retirement reason. Staff appear by their current account display name, including the signed-in user; an account that cannot be found shows as user followed by its identifier.",
           "rules": "Effective periods are set by confirmation/retirement events; this screen has no manually editable effective-date fields."
         },
         {

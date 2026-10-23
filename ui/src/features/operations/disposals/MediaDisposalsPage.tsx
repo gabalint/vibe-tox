@@ -11,6 +11,7 @@ import { labelOf } from "@/lib/choices";
 import { useCommandQuery, useHasCapability } from "@/lib/commands";
 import { BACKUP_RESTORE, LIST_MEDIA_DISPOSALS } from "../contract";
 import { DISPOSAL_METHODS } from "../labels";
+import { Person } from "../Person";
 import { RecordDisposalDialog } from "./RecordDisposalDialog";
 
 const COLUMNS: readonly DataGridColumn<MediaDisposalView>[] = [
@@ -22,7 +23,11 @@ const COLUMNS: readonly DataGridColumn<MediaDisposalView>[] = [
     width: 180,
   },
   { id: "identifier", header: "Identifier", cell: (row) => row.identifier ?? "None" },
-  { id: "recordedBy", header: "Recorded by", cell: (row) => row.recordedBy },
+  {
+    id: "recordedBy",
+    header: "Recorded by",
+    cell: (row) => <Person id={row.recordedBy} display={row.recordedByDisplay} />,
+  },
   {
     id: "recordedAt",
     header: "Recorded",

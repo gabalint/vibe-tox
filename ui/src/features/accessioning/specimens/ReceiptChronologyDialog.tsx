@@ -4,6 +4,7 @@ import type { AccessionSpecimenView } from "@/generated/AccessionSpecimenView";
 import type { ResolveReceiptChronologyInput } from "@/generated/ResolveReceiptChronologyInput";
 import { CommandDialog } from "@/lib/CommandDialog";
 import { checked } from "@/lib/choices";
+import { usePersonText } from "@/lib/person";
 import { ACCESSION_QUERIES } from "./contract";
 export function ReceiptChronologyDialog({
   specimen,
@@ -12,6 +13,7 @@ export function ReceiptChronologyDialog({
   specimen: AccessionSpecimenView;
   onClose: () => void;
 }) {
+  const person = usePersonText();
   return (
     <CommandDialog<{ order: (string | null)[]; reason: string }, ResolveReceiptChronologyInput>
       title="Resolve receipt chronology"
@@ -39,7 +41,7 @@ export function ReceiptChronologyDialog({
           label={`Decision ${i + 1}${i === 0 ? " (oldest)" : i === specimen.decisions.length - 1 ? " (newest)" : ""}`}
           options={specimen.decisions.map((d) => ({
             id: d.decisionId,
-            label: `${d.decision} — ${d.decidedAt} — ${d.decidedBy} — ${d.decisionId}`,
+            label: `${d.decision} — ${d.decidedAt} — ${person(d.decidedBy, d.decidedByDisplay)} — ${d.decisionId}`,
           }))}
           isRequired
         />

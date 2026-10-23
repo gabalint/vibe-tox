@@ -4,14 +4,15 @@
 //! free-text source records and are access-audited.
 
 use lis_analytical::{
-    AssessQcInput, CloseDeviationInput, DeviationView, InstrumentReadinessView, OpenDeviationInput,
-    QcAssessmentView, QcConflictView, ResolveQcConflictInput, RunId, RunQcView,
+    AnalyticalError, AssessQcInput, CloseDeviationInput, DeviationView, InstrumentReadinessView,
+    OpenDeviationInput, QcAssessmentView, QcConflictView, ResolveQcConflictInput, RunId, RunQcView,
     SetInstrumentStatusInput, actions,
 };
 use lis_core::{Capability, CommandError};
 use serde::Deserialize;
 use ts_rs::TS;
 
+use super::names::{name_deviation, name_run_qc};
 use crate::engine::Engine;
 use crate::registry::{Access, CommandSpec, spec};
 
@@ -49,7 +50,9 @@ impl Engine {
     pub async fn get_run_qc(&self, input: GetRunQcInput) -> Result<RunQcView, CommandError> {
         self.run(&GET_RUN_QC, |call| async move {
             self.read(&call, move |conn| {
-                lis_analytical::get_run_qc(conn, input.run_id)
+                let mut view = lis_analytical::get_run_qc(conn, input.run_id)?;
+                name_run_qc(conn, &mut view)?;
+                Ok::<_, AnalyticalError>(view)
             })
             .await
         })
@@ -137,7 +140,11 @@ impl Engine {
         self.run(&GET_DEVIATION, |call| async move {
             self.audited_read(
                 &call,
-                move |conn| lis_analytical::get_deviation(conn, input.deviation_id),
+                move |conn| {
+                    let mut deviation = lis_analytical::get_deviation(conn, input.deviation_id)?;
+                    name_deviation(conn, &mut deviation)?;
+                    Ok::<_, AnalyticalError>(deviation)
+                },
                 move |_| {
                     crate::pipeline::access(GET_DEVIATION.action)
                         .record("deviation", input.deviation_id)

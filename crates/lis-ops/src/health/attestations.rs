@@ -56,6 +56,7 @@ pub fn attest_check(
     let attestation = Attestation {
         code,
         by: ctx.principal().actor().id_text(),
+        by_display: None,
         at: ctx.now(),
         valid_until: ctx
             .now()
@@ -107,6 +108,7 @@ pub fn valid_attestations(
             Ok(Attestation {
                 code: row.get::<_, AttestationCode>(0)?,
                 by: row.get(1)?,
+                by_display: None,
                 at: row.get(2)?,
                 valid_until: row.get(3)?,
             })

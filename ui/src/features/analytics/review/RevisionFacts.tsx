@@ -1,6 +1,7 @@
 import { Facts } from "@/components/Facts";
 import type { ResultRevisionView } from "@/generated/ResultRevisionView";
 import { useFormatTime } from "@/lib/format";
+import { usePersonText } from "@/lib/person";
 import { causeText, classificationText, methodText, resultValueText } from "../resultLabels";
 import { MeasurementList } from "./MeasurementList";
 
@@ -13,6 +14,7 @@ export function RevisionFacts({
   analyte: string;
 }) {
   const formatTime = useFormatTime();
+  const person = usePersonText();
   return (
     <Facts
       items={[
@@ -21,7 +23,7 @@ export function RevisionFacts({
         { label: "Method", value: methodText(revision) },
         {
           label: "Revision",
-          value: `${revision.revisionNo}: ${causeText(revision.cause)}, ${formatTime(revision.createdAt)} by ${revision.createdBy}`,
+          value: `${revision.revisionNo}: ${causeText(revision.cause)}, ${formatTime(revision.createdAt)} by ${person(revision.createdBy, revision.createdByDisplay)}`,
         },
         ...(revision.reason ? [{ label: "Reason", value: revision.reason }] : []),
         {

@@ -201,6 +201,7 @@ fn validity_history(
                 supersedes_id: row.get(3)?,
                 reason: row.get(4)?,
                 assessed_by: row.get(5)?,
+                assessed_by_display: None,
                 assessed_at: row.get(6)?,
                 evidence_revision_ids: Vec::new(),
             })

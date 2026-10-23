@@ -117,6 +117,9 @@ pub struct ReceiptDecisionView {
     pub reason: Option<String>,
     /// Who decided (user ID).
     pub decided_by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub decided_by_display: Option<String>,
     /// When.
     pub decided_at: UtcTimestamp,
     /// Committed aggregate revision; absent when legacy chronology needs review.
@@ -322,8 +325,14 @@ pub struct ExcursionView {
     /// Stable barcode links for every container named by an assessment.
     pub affected_container_labels: std::collections::BTreeMap<String, String>,
     pub recorded_by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub recorded_by_display: Option<String>,
     pub recorded_at: UtcTimestamp,
     pub assessed_by: Option<String>,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub assessed_by_display: Option<String>,
     pub assessed_at: Option<UtcTimestamp>,
     pub assessment_reason: Option<String>,
     /// Optimistic-concurrency revision.

@@ -27,6 +27,8 @@
     }
   ],
   "reviewSources": [
+    "crates/lis-engine/src/commands/analytical/names.rs",
+    "ui/src/lib/person.ts",
     "ui/src/features/analytics/runs/WorklistPage.tsx",
     "ui/src/features/analytics/runs/CreateRunDialog.tsx",
     "ui/src/features/analytics/runs/PrepBatchSection.tsx",
@@ -120,7 +122,7 @@
         {
           "name": "Preparation batch: Started / Completed",
           "meaning": "Attributes preparation to the people and times recorded.",
-          "values": "Date/time and user; Not yet until completion.",
+          "values": "Date/time and the person's current account display name; Not yet until completion.",
           "rules": "Read-only; supplied by the current record."
         },
         {
@@ -150,7 +152,7 @@
         {
           "name": "Preparation steps: Performed",
           "meaning": "Attributes each recorded step.",
-          "values": "Date/time and user.",
+          "values": "Date/time and the person's current account display name.",
           "rules": "Read-only; supplied by the current record."
         },
         {

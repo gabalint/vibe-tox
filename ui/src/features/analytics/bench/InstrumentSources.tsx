@@ -10,6 +10,7 @@ import type { SourceRegistrationView } from "@/generated/SourceRegistrationView"
 import { labelOf } from "@/lib/choices";
 import { useCommandQuery, useHasCapability } from "@/lib/commands";
 import { useFormatTime } from "@/lib/format";
+import { usePersonText } from "@/lib/person";
 import styles from "@/styles/layout.module.css";
 import { APPROVE_CONFIGURATION, LIST_SOURCE_REGISTRATIONS } from "../contract";
 import { shapeText } from "../fileTemplates/templateLabels";
@@ -67,6 +68,7 @@ interface SourceItemProps {
 
 function SourceItem({ source, instrumentName, analyteName }: SourceItemProps) {
   const formatTime = useFormatTime();
+  const person = usePersonText();
   const status = registrationStatus(source.state);
   const name = `${source.senderName} ${source.senderVersion}`;
   const layout = source.fileLayout;
@@ -103,14 +105,14 @@ function SourceItem({ source, instrumentName, analyteName }: SourceItemProps) {
           },
           {
             label: "Registered",
-            value: `${formatTime(source.authoredAt)} by ${source.authoredBy}`,
+            value: `${formatTime(source.authoredAt)} by ${person(source.authoredBy, source.authoredByDisplay)}`,
           },
           {
             label: "Approved",
             value:
               source.approvedAt === null
                 ? "Not yet"
-                : `${formatTime(source.approvedAt)} by ${source.approvedBy ?? "unknown"}`,
+                : `${formatTime(source.approvedAt)} by ${source.approvedBy ? person(source.approvedBy, source.approvedByDisplay) : "unknown"}`,
           },
         ]}
       />

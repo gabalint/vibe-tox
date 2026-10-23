@@ -47,6 +47,10 @@ closeReason: string | null,
  */
 openedBy: string, 
 /**
+ * Current display name resolved by the engine from the account owner.
+ */
+openedByDisplay?: string, 
+/**
  * When.
  */
 openedAt: string, 
@@ -54,6 +58,10 @@ openedAt: string,
  * Who closed it.
  */
 closedBy: string | null, 
+/**
+ * Current display name resolved by the engine from the account owner.
+ */
+closedByDisplay?: string, 
 /**
  * When.
  */

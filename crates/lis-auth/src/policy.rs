@@ -103,6 +103,9 @@ pub struct SecurityPolicyView {
     pub defaults: SecurityPolicy,
     /// Who set the version in force (principal ID text).
     pub set_by: Option<String>,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub set_by_display: Option<String>,
     /// When it was set.
     pub set_at: Option<UtcTimestamp>,
 }
@@ -178,6 +181,7 @@ pub fn get_security_policy(conn: &Connection) -> Result<SecurityPolicyView, Auth
             .map_or(DEFAULT_SECURITY_POLICY, |stored| stored.values),
         defaults: DEFAULT_SECURITY_POLICY,
         set_by: stored.as_ref().map(|stored| stored.set_by.clone()),
+        set_by_display: None,
         set_at: stored.map(|stored| stored.set_at),
     })
 }

@@ -8,6 +8,7 @@ import { RefreshControl } from "@/components/RefreshControl";
 import { Timestamp } from "@/components/Timestamp";
 import type { DeviationView } from "@/generated/DeviationView";
 import { useCommandQuery, useHasCapability } from "@/lib/commands";
+import { usePersonText } from "@/lib/person";
 import { CloseDeviationDialog } from "./CloseDeviationDialog";
 
 /** Exact queue target for a deviation of any scope, including a shared lot. */
@@ -16,6 +17,7 @@ export function DeviationPage() {
   const { deviationId = "" } = useParams();
   const query = useCommandQuery<DeviationView>("get_deviation", { input: { deviationId } });
   const canClose = useHasCapability("manage_quality");
+  const person = usePersonText();
   const [closing, setClosing] = useState(false);
   return (
     <Page>
@@ -37,7 +39,7 @@ export function DeviationPage() {
                   label: "Opened",
                   value: (
                     <>
-                      <Timestamp value={d.openedAt} /> by {d.openedBy}
+                      <Timestamp value={d.openedAt} /> by {person(d.openedBy, d.openedByDisplay)}
                     </>
                   ),
                 },
@@ -47,7 +49,8 @@ export function DeviationPage() {
                   label: "Closed",
                   value: d.closedAt ? (
                     <>
-                      <Timestamp value={d.closedAt} /> by {d.closedBy}
+                      <Timestamp value={d.closedAt} /> by{" "}
+                      {d.closedBy ? person(d.closedBy, d.closedByDisplay) : "Not recorded"}
                     </>
                   ) : (
                     "—"

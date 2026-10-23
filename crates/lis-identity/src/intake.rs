@@ -60,12 +60,18 @@ pub struct IntakeDeferralView {
     pub source_reference: String,
     pub reason: String,
     pub recorded_by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub recorded_by_display: Option<String>,
     pub recorded_at: UtcTimestamp,
     pub disposition: Option<IntakeDisposition>,
     pub subject_id: Option<SubjectId>,
     pub disposition_source: Option<String>,
     pub disposition_reason: Option<String>,
     pub disposed_by: Option<String>,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub disposed_by_display: Option<String>,
     pub disposed_at: Option<UtcTimestamp>,
 }
 const COLUMNS: &str = "SELECT d.id, d.supplied_name, d.birth_evidence_kind, d.birth_evidence_text, d.source_reference, d.reason, d.recorded_by, d.recorded_at, x.disposition, x.subject_id, x.source_reference, x.reason, x.recorded_by, x.recorded_at FROM idn_intake_deferrals d LEFT JOIN idn_intake_dispositions x ON x.id=d.id";
@@ -80,12 +86,14 @@ fn row(r: &rusqlite::Row<'_>) -> rusqlite::Result<IntakeDeferralView> {
         source_reference: r.get(4)?,
         reason: r.get(5)?,
         recorded_by: r.get(6)?,
+        recorded_by_display: None,
         recorded_at: r.get(7)?,
         disposition,
         subject_id: r.get(9)?,
         disposition_source: r.get(10)?,
         disposition_reason: r.get(11)?,
         disposed_by: r.get(12)?,
+        disposed_by_display: None,
         disposed_at: r.get(13)?,
     })
 }

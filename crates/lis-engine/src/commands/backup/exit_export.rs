@@ -31,6 +31,9 @@ pub struct ExitExportView {
     pub export_id: ExitExportId,
     pub state: String,
     pub requested_by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub requested_by_display: Option<String>,
     pub requested_at: UtcTimestamp,
     pub finished_at: Option<UtcTimestamp>,
     pub folder_label: String,
@@ -85,8 +88,16 @@ impl Engine {
         self.run(&LIST_EXIT_EXPORTS, |call| async move {
             let limit = checked_limit(input.limit)?;
             self.read(&call, move |conn| {
-                lis_ops::exit_export::list_exit_exports(conn, limit)
-                    .map(|rows| rows.into_iter().map(exit_export_view).collect())
+                let rows = lis_ops::exit_export::list_exit_exports(conn, limit)?;
+                let names = crate::commands::people::display_names(
+                    conn,
+                    rows.iter().map(|row| row.requested_by.as_str()),
+                )?;
+                Ok::<_, lis_ops::backup::BackupError>(
+                    rows.into_iter()
+                        .map(|row| exit_export_view(row, &names))
+                        .collect(),
+                )
             })
             .await
         })
@@ -107,17 +118,22 @@ fn requested_view(
     conn: &rusqlite::Connection,
     export_id: ExitExportId,
 ) -> Result<ExitExportView, lis_ops::backup::BackupError> {
-    lis_ops::exit_export::list_exit_exports(conn, 500)?
+    let row = lis_ops::exit_export::list_exit_exports(conn, 500)?
         .into_iter()
         .find(|row| row.export_id == export_id)
-        .map(exit_export_view)
-        .ok_or(lis_ops::backup::BackupError::NotFound("exit export"))
+        .ok_or(lis_ops::backup::BackupError::NotFound("exit export"))?;
+    let names = crate::commands::people::display_names(conn, [row.requested_by.as_str()])?;
+    Ok(exit_export_view(row, &names))
 }
 
-fn exit_export_view(record: ExitExportRecord) -> ExitExportView {
+fn exit_export_view(
+    record: ExitExportRecord,
+    names: &std::collections::HashMap<String, String>,
+) -> ExitExportView {
     ExitExportView {
         export_id: record.export_id,
         state: record.state.as_str().to_owned(),
+        requested_by_display: crate::commands::people::name_of(names, &record.requested_by),
         requested_by: record.requested_by,
         requested_at: record.requested_at,
         finished_at: record.finished_at,

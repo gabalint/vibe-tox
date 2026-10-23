@@ -65,6 +65,7 @@ fn from_row(row: &Row<'_>) -> rusqlite::Result<ConflictRow> {
             observation_id: row.get(10)?,
             reason: row.get(11)?,
             resolved_by: row.get(12)?,
+            resolved_by_display: None,
             resolved_at: row.get(13)?,
             recorded_at: row.get(14)?,
             revision: row.get(15)?,

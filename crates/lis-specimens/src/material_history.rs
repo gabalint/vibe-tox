@@ -14,6 +14,9 @@ pub struct MaterialHistoryEntry {
     pub id: String,
     pub kind: String,
     pub actor: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[ts(optional)]
+    pub actor_display: Option<String>,
     pub recorded_at: UtcTimestamp,
     pub description: String,
     pub reason: Option<String>,
@@ -122,6 +125,7 @@ pub fn get_container_history(
         id: event.seq.to_string(),
         kind: "depletion".to_owned(),
         actor: event.principal_id,
+        actor_display: None,
         recorded_at: event.occurred_at,
         description: "Marked depleted".to_owned(),
         reason: event.reason,
@@ -154,6 +158,7 @@ fn history_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<MaterialHistoryEntry
         id: row.get(0)?,
         kind: row.get(1)?,
         actor: row.get(2)?,
+        actor_display: None,
         recorded_at: row.get(3)?,
         description: row.get(4)?,
         reason: row.get(5)?,

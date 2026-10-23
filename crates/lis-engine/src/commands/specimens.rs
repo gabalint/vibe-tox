@@ -10,6 +10,7 @@
 
 pub(crate) mod chronology;
 pub(crate) mod material;
+mod names;
 
 use lis_core::{Capability, CommandError};
 use lis_specimens::{
@@ -102,9 +103,10 @@ domain_error!(SpecimenError, SpecimenError::field_errors);
 fn audit_accession_response(
     ctx: &mut CommandContext<'_>,
     action: &'static str,
-    detail: AccessionDetail,
+    mut detail: AccessionDetail,
 ) -> Result<AccessionDetail, SpecimenError> {
     ctx.audit(access(action).record("accession", detail.accession_id))?;
+    names::decisions(ctx.tx(), &mut detail)?;
     Ok(detail)
 }
 
@@ -120,9 +122,10 @@ fn audit_hold_response(
 fn audit_excursion_response(
     ctx: &mut CommandContext<'_>,
     action: &'static str,
-    detail: ExcursionView,
+    mut detail: ExcursionView,
 ) -> Result<ExcursionView, SpecimenError> {
     ctx.audit(access(action).record("excursion", detail.excursion_id))?;
+    names::excursions(ctx.tx(), std::slice::from_mut(&mut detail))?;
     Ok(detail)
 }
 
@@ -150,7 +153,11 @@ impl Engine {
         self.run(&GET_ACCESSION, |call| async move {
             self.audited_read(
                 &call,
-                move |conn| lis_specimens::get_accession(conn, input.accession_id),
+                move |conn| {
+                    let mut detail = lis_specimens::get_accession(conn, input.accession_id)?;
+                    names::decisions(conn, &mut detail)?;
+                    Ok::<_, SpecimenError>(detail)
+                },
                 |detail| access(GET_ACCESSION.action).record("accession", detail.accession_id),
             )
             .await

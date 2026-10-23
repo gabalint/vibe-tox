@@ -8,7 +8,8 @@ function Acknowledged({ run }: { run: AppRunView }) {
   if (run.acknowledged === null) return NONE;
   return (
     <>
-      <Person id={run.acknowledged.by} />, <Timestamp value={run.acknowledged.at} />
+      <Person id={run.acknowledged.by} display={run.acknowledged.byDisplay} />,{" "}
+      <Timestamp value={run.acknowledged.at} />
     </>
   );
 }
