@@ -36,7 +36,7 @@ ui/src/
    | Form | `Form` plus `react-hook-form` plus the field components |
    | Table of records | `DataGrid` |
    | Modal | `Dialog`, or `ConfirmDialog` for destructive or irreversible actions |
-   | Transient notice | `useToast` |
+   | Transient notice | `useToast`, shown in the top-right corner below the top bar |
    | Loading, empty, error | `LoadingState`, `EmptyState`, `ErrorState` |
    | Status | `StatusBadge` |
    | Page frame | `Page` with `PageHeader` |

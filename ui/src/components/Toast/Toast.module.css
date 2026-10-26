@@ -1,7 +1,8 @@
 .region {
   position: fixed;
+  /* Top right, just under the app shell's top bar (its min-height is --space-12). */
+  top: calc(var(--space-12) + var(--space-4));
   right: var(--space-4);
-  bottom: var(--space-4);
   z-index: var(--z-toast);
   width: min(24rem, calc(100vw - 2 * var(--space-4)));
   pointer-events: none;
