@@ -15,7 +15,7 @@ use lis_orders::ClarificationDeficiency;
 
 use crate::m2_lab::{Lab, Role};
 use crate::m2_review::assert_refused;
-use crate::m2_steps::{JOURNEY, line};
+use crate::m2_steps::{JOURNEY, current_revisions, line};
 
 impl Lab {
     /// Cancels the item of sample `index`, as requested by the client and
@@ -74,7 +74,10 @@ async fn a_cancelled_component_keeps_its_evidence_but_cannot_pass_review() {
             "{gates:?}"
         );
     }
-    assert_refused(lab.approve_all(1).await, "component_cancelled");
+    assert_refused(
+        lab.approve(1, current_revisions(&reviewed)).await,
+        "component_cancelled",
+    );
 }
 
 /// Accepted authority remains patient/practitioner/scope-specific. An out-of-scope

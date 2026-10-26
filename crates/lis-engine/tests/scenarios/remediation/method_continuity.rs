@@ -1,7 +1,7 @@
 //! WFREV-02: native engine and TCP import, with preserved issued bytes.
 use crate::fixture::{NEW_PASSWORD, secret};
 use crate::m2_lab::{Lab, Role, Sample};
-use crate::m2_steps::message;
+use crate::m2_steps::{message, reapprove};
 use crate::m3_fixture::{Bench, Staff, Variant};
 use lis_analytical::{AttemptKind, ExecutionId, MaterialKind, QcOutcome, QcRole, QcScope, RunId};
 use lis_catalog::{
@@ -25,20 +25,16 @@ async fn latest_attributable_review_controls_release_separation_of_duties() {
         bench.revision("SYN-MOR").await,
         bench.revision("SYN-OXY").await,
     ];
-    // T already approved these exact revisions. B now reviews the same evidence
-    // at the fixture's unchanged instant, then attempts to release it as B.
+    // T already approved these exact revisions. B now re-reviews the same
+    // evidence at the fixture's unchanged instant (a repeat approval is refused,
+    // so B rejects first), then attempts to release it as B.
     bench.sign_in(Staff::Racer).await;
-    let review = bench
-        .lab()
-        .engine()
-        .submit_technical_review(SubmitTechnicalReviewInput {
-            specimen_id: bench.sample().specimen_id,
-            result_revision_ids: revisions.clone(),
-            decision: lis_results::ReviewDecision::Approved,
-            reason: None,
-        })
-        .await
-        .unwrap();
+    let review = reapprove(
+        bench.lab().engine(),
+        bench.sample().specimen_id,
+        revisions.clone(),
+    )
+    .await;
     assert_eq!(review.reviewed_by, bench.user_id(Staff::Racer).to_string());
     let current = bench
         .lab()

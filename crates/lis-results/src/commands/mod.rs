@@ -24,11 +24,13 @@ use crate::model::{
 };
 use crate::queries::{
     current_result, dependency_snapshots, get_import_attempt, next_attempt_no, reflex_parent,
-    review_gates,
+    review_gates, review_status,
 };
 use crate::result_value::{ResultValue, ValueRule, WordRefusal};
 use crate::value::SourceValue;
-use crate::views::{ImportAttemptDetail, ResultRevisionView, ReviewView, ValidityAssessmentView};
+use crate::views::{
+    ImportAttemptDetail, ResultRevisionView, ReviewStatus, ReviewView, ValidityAssessmentView,
+};
 
 /// Topic used by a reviewer-requested retry of a receipt.
 pub const RETRY_IMPORT_TOPIC: &str = "res.import.retry";
