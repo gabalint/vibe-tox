@@ -60,6 +60,18 @@ describe("RecordPicker with a static list", () => {
     expect(field()).toHaveProperty("value", "Synthetic, Avery (NPI 0000000029)");
   });
 
+  it("opens the full list on a click anywhere in the field, but not on keyboard focus", async () => {
+    const { user } = renderWithProviders(<Static onChange={vi.fn()} />);
+    await user.tab();
+    expect(document.activeElement).toBe(field());
+    expect(screen.queryByRole("listbox")).toBeNull();
+    await user.click(field());
+    expect(optionTexts()).toHaveLength(PRACTITIONERS.length);
+    // Typing after the click still narrows the list.
+    await user.keyboard("blake");
+    expect(optionTexts()).toEqual(["Example, BlakeNPI 0000000037"]);
+  });
+
   it("says when nothing matches and keeps no free text", async () => {
     const onChange = vi.fn();
     const { user } = renderWithProviders(<Static onChange={onChange} />);

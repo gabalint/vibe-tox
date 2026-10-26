@@ -1,8 +1,9 @@
 import { Check, ChevronDown } from "lucide-react";
-import { type KeyboardEvent, type Ref, useState } from "react";
+import { type ComponentProps, type KeyboardEvent, type Ref, useContext, useState } from "react";
 import {
   Button,
   ComboBox,
+  ComboBoxStateContext,
   Input,
   ListBox,
   ListBoxItem,
@@ -125,7 +126,7 @@ export function RecordPicker(props: RecordPickerProps) {
     >
       <FieldLabel isRequired={isRequired}>{label}</FieldLabel>
       <div className={styles.control}>
-        <Input
+        <PickerInput
           ref={inputRef}
           autoCorrect="off"
           autoCapitalize="off"
@@ -141,6 +142,22 @@ export function RecordPicker(props: RecordPickerProps) {
       <FieldHelp description={description} errorMessage={errorMessage} />
       <OptionList isLoading={isLoading} />
     </ComboBox>
+  );
+}
+
+/**
+ * The text input; a click anywhere in it opens the full list, as the arrow and a `Select`
+ * do, and typing still narrows it. Keyboard focus alone does not open it.
+ */
+function PickerInput(props: ComponentProps<typeof Input>) {
+  const state = useContext(ComboBoxStateContext);
+  return (
+    <Input
+      {...props}
+      onClick={() => {
+        if (state && !state.isOpen) state.open(null, "manual");
+      }}
+    />
   );
 }
 
