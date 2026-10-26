@@ -25,6 +25,11 @@ placerOrderId: string | null,
  */
 clientName: string, 
 /**
+ * Label codes of the order's primary sample containers, in accession order;
+ * filled by the engine from the specimens module, empty before receipt.
+ */
+sampleBarcodes: Array<string>, 
+/**
  * Items on the order in any state: requested, add-on and reflex items included.
  */
 itemCount: number, status: OrderStatus, receivedAt: string, version: number, revision: number, openHoldCount: number, };

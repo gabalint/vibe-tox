@@ -3,6 +3,8 @@
 //! engine checks the capability, and audits the read where the result is
 //! sensitive, before calling them.
 
+use std::collections::BTreeMap;
+
 use lis_core::GateReason;
 use rusqlite::Connection;
 
@@ -74,6 +76,36 @@ pub fn order_item_accessioned(
     item_id: lis_orders::OrderItemId,
 ) -> Result<bool, SpecimenError> {
     Ok(accessions::item_accessioned(conn, item_id)?)
+}
+
+/// Primary-container label codes (sample barcodes) for each listed order, in
+/// accession order, for the order worklist (REQ-ORD-001). Orders with no
+/// received sample are absent from the map.
+pub fn order_sample_barcodes(
+    conn: &Connection,
+    order_ids: &[lis_orders::OrderId],
+) -> Result<BTreeMap<lis_orders::OrderId, Vec<String>>, SpecimenError> {
+    // Hyphenated UUIDs need no JSON escaping.
+    let ids = order_ids
+        .iter()
+        .map(|id| format!("\"{id}\""))
+        .collect::<Vec<_>>()
+        .join(",");
+    let mut barcodes: BTreeMap<_, Vec<String>> = BTreeMap::new();
+    let mut statement = conn.prepare_cached(
+        "SELECT a.order_id, c.label_code FROM spc_accessions a \
+         JOIN spc_collections col ON col.accession_id = a.id \
+         JOIN spc_specimens s ON s.collection_id = col.id \
+         JOIN spc_containers c ON c.specimen_id = s.id AND c.kind = 'primary' \
+         WHERE a.order_id IN (SELECT value FROM json_each(?1)) \
+         ORDER BY a.created_at, a.id, c.label_code",
+    )?;
+    let rows = statement.query_map([format!("[{ids}]")], |row| Ok((row.get(0)?, row.get(1)?)))?;
+    for row in rows {
+        let (order_id, label_code) = row?;
+        barcodes.entry(order_id).or_default().push(label_code);
+    }
+    Ok(barcodes)
 }
 
 /// Current accession number for an accession or specimen audit record. The

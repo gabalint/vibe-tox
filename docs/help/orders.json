@@ -72,7 +72,8 @@
     "ui/src/features/accessioning/orders/OrderMaintenance.tsx",
     "crates/lis-orders/src/commands/evidence.rs",
     "crates/lis-orders/src/commands/cancellation.rs",
-    "crates/lis-orders/src/queries.rs"
+    "crates/lis-orders/src/queries.rs",
+    "crates/lis-specimens/src/queries.rs"
   ],
   "pages": [
     {
@@ -98,6 +99,12 @@
           "meaning": "Columns used to identify a request and its progress.",
           "values": "Patient name; clinic number or Not supplied; client; test count; request receipt time; Received, not yet accepted, Accepted or Rejected; number of open holds.",
           "rules": "Read-only. Test count is not performed work and request receipt time is not collection time."
+        },
+        {
+          "name": "Sample barcode",
+          "meaning": "Label codes of the primary containers received for the order, to find an order from the tube in hand.",
+          "values": "One or more container label codes, separated by semicolons, in accession order; None received before any specimen is accessioned.",
+          "rules": "Read-only. Aliquot labels are not listed; scan or search a label in the top bar to open its container. Select the column header to sort ascending, then descending; orders with no sample sort first in ascending order."
         },
         {
           "name": "Birth date and patient identifiers",

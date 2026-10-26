@@ -132,8 +132,8 @@ pub use order_accession_context::{
 };
 pub use queries::{
     audit_record_label, container_hold_history, excursion, find_container, get_accession,
-    list_locations, list_printers, order_item_accessioned, release_gate, specimen_accession,
-    specimens_for_subject, testing_gate,
+    list_locations, list_printers, order_item_accessioned, order_sample_barcodes, release_gate,
+    specimen_accession, specimens_for_subject, testing_gate,
 };
 pub use queues::{
     FailedLabelJob, SpecimenAwaitingDecision, accepted_specimens_between, failed_label_jobs,
