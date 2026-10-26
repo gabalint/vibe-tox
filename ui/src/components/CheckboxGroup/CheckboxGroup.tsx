@@ -30,7 +30,11 @@ export function CheckboxGroup({
 }: CheckboxGroupProps) {
   const errorId = useId();
   return (
-    <fieldset className={styles.group} aria-describedby={errorMessage ? errorId : undefined}>
+    <fieldset
+      className={styles.group}
+      aria-describedby={errorMessage ? errorId : undefined}
+      data-invalid={errorMessage ? true : undefined}
+    >
       <legend className={styles.legend}>
         {legend}
         {isRequired && (
