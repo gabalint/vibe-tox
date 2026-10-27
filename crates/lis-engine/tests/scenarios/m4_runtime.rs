@@ -39,7 +39,10 @@ pub(crate) async fn runtime_call(
     name: &str,
     _target: UserId,
 ) -> Option<Result<(), CommandError>> {
-    match health_call(engine, name).await {
+    if let Some(result) = health_call(engine, name).await {
+        return Some(result);
+    }
+    match update_call(engine, name).await {
         Some(result) => Some(result),
         None => records_call(engine, name).await,
     }
@@ -104,6 +107,30 @@ async fn health_call(engine: &Engine, name: &str) -> Option<Result<(), CommandEr
     })
 }
 
+/// In-app updates (ADR 0020): the shell's update requests after the engine allows them.
+async fn update_call(engine: &Engine, name: &str) -> Option<Result<(), CommandError>> {
+    Some(match name {
+        "check_release_update" => engine.preflight_update(UpdateRequest::CheckRelease).await,
+        "list_nightly_builds" => engine.preflight_update(UpdateRequest::ListNightly).await,
+        "download_update" => engine.preflight_update(UpdateRequest::Download).await,
+        "approve_downloaded_update" => engine
+            .approve_downloaded_update(
+                approval_input("9.9.9", PASSWORD),
+                PathBuf::from("synthetic-missing-package"),
+            )
+            .await
+            .map(drop),
+        "install_update" => engine
+            .begin_update_install(
+                "9.9.9".to_owned(),
+                PathBuf::from("synthetic-missing-package"),
+            )
+            .await
+            .map(drop),
+        _ => return None,
+    })
+}
+
 /// Update records, disposals and the installation key.
 async fn records_call(engine: &Engine, name: &str) -> Option<Result<(), CommandError>> {
     Some(match name {
@@ -123,23 +150,6 @@ async fn records_call(engine: &Engine, name: &str) -> Option<Result<(), CommandE
             .map(drop),
         "accept_installed_version" => engine
             .accept_installed_version(acceptance(env!("CARGO_PKG_VERSION"), PASSWORD))
-            .await
-            .map(drop),
-        "check_release_update" => engine.preflight_update(UpdateRequest::CheckRelease).await,
-        "list_nightly_builds" => engine.preflight_update(UpdateRequest::ListNightly).await,
-        "download_update" => engine.preflight_update(UpdateRequest::Download).await,
-        "approve_downloaded_update" => engine
-            .approve_downloaded_update(
-                approval_input("9.9.9", PASSWORD),
-                PathBuf::from("synthetic-missing-package"),
-            )
-            .await
-            .map(drop),
-        "install_update" => engine
-            .begin_update_install(
-                "9.9.9".to_owned(),
-                PathBuf::from("synthetic-missing-package"),
-            )
             .await
             .map(drop),
         "record_media_disposal" => engine.record_media_disposal(disposal()).await.map(drop),
