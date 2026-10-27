@@ -19,7 +19,7 @@ use lis_results::{
 use lis_specimens::ContainerHoldKind;
 
 use crate::m2_lab::{Lab, Role};
-use crate::m2_steps::{CORRECTION, JOURNEY, gate_codes, line, message};
+use crate::m2_steps::{CORRECTION, JOURNEY, current_revisions, gate_codes, line, message};
 
 pub(crate) async fn results_call(
     engine: &Engine,
@@ -546,8 +546,46 @@ async fn review_decisions_follow_commit_order_after_clock_changes() {
 
     // A rejection after a clock rollback must also leave the release queue.
     lab.t().advance(60);
+    reject_and_assert_release_line(&lab, revision).await;
     approve_and_assert_current_review(&lab, revision).await;
     lab.t().clock.set(first.reviewed_at);
+    reject_and_assert_release_line(&lab, revision).await;
+    approve_and_assert_current_review(&lab, revision).await;
+    lab.engine().shutdown().await;
+}
+
+// REQ-RES-005: approving revisions that already have a current approval is
+// refused, so no duplicate review or audit event is recorded; a rejection
+// makes the same revisions approvable again.
+#[tokio::test]
+async fn repeat_approval_of_current_revisions_is_refused() {
+    let lab = Lab::start(RevisionIndicator::None).await;
+    lab.import(JOURNEY).await;
+    lab.accept_qc().await;
+    lab.approve_all(0).await.unwrap();
+    let decisions = || -> (i64, i64) {
+        lab.t()
+            .conn()
+            .query_row(
+                "SELECT (SELECT count(*) FROM res_technical_reviews), \
+                 (SELECT count(*) FROM audit_events WHERE action = 'result.submit_review')",
+                [],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .unwrap()
+    };
+    let before = decisions();
+
+    let all = current_revisions(&lab.results(0).await);
+    let refused = lab.approve(0, all).await.unwrap_err();
+    assert_eq!(refused.code(), ErrorCode::Conflict);
+    assert_eq!(decisions(), before);
+
+    let revision = line(&lab.results(0).await, "SYN-MOR")
+        .current
+        .as_ref()
+        .unwrap()
+        .revision_id;
     reject_and_assert_release_line(&lab, revision).await;
     approve_and_assert_current_review(&lab, revision).await;
     lab.engine().shutdown().await;

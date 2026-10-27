@@ -11,6 +11,21 @@
   padding-right: var(--space-8);
 }
 
+/* The arrow looks and sits as a Select's does: no box or hover of its own. */
+.opener {
+  position: absolute;
+  right: var(--space-2);
+  display: flex;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.opener[data-disabled] {
+  cursor: not-allowed;
+}
+
 .option {
   gap: var(--space-3);
 }

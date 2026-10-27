@@ -41,7 +41,7 @@ The project's own workspace packages use GPL-3.0-only ([ADR 0017](../architectur
 | `secrecy`, `zeroize` | 0.10 / 1.9 | Secret wrappers and memory wiping | auth, engine, ops, reporting, security-key, shell |
 | `rand` | 0.10 | OS-backed randomness for secrets and salts | auth, ops |
 | `keyring` | 4.2 | OS key stores (Credential Manager, Keychain, Secret Service) | engine |
-| `tokio` | 1.53 | Async runtime for listeners and workers (already required by Tauri) | store, engine, security-key, shell |
+| `tokio` | 1.53.3 | Async runtime for listeners and workers (already required by Tauri) | store, engine, security-key, shell |
 | `serialport` | 4.10 | Serial analyzer connections | interfaces |
 | `typst`, `typst-pdf`, `typst-assets` (`fonts`) | 0.15.1 | Embedded report rendering with bundled fonts; pinned and wrapped in `lis-report` | report |
 | `tauri`, `tauri-build` | 2.12 / 2.7 | Desktop shell | shell |
@@ -50,6 +50,16 @@ The project's own workspace packages use GPL-3.0-only ([ADR 0017](../architectur
 | `csv` | 1.4 | RFC 4180 reading of laboratory result files, with our own size, row, column and field limits around it (already a transitive dependency through Typst). See the [result files contract](../planning/result-files-design-brief.md) | results |
 
 Dev-only: `proptest` 1.12 (property tests), `tempfile` 3.27 (temporary databases and directories), `insta` 1.49 (snapshots of codec and render outputs only, never of UI DOM; declared in the workspace, not yet used by any crate). Exception: `lis-store` may depend on `tempfile` optionally, behind its `testing` feature, which other crates enable only from `[dev-dependencies]`.
+
+The approved dependency graph uses these security patch baselines
+([source evidence](../research/sources-engineering.md#release-maintenance-sources-2026-10-23)).
+Their dependency, feature, license and minimum-Rust requirements are unchanged
+from the preceding locked patch versions. The normal advisory gate still applies.
+
+| Package | Locked version | Advisory and scope |
+| --- | --- | --- |
+| `ctutils` (transitive) | 0.4.4 | Minimum patch for RUSTSEC-2026-0385: constant-time mask generation and 32-bit `u128` comparisons (ENG-303/304). |
+| `tokio` | 1.53.3 | Minimum forward patch from 1.53.2 for RUSTSEC-2026-0386. It deprecates the affected `AsyncFd` constructors in favor of explicit unsafe registration; it does not repair misuse in callers. Project-owned source does not use `AsyncFd`; transitive callers retain their own safety obligations (ENG-306/307). |
 
 ### Additional installed crates
 

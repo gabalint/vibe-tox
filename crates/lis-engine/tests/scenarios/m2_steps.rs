@@ -11,11 +11,12 @@ use lis_analytical::{QcOutcome, QcScope};
 use lis_catalog::AnalyteId;
 use lis_core::CommandError;
 use lis_engine::{
-    AssessQcInput, GetRunQcInput, GetSpecimenResultsInput, ImportAttemptSummary,
+    AssessQcInput, Engine, GetRunQcInput, GetSpecimenResultsInput, ImportAttemptSummary,
     ListImportAttemptsInput, ReviewView, SpecimenResults, SubmitTechnicalReviewInput,
 };
 use lis_interfaces::ReceiptId;
-use lis_results::{ResultLineView, ResultRevisionId, ReviewDecision};
+use lis_results::{ResultLineView, ResultRevisionId, ReviewDecision, ReviewStatus};
+use lis_specimens::SpecimenId;
 
 use crate::m2_lab::{Lab, Role};
 
@@ -255,11 +256,45 @@ impl Lab {
             .await
     }
 
-    /// Approves every current revision of sample `index`.
+    /// Approves every current revision of sample `index` that has no current
+    /// approval, as the review screen does; a repeat approval is refused.
     pub(crate) async fn approve_all(&self, index: usize) -> Result<ReviewView, CommandError> {
-        let revisions = current_revisions(&self.results(index).await);
+        let results = self.results(index).await;
+        let revisions = results
+            .lines
+            .iter()
+            .filter(|line| !matches!(line.review_status, ReviewStatus::Current { .. }))
+            .filter_map(|line| line.current.as_ref().map(|c| c.revision_id))
+            .collect();
         self.approve(index, revisions).await
     }
+}
+
+/// Makes the signed-in reviewer the latest approver of revisions that are
+/// already approved: a repeat approval is refused, so it rejects with a reason
+/// first.
+pub(crate) async fn reapprove(
+    engine: &Engine,
+    specimen_id: SpecimenId,
+    revisions: Vec<ResultRevisionId>,
+) -> ReviewView {
+    let review = |decision, reason: Option<&str>| SubmitTechnicalReviewInput {
+        specimen_id,
+        decision,
+        result_revision_ids: revisions.clone(),
+        reason: reason.map(str::to_owned),
+    };
+    engine
+        .submit_technical_review(review(
+            ReviewDecision::Rejected,
+            Some("Synthetic re-review"),
+        ))
+        .await
+        .unwrap();
+    engine
+        .submit_technical_review(review(ReviewDecision::Approved, None))
+        .await
+        .unwrap()
 }
 
 /// The line for the analyte with catalog `code`.

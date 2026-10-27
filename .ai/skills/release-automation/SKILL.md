@@ -24,8 +24,12 @@ The operator's prompt supplies these values:
 
 ## Procedure
 
-1. **Preflight.** `gh auth status` must succeed with the `repo` and `workflow`
-   scopes. Run `git -C "$CLONE" fetch --prune --prune-tags --tags --force origin`
+1. **Preflight.** `gh auth status --active --hostname github.com` must succeed
+   with the `repo` and `workflow` scopes. Record the active account and, when the
+   operator specifies one, confirm that it matches. Check the account used for
+   the run; invalid stored credentials for inactive accounts do not block it.
+   Do not switch accounts or manually change credentials during an unattended run.
+   Run `git -C "$CLONE" fetch --prune --prune-tags --tags --force origin`
    and record the `origin/develop` and `origin/main` SHAs. List recent package runs:
    `gh run list -R "$REPO" --workflow package.yml -L 20 --json databaseId,status,conclusion,displayTitle,headSha,createdAt,url`.
    Run titles read `package <channel> from <branch>`. If a run for a channel is

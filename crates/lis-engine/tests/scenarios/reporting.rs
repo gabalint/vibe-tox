@@ -25,9 +25,8 @@ use lis_engine::{
     PointOfCareResultInput, PrepareReportCandidateInput, RecordDeliveryAttemptInput,
     RecordImpactAssessmentInput, RecordTriggerNotMetInput, RedirectDeliveryObligationInput,
     ReleaseReportInput, ReplaceDeliveryDestinationInput, ReportDetail, ReportListFilter,
-    RetireDeliveryDestinationInput, RevisionSummary, SetLaboratoryProfile,
-    SubmitTechnicalReviewInput, TriggerSource, VerifyDeliveryDestinationInput, WithdrawReportInput,
-    WorkQueueItem,
+    RetireDeliveryDestinationInput, RevisionSummary, SetLaboratoryProfile, TriggerSource,
+    VerifyDeliveryDestinationInput, WithdrawReportInput, WorkQueueItem,
 };
 use lis_identity::ClientId;
 use lis_reporting::{
@@ -36,12 +35,12 @@ use lis_reporting::{
     ObligationStatus, PreservationIncidentId, ReleaseQueue, ReportCompleteness, ReportId,
     ReportRelationship, ReportRevisionId, RevisionAvailability, StoredRecord,
 };
-use lis_results::{ResultOutcome, ReviewDecision};
+use lis_results::ResultOutcome;
 use lis_specimens::{ContainerHoldKind, PlaceContainerHoldInput, ReleaseContainerHoldInput};
 
 use crate::fixture::{NEW_PASSWORD, secret};
 use crate::m2_lab::{Lab, Role};
-use crate::m2_steps::{JOURNEY, current_revisions, gate_codes, line};
+use crate::m2_steps::{JOURNEY, current_revisions, gate_codes, line, reapprove};
 
 /// Calls the reporting command `name` with plausible input aimed at random IDs.
 pub(crate) async fn reporting_call(
@@ -1627,15 +1626,7 @@ async fn release_refuses_a_candidate_whose_reviews_were_replaced() {
     let reviser = reviewing_releaser(&desk).await;
     let revisions = current_revisions(&desk.lab.results(0).await);
     reviser.sign_in(&desk).await;
-    desk.engine()
-        .submit_technical_review(SubmitTechnicalReviewInput {
-            specimen_id: desk.lab.samples[0].specimen_id,
-            decision: ReviewDecision::Approved,
-            result_revision_ids: revisions,
-            reason: None,
-        })
-        .await
-        .unwrap();
+    reapprove(desk.engine(), desk.lab.samples[0].specimen_id, revisions).await;
     let candidate = desk
         .engine()
         .prepare_report_candidate(PrepareReportCandidateInput {
@@ -1646,7 +1637,9 @@ async fn release_refuses_a_candidate_whose_reviews_were_replaced() {
         .await
         .unwrap();
     resync(&desk.lab).await;
-    desk.lab.approve_all(0).await.unwrap();
+    desk.lab.sign_in(Role::Reviewer).await;
+    let revisions = current_revisions(&desk.lab.results(0).await);
+    reapprove(desk.engine(), desk.lab.samples[0].specimen_id, revisions).await;
     reviser.sign_in(&desk).await;
     let released = desk
         .engine()

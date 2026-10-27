@@ -29,4 +29,13 @@ describe("layering and sticky parts", () => {
       "background: var(--color-surface);",
     );
   });
+
+  it("shows every toast in the top-right corner, below the top bar (ticket #4358)", () => {
+    // `.region` opens the file, so give it the newline `rule` looks for.
+    const region = rule(`\n${css("Toast/Toast.module.css")}`, ".region");
+    expect(region).toContain("position: fixed;");
+    expect(region).toContain("top: calc(var(--space-12) + var(--space-4));");
+    expect(region).toContain("right: var(--space-4);");
+    expect(region).not.toContain("bottom:");
+  });
 });

@@ -36,7 +36,7 @@ ui/src/
    | Form | `Form` plus `react-hook-form` plus the field components |
    | Table of records | `DataGrid` |
    | Modal | `Dialog`, or `ConfirmDialog` for destructive or irreversible actions |
-   | Transient notice | `useToast` |
+   | Transient notice | `useToast`, shown in the top-right corner below the top bar |
    | Loading, empty, error | `LoadingState`, `EmptyState`, `ErrorState` |
    | Status | `StatusBadge` |
    | Page frame | `Page` with `PageHeader` |
@@ -165,6 +165,7 @@ Opening a patient, order, report or audit record is an audited read ([security s
 - **Where filtering runs.** The UI may filter and sort a collection itself when the engine returns the whole collection and the screen's data contract bounds its worst case within NFR-33 (10,000 rows). Otherwise the engine filters, sorts and pages, and the list says what it shows (`ListLimit`).
 - **Empty and no results are different states.** When nothing exists yet, say so ("No analytes yet") and offer "Add analyte". When the find or a filter excludes everything, name the search ("No analytes match 'oxy'") and offer "Clear search".
 - **Picking a reference record in a form.** Use `Select` for up to 15 fixed options. Above 15, and for any list that grows (clients, practitioners, tests, analytes), use `RecordPicker`: the person types to narrow the list and chooses one existing record (ENG-162, ENG-169, ENG-170). A click anywhere in the field opens the full list, as its arrow and a `Select` do; keyboard focus alone does not open it.
+- **Picking a reference record in a form.** Use `Select` for up to 15 fixed options. Above 15, and for any list that grows (clients, practitioners, tests, analytes), use `RecordPicker`: the person types to narrow the list and chooses one existing record (ENG-162, ENG-169, ENG-170). Its arrow has the same icon, size, colour and position as a `Select`'s, so both kinds of dropdown look alike.
   - Each option shows what tells near-duplicates apart: code and name for a client, name and NPI for a practitioner.
   - Pickers start empty (REQ-ORD-005).
   - A choice that depends on another, such as a client location after the client, lists only the matching records and clears when its parent changes.
@@ -202,6 +203,7 @@ Each screen design and each feature test names which of these states apply, and 
 
 - Labels are always visible, and required fields are marked.
 - Engine field errors (`CommandError.fieldErrors`) map onto the matching fields.
+- An invalid field shows its label, border and message in the danger tone until it is corrected. Submitting moves focus to the first invalid field.
 - Client-side checks are limited to presence and format, for faster feedback. The engine validates everything again.
 - Submit is disabled while pending. Input is kept after an error.
 - **Barcode scanners** act as keyboards: a text field that submits on Enter. Do not use keystroke-timing heuristics.

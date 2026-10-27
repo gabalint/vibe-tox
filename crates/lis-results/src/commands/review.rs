@@ -95,6 +95,13 @@ fn validate_review_revisions(
             if !gates.is_empty() {
                 return Err(ResultError::GateBlocked(gates));
             }
+            // A repeat approval would add a second review and audit event for nothing new.
+            if matches!(
+                review_status(conn, *revision_id)?,
+                ReviewStatus::Current { .. }
+            ) {
+                return Err(ResultError::AlreadyApproved);
+            }
             dependencies.extend(dependency_snapshots(conn, *revision_id)?);
         }
     }
