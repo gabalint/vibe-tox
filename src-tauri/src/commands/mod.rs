@@ -51,6 +51,7 @@ mod backup;
 // backup: end
 // runtime: begin
 mod operations;
+mod updates;
 // runtime: end
 // anchors: begin
 mod anchors;
@@ -105,6 +106,7 @@ mod tests {
         app.manage(crate::installation::Installation(
             lis_engine::InstallationKind::Laboratory,
         ));
+        app.manage(crate::updater::Updates::new(app.config()));
         (app, dir)
     }
 

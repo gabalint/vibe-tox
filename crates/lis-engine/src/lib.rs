@@ -216,7 +216,7 @@ pub use commands::dialogs::DialogCommand;
 pub use commands::operations::{
     AcceptInstalledVersionInput, AcknowledgeListeningGapInput, AttestHealthCheckInput,
     ListAppRunsInput, ListHealthHistoryInput, RecordUpdateApprovalInput,
-    RestoreInstallationKeyInput,
+    RestoreInstallationKeyInput, UpdateRequest,
 };
 pub use keep_awake::{Guard, Inhibitor, KeepAwakeView};
 pub use keys::{InstallationKeyStateView, KeyState, MemoryKeyStore};
@@ -232,7 +232,8 @@ pub use lis_ops::policy::OperationsSettings;
 pub use lis_ops::runs::{AppRunView, Stamp, StopKind};
 pub use lis_ops::settings::{OperationsSettingsView, SetOperationsSettingsInput};
 pub use lis_ops::updates::{
-    InstalledVersionView, UpdateApprovalView, VersionStatus, WithdrawUpdateApprovalInput,
+    InstallFailure, InstalledVersionView, UpdateApprovalId, UpdateApprovalView, VersionStatus,
+    WithdrawUpdateApprovalInput, version_precedence,
 };
 pub use ops_worker::{HostHealthView, HostView, QuitWarnings};
 pub use session::ABSOLUTE_SESSION_LIFETIME;

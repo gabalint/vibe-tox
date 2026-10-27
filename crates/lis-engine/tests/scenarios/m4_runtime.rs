@@ -5,6 +5,7 @@
 //! update records. Synthetic data only.
 
 use std::net::{IpAddr, Ipv4Addr, TcpListener};
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -19,8 +20,8 @@ use lis_engine::{
     DisposalMethod, Engine, EngineConfig, HealthState, KeyProvider, KeyState, ListAppRunsInput,
     ListHealthHistoryInput, ListWorkQueueItemsInput, MemoryKeyStore, OperationsSettings,
     RecordMediaDisposalInput, RecordUpdateApprovalInput, RegisterInstrument,
-    RestoreInstallationKeyInput, SessionInfo, SetOperationsSettingsInput, VersionStatus,
-    WithdrawUpdateApprovalInput,
+    RestoreInstallationKeyInput, SessionInfo, SetOperationsSettingsInput, UpdateRequest,
+    VersionStatus, WithdrawUpdateApprovalInput,
 };
 use lis_interfaces::{ConnectionSettings, ListenerState};
 use lis_ops::health::CheckCode;
@@ -38,7 +39,10 @@ pub(crate) async fn runtime_call(
     name: &str,
     _target: UserId,
 ) -> Option<Result<(), CommandError>> {
-    match health_call(engine, name).await {
+    if let Some(result) = health_call(engine, name).await {
+        return Some(result);
+    }
+    match update_call(engine, name).await {
         Some(result) => Some(result),
         None => records_call(engine, name).await,
     }
@@ -97,6 +101,30 @@ async fn health_call(engine: &Engine, name: &str) -> Option<Result<(), CommandEr
                 reason: "Synthetic policy".to_owned(),
                 password: secret(PASSWORD).into(),
             })
+            .await
+            .map(drop),
+        _ => return None,
+    })
+}
+
+/// In-app updates (ADR 0020): the shell's update requests after the engine allows them.
+async fn update_call(engine: &Engine, name: &str) -> Option<Result<(), CommandError>> {
+    Some(match name {
+        "check_release_update" => engine.preflight_update(UpdateRequest::CheckRelease).await,
+        "list_nightly_builds" => engine.preflight_update(UpdateRequest::ListNightly).await,
+        "download_update" => engine.preflight_update(UpdateRequest::Download).await,
+        "approve_downloaded_update" => engine
+            .approve_downloaded_update(
+                approval_input("9.9.9", PASSWORD),
+                PathBuf::from("synthetic-missing-package"),
+            )
+            .await
+            .map(drop),
+        "install_update" => engine
+            .begin_update_install(
+                "9.9.9".to_owned(),
+                PathBuf::from("synthetic-missing-package"),
+            )
             .await
             .map(drop),
         _ => return None,
@@ -867,9 +895,21 @@ async fn update_records_need_their_capability_a_backup_and_fresh_authentication(
         .await;
     assert_eq!(code_of(without_backup), ErrorCode::Conflict);
     let wrong_password = engine
-        .record_update_approval(approval_input("9.9.9", "wrong passphrase"), Some(package))
+        .record_update_approval(
+            approval_input("9.9.9", "wrong passphrase"),
+            Some(package.clone()),
+        )
         .await;
     assert_eq!(code_of(wrong_password), ErrorCode::Validation);
+    // ADR 0020: a downloaded package installs only under an approval naming it.
+    let not_approved = engine
+        .begin_update_install("9.9.9".to_owned(), package.clone())
+        .await;
+    assert_eq!(code_of(not_approved), ErrorCode::Conflict);
+    let downloaded_without_backup = engine
+        .approve_downloaded_update(approval_input("9.9.9", PASSWORD), package)
+        .await;
+    assert_eq!(code_of(downloaded_without_backup), ErrorCode::Conflict);
     let disposal = engine.record_media_disposal(disposal()).await.unwrap();
     assert_eq!(disposal.method, DisposalMethod::Wiped);
     let disposals = engine.list_media_disposals().await.unwrap();

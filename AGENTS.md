@@ -16,6 +16,14 @@ runs them with the [release-automation skill](.ai/skills/release-automation/SKIL
 These are development builds for evaluation with synthetic data. They do not
 authorize signing, clinical use or support commitments.
 
+**In-app updates — project owner decision, relayed 2026-10-27.** Official releases and
+nightly builds are checked, downloaded and installed from the application, as
+[ADR 0020](docs/architecture/decisions/0020-in-app-updates.md) describes. This authorizes the
+updater's HTTP client, Minisign signing of update packages in the package workflow, and
+retained `nightly-*` releases. Every installation, nightly included, keeps the recorded
+approval and verified pre-update backup (NFR-24). It does not authorize OS code signing,
+supported releases or clinical use (Q-19, Q-34).
+
 **Open-source preparation — user instruction, 2026-10-20.** Retain GPL-3.0-only
 and keep the free clinical toxicology LIS scope explicit. Keep project pricing,
 business-model material and other LIS organizations' names and brands out of

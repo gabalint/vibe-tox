@@ -8,7 +8,9 @@ description: Unattended nightly release run. Decide whether develop needs a new 
 The [release guide](../../../docs/development/releases.md) defines the branches,
 versions and package workflow. This skill is the procedure for the agent that runs
 them. The project owner authorized unsigned development releases on GitHub on
-2026-10-20. That authorization does not cover signing, clinical use or support
+2026-10-20. [ADR 0020](../../../docs/architecture/decisions/0020-in-app-updates.md),
+accepted 2026-10-27, adds the workflow's Minisign signing of update packages. Neither
+authorization covers OS code signing, clinical use or support
 commitments.
 
 ## Inputs
@@ -69,8 +71,12 @@ The operator's prompt supplies these values:
    and check all of the following:
    - The release is not a draft.
    - `nightly` is a prerelease; `v<version>` is not.
-   - There are exactly five non-empty assets: four
-     `vibe-tox-lis_<version>_*` installers and `SHA256SUMS.txt`.
+   - There are five non-empty assets: four `vibe-tox-lis_<version>_*` installers and
+     `SHA256SUMS.txt`. When in-app updates are configured
+     ([in-app updates](../../../docs/development/releases.md#in-app-updates)), there are also
+     `latest.json` and `vibe-tox-lis_<version>_macos-arm64.app.tar.gz`, and `nightly` also
+     carries `nightly.json`. Its first build entry names the new version, and the
+     `nightly-<date>.<run>` release it points to exists.
    - After a fresh fetch, the tag's commit equals the dispatched SHA.
 8. **Release summary (versioned releases only).** Summarize the changes since the
    previous `v*` tag from
@@ -99,7 +105,7 @@ Local writes are limited to `CLONE` and `REPORT_DIR`.
 Never do any of the following. Report the need instead:
 
 - commit, push, merge, rebase or reset a branch;
-- create, move or delete tags or releases yourself, because the workflow manages `nightly` and `v*`;
+- create, move or delete tags or releases yourself, because the workflow manages `nightly`, `nightly-*` and `v*`;
 - change versions, code, workflows, repository settings, branch protection, secrets or the default branch;
 - dispatch other workflows or channels, or cancel runs;
 - delete or replace a published `v*` release or its assets; a person withdraws a bad release;

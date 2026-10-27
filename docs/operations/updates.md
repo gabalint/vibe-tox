@@ -1,13 +1,52 @@
 # Updates
 
-The application records approval and acceptance of updates, but it does not yet discover,
-download, verify or install an update. Signed installers, Minisign-signed update packages and the
-Tauri updater wait for the publisher and release-channel decisions in
-[Q-19 and Q-34](../planning/open-questions.md#decision-and-discovery-queue).
+The application records approval and acceptance of every update. In builds configured for
+in-app updates, it also checks, downloads, verifies and installs newer published builds on
+**Versions and updates → Available updates**
+([ADR 0020](../architecture/decisions/0020-in-app-updates.md)). The project's
+releases are development builds without OS code signing, for evaluation with synthetic data
+([branches and releases](../development/releases.md)). Installing one from the app does not
+make it safe for clinical use.
 
-The current workflow is therefore a controlled record around a separately installed package. It
-does not make an unsigned developer build safe for clinical use. The installers on the project's
-GitHub releases page are such unsigned development builds ([branches and releases](../development/releases.md)).
+## Available updates
+
+**Available updates** asks the project's GitHub releases when the tab opens or when you choose
+**Check again**. It never checks on a schedule.
+
+- **Official release** shows the newest official version and its changes.
+- **Nightly builds for internal testing** appears only while a nightly build runs. It lists
+  the newest retained nightly builds. A row opens the build's commit and changes.
+- Only a version newer than the running one can be installed. An older build cannot open a
+  database that a newer version has already migrated.
+- A build without the project's update key cannot update itself and says so. This applies
+  to local developer builds and to builds published before in-app updates. Install a newer
+  published release by hand once.
+
+To install a newer build with configuration authority:
+
+1. Prepare as in [Before approving](#before-approving), including a recent verified manual
+   or pre-update backup.
+2. Choose **Download version N**. The app downloads the package for this computer's system
+   and checks its Minisign signature and the version it was signed for. A package that fails
+   the check is not kept.
+3. Choose **Approve and install** and complete the approval as in
+   [Record approval](#record-approval). The version and package come from the download, so
+   neither is typed or chosen. If a current approval already names this package, choose
+   **Install approved update**.
+4. The app refuses to install while listeners or other work are in progress. The engine
+   then checks that the approval names exactly this package and that its backup is still
+   verified and no more than 24 hours old, and audits the installation.
+5. The app closes and starts the new version.
+   - **Windows:** the installer shows its progress.
+   - **Linux:** a `.deb` installation asks for the computer's administrator password; an
+     AppImage is replaced in place.
+   - **macOS:** installation from the app is not yet qualified.
+6. Continue with [Install and start](#install-and-start) step 4 and
+   [Accept for clinical use](#accept-for-clinical-use).
+
+If the download or installation fails, the running version is unchanged. A failed
+installation is recorded in the audit trail. A downloaded package is discarded when the app
+restarts.
 
 ## Before approving
 
@@ -43,16 +82,17 @@ scan of files on disk. **Load older backup runs** continues past the initial 100
 **Refresh backup list** checks for newly completed work. The engine determines eligibility
 and rechecks it when saving, so a backup that expires while the form is open may be refused.
 
-The application then opens a file dialog for the update package, computes its SHA-256 digest and
-records that package with the approval. This step does not verify a publisher signature and does
-not install the package.
+For a package obtained outside the app, the application then opens a file dialog for the update
+package, computes its SHA-256 digest and records that package with the approval. This step does
+not verify a publisher signature and does not install the package. For a package downloaded on
+**Available updates**, the downloaded file is recorded instead and the app installs it.
 
 ## Install and start
 
-1. Close the application safely. Do not override listener or pending-work warnings merely to start
-   the update.
-2. Install the package using the controlled procedure supplied with that release. The in-app
-   updater is not built.
+1. For a package obtained outside the app, close the application safely. Do not override
+   listener or pending-work warnings merely to start the update.
+2. Install the package using the controlled procedure supplied with that release, or let
+   **Available updates** install a downloaded package.
 3. Open the application. Before applying pending database migrations, it makes an integrity-checked
    local safety snapshot when required. If that copy fails, startup stops rather than migrating.
 4. Review startup, host health, listener state, the web-engine change check and the laboratory's

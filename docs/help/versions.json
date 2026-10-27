@@ -1,21 +1,22 @@
 {
   "id": "versions",
   "title": "Versions and updates",
-  "summary": "Accept the detected running version, or record approval and backup evidence before installing a downloaded update.",
-  "reviewedOn": "2026-10-15",
+  "summary": "Install a newer published update from the app, accept the detected running version, or record approval and backup evidence before installing an update.",
+  "reviewedOn": "2026-10-27",
   "routes": ["/operations/versions/:tab?"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
         "Installed versions shows Running version with the exact version detected by the app. To record the laboratory’s acceptance of the app already installed, choose Accept running version, complete the required checks, and enter a note with fresh identity confirmation. You do not type a version, select a package or choose a backup for this acceptance.",
-        "Update approvals records decisions made before installing a downloaded update. Review the release notes, copy their published version and risk description, and choose a recent verified manual or pre-update backup from Backups → Runs. Request pre-update backup is available on this tab and inside the approval dialog when your account has Backup and restore authority. Installation remains a separate step."
+        "Available updates checks the project’s published updates when the tab opens or when you choose Check again. Official release shows the newest official version. Nightly builds for internal testing appear only while a nightly build is running. With Manage configuration, choose Download for a newer build, then Approve and install: the approval records the downloaded package with a recent verified backup, and the app installs it and restarts into the new version, which then awaits acceptance.",
+        "Update approvals records decisions made before installing an update. For a package obtained outside the app, review the release notes, copy their published version and risk description, and choose a recent verified manual or pre-update backup from Backups → Runs. Request pre-update backup is available on this tab and inside the approval dialog when your account has Backup and restore authority."
       ]
     },
     {
       "title": "Good practice",
       "paragraphs": [
-        "Use the laboratory’s approved update procedure and release evidence. This page does not discover, download, detect a downloaded package’s version, verify publisher signatures or install updates. About this app identifies the currently running version for support.",
+        "Use the laboratory’s approved update procedure and release evidence. Available updates installs only a build newer than the running version whose package signature the app verified while downloading it; it does not check on a schedule. A package chosen in Record update approval is identified only by its SHA-256 and is installed outside the app. About this app identifies the currently running version for support.",
         "Review the backup completion time, retained verified destinations and package identity before approval. Record the checks actually completed when accepting a version. An approval added after an unapproved start requires a later start under that approval before acceptance is available."
       ]
     },
@@ -23,6 +24,7 @@
       "title": "If you cannot continue",
       "paragraphs": [
         "For a warning about the already installed app, inspect Running version and its acceptance status. For a missing backup choice during update approval, inspect Backups → Runs, refresh the backup list or load older runs. The list includes only qualifying retained manual or pre-update backups completed within the last 24 hours.",
+        "If Available updates says updates are not available in this build, install a published release once from the project’s release page. If a check, download or installation fails, read the message and correlation ID; the running version is unchanged and the downloaded package can be downloaded again.",
         "The App version notice can be closed with Dismiss notification for the current signed-in view. Its health finding remains available through Health in the header and Versions and updates. Closing the notice records no approval or acceptance."
       ]
     }
@@ -31,14 +33,14 @@
     {
       "title": "Versions and updates",
       "routes": ["/operations/versions/:tab?"],
-      "purpose": "Review the detected running version and record its acceptance, or record approval and backup evidence before installing a downloaded update.",
-      "access": "Installed versions is available to signed-in users. Manage configuration opens Update approvals and records or withdraws approval. Backup and restore is also needed to read the backup choices and request backups in this UI. Approve configuration accepts the running version.",
+      "purpose": "Check and install newer published updates, review the detected running version and record its acceptance, or record approval and backup evidence before installing an update.",
+      "access": "Installed versions and Available updates are available to signed-in users with access to this page. Manage configuration downloads, approves and installs updates, opens Update approvals and records or withdraws approval. Backup and restore is also needed to read the backup choices and request backups in this UI. Approve configuration accepts the running version.",
       "fields": [
         {
-          "name": "Installed versions / Update approvals tabs",
-          "meaning": "Switch between versions that have run and recorded approval decisions.",
-          "values": "Installed versions (default); Update approvals.",
-          "rules": "Update approvals is shown with Manage configuration. Tab selection is navigation only."
+          "name": "Installed versions / Available updates / Update approvals tabs",
+          "meaning": "Switch between versions that have run, updates published for this app, and recorded approval decisions.",
+          "values": "Installed versions (default); Available updates; Update approvals.",
+          "rules": "Update approvals is shown with Manage configuration. Opening Available updates checks the published updates; tab selection changes no record."
         },
         {
           "name": "Running version / Version (installed records and detail panels)",
@@ -51,6 +53,42 @@
           "meaning": "The published version of the downloaded update that will be installed.",
           "values": "Copy the exact version from the update’s release notes: MAJOR.MINOR.PATCH, optionally followed by valid prerelease/build identifiers, such as 1.2.0 or 1.2.0-rc.1. Maximum 64 characters.",
           "rules": "Required and initially blank; surrounding spaces are trimmed. Do not enter the currently running version unless that is the package actually being approved. The app does not extract or verify this version from the selected file. Obtain missing release information from the publisher."
+        },
+        {
+          "name": "Official release (Available updates)",
+          "meaning": "The newest official version published for this app, compared with the running version.",
+          "values": "Version N is available, with its build time and changes; or the running version and the newest official release when nothing newer exists; or a notice that no official release with in-app updates is published.",
+          "rules": "Read-only. Only official releases are shown here; nightly builds never are. Read from the project’s release repository when the tab opens or on Check again."
+        },
+        {
+          "name": "Nightly builds for internal testing (Available updates)",
+          "meaning": "Retained builds of the development line for testing with synthetic data.",
+          "values": "Up to 20 builds, newest first, with Version, Built, Commit, Changes (the number of change lines) and Status.",
+          "rules": "Shown only while a nightly build is running; a release build never offers nightly builds. Read-only list; a row opens its details."
+        },
+        {
+          "name": "Status (Nightly builds)",
+          "meaning": "Whether a nightly build could replace the running version.",
+          "values": "Newer; Older; Running.",
+          "rules": "Read-only. Only Newer builds can be downloaded and installed; installing an older build is refused because a newer version may already have changed the database."
+        },
+        {
+          "name": "Built / Commit / Changes (update details)",
+          "meaning": "When the build was published, the source commit of a nightly build, and its published change summary.",
+          "values": "Time in the laboratory time zone or Not given; the first 12 characters of the commit; up to 50 published change lines of at most 200 characters, or No change summary was published.",
+          "rules": "Read-only, as published by the project. The change lines are commit subjects since the previous build of that channel, not validation evidence."
+        },
+        {
+          "name": "Downloaded package (Available updates)",
+          "meaning": "The package downloaded for the chosen build, kept until it is installed or another download replaces it.",
+          "values": "File name, shown once its signature is verified.",
+          "rules": "Read-only. The app checks the package’s publisher signature and signed version while downloading and again before installation. One package is kept at a time; restarting the app discards it, so download it again before approving or installing."
+        },
+        {
+          "name": "Version (Approve version dialog)",
+          "meaning": "The version of the downloaded package being approved.",
+          "values": "Fixed to the downloaded build’s version; not typed.",
+          "rules": "The approval records the downloaded package’s file name and SHA-256. The other approval fields have the same rules as in Record update approval."
         },
         {
           "name": "First started / Last started / Running",
@@ -97,8 +135,8 @@
         {
           "name": "Package file / Package SHA-256",
           "meaning": "Identify the exact package selected for approval.",
-          "values": "Native file selection, then saved filename and computed fingerprint.",
-          "rules": "The native chooser opens after confirmation. The saved filename and computed SHA-256 are read-only evidence of the selected bytes; they do not establish the package version or publisher signature. Canceling the chooser records no approval and keeps the form open."
+          "values": "Native file selection in Record update approval, or the downloaded package in Approve version; then saved filename and computed fingerprint.",
+          "rules": "In Record update approval the native chooser opens after confirmation; canceling it records no approval and keeps the form open. The saved filename and computed SHA-256 are read-only evidence of the selected bytes. For a chosen file they do not establish the package version or publisher signature; a downloaded package’s signature was verified by the app."
         },
         {
           "name": "Your password",
@@ -151,6 +189,30 @@
           "result": "A backup request is saved independently of approval. Wait for a verified retained copy in Backups → Runs, refresh the backup list if needed, and explicitly select it. Requesting a backup does not select it or approve an update; canceling the approval form does not cancel the saved backup request."
         },
         {
+          "name": "Check again",
+          "does": "Read the published official release, or nightly builds, again.",
+          "availableWhen": "Available updates, in this build when it can install updates.",
+          "result": "Shows the current published builds. Nothing is downloaded or recorded. The app checks only when the tab opens or on this action, never on a schedule."
+        },
+        {
+          "name": "Download version N",
+          "does": "Download the build’s package for this computer’s system and verify its publisher signature and signed version.",
+          "availableWhen": "Manage configuration; the build is newer than the running version; this build can install updates. Shown under Official release or in a newer nightly build’s details.",
+          "result": "Keeps the verified package and offers Approve and install, or Install approved update when a current approval names that package. A package that fails its signature check is not kept. Nothing is installed or recorded."
+        },
+        {
+          "name": "Approve and install",
+          "does": "Open Approve version for the downloaded package, record the approval, then install it and restart.",
+          "availableWhen": "A downloaded package without a current approval naming it; the same approval fields, qualifying backup and fresh identity confirmation as Record update approval.",
+          "result": "Records the approval with the downloaded package’s SHA-256, then installs it. The app checks that no listener or other work is still in progress, that the approval names exactly this package and that its backup is still verified and no more than 24 hours old. It then closes and starts the new version, which awaits acceptance. A refused or failed installation leaves the running version unchanged and the approval recorded."
+        },
+        {
+          "name": "Install approved update",
+          "does": "Install a downloaded package that a current approval already names, then restart.",
+          "availableWhen": "Manage configuration; the downloaded package’s file name matches a current, nonwithdrawn, not installed approval of that version. The engine compares the SHA-256 before installing.",
+          "result": "As Approve and install, without a second approval. On Windows the installer shows its progress and starts the new version; on Linux a .deb installation asks for the computer’s administrator password, and an AppImage is replaced in place."
+        },
+        {
           "name": "Record update approval / Choose the update package",
           "does": "Open the approval form, then select the downloaded package in the native chooser and record its SHA-256 with the review evidence.",
           "availableWhen": "Manage configuration, access to the backup choices, required version/risk/review/note fields, a qualifying backup and fresh identity confirmation. A current nonwithdrawn approval for the same version prevents another.",
@@ -170,9 +232,9 @@
         },
         {
           "name": "Open row / Previous / Next / Close",
-          "does": "Inspect version or approval details.",
+          "does": "Inspect version, nightly build or approval details.",
           "availableWhen": "A listed row.",
-          "result": "Shows recorded package, backup and decision evidence without changing it."
+          "result": "Shows recorded package, backup and decision evidence, or a published build’s changes, without changing them."
         },
         {
           "name": "Load older backup runs",
@@ -212,14 +274,19 @@
         }
       ],
       "restrictions": [
-        "The application does not install updates or detect a downloaded package’s version from this page. Its SHA-256 record identifies bytes; it does not validate the published version or signature.",
+        "Available updates installs only newer builds published by the project, after verifying the package signature, recording an approval with a verified backup and confirming that no work is in progress. A package chosen in Record update approval is identified only by its SHA-256, is not installed by the app and its version and signature are not verified.",
         "Human laboratory acceptance is not established by software tests or by an agent’s completion statement.",
         "An approval recorded after an unapproved start requires a subsequent restart under that approval before acceptance can proceed.",
         "Scheduled backups are excluded from update approval because automatic retention can remove them. Manual and pre-update backups are retained by the current automatic retention policy.",
-        "Dismissing the App version notice is a temporary display choice. Approval, acceptance, health findings and clinical gates retain their actual state."
+        "Dismissing the App version notice is a temporary display choice. Approval, acceptance, health findings and clinical gates retain their actual state.",
+        "Builds compiled without the project’s update key, such as local developer builds and releases published before in-app updates, cannot download or install updates; install a newer release by hand once.",
+        "Nightly builds are offered only to nightly builds and are for testing with synthetic data. An official release is offered to every build with a lower version.",
+        "The published update list is not itself signed or dated; the package signature binds each package to its version, and only newer versions install."
       ],
       "workflow": [
         "For the app already installed, inspect Running version on Installed versions. Complete the laboratory’s checks, choose Accept running version when available, enter a specific note and confirm your identity. Verify the Accepted status.",
+        "For an update published for this app, open Available updates. Review the newer build’s changes and the release page, inspect or request a recent verified manual or pre-update backup, and choose Download.",
+        "For a package obtained outside the app, review its release notes and published risk. Inspect a recent verified manual or pre-update backup, or request one and wait for verification.",
         "For a downloaded update, review its release notes and published risk. Inspect a recent verified manual or pre-update backup, or request one and wait for verification.",
         "Choose Record update approval, copy Version to install and the published risk description, confirm release-note review, select Backup before this update, and enter Approval notes.",
         "Confirm your identity, choose the exact downloaded package and verify the saved approval. Perform installation through the laboratory’s approved process outside this screen.",
@@ -261,6 +328,30 @@
         {
           "problem": "The version notice returned after dismissal",
           "recovery": "A changed version or warning, a recurring warning, or a recreated signed-in view shows the notice again. Inspect Versions and updates or Host health to address the finding; dismissing it only hides the notice."
+        },
+        {
+          "problem": "Updates are not available in this build",
+          "recovery": "This build was compiled without the project’s update key, for example a local developer build or a release published before in-app updates. Install a newer published release from the project’s release page once; later releases can then be installed from Available updates."
+        },
+        {
+          "problem": "The update server could not be reached",
+          "recovery": "Check this computer’s internet connection and any proxy, then choose Check again or Download again. The running version and laboratory work are unaffected."
+        },
+        {
+          "problem": "The update package failed its signature check",
+          "recovery": "The package was not kept and nothing was installed. Do not install the package by other means; report the version and correlation ID to the project."
+        },
+        {
+          "problem": "Wait until these finish, then install",
+          "recovery": "Listeners or other work are still in progress. Let them finish or stop them as the laboratory’s procedure allows, then choose the install action again."
+        },
+        {
+          "problem": "The downloaded package differs from the approved one, or Download this update again",
+          "recovery": "The approval names a different package, or the app restarted and discarded the download. Download the build again; if a current approval names another package of the same version, withdraw it on Update approvals and approve the downloaded one."
+        },
+        {
+          "problem": "The update could not be installed",
+          "recovery": "The running version is unchanged and a failed installation is recorded in the audit trail. Read the correlation ID, check free disk space and, on Linux, the administrator password prompt or the AppImage’s file permissions, then try again."
         }
       ]
     }
@@ -294,6 +385,15 @@
     "crates/lis-ops/src/backup/retention.rs",
     "ui/src/app/SessionRoot.tsx",
     "ui/src/features/auth/AuthGate.tsx",
-    "ui/src/components/ErrorState/ErrorState.tsx"
+    "ui/src/components/ErrorState/ErrorState.tsx",
+    "ui/src/features/operations/updates/AvailableUpdates.tsx",
+    "ui/src/features/operations/updates/UpdateActions.tsx",
+    "ui/src/features/operations/updates/buildColumns.tsx",
+    "src-tauri/src/updater.rs",
+    "src-tauri/src/commands/updates.rs",
+    "crates/lis-ops/src/updates/install.rs",
+    "src-tauri/src/updater/feed.rs",
+    "src-tauri/src/updater/errors.rs",
+    "crates/lis-ops/src/updates/version.rs"
   ]
 }

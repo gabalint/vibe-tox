@@ -70,6 +70,7 @@ from the preceding locked patch versions. The normal advisory gate still applies
 | `fs4` 1.1, `sync` feature only | Free/total disk space for backup preflight and host health (REQ-OPS-008) | Operations |
 | `chacha20poly1305` 0.11 | Authenticated encryption for secrets and backup packages | Authentication, operations |
 | `qrcode` 0.14, `svg` feature only | Authenticator enrollment QR code | Authentication |
+| `tauri-plugin-updater` 2.14, features `rustls-tls` and `system-proxy` only | Admitted by [ADR 0020](../architecture/decisions/0020-in-app-updates.md), accepted 2026-10-27. Checks, downloads and installs Minisign-signed updates from the project's GitHub releases, on request only. Rust calls it; the UI receives no `updater:` permission. It brings `reqwest` 0.13 with `rustls`, `ring` and the platform certificate verifier, used only for update requests. The `zip` feature, needed only for legacy compressed update archives, stays off: it brings `zip` 4.6 with RUSTSEC-2026-0367, -0368 and -0369. The workflow publishes uncompressed packages. Plugin license Apache-2.0 OR MIT; `cargo deny check` passed for the resulting tree on 2026-10-27. Maintained by the Tauri project in `tauri-apps/plugins-workspace`, checked 2026-10-27. | Desktop shell |
 
 Windows durable artifact replacement remains an open implementation decision (G2-11). Direct `windows-sys` filesystem calls would require a reviewed exception to the unsafe-code policy; this document does not admit them. Folder backups use the built-in `vtbk1` format. A third-party backup sidecar or write-once bucket backend requires a scoped decision under Q-30/Q-31 and dependency review.
 
@@ -138,7 +139,7 @@ Companion registry checks on 2026-10-15 confirmed: [`url` 2.5.8](https://crates.
 | `anyhow`, `eyre` | Typed errors are required | `thiserror` |
 | `log` macros, `env_logger` | One logging facade | `tracing` |
 | `lazy_static`, `once_cell`, `parking_lot`, `crossbeam` | The standard library or `tokio` covers them | `std::sync::{LazyLock, OnceLock, Mutex}`, `tokio::sync` |
-| HTTP clients (`reqwest` and others) | The local application makes no HTTP calls; optional hosted services ([ADR 0010](../architecture/decisions/0010-optional-cloud-services.md)) need their own scope decision | Not needed |
+| HTTP clients (`reqwest` and others) as direct dependencies | The engine makes no HTTP calls. The shell's only HTTP use is the updater's own client for in-app updates ([ADR 0020](../architecture/decisions/0020-in-app-updates.md)). Optional hosted services ([ADR 0010](../architecture/decisions/0010-optional-cloud-services.md)) need their own scope decision | `tauri-plugin-updater` for updates; nothing else |
 | Redux, Zustand, MobX, Jotai | Engine state lives in TanStack Query and local state in React | Command hooks, `useState` |
 | MUI, Ant, Chakra, Mantine, shadcn/ui, Tailwind, CSS-in-JS | One design system, minimal tooling | `react-aria-components` with CSS Modules and tokens |
 | moment, dayjs, date-fns, lodash, ramda, axios | Not needed: `Intl`, built-ins, and no HTTP from the UI | Platform APIs |
