@@ -1,9 +1,8 @@
-import { TextInput } from "@/components/FormFields";
+import { NPI_FORMAT, TextInput } from "@/components/FormFields";
 import type { RegisterPractitioner } from "@/generated/RegisterPractitioner";
 import { CommandDialog } from "@/lib/CommandDialog";
 import { optionalText } from "@/lib/choices";
 import { LIST_PRACTITIONERS } from "../contract";
-import { NPI_FORMAT } from "../formats";
 
 interface PractitionerValues {
   npi: string;

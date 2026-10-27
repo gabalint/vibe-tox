@@ -15,6 +15,13 @@ export const DATE_FORMAT: TextFormat = {
   description: "YYYY-MM-DD",
 };
 
+/** Only the length is checked here; the engine also checks the last (check) digit. */
+export const NPI_FORMAT: TextFormat = {
+  pattern: /^\d{10}$/,
+  message: "The NPI must be exactly 10 digits.",
+  description: "10 digits. The last digit is checked automatically.",
+};
+
 interface TextInputProps {
   /** The form path, such as `diagnoses.0.code`; also the key for engine field errors. */
   name: string;

@@ -226,15 +226,33 @@ pub(crate) fn parse_identifiers(
 pub struct Npi(String);
 
 impl Npi {
-    /// Validates length, digits and the check digit.
+    /// Validates length, digits and the check digit, with a separate message for each so a
+    /// ten-digit typo is not reported as a length problem.
     pub fn parse(text: &str) -> Result<Self, IdentityError> {
+        Self::parse_field("npi", text)
+    }
+
+    /// [`Npi::parse`], reporting a refusal against `field`.
+    pub(crate) fn parse_field(field: &str, text: &str) -> Result<Self, IdentityError> {
         let text = text.trim();
         let digits: Option<Vec<u32>> = text.chars().map(|c| c.to_digit(10)).collect();
         match digits {
-            Some(digits) if digits.len() == 10 && luhn_valid_with_prefix(&digits) => {
-                Ok(Self(text.to_owned()))
+            Some(digits) if digits.len() == 10 => {
+                if luhn_valid_with_prefix(&digits) {
+                    Ok(Self(text.to_owned()))
+                } else {
+                    Err(invalid(
+                        field,
+                        "npi_check_digit",
+                        "This NPI is not valid. Please check the number for a typo.",
+                    ))
+                }
             }
-            Some(_) | None => Err(invalid("npi", "invalid_npi", "Enter a valid 10-digit NPI.")),
+            Some(_) | None => Err(invalid(
+                field,
+                "npi_length",
+                "The NPI must be exactly 10 digits.",
+            )),
         }
     }
 
@@ -312,27 +330,35 @@ mod tests {
     // example in the CMS NPI check-digit description.
     #[test]
     fn npi_accepts_valid_check_digits() {
-        for npi in ["1234567893", "1000000004", "2000000002"] {
+        for npi in ["1234567893", "1000000004", "2000000002", "1245319599"] {
             assert_eq!(Npi::parse(npi).unwrap().as_str(), npi, "{npi}");
         }
     }
 
+    fn npi_refusal(npi: &str) -> String {
+        match Npi::parse(npi) {
+            Err(IdentityError::Invalid(field)) => field.code,
+            other => panic!("{npi}: {other:?}"),
+        }
+    }
+
     #[test]
-    fn npi_refuses_wrong_check_digit_length_or_characters() {
+    fn npi_refuses_a_wrong_check_digit() {
+        for npi in ["1234567890", "1234567894", "1000000005", "1908763221"] {
+            assert_eq!(npi_refusal(npi), "npi_check_digit", "{npi}");
+        }
+    }
+
+    #[test]
+    fn npi_refuses_wrong_length_or_characters() {
         for npi in [
-            "1234567890",
-            "1234567894",
-            "1000000005",
             "123456789",
             "12345678930",
             "12345678a3",
             "",
             "１２３４５６７８９３",
         ] {
-            assert!(
-                matches!(Npi::parse(npi), Err(IdentityError::Invalid(_))),
-                "{npi}"
-            );
+            assert_eq!(npi_refusal(npi), "npi_length", "{npi}");
         }
     }
 

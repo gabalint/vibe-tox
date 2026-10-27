@@ -105,7 +105,11 @@ describe("PractitionersPage (REQ-ORD-001 references)", { timeout: WALKTHROUGH_TI
       .mockRejectedValueOnce(
         engineError("validation", "Check the highlighted fields.", {
           fieldErrors: [
-            { field: "npi", code: "invalid_npi", message: "Enter a valid 10-digit NPI." },
+            {
+              field: "npi",
+              code: "npi_check_digit",
+              message: "This NPI is not valid. Please check the number for a typo.",
+            },
           ],
         }),
       )
@@ -120,10 +124,15 @@ describe("PractitionersPage (REQ-ORD-001 references)", { timeout: WALKTHROUGH_TI
     await tabTo(user, screen.getByRole("button", { name: "Register practitioner" }));
     await user.keyboard("{Enter}");
     const dialog = await screen.findByRole("dialog", { name: "Register practitioner" });
+    expect(
+      within(dialog).getByText("10 digits. The last digit is checked automatically."),
+    ).toBeTruthy();
     await user.keyboard("1234567890");
     await typeInto(user, /^Family name/, "Newcomer");
     await user.keyboard("{Enter}");
-    expect(await within(dialog).findByText("Enter a valid 10-digit NPI.")).toBeTruthy();
+    expect(
+      await within(dialog).findByText("This NPI is not valid. Please check the number for a typo."),
+    ).toBeTruthy();
     const npi = within(dialog).getByRole("textbox", { name: /^NPI/ });
     await tabTo(user, npi);
     await user.keyboard("{Control>}a{/Control}1234567893{Enter}");
