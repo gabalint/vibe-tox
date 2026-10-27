@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "operations",
-  "description": "Runtime operations commands for the main window: host health and history, app runs and listening gaps, settings, the security policy and the separation-of-duties policy, update records, media disposals, the installation key, and the shell-only startup status (REQ-OPS-002, 003, 006, 008, 013; NFR-19, NFR-31).",
+  "description": "Runtime operations commands for the main window: host health and history, app runs and listening gaps, settings, the security policy and the separation-of-duties policy, update records and in-app updates (ADR 0020), media disposals, the installation key, and the shell-only startup status (REQ-OPS-002, 003, 006, 008, 013; NFR-19, NFR-31).",
   "windows": ["main"],
   "permissions": [
     "allow-get-host-health",
@@ -21,6 +21,11 @@
     "allow-record-update-approval",
     "allow-withdraw-update-approval",
     "allow-accept-installed-version",
+    "allow-check-release-update",
+    "allow-list-nightly-builds",
+    "allow-download-update",
+    "allow-approve-downloaded-update",
+    "allow-install-update",
     "allow-record-media-disposal",
     "allow-list-media-disposals",
     "allow-get-installation-key-state",

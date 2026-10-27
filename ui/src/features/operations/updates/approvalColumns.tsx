@@ -30,7 +30,8 @@ export const APPROVAL_COLUMNS: readonly DataGridColumn<UpdateApprovalView>[] = [
     identifier: true,
     cell: (row) => row.version,
     sortValue: (row) => row.version,
-    width: 110,
+    // Wide enough for a nightly version such as 0.1.2-nightly.20261028.4.
+    width: 240,
   },
   {
     id: "status",

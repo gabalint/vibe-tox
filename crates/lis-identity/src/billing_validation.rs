@@ -146,7 +146,7 @@ pub fn validate_financial_evidence(
             validate_key(key)?;
         }
         if let Some(npi) = &item.provider_npi {
-            Npi::parse(npi)?;
+            Npi::parse_field("providerNpi", npi)?;
         }
         if item.kind == FinancialEvidenceKind::ProviderEnrollment && item.provider_npi.is_none() {
             return Err(invalid(

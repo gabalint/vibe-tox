@@ -6,8 +6,10 @@
 //!
 //! Every write checks its capability in the domain function and audits in the same
 //! transaction; update approval and version acceptance re-authenticate inside it. The
-//! package file is read from the path an OS dialog returned, outside any transaction,
-//! and only its name and SHA-256 are recorded.
+//! package file is read from the path an OS dialog returned, or from the package the shell
+//! downloaded and verified, outside any transaction, and only its name and SHA-256 are
+//! recorded. The engine never contacts the update host; it authorizes the shell's update
+//! requests and allows an installation only under a matching approval (ADR 0020).
 
 mod health;
 mod keys;
@@ -27,7 +29,7 @@ pub use health::{
 };
 pub use keys::RestoreInstallationKeyInput;
 pub(crate) use keys::reconcile_key_restores;
-pub use updates::{AcceptInstalledVersionInput, RecordUpdateApprovalInput};
+pub use updates::{AcceptInstalledVersionInput, RecordUpdateApprovalInput, UpdateRequest};
 
 const CONFIGURE: Access = Access::Capability(Capability::ManageConfiguration);
 
@@ -97,9 +99,31 @@ pub(crate) const RECORD_UPDATE_APPROVAL: CommandSpec = spec(
     lis_ops::updates::APPROVE_UPDATE,
     CONFIGURE,
 );
+pub(crate) const APPROVE_DOWNLOADED_UPDATE: CommandSpec = spec(
+    "approve_downloaded_update",
+    lis_ops::updates::APPROVE_UPDATE,
+    CONFIGURE,
+);
 pub(crate) const WITHDRAW_UPDATE_APPROVAL: CommandSpec = spec(
     "withdraw_update_approval",
     lis_ops::updates::WITHDRAW_UPDATE_APPROVAL,
+    CONFIGURE,
+);
+pub(crate) const CHECK_RELEASE_UPDATE: CommandSpec = spec(
+    "check_release_update",
+    "ops.check_release_update",
+    Access::Session,
+);
+pub(crate) const LIST_NIGHTLY_BUILDS: CommandSpec = spec(
+    "list_nightly_builds",
+    "ops.list_nightly_builds",
+    Access::Session,
+);
+pub(crate) const DOWNLOAD_UPDATE: CommandSpec =
+    spec("download_update", "ops.download_update", CONFIGURE);
+pub(crate) const INSTALL_UPDATE: CommandSpec = spec(
+    "install_update",
+    lis_ops::updates::INSTALL_UPDATE,
     CONFIGURE,
 );
 pub(crate) const ACCEPT_INSTALLED_VERSION: CommandSpec = spec(

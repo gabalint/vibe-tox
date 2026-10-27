@@ -1,4 +1,4 @@
-import { ChoiceInput, TextInput } from "@/components/FormFields";
+import { ChoiceInput, NPI_FORMAT, TextInput } from "@/components/FormFields";
 import type { PractitionerView } from "@/generated/PractitionerView";
 import type { UpdatePractitioner } from "@/generated/UpdatePractitioner";
 import { CommandDialog } from "@/lib/CommandDialog";
@@ -56,7 +56,8 @@ export function CorrectPractitionerDialog({
         name="npi"
         label="NPI"
         isRequired
-        description="10 digits with a valid check digit; must not belong to another registered practitioner."
+        format={NPI_FORMAT}
+        description={`${NPI_FORMAT.description} Must not belong to another registered practitioner.`}
       />
       <TextInput
         name="familyName"

@@ -88,7 +88,9 @@ The single desktop process owns listeners and jobs. Keep-awake reflects active i
 
 The application records a package/version/digest approval, reviewed release information, a retained verified manual or pre-update backup completed within 24 hours, approver and fresh confirmation. Scheduled backups do not qualify. Version history distinguishes approved, unapproved and awaiting-acceptance states; an authorized user records acceptance of the running version.
 
-An unaccepted version raises a banner/work item; the current application does not block release on that condition. Dismissing the banner changes no approval, acceptance or clinical gate. Signed installers, signed update-manifest enforcement, automatic updater/rollback and release identity remain Q-19/Q-34/G2 work. A pre-migration snapshot is a recovery control, not an implemented signed-update channel.
+In builds configured for in-app updates ([ADR 0020](decisions/0020-in-app-updates.md)), the shell downloads a newer package and verifies its Minisign signature and signed version. The approval then records that staged package. `install_update` (`manage_configuration`) refuses work in progress. It requires a current, not installed approval naming the staged package's SHA-256 and a backup that is still eligible, and audits `ops.install_update` in the same transaction; a failed installation is audited as failed.
+
+An unaccepted version raises a banner/work item; the current application does not block release on that condition. Dismissing the banner changes no approval, acceptance or clinical gate. Signed installers, signed update-manifest enforcement, rollback and release identity remain Q-19/Q-34/G2 work. A pre-migration snapshot is a recovery control, not an implemented signed-update channel.
 
 ## Verification expectations
 

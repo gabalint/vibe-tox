@@ -1,6 +1,8 @@
-# Builds unsigned desktop bundles. The default "artifacts" channel keeps them as workflow
-# artifacts. "nightly" (from develop) and "release" (from main) also run the full CI gate
-# and publish a GitHub release; see docs/development/releases.md.
+# Builds desktop bundles without OS code signing. The default "artifacts" channel keeps them
+# as workflow artifacts. "nightly" (from develop) and "release" (from main) also run the full
+# CI gate and publish a GitHub release; see docs/development/releases.md. When the updater
+# signing secret and public key are set, those channels also sign the update packages with
+# Minisign and publish the in-app update manifests (ADR 0020).
 name: package
 run-name: package ${{ inputs.channel }} from ${{ github.ref_name }}
 
@@ -149,8 +151,42 @@ jobs:
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
         run: python scripts/release_version.py set "$VERSION"
-      - name: Build unsigned bundles
-        run: npx tauri build --bundles ${{ matrix.bundles }} -- --locked
+      # ADR 0020: published channels sign update packages when both values are set; neither
+      # set keeps the earlier unsigned-only build, and only one set is a configuration error.
+      - name: Configure in-app updates
+        if: inputs.channel != 'artifacts'
+        shell: bash
+        env:
+          SIGNING_KEY_SET: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+          UPDATER_PUBKEY: ${{ vars.TAURI_UPDATER_PUBKEY }}
+        run: |
+          if [[ "$SIGNING_KEY_SET" != true && -z "$UPDATER_PUBKEY" ]]; then
+            echo "::warning::In-app updates are not configured: set the TAURI_SIGNING_PRIVATE_KEY secret and the TAURI_UPDATER_PUBKEY variable"
+            exit 0
+          fi
+          if [[ "$SIGNING_KEY_SET" != true || -z "$UPDATER_PUBKEY" ]]; then
+            echo "::error::Set both the TAURI_SIGNING_PRIVATE_KEY secret and the TAURI_UPDATER_PUBKEY variable, or neither"
+            exit 1
+          fi
+          node -e 'require("fs").writeFileSync(process.argv[1], JSON.stringify({
+            bundle: { createUpdaterArtifacts: true },
+            plugins: { updater: { pubkey: process.argv[2], requireSignedVersion: true } },
+          }))' "$RUNNER_TEMP/updater.conf.json" "$UPDATER_PUBKEY"
+          {
+            echo "UPDATER_CONFIG=$RUNNER_TEMP/updater.conf.json"
+            echo "VIBE_TOX_UPDATE_REPOSITORY=$GITHUB_REPOSITORY"
+          } >> "$GITHUB_ENV"
+      - name: Build bundles
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          config=()
+          if [[ -n "${UPDATER_CONFIG:-}" ]]; then
+            config=(--config "$UPDATER_CONFIG")
+          fi
+          npx tauri build --bundles ${{ matrix.bundles }} "${config[@]}" -- --locked
       - name: Verify macOS application bundle signature
         if: runner.os == 'macOS'
         run: |
@@ -205,6 +241,11 @@ jobs:
       CHANNEL: ${{ inputs.channel }}
       VERSION: ${{ needs.prepare.outputs.version }}
     steps:
+      # The update feed script only; the published files come from the build artifacts.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts
       - uses: actions/download-artifact@v8
         with:
           path: bundles
@@ -223,8 +264,31 @@ jobs:
           stage '*_aarch64.dmg' macos-arm64.dmg
           stage '*_amd64.deb' linux-amd64.deb
           stage '*_amd64.AppImage' linux-amd64.AppImage
-          (cd release && sha256sum -- * > SHA256SUMS.txt)
-          cat release/SHA256SUMS.txt
+          # ADR 0020: signed update packages, present only when the build configured updates.
+          signatures="$(find bundles -type f -name '*.sig' | wc -l)"
+          if [[ "$signatures" -gt 0 ]]; then
+            mkdir updater
+            stage '*.app.tar.gz' macos-arm64.app.tar.gz
+            for package in release/*; do
+              name="${package#release/}"
+              case "$name" in
+                *.dmg) continue ;;
+                *.exe) pattern='*_x64-setup.exe.sig' ;;
+                *.deb) pattern='*_amd64.deb.sig' ;;
+                *.AppImage) pattern='*_amd64.AppImage.sig' ;;
+                *.app.tar.gz) pattern='*.app.tar.gz.sig' ;;
+              esac
+              mapfile -t found < <(find bundles -type f -name "$pattern")
+              if [[ ${#found[@]} -ne 1 ]]; then
+                echo "::error::Expected one $pattern signature, found ${#found[@]}"
+                exit 1
+              fi
+              cp "${found[0]}" "updater/$name.sig"
+            done
+            echo "UPDATER=true" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No update signatures were built; publishing installers without in-app update manifests"
+          fi
       - name: Write release notes
         run: |
           source_url="$GITHUB_SERVER_URL/$GH_REPO/blob/$GITHUB_SHA"
@@ -232,6 +296,7 @@ jobs:
             if [[ "$CHANNEL" == nightly ]]; then
               echo "Nightly build \`$VERSION\` of \`develop\` at $GITHUB_SHA. Each newer nightly replaces this prerelease."
               previous="$(gh release view nightly --json targetCommitish --jq .targetCommitish 2>/dev/null || true)"
+              echo "PREVIOUS=$previous" >> "$GITHUB_ENV"
               if [[ -n "$previous" && "$previous" != "$GITHUB_SHA" ]]; then
                 echo
                 echo "Changes since the previous nightly: $GITHUB_SERVER_URL/$GH_REPO/compare/$previous...$GITHUB_SHA"
@@ -255,18 +320,89 @@ jobs:
           Built by [workflow run $GITHUB_RUN_ID]($GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID) after the full quality gate. The source code archives on this page hold the tagged source; [packaging]($source_url/docs/development/packaging.md) describes the build. Licensed under GPL-3.0-only.
           EOF
           } > notes.md
+          if [[ "${UPDATER:-}" == true ]]; then
+            {
+              echo
+              echo "The in-app updater uses \`latest.json\` and the Minisign-signed packages it names, including \`vibe-tox-lis_${VERSION}_macos-arm64.app.tar.gz\`. Install one of the installers above by hand only the first time."
+            } >> notes.md
+          fi
           cat notes.md
-      - name: Publish the release
+      # ADR 0020: the manifest names each signed package of this build at its own release tag.
+      - name: Write the in-app update manifest
+        if: env.UPDATER == 'true'
         run: |
           if [[ "$CHANNEL" == nightly ]]; then
+            build_tag="nightly-${VERSION#*-nightly.}"
+            previous="$PREVIOUS"
+          else
+            build_tag="v$VERSION"
+            previous="$(gh release view --json tagName --jq .tagName 2>/dev/null || true)"
+          fi
+          echo "BUILD_TAG=$build_tag" >> "$GITHUB_ENV"
+          # Commit subjects since the previous build of this channel; the app shows them as
+          # plain text lines.
+          : > changes.txt
+          if [[ -n "$previous" && "$previous" != "$GITHUB_SHA" ]]; then
+            gh api "repos/$GH_REPO/compare/$previous...$GITHUB_SHA" \
+              --jq '.commits[].commit.message | split("\n")[0] | select(startswith("Merge ") | not)' \
+              > changes.txt || echo "::warning::Changes since $previous could not be listed"
+          fi
+          python3 scripts/update_feed.py manifest --version "$VERSION" \
+            --published-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --notes-file changes.txt \
+            --base-url "$GITHUB_SERVER_URL/$GH_REPO/releases/download/$build_tag" \
+            --signature-dir updater \
+            --artifact "windows-x86_64-nsis=release/vibe-tox-lis_${VERSION}_windows-x64-setup.exe" \
+            --artifact "linux-x86_64-appimage=release/vibe-tox-lis_${VERSION}_linux-amd64.AppImage" \
+            --artifact "linux-x86_64-deb=release/vibe-tox-lis_${VERSION}_linux-amd64.deb" \
+            --artifact "darwin-aarch64-app=release/vibe-tox-lis_${VERSION}_macos-arm64.app.tar.gz" \
+            --output release/latest.json
+          cat release/latest.json
+      - name: Write checksums
+        run: |
+          (cd release && sha256sum -- * > SHA256SUMS.txt)
+          cat release/SHA256SUMS.txt
+      - name: Publish the release
+        run: |
+          expected="$(find release -type f | wc -l)"
+          if [[ "$CHANNEL" == nightly ]]; then
+            if [[ "${UPDATER:-}" == true ]]; then
+              # Each nightly is kept at its own tag for in-app updates; the index lists the
+              # newest ten and the older builds' releases are deleted.
+              gh release download nightly -p nightly.json -O previous-index.json 2>/dev/null || true
+              if gh release view "$BUILD_TAG" > /dev/null 2>&1; then
+                gh release delete "$BUILD_TAG" --cleanup-tag --yes
+              fi
+              gh release create "$BUILD_TAG" release/* --target "$GITHUB_SHA" --prerelease --latest=false \
+                --title "Vibe Tox LIS $VERSION" --notes-file notes.md
+              python3 scripts/update_feed.py index --previous previous-index.json \
+                --manifest release/latest.json --tag "$BUILD_TAG" --commit "$GITHUB_SHA" \
+                --manifest-url "$GITHUB_SERVER_URL/$GH_REPO/releases/download/$BUILD_TAG/latest.json" \
+                --output nightly.json > dropped-tags.txt
+              build_assets="$(gh release view "$BUILD_TAG" --json assets --jq '.assets | length')"
+              if [[ "$build_assets" != "$expected" ]]; then
+                echo "::error::$BUILD_TAG has $build_assets assets; expected $expected"
+                exit 1
+              fi
+            fi
             if gh release view nightly > /dev/null 2>&1; then
               gh release delete nightly --cleanup-tag --yes
             elif gh api "repos/$GH_REPO/git/ref/tags/nightly" > /dev/null 2>&1; then
               gh api -X DELETE "repos/$GH_REPO/git/refs/tags/nightly"
             fi
-            gh release create nightly release/* --target "$GITHUB_SHA" --prerelease --latest=false \
+            files=(release/*)
+            if [[ "${UPDATER:-}" == true ]]; then
+              files+=(nightly.json)
+              expected=$((expected + 1))
+            fi
+            gh release create nightly "${files[@]}" --target "$GITHUB_SHA" --prerelease --latest=false \
               --title "Vibe Tox LIS $VERSION" --notes-file notes.md
             tag=nightly
+            if [[ -s dropped-tags.txt ]]; then
+              while read -r dropped; do
+                gh release delete "$dropped" --cleanup-tag --yes ||
+                  echo "::warning::Older nightly $dropped was not deleted"
+              done < dropped-tags.txt
+            fi
           else
             tag="v$VERSION"
             # A failed earlier attempt can leave an unpublished draft; drafts have no tag yet.
@@ -279,8 +415,8 @@ jobs:
             gh release edit "$tag" --draft=false --latest
           fi
           assets="$(gh release view "$tag" --json assets --jq '.assets | length')"
-          if [[ "$assets" != 5 ]]; then
-            echo "::error::$tag has $assets assets; expected 4 installers and SHA256SUMS.txt"
+          if [[ "$assets" != "$expected" ]]; then
+            echo "::error::$tag has $assets assets; expected $expected"
             exit 1
           fi
           echo "Published [$tag]($GITHUB_SERVER_URL/$GH_REPO/releases/tag/$tag)" >> "$GITHUB_STEP_SUMMARY"

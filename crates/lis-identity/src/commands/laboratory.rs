@@ -154,8 +154,7 @@ fn billing_npi(text: Option<&str>) -> Result<Option<String>, IdentityError> {
     let Some(text) = text.filter(|text| !text.trim().is_empty()) else {
         return Ok(None);
     };
-    let npi = Npi::parse(text)
-        .map_err(|_| invalid("billingNpi", "invalid_npi", "Enter a valid 10-digit NPI."))?;
+    let npi = Npi::parse_field("billingNpi", text)?;
     Ok(Some(npi.as_str().to_owned()))
 }
 
@@ -269,8 +268,12 @@ mod tests {
         );
         assert_eq!(billing_npi(None).unwrap(), None);
         assert_eq!(
-            field_code(billing_npi(Some("1234567890")).unwrap_err()).0,
-            "billingNpi"
+            field_code(billing_npi(Some("1234567890")).unwrap_err()),
+            ("billingNpi".to_owned(), "npi_check_digit".to_owned())
+        );
+        assert_eq!(
+            field_code(billing_npi(Some("123456789")).unwrap_err()),
+            ("billingNpi".to_owned(), "npi_length".to_owned())
         );
     }
 

@@ -585,7 +585,7 @@
         {
           "name": "Related provider NPI",
           "meaning": "The provider identified by this evidence.",
-          "values": "A valid ten-digit NPI with a valid check digit.",
+          "values": "A valid ten-digit NPI with a valid check digit. The field hint reads “10 digits. The last digit is checked automatically.” Fewer or more than ten digits shows “The NPI must be exactly 10 digits.”; a failed check digit shows “This NPI is not valid. Please check the number for a typo.”",
           "rules": "Required for Provider enrollment; optional for other evidence. For order enrollment evidence it must identify the ordering practitioner."
         },
         {
