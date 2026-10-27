@@ -79,6 +79,12 @@ export const LIST_UPDATE_APPROVALS = "list_update_approvals";
 export const RECORD_UPDATE_APPROVAL = "record_update_approval"; // file dialog
 export const WITHDRAW_UPDATE_APPROVAL = "withdraw_update_approval";
 export const ACCEPT_INSTALLED_VERSION = "accept_installed_version";
+/** In-app updates (ADR 0020): the shell contacts the release repository after the engine allows it. */
+export const CHECK_RELEASE_UPDATE = "check_release_update";
+export const LIST_NIGHTLY_BUILDS = "list_nightly_builds";
+export const DOWNLOAD_UPDATE = "download_update";
+export const APPROVE_DOWNLOADED_UPDATE = "approve_downloaded_update";
+export const INSTALL_UPDATE = "install_update";
 
 export const STARTUP_STATUS = "startup_status"; // shell-only: answered even when the engine failed to start
 

@@ -3,7 +3,7 @@
 use super::{
     analytical, anchors, app_info, audit, backup, billing, billing_intake, catalog, catalog_review,
     collection_corrections, demo, file_templates, identity, interfaces, listeners, operations,
-    orders, reporting, result_files, results, security_keys, session, specimens, users,
+    orders, reporting, result_files, results, security_keys, session, specimens, updates, users,
     work_queues,
 };
 
@@ -316,6 +316,11 @@ pub(crate) fn handler<R: Runtime>() -> impl Fn(Invoke<R>) -> bool + Send + Sync 
         operations::record_update_approval,
         operations::withdraw_update_approval,
         operations::accept_installed_version,
+        updates::check_release_update,
+        updates::list_nightly_builds,
+        updates::download_update,
+        updates::approve_downloaded_update,
+        updates::install_update,
         operations::record_media_disposal,
         operations::list_media_disposals,
         operations::get_installation_key_state,

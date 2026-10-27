@@ -5,6 +5,7 @@
 //! update records. Synthetic data only.
 
 use std::net::{IpAddr, Ipv4Addr, TcpListener};
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -19,8 +20,8 @@ use lis_engine::{
     DisposalMethod, Engine, EngineConfig, HealthState, KeyProvider, KeyState, ListAppRunsInput,
     ListHealthHistoryInput, ListWorkQueueItemsInput, MemoryKeyStore, OperationsSettings,
     RecordMediaDisposalInput, RecordUpdateApprovalInput, RegisterInstrument,
-    RestoreInstallationKeyInput, SessionInfo, SetOperationsSettingsInput, VersionStatus,
-    WithdrawUpdateApprovalInput,
+    RestoreInstallationKeyInput, SessionInfo, SetOperationsSettingsInput, UpdateRequest,
+    VersionStatus, WithdrawUpdateApprovalInput,
 };
 use lis_interfaces::{ConnectionSettings, ListenerState};
 use lis_ops::health::CheckCode;
@@ -122,6 +123,23 @@ async fn records_call(engine: &Engine, name: &str) -> Option<Result<(), CommandE
             .map(drop),
         "accept_installed_version" => engine
             .accept_installed_version(acceptance(env!("CARGO_PKG_VERSION"), PASSWORD))
+            .await
+            .map(drop),
+        "check_release_update" => engine.preflight_update(UpdateRequest::CheckRelease).await,
+        "list_nightly_builds" => engine.preflight_update(UpdateRequest::ListNightly).await,
+        "download_update" => engine.preflight_update(UpdateRequest::Download).await,
+        "approve_downloaded_update" => engine
+            .approve_downloaded_update(
+                approval_input("9.9.9", PASSWORD),
+                PathBuf::from("synthetic-missing-package"),
+            )
+            .await
+            .map(drop),
+        "install_update" => engine
+            .begin_update_install(
+                "9.9.9".to_owned(),
+                PathBuf::from("synthetic-missing-package"),
+            )
             .await
             .map(drop),
         "record_media_disposal" => engine.record_media_disposal(disposal()).await.map(drop),
@@ -867,9 +885,21 @@ async fn update_records_need_their_capability_a_backup_and_fresh_authentication(
         .await;
     assert_eq!(code_of(without_backup), ErrorCode::Conflict);
     let wrong_password = engine
-        .record_update_approval(approval_input("9.9.9", "wrong passphrase"), Some(package))
+        .record_update_approval(
+            approval_input("9.9.9", "wrong passphrase"),
+            Some(package.clone()),
+        )
         .await;
     assert_eq!(code_of(wrong_password), ErrorCode::Validation);
+    // ADR 0020: a downloaded package installs only under an approval naming it.
+    let not_approved = engine
+        .begin_update_install("9.9.9".to_owned(), package.clone())
+        .await;
+    assert_eq!(code_of(not_approved), ErrorCode::Conflict);
+    let downloaded_without_backup = engine
+        .approve_downloaded_update(approval_input("9.9.9", PASSWORD), package)
+        .await;
+    assert_eq!(code_of(downloaded_without_backup), ErrorCode::Conflict);
     let disposal = engine.record_media_disposal(disposal()).await.unwrap();
     assert_eq!(disposal.method, DisposalMethod::Wiped);
     let disposals = engine.list_media_disposals().await.unwrap();

@@ -21,9 +21,14 @@ use crate::runs::Stamp;
 use crate::runtime_error::RuntimeError;
 
 mod backup;
+mod install;
+mod version;
 
 use backup::ensure_pre_update_backup;
 pub use backup::update_approval_eligible;
+pub use install::{InstallFailure, begin_update_install, record_update_install_failure};
+use version::is_semver;
+pub use version::version_precedence;
 
 /// Audit action of an update approval.
 pub const APPROVE_UPDATE: &str = "ops.approve_update";
@@ -31,6 +36,8 @@ pub const APPROVE_UPDATE: &str = "ops.approve_update";
 pub const WITHDRAW_UPDATE_APPROVAL: &str = "ops.withdraw_update_approval";
 /// Audit action of a version acceptance.
 pub const ACCEPT_VERSION: &str = "ops.accept_version";
+/// Audit action of an in-app update installation.
+pub const INSTALL_UPDATE: &str = "ops.install_update";
 
 /// Marker for update approval identifiers.
 pub enum UpdateApproval {}
@@ -147,34 +154,6 @@ pub struct VersionFacts {
     pub started_without_approval: bool,
     /// The running version is not yet accepted.
     pub awaiting_acceptance: bool,
-}
-
-/// True for `MAJOR.MINOR.PATCH`, optionally with `-pre.release` and `+build`
-/// identifiers, as Semantic Versioning 2.0.0 defines them.
-fn is_semver(text: &str) -> bool {
-    let (rest, build) = text
-        .split_once('+')
-        .map_or((text, None), |(r, b)| (r, Some(b)));
-    let (core, pre) = rest
-        .split_once('-')
-        .map_or((rest, None), |(c, p)| (c, Some(p)));
-    let numeric = |part: &str| {
-        !part.is_empty()
-            && part.bytes().all(|b| b.is_ascii_digit())
-            && (part == "0" || !part.starts_with('0'))
-    };
-    let identifier = |part: &str| {
-        !part.is_empty() && part.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
-    };
-    let core_parts: Vec<&str> = core.split('.').collect();
-    core_parts.len() == 3
-        && core_parts.iter().all(|part| numeric(part))
-        && pre.is_none_or(|pre| {
-            pre.split('.').all(|part| {
-                identifier(part) && (!part.bytes().all(|b| b.is_ascii_digit()) || numeric(part))
-            })
-        })
-        && build.is_none_or(|build| build.split('.').all(identifier))
 }
 
 fn field_error(field: &str, code: &str, message: &str) -> FieldError {

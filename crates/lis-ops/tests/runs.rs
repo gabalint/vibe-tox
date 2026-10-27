@@ -829,3 +829,102 @@ fn app_history_rejects_a_missing_cursor_instead_of_claiming_end_of_history() {
         Err(RuntimeError::NotFound("app run cursor"))
     ));
 }
+
+fn begin_install(
+    test: &TestDatabase,
+    principal: &Principal,
+    version: &'static str,
+    sha256: String,
+) -> Result<lis_ops::updates::UpdateApprovalId, RuntimeError> {
+    write(test, principal, move |ctx| {
+        lis_ops::updates::begin_update_install(ctx, version, &sha256)
+    })
+}
+
+#[test]
+fn an_install_needs_the_approved_package_and_a_still_recent_backup() {
+    let test = open();
+    let configurator = principal(&[Capability::ManageConfiguration]);
+    start(&test, "0.4.0", None);
+    let run = backup_run(&test, "pre_update", test_start(), true);
+
+    let unapproved = begin_install(&test, &configurator, "0.5.0", "b".repeat(64));
+    assert!(matches!(unapproved, Err(RuntimeError::InstallNotApproved)));
+    let view = approve(&test, &configurator, approval("0.5.0", run)).unwrap();
+
+    let denied = begin_install(
+        &test,
+        &principal(&[Capability::ApproveConfiguration]),
+        "0.5.0",
+        "b".repeat(64),
+    );
+    assert!(is_denied(&denied.unwrap_err()));
+    let other = begin_install(&test, &configurator, "0.5.0", "c".repeat(64));
+    assert!(matches!(other, Err(RuntimeError::PackageNotApproved)));
+
+    let allowed = begin_install(&test, &configurator, "0.5.0", "b".repeat(64)).unwrap();
+    assert_eq!(allowed, view.approval_id);
+    let event = &audit(&test, lis_ops::updates::INSTALL_UPDATE)[0];
+    assert_eq!(event.0, "security");
+    assert!(event.2.contains(&"b".repeat(64)));
+
+    test.clock.set(at(24 * 3600 + 1));
+    let stale = begin_install(&test, &configurator, "0.5.0", "b".repeat(64));
+    assert!(matches!(stale, Err(RuntimeError::PreUpdateBackupInvalid)));
+
+    test.clock.set(at(60));
+    start(&test, "0.5.0", None);
+    let installed = begin_install(&test, &configurator, "0.5.0", "b".repeat(64));
+    assert!(matches!(installed, Err(RuntimeError::ApprovalInstalled)));
+}
+
+#[test]
+fn a_failed_install_is_audited_against_its_approval() {
+    let test = open();
+    let configurator = principal(&[Capability::ManageConfiguration]);
+    let run = backup_run(&test, "pre_update", test_start(), true);
+    let view = approve(&test, &configurator, approval("0.5.0", run)).unwrap();
+    let id = view.approval_id;
+    write(&test, &configurator, move |ctx| {
+        lis_ops::updates::record_update_install_failure(
+            ctx,
+            id,
+            lis_ops::updates::InstallFailure::Installer,
+        )
+    })
+    .unwrap();
+    let events = audit(&test, lis_ops::updates::INSTALL_UPDATE);
+    assert_eq!(events.len(), 1);
+    assert!(events[0].2.contains("installer_failed"));
+}
+
+#[test]
+fn versions_compare_by_semantic_version_precedence() {
+    use std::cmp::Ordering::{Equal, Greater, Less};
+
+    use lis_ops::updates::version_precedence;
+
+    let ordered = [
+        "0.1.1",
+        "0.1.2-nightly.20261026.18",
+        "0.1.2-nightly.20261027.9",
+        "0.1.2-nightly.20261027.10",
+        "0.1.2",
+        "0.2.0",
+        "1.0.0-alpha",
+        "1.0.0-alpha.1",
+        "1.0.0-beta",
+        "1.0.0",
+    ];
+    for pair in ordered.windows(2) {
+        assert_eq!(version_precedence(pair[0], pair[1]), Some(Less), "{pair:?}");
+        assert_eq!(
+            version_precedence(pair[1], pair[0]),
+            Some(Greater),
+            "{pair:?}"
+        );
+    }
+    assert_eq!(version_precedence("1.0.0+build.1", "1.0.0"), Some(Equal));
+    assert_eq!(version_precedence("1.0", "1.0.0"), None);
+    assert_eq!(version_precedence("1.0.0", "v1.0.1"), None);
+}

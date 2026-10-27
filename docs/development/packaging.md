@@ -124,7 +124,7 @@ part of [G2-09](../quality/open-items-g1-g2.md), not a waiver of that gate.
 | Windows signing | Certificate thumbprint, digest algorithm, timestamp URL and custom signing command are explicitly empty. | Authenticode-sign and verify both the executable and NSIS installer. |
 | macOS trust | The complete app bundle is ad-hoc signed and its signature checked during packaging. Developer ID signing and notarization are not configured. | Sign with Developer ID, notarize, staple and verify on a clean host. |
 | Linux signing | Packages and repository metadata are unsigned. | Choose the release channel and signing method, then verify on each supported distribution. |
-| Updater | Updater artifacts are disabled; no endpoint, public key or private key is configured. | After Q-19/Q-34, retain lab approval and verified pre-update snapshot requirements (NFR-24). |
+| Updater | Accepted in [ADR 0020](../architecture/decisions/0020-in-app-updates.md). The `nightly` and `release` channels build Minisign-signed update artifacts and publish `latest.json` (and `nightly.json`) once the signing secret and public-key variable are set ([in-app updates](releases.md#in-app-updates)). Local and `artifacts` builds have no updater. The manifest is neither signed nor expiring. | Configure the signing secret and public key; retain lab approval and the verified pre-update snapshot (NFR-24); add a signed, expiring manifest and freeze detection (NFR-21, G2-03); qualify installation on each OS, including macOS. |
 | File associations | None. | Add only if a user workflow and safe parser boundary are approved. |
 
 Before conveying a covered binary, prepare and verify its matching corresponding

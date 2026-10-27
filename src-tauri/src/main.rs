@@ -15,6 +15,10 @@
 //!   restarts the app through the same exit path.
 //! - Report windows show a stored PDF and nothing else; they have no capability
 //!   ([`report_window`]).
+//! - Builds that CI configured for updates check, download and install signed updates from
+//!   the project's GitHub releases on request ([`updater`], ADR 0020); installing restarts
+//!   the app through the same exit path, or shuts the engine down before the Windows
+//!   installer replaces the app.
 //! - Closing the main window or quitting asks the engine what is still pending; if anything
 //!   is, a native dialog off the main thread offers Cancel or "Quit anyway", which is
 //!   recorded (REQ-OPS-013, §6.3). A second close or quit request while the dialog is
@@ -27,6 +31,7 @@ mod logging;
 mod report_window;
 mod security_key_operations;
 mod startup;
+mod updater;
 
 use std::path::Path;
 use std::sync::{Arc, Mutex, PoisonError};
@@ -74,13 +79,10 @@ impl QuitState {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let app = tauri::Builder::default()
-        // Registered first so a second launch exits before it opens anything (REQ-OPS-013).
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            focus_main_window(app);
-        }))
-        // Dialogs open from Rust only; no `dialog:` permission is granted to the UI (M4 D10).
-        .plugin(tauri_plugin_dialog::init())
+    let context = context();
+    let updates = updater::Updates::new(context.config());
+    let app = plugins(&updates)
+        .manage(updates)
         .manage(ReportWindows::default())
         .manage(security_key_operations::SecurityKeyOperations::default())
         .register_uri_scheme_protocol(report_window::SCHEME, report_window::serve)
@@ -134,7 +136,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             _ => {}
         })
         .invoke_handler(commands::handler())
-        .build(context())?;
+        .build(context)?;
     app.run(|app, event| match event {
         RunEvent::ExitRequested { api, .. } if !may_exit(app) => api.prevent_exit(),
         RunEvent::Exit => {
@@ -151,6 +153,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         _ => {}
     });
     Ok(())
+}
+
+/// The shell's plugins. The updater is registered only in builds CI configured for updates
+/// (ADR 0020); its commands are never granted to the UI, and the update adapters call it
+/// from Rust.
+fn plugins(updates: &updater::Updates) -> tauri::Builder<tauri::Wry> {
+    let builder = tauri::Builder::default()
+        // Registered first so a second launch exits before it opens anything (REQ-OPS-013).
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            focus_main_window(app);
+        }))
+        // Dialogs open from Rust only; no `dialog:` permission is granted to the UI (M4 D10).
+        .plugin(tauri_plugin_dialog::init());
+    if updates.configured() {
+        builder.plugin(tauri_plugin_updater::Builder::new().build())
+    } else {
+        builder
+    }
 }
 
 /// Starts the engine on the chosen installation's data folder, after deleting the demo
