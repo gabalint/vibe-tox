@@ -1,12 +1,11 @@
 import type { TextFormat } from "@/components/FormFields";
-import { TextInput } from "@/components/FormFields";
+import { NPI_FORMAT, TextInput } from "@/components/FormFields";
 import { ReasonField } from "@/components/ReasonField";
 import type { LaboratoryProfileView } from "@/generated/LaboratoryProfileView";
 import type { SetLaboratoryProfile } from "@/generated/SetLaboratoryProfile";
 import { CommandDialog } from "@/lib/CommandDialog";
 import { optionalText } from "@/lib/choices";
 import { GET_LABORATORY_PROFILE } from "@/lib/commands";
-import { NPI_FORMAT } from "../formats";
 
 const CLIA_FORMAT: TextFormat = {
   pattern: /^\d{2}D\d{7}$/,

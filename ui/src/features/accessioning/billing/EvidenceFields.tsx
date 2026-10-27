@@ -1,6 +1,12 @@
 import { useWatch } from "react-hook-form";
 import { FieldGrid } from "@/components/Form";
-import { ChoiceInput, DATE_FORMAT, RecordPickerInput, TextInput } from "@/components/FormFields";
+import {
+  ChoiceInput,
+  DATE_FORMAT,
+  NPI_FORMAT,
+  RecordPickerInput,
+  TextInput,
+} from "@/components/FormFields";
 import type { PatientCoverage } from "@/generated/PatientCoverage";
 import { EVIDENCE_KINDS, EVIDENCE_STATUSES } from "./evidenceValues";
 
@@ -35,7 +41,7 @@ export function EvidenceFields({ coverages }: { coverages: PatientCoverage[] }) 
             label: `${coverage.payerName} — ${coverage.memberId ?? "No member identifier"}`,
           }))}
         />
-        <TextInput name="providerNpi" label="Related provider NPI" />
+        <TextInput name="providerNpi" label="Related provider NPI" format={NPI_FORMAT} />
         <TextInput
           name="units"
           label="Authorized units"

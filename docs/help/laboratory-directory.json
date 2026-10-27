@@ -84,7 +84,7 @@
           "name": "Billing NPI",
           "meaning": "Performing laboratory’s billing identifier.",
           "values": "Ten digits with a valid NPI check digit, or blank.",
-          "rules": "Optional in the profile; other billing workflows may flag missing billing identity."
+          "rules": "Optional in the profile; other billing workflows may flag missing billing identity. A value that is not exactly ten digits is refused with “The NPI must be exactly 10 digits.”; ten digits whose last (check) digit does not match the other nine is refused with “This NPI is not valid. Please check the number for a typo.”"
         },
         {
           "name": "Tax ID",
@@ -131,7 +131,7 @@
       "troubleshooting": [
         {
           "problem": "Time zone or NPI is refused",
-          "recovery": "Use a recognized IANA name or the supplied ten-digit NPI with correct check digit; do not substitute a guessed value."
+          "recovery": "Use a recognized IANA name or the supplied ten-digit NPI with correct check digit; do not substitute a guessed value. “This NPI is not valid” means the ten digits fail the check-digit test, usually a typo: compare each digit with the source."
         },
         {
           "problem": "Another profile version was saved meanwhile",
@@ -386,8 +386,8 @@
         {
           "name": "NPI",
           "meaning": "Practitioner identifier used to distinguish ordering professionals.",
-          "values": "Exactly ten digits with a valid NPI check digit.",
-          "rules": "Required and unique. Format validation does not verify licensing, enrollment or authorization to order."
+          "values": "Exactly ten digits with a valid NPI check digit. The field hint reads “10 digits. The last digit is checked automatically.”",
+          "rules": "Required and unique. Fewer or more than ten digits, or any other character, shows “The NPI must be exactly 10 digits.” Ten digits whose last (check) digit does not match the other nine shows “This NPI is not valid. Please check the number for a typo.” Format validation does not verify licensing, enrollment or authorization to order."
         },
         {
           "name": "Family name",
@@ -468,8 +468,8 @@
           "recovery": "Open the existing practitioner and confirm identity."
         },
         {
-          "problem": "NPI check fails",
-          "recovery": "Check the supplied digits with the source; a ten-digit string can still have an invalid check digit."
+          "problem": "This NPI is not valid. Please check the number for a typo.",
+          "recovery": "The number has ten digits, but its last (check) digit does not match the other nine, which usually means a mistyped or swapped digit. Compare each digit with the source and correct it; do not change digits only to make the check pass."
         },
         {
           "problem": "The record changed, or a retired source is refused for a new order",
