@@ -249,6 +249,11 @@ pub const COMMANDS: &[CommandSpec] = &[
     crate::commands::reporting::REPLACE_DELIVERY_DESTINATION,
     crate::commands::reporting::RETIRE_DELIVERY_DESTINATION,
     crate::commands::reporting::CLOSE_PRESERVATION_INCIDENT,
+    crate::commands::report_layouts::GET_REPORT_LAYOUTS,
+    crate::commands::report_layouts::PREVIEW_REPORT_LAYOUT,
+    crate::commands::report_layouts::DRAFT_REPORT_LAYOUT,
+    crate::commands::report_layouts::APPROVE_REPORT_LAYOUT,
+    crate::commands::report_layouts::REJECT_REPORT_LAYOUT,
     // reporting: end
     crate::commands::billing_intake::GET_PATIENT_BILLING_PROFILE,
     crate::commands::billing_intake::SET_PATIENT_BILLING_PROFILE,

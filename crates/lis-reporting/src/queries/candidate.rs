@@ -7,13 +7,14 @@ use rusqlite::Connection;
 
 use crate::error::ReportingError;
 use crate::gates;
+use crate::layouts::ReportLayout;
 use crate::model::{CandidateId, CandidateState, LineDisposition};
 use crate::policy::CANDIDATE_MAX_AGE;
 use crate::repo::candidates::{self, CandidateRow};
 use crate::repo::reports;
 use crate::snapshot::{self, Built, ReportSnapshot, sha256_hex};
 use crate::stored::{StoredContent, stored_content};
-use crate::views::{CandidateView, DispositionView, ReportUserView};
+use crate::views::{CandidateView, DispositionView, ReportUserView, RevisionProvenance};
 
 /// One candidate. Report content: an audited read (`release_reports`).
 pub fn get_candidate(
@@ -164,6 +165,27 @@ pub(crate) fn dispositions(
         gates: Vec::new(),
     });
     components.chain(triggers).collect()
+}
+
+/// How a rendered candidate was produced: its layout, template, renderer,
+/// fonts and digests (REQ-RPT-007, NFR-07).
+pub(crate) fn provenance(candidate: &CandidateRow) -> Result<RevisionProvenance, ReportingError> {
+    let rendered = candidate
+        .render
+        .as_ref()
+        .ok_or(ReportingError::Inconsistent("released candidate artifact"))?;
+    Ok(RevisionProvenance {
+        layout_name: ReportLayout::of_template(&candidate.template_id, candidate.template_version)
+            .map(|layout| layout.name().to_owned()),
+        template_id: candidate.template_id.clone(),
+        template_version: candidate.template_version,
+        template_sha256: rendered.template_sha256.clone(),
+        renderer_version: rendered.renderer_version.clone(),
+        content_sha256: candidate.content_sha256.clone(),
+        data_sha256: candidate.data_sha256.clone(),
+        artifact_sha256: rendered.artifact_sha256.clone(),
+        fonts: serde_json::from_str(&rendered.fonts_json)?,
+    })
 }
 
 /// A user's display name, for record views.

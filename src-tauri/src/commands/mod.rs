@@ -36,6 +36,7 @@ mod analytical;
 mod results;
 // results: end
 // reporting: begin
+mod report_layouts;
 mod reporting;
 // reporting: end
 // billing: begin

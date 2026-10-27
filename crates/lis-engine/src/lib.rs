@@ -155,18 +155,21 @@ pub use lis_results::{
 // reporting: begin
 mod report_reads;
 mod report_rendering;
+pub use commands::report_layouts::PreviewReportLayoutInput;
 pub use commands::reporting::{
     GetReportCandidateInput, GetReportInput, GetReportRevisionInput, GetReportWorkspaceInput,
 };
 pub use lis_reporting::{
-    AddDeliveryObligationInput, CandidateView, ClosePreservationIncidentInput,
-    CreateDeliveryDestinationInput, DeliveryQueueFilter, DeliveryQueuePage, DestinationState,
-    DestinationView, ExportReportPdfInput, ImpactView, ListDeliveryDestinationsInput,
-    ListDeliveryObligationsInput, ListReportsInput, ObligationView, PrepareReportCandidateInput,
-    PreservationIncidentView, RecordDeliveryAttemptInput, RecordImpactAssessmentInput,
-    RedirectDeliveryObligationInput, ReleaseReportInput, ReplaceDeliveryDestinationInput,
-    ReportDetail, ReportListFilter, ReportSummary, ReportWorkspace, RetireDeliveryDestinationInput,
-    RevisionDetail, RevisionSummary, VerifyDeliveryDestinationInput, WithdrawReportInput,
+    AddDeliveryObligationInput, ApproveReportLayoutInput, CandidateView,
+    ClosePreservationIncidentInput, CreateDeliveryDestinationInput, DeliveryQueueFilter,
+    DeliveryQueuePage, DestinationState, DestinationView, DraftReportLayoutInput,
+    ExportReportPdfInput, ImpactView, ListDeliveryDestinationsInput, ListDeliveryObligationsInput,
+    ListReportsInput, ObligationView, PrepareReportCandidateInput, PreservationIncidentView,
+    RecordDeliveryAttemptInput, RecordImpactAssessmentInput, RedirectDeliveryObligationInput,
+    RejectReportLayoutInput, ReleaseReportInput, ReplaceDeliveryDestinationInput, ReportDetail,
+    ReportLayoutsView, ReportListFilter, ReportSummary, ReportWorkspace,
+    RetireDeliveryDestinationInput, RevisionDetail, RevisionSummary,
+    VerifyDeliveryDestinationInput, WithdrawReportInput,
 };
 pub use report_rendering::ExportedReportFile;
 // reporting: end

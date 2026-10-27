@@ -122,6 +122,7 @@ function Revision({ detail }: { detail: RevisionDetail }) {
                 </>
               ),
             },
+            { label: "Layout", value: provenance.layoutName ?? "Earlier template, before layouts" },
             {
               label: "Template",
               value: `${provenance.templateId} version ${provenance.templateVersion}, renderer ${provenance.rendererVersion}`,

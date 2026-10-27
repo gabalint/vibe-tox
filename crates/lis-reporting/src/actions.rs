@@ -34,5 +34,11 @@ pub const ADD_OBLIGATION: &str = "report.add_obligation";
 pub const REDIRECT_OBLIGATION: &str = "report.redirect_obligation";
 /// An attested delivery attempt.
 pub const RECORD_DELIVERY: &str = "report.record_delivery";
+/// A report layout drafted (REQ-RPT-007).
+pub const DRAFT_LAYOUT: &str = "report.draft_layout";
+/// A drafted report layout approved; it becomes the active layout.
+pub const APPROVE_LAYOUT: &str = "report.approve_layout";
+/// A drafted report layout rejected with a reason.
+pub const REJECT_LAYOUT: &str = "report.reject_layout";
 /// A PDF export (security stream).
 pub const EXPORT_PDF: &str = "report.export_pdf";

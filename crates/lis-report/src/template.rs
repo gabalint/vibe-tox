@@ -35,6 +35,30 @@ pub(crate) const TEMPLATES: &[Template] = &[
         source: include_str!("../templates/tox-report/v3.typ"),
     },
     Template {
+        id: "tox-report-standard",
+        version: 1,
+        source: concat!(
+            include_str!("../templates/tox-layouts/contract-v1.typ"),
+            include_str!("../templates/tox-layouts/standard-v1.typ"),
+        ),
+    },
+    Template {
+        id: "tox-report-compact",
+        version: 1,
+        source: concat!(
+            include_str!("../templates/tox-layouts/contract-v1.typ"),
+            include_str!("../templates/tox-layouts/compact-v1.typ"),
+        ),
+    },
+    Template {
+        id: "tox-report-results-first",
+        version: 1,
+        source: concat!(
+            include_str!("../templates/tox-layouts/contract-v1.typ"),
+            include_str!("../templates/tox-layouts/results-first-v1.typ"),
+        ),
+    },
+    Template {
         id: "report-notice",
         version: 1,
         source: include_str!("../templates/report-notice/v1.typ"),
@@ -81,6 +105,21 @@ mod tests {
                 "tox-report",
                 3,
                 "8096b8f1de0b336cb91bba286b38164dcc781302c9f07663f76b19f27ef397d9",
+            ),
+            (
+                "tox-report-standard",
+                1,
+                "f7bd2101200eb3c7d4fc0bf0e525722a20e43af9b25b798b8948d4e67e3a7406",
+            ),
+            (
+                "tox-report-compact",
+                1,
+                "ec1885839b3657efd34d093e7810039433bdb1818453ac0ea41160af13a84861",
+            ),
+            (
+                "tox-report-results-first",
+                1,
+                "ba4491dab1ff43f86b86366ab9d4585d529dcac023a110ec61d1a84c37171a24",
             ),
             (
                 "report-notice",

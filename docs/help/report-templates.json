@@ -1,0 +1,154 @@
+{
+  "id": "report-templates",
+  "title": "Report templates",
+  "summary": "Choose the laboratory's report layout, preview it on synthetic data, and approve or reject a drafted layout.",
+  "reviewedOn": "2026-10-27",
+  "routes": ["/reports/templates"],
+  "sections": [
+    {
+      "title": "How layouts work",
+      "paragraphs": [
+        "The laboratory has one active report layout. It decides how a released report's PDF is arranged: where the header, the patient, order and specimen details, and the results appear. The content is the same in every layout: patient, order, specimen, every result with its units and limits, the engine's comparison wording, notes, medications as supplied, tests not reported, specimen validity and the person who prepared the release.",
+        "A change of layout is a draft until a quality manager approves it. An administrator saves a ready-made layout as a draft; a quality manager previews it and approves it, or rejects it with a reason. Only one draft can wait at a time.",
+        "Every candidate records the layout in force when it is prepared, and its PDF is stored once. Approving another layout never changes a released report, its PDF or a candidate already prepared. The layout used is shown on each released revision under Layout.",
+        "In every layout except Classic, Meets cutoff is shown as a red label and Does not meet cutoff as a green label; Not classifiable is grey. The engine sends both the wording and its code; the layout only chooses the colour and never interprets a result."
+      ]
+    },
+    {
+      "title": "Previews",
+      "paragraphs": [
+        "Preview opens the layout as a PDF in a report window. It is filled with one built-in synthetic report (TEST LAB, patient Test, Patient) and never with laboratory data. Every page is marked PREVIEW – NOT A REPORT. A preview is not stored and is not a report."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Preview the draft before deciding, and check that the report number, revision, completeness, report type, patient identity and every result with its limits remain easy to find. After approval, prepare a candidate for a synthetic or routine specimen and check its PDF before release.",
+        "Give a rejection reason that the administrator can act on, such as which part of the layout is hard to read."
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/reports/templates/ReportTemplatesPage.tsx",
+    "ui/src/features/reports/templates/CurrentLayouts.tsx",
+    "ui/src/features/reports/templates/LayoutCards.tsx",
+    "ui/src/features/reports/templates/LayoutVersions.tsx",
+    "ui/src/features/reports/templates/labels.ts",
+    "crates/lis-reporting/src/layouts.rs",
+    "crates/lis-reporting/src/commands/layouts.rs",
+    "crates/lis-reporting/src/queries/layouts.rs",
+    "crates/lis-reporting/migrations/0006_report_layouts.sql",
+    "crates/lis-engine/src/commands/report_layouts.rs",
+    "crates/lis-report/src/preview.rs",
+    "crates/lis-report/templates/tox-layouts/contract-v1.typ",
+    "crates/lis-report/templates/preview-marking/v1.typ"
+  ],
+  "pages": [
+    {
+      "title": "Report templates",
+      "routes": ["/reports/templates"],
+      "purpose": "See which report layout is active, compare the ready-made layouts with a preview, save a layout as a draft and approve or reject the draft.",
+      "access": "Administrators (manage configuration) and quality managers (manage quality) open the page and preview layouts. Only manage configuration saves a draft; only manage quality approves or rejects one. The person who drafted a layout approves it only when the laboratory's separation-of-duties policy allows configuration self-approval, and then must confirm it.",
+      "fields": [
+        {
+          "name": "Status (page header)",
+          "meaning": "The layout reports use now and any draft waiting for approval.",
+          "values": "Active: <layout>, or Active: <layout>, <layout> waiting for approval.",
+          "rules": "Read-only; changes when a draft is saved, approved or rejected."
+        },
+        {
+          "name": "Active layout: Layout / Version",
+          "meaning": "The layout every candidate prepared from now on uses.",
+          "values": "Standard, Compact, Results first or Classic. Version N for an approved version; Built-in default, never approved while the laboratory has approved none (the Classic layout).",
+          "rules": "Read-only."
+        },
+        {
+          "name": "Active layout: Approved by / Approved",
+          "meaning": "Who approved the active version and when.",
+          "values": "The approver's display name and the time in the laboratory's time zone.",
+          "rules": "Shown only for an approved version."
+        },
+        {
+          "name": "Waiting for approval: Layout / Version / Drafted by / Drafted",
+          "meaning": "The draft that a quality manager must decide.",
+          "values": "Layout name, version number, the administrator's display name and the draft time.",
+          "rules": "The section is shown only while a draft exists. A draft affects no report."
+        },
+        {
+          "name": "Layouts (cards)",
+          "meaning": "The ready-made layouts: a thumbnail of the first page of its preview, its name and a short description.",
+          "values": "Standard: a header band with the laboratory and the report number, Patient, Order and Specimen in three cards, a results table and the preparation details. Compact: a dense report meant for one page, with a patient strip at the top and a results table. Results first: the results at the top as large cards, with the order and specimen details after them. Classic: the original single-column layout.",
+          "rules": "A card is marked Active or Waiting for approval when it is the active layout or the draft. Long reports can still run to more pages in any layout."
+        },
+        {
+          "name": "History",
+          "meaning": "Every drafted layout version, newest first.",
+          "values": "Version, Layout, Status (Waiting for approval, Active, Superseded, Rejected), Drafted (who and when), Approved or rejected (who and when, or Not yet) and Rejection reason.",
+          "rules": "Read-only. Versions are never deleted. An approval supersedes the previous active version."
+        },
+        {
+          "name": "Reason (Reject dialog)",
+          "meaning": "Why the draft is rejected.",
+          "values": "Free text, up to 1,000 characters.",
+          "rules": "Required. Kept with the version and in the audit trail."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Preview",
+          "does": "Opens the layout as a PDF on built-in synthetic data in a report window, marked PREVIEW – NOT A REPORT on every page.",
+          "availableWhen": "Always on this page: on the active layout, the draft and every card.",
+          "result": "Nothing is stored or audited as a report; no laboratory data is used. If the window does not open, the refusal is shown at the top of the page."
+        },
+        {
+          "name": "Save as draft",
+          "does": "After confirmation, records the layout as a draft waiting for approval.",
+          "availableWhen": "Manage configuration, no draft waiting, and the card is not the active layout.",
+          "result": "The draft appears under Waiting for approval and in History. Reports keep using the active layout. Recorded in the audit trail as report.draft_layout."
+        },
+        {
+          "name": "Approve (Approve layout)",
+          "does": "After confirmation, makes the draft the active layout and supersedes the previous active version.",
+          "availableWhen": "Manage quality, while a draft waits. The draft's author must be allowed configuration self-approval by the laboratory's separation-of-duties policy and confirm it; otherwise a second person must approve.",
+          "result": "Candidates prepared from now on use the layout. Released reports, their PDFs and candidates already prepared are unchanged. Recorded as report.approve_layout, marked as a self-approval when the author approved."
+        },
+        {
+          "name": "Reject (Reject layout)",
+          "does": "Rejects the draft with a reason.",
+          "availableWhen": "Manage quality, while a draft waits.",
+          "result": "The active layout stays in use; the draft is kept in History as Rejected with the reason. Recorded as report.reject_layout. A new draft can then be saved."
+        }
+      ],
+      "restrictions": [
+        "Only the ready-made layouts can be chosen; their arrangement, colours and wording cannot be edited here.",
+        "There is one active layout for the whole laboratory; it cannot differ by client or test.",
+        "Approving a layout never re-renders or redates an issued report. A report already prepared as a candidate keeps the layout it recorded; prepare a new candidate to use the new layout before release.",
+        "A preview uses fixed synthetic data and is not evidence that the layout suits every report the laboratory issues."
+      ],
+      "workflow": [
+        "Open Reports › Report templates and preview the layouts.",
+        "As an administrator, choose Save as draft on the layout to propose.",
+        "As a quality manager, open the page, Preview the draft under Waiting for approval, then Approve or Reject with a reason.",
+        "After approval, prepare a candidate and check the PDF. On a released revision, the Layout fact names the layout it was printed with."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Save as draft is not shown.",
+          "recovery": "A draft is already waiting, the card is the active layout, or you lack manage configuration. Ask a quality manager to decide the waiting draft."
+        },
+        {
+          "problem": "Approve is refused because a second person is required.",
+          "recovery": "You drafted this layout and the laboratory's separation-of-duties policy does not allow configuration self-approval. Ask another quality manager to approve it."
+        },
+        {
+          "problem": "The record changed since it was shown.",
+          "recovery": "Someone decided or replaced the draft meanwhile. Reload the page and review the current draft before acting."
+        },
+        {
+          "problem": "A new report still uses the previous layout.",
+          "recovery": "Its candidate was prepared before the approval. Prepare a new candidate; the released revision's Layout fact shows the layout used."
+        }
+      ]
+    }
+  ]
+}

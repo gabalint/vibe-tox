@@ -12,7 +12,7 @@ use crate::delivery::labels::export_label;
 use crate::error::ReportingError;
 use crate::impact;
 use crate::model::{ReportId, ReportRevisionId, RevisionAvailability};
-use crate::queries::candidate::user_view;
+use crate::queries::candidate::{provenance, user_view};
 use crate::queries::delivery::DeliveryContext;
 use crate::queries::incidents::report_incidents;
 use crate::repo::candidates;
@@ -22,7 +22,7 @@ use crate::repo::reports::{self, RevisionRow};
 use crate::stored::stored_content;
 use crate::views::{
     ExportView, ImpactAssessmentView, ImpactReasonView, ImpactView, ObligationView, ReportDetail,
-    ReportSummary, RevisionDetail, RevisionProvenance, RevisionSummary, WithdrawalView,
+    ReportSummary, RevisionDetail, RevisionSummary, WithdrawalView,
 };
 
 /// Current report number for an audit record, including the revision number
@@ -267,26 +267,13 @@ pub fn get_revision(
         .ok_or(ReportingError::Inconsistent("revision report"))?;
     let candidate = candidates::candidate(conn, revision.candidate_id)?
         .ok_or(ReportingError::Inconsistent("released candidate"))?;
-    let rendered = candidate
-        .render
-        .as_ref()
-        .ok_or(ReportingError::Inconsistent("released candidate artifact"))?;
     let content = stored_content(conn, &candidate)?.data;
     Ok(RevisionDetail {
         report_id: report.id,
         report_number: report.report_number,
         summary: revision_summary(conn, &revision)?,
         content,
-        provenance: RevisionProvenance {
-            template_id: candidate.template_id.clone(),
-            template_version: candidate.template_version,
-            template_sha256: rendered.template_sha256.clone(),
-            renderer_version: rendered.renderer_version.clone(),
-            content_sha256: candidate.content_sha256.clone(),
-            data_sha256: candidate.data_sha256.clone(),
-            artifact_sha256: rendered.artifact_sha256.clone(),
-            fonts: serde_json::from_str(&rendered.fonts_json)?,
-        },
+        provenance: provenance(&candidate)?,
     })
 }
 

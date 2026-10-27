@@ -3,4 +3,9 @@
 /**
  * How an issued revision was produced.
  */
-export type RevisionProvenance = { templateId: string, templateVersion: number, templateSha256: string, rendererVersion: string, contentSha256: string, dataSha256: string, artifactSha256: string, fonts: Array<string>, };
+export type RevisionProvenance = { 
+/**
+ * The report layout the template belongs to (REQ-RPT-007); `None` for
+ * templates issued before layouts were offered.
+ */
+layoutName: string | null, templateId: string, templateVersion: number, templateSha256: string, rendererVersion: string, contentSha256: string, dataSha256: string, artifactSha256: string, fonts: Array<string>, };

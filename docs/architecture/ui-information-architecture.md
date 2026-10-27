@@ -22,7 +22,7 @@ The navigation and route definitions are maintained in [`navigation.ts`](../../u
 | Front desk | Patients, Orders, Incomplete identity intake, Storage excursions, Container lookup |
 | Bench | Worklist, Runs, Bench setup |
 | Review | Result review, Result imports |
-| Reports | Release queue, Delivery, Reports |
+| Reports | Release queue, Delivery, Reports, Report templates |
 | Billing | Billing follow-up, Billing work, Billing class mappings |
 | Quality and audit | Audit trail, Audit anchors |
 | Test catalog | Tests and panels, Methods, Analytes, Specimen types |

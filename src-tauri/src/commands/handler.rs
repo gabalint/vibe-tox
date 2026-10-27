@@ -3,8 +3,8 @@
 use super::{
     analytical, anchors, app_info, audit, backup, billing, billing_intake, catalog, catalog_review,
     collection_corrections, demo, file_templates, identity, interfaces, listeners, operations,
-    orders, reporting, result_files, results, security_keys, session, specimens, users,
-    work_queues,
+    orders, report_layouts, reporting, result_files, results, security_keys, session, specimens,
+    users, work_queues,
 };
 
 use tauri::Runtime;
@@ -239,6 +239,11 @@ pub(crate) fn handler<R: Runtime>() -> impl Fn(Invoke<R>) -> bool + Send + Sync 
         reporting::replace_delivery_destination,
         reporting::retire_delivery_destination,
         reporting::close_preservation_incident,
+        report_layouts::get_report_layouts,
+        report_layouts::preview_report_layout,
+        report_layouts::draft_report_layout,
+        report_layouts::approve_report_layout,
+        report_layouts::reject_report_layout,
         // reporting: end
         billing_intake::get_patient_billing_profile,
         billing_intake::set_patient_billing_profile,
