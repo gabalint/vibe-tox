@@ -9,6 +9,10 @@
   font-weight: var(--font-weight-semibold);
 }
 
+.group[data-invalid] > .legend {
+  color: var(--tone-danger-text);
+}
+
 .required {
   color: var(--tone-danger-text);
 }

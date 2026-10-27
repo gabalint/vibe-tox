@@ -90,6 +90,11 @@
   border-color: var(--tone-danger-border);
 }
 
+/* An invalid field's name turns red with its border and message, so it stands out in long forms. */
+.field[data-invalid] > .label {
+  color: var(--tone-danger-text);
+}
+
 .control[data-disabled] {
   background: var(--color-surface-sunken);
   cursor: not-allowed;
