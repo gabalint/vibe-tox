@@ -11,7 +11,6 @@ import {
   Text,
   Virtualizer,
 } from "react-aria-components";
-import findStyles from "@/components/FindField/FindField.module.css";
 import { useTypingPause } from "@/components/FindField/useTypingPause";
 import { FieldHelp } from "@/components/Form/FieldHelp";
 import { FieldLabel } from "@/components/Form/FieldLabel";
@@ -134,8 +133,8 @@ export function RecordPicker(props: RecordPickerProps) {
           onKeyDown={props.selectionMode === "multiple" ? keepSearchEnter : undefined}
           className={`${formStyles.control} ${styles.input}`}
         />
-        <Button className={findStyles.fieldButton}>
-          <ChevronDown aria-hidden="true" />
+        <Button className={styles.opener}>
+          <ChevronDown aria-hidden="true" className={selectStyles.chevron} />
         </Button>
       </div>
       <FieldHelp description={description} errorMessage={errorMessage} />

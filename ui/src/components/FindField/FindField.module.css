@@ -71,7 +71,7 @@
   appearance: none;
 }
 
-/* A small icon button inside a text field: Find's clear button and RecordPicker's opener. */
+/* A small icon button inside a text field: Find's clear button. */
 .fieldButton {
   position: absolute;
   right: var(--space-1);
