@@ -2,7 +2,7 @@
   "id": "result-review",
   "title": "Result review",
   "summary": "Inspect specimen results, their evidence and the reasons review may be blocked.",
-  "reviewedOn": "2026-10-15",
+  "reviewedOn": "2026-10-26",
   "routes": ["/review/queue", "/review/specimens/:specimenId"],
   "sections": [
     {
@@ -328,9 +328,9 @@
           "rules": "Add-on required; one eligible add-on is selected and shown read-only, otherwise choose from the list. No new order authority is created by this action."
         },
         {
-          "name": "Approve / Reject confirmation: Revisions reviewed",
+          "name": "Approve / Reject / Withdraw approval confirmation: Revisions reviewed",
           "meaning": "Lists the exact analyte values and revision numbers in the proposed decision.",
-          "values": "Every current result revision shown on the page.",
+          "values": "Approve lists only current revisions without a current approval; Reject and Withdraw approval list every current revision shown on the page.",
           "rules": "Read-only; this confirmation is not a per-line selection checklist."
         },
         {
@@ -397,15 +397,21 @@
         },
         {
           "name": "Approve results",
-          "does": "Confirms approval of the exact current revisions displayed.",
-          "availableWhen": "At least one current revision, review authority and all applicable gates pass.",
-          "result": "Records technical approval; it does not issue a report."
+          "does": "Confirms approval of the exact current revisions displayed that do not already have a current approval.",
+          "availableWhen": "Review authority and at least one current revision that is not yet approved, was rejected or whose approval is out of date; all applicable gates must pass. When every current revision is approved, the button is replaced by the note All current results are approved. Nothing new to review.",
+          "result": "Records technical approval; it does not issue a report. A repeat approval of already-approved revisions is refused and records nothing."
         },
         {
           "name": "Reject results",
           "does": "Records rejection of the exact displayed revisions with a reason.",
           "availableWhen": "At least one current revision and review authority; revisions have not changed.",
           "result": "Records the rejected review; no report is released."
+        },
+        {
+          "name": "Withdraw approval",
+          "does": "Replaces Reject results when every current revision is approved. Records a rejection of the exact displayed revisions with a required reason.",
+          "availableWhen": "Every current revision has a current approval and the user has review authority.",
+          "result": "The results return to review and cannot be released until approved again. A report already released is not changed."
         },
         {
           "name": "Run link / Previous / Next",

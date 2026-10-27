@@ -386,6 +386,71 @@ describe("SpecimenResultsPage (REQ-RES-001, REQ-RES-005)", {
     });
   });
 
+  it("approves only the revisions without a current approval", async () => {
+    const submit = vi.fn(() => ({}));
+    const partlyApproved: SpecimenResults = {
+      ...RESULTS,
+      lines: RESULTS.lines.map((line) =>
+        line.resultId === "result-2"
+          ? { ...line, reviewStatus: { status: "current", review_id: "r-1" } }
+          : line,
+      ),
+    };
+    const { user } = renderPage({
+      get_specimen_results: () => partlyApproved,
+      submit_technical_review: submit,
+    });
+    await user.click(await screen.findByRole("button", { name: "Approve results" }));
+    const confirm = await screen.findByRole("alertdialog", { name: "Approve these results" });
+    expect(within(confirm).getByText(/not approved again/)).toBeTruthy();
+    await user.click(within(confirm).getByRole("button", { name: "Approve results" }));
+    await screen.findByText("Technical review recorded");
+    expect(submit).toHaveBeenCalledWith({
+      input: {
+        specimenId: SPECIMEN_ID,
+        decision: "approved",
+        resultRevisionIds: ["revision-2"],
+        reason: null,
+      },
+    });
+  });
+
+  it("offers withdrawal, not a repeat approval, once every result is approved", async () => {
+    const submit = vi.fn(() => ({}));
+    const approved: SpecimenResults = {
+      ...RESULTS,
+      lines: RESULTS.lines.map((line) => ({
+        ...line,
+        reviewStatus: { status: "current", review_id: "r-1" },
+      })),
+    };
+    const { user } = renderPage({
+      get_specimen_results: () => approved,
+      submit_technical_review: submit,
+    });
+    expect(
+      await screen.findByText("All current results are approved. Nothing new to review."),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Approve results" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reject results" })).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Withdraw approval" }));
+    const confirm = await screen.findByRole("alertdialog", {
+      name: "Withdraw approval of these results",
+    });
+    expect(within(confirm).getByText(/cannot be released until/)).toBeTruthy();
+    await user.type(within(confirm).getByRole("textbox", { name: /Reason/ }), "Wrong method");
+    await user.click(within(confirm).getByRole("button", { name: "Withdraw approval" }));
+    await screen.findByText("Technical review recorded");
+    expect(submit).toHaveBeenCalledWith({
+      input: {
+        specimenId: SPECIMEN_ID,
+        decision: "rejected",
+        resultRevisionIds: ["revision-2", "revision-c1"],
+        reason: "Wrong method",
+      },
+    });
+  });
+
   it("lists the gate reasons when the engine blocks the review", async () => {
     const { user } = renderPage({
       submit_technical_review: () =>
