@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LotView } from "@/generated/LotView";
 import { expectNoA11yViolations } from "@/lib/test/a11y";
@@ -231,6 +231,39 @@ describe("BenchSetupPage (REQ-ANA-003, REQ-ANA-007)", { timeout: WALKTHROUGH_TIM
         testCodes: [{ sourceTestCode: "AMP", analyteId: ANALYTE.id }],
       },
     });
+  });
+
+  it("shows the engine's refusal of an empty test-code map on the Test codes list", async () => {
+    const message = "Map at least one source test code.";
+    const register = vi.fn(() =>
+      Promise.reject(
+        engineError("validation", "Check the highlighted fields.", {
+          fieldErrors: [{ field: "testCodes", code: "required", message }],
+        }),
+      ),
+    );
+    const { user } = renderPage("/bench/setup", ["manage_configuration"], {
+      register_source: register,
+    });
+    await openRow(user, INSTRUMENT.name);
+    await user.click(
+      within(panel(INSTRUMENT.name)).getByRole("button", { name: "Register source" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByRole("textbox", { name: /^Sender name/ }), "SYN-SENDER");
+    await user.type(within(dialog).getByRole("textbox", { name: /^Sender version/ }), "2.0");
+    await chooseWithKeyboard(user, /Sample ID is read from$/, "Specimen ID field");
+    await chooseWithKeyboard(
+      user,
+      /Corrected results$/,
+      "Corrections carry a corrected result status",
+    );
+    await chooseWithKeyboard(user, /Reports final concentration after dilution$/, "No");
+    await user.click(within(dialog).getByRole("button", { name: "Register source" }));
+    const list = await within(dialog).findByRole("group", { name: "Test codes" });
+    await waitFor(() => expect(list.getAttribute("aria-invalid")).toBe("true"));
+    expect(within(list).getByText(message)).toBeTruthy();
+    expect(register).toHaveBeenCalledOnce();
   });
 
   it("offers a result-file instrument a new file template instead of a source", async () => {

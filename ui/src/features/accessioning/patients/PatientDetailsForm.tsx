@@ -70,6 +70,7 @@ export function PatientDetailsForm({
           />
         </FieldGrid>
         <FieldList
+          name="identifiers"
           legend="Identifiers"
           emptyText="No identifiers added."
           items={identifiers.fields}

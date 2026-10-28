@@ -100,6 +100,7 @@ function TestCodeList() {
   }));
   return (
     <FieldList
+      name="testCodes"
       legend="Test codes"
       emptyText="No test codes mapped yet. Map at least one."
       items={codes.fields}

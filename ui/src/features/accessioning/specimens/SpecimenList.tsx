@@ -13,6 +13,7 @@ export function SpecimenList({ specimenTypes }: { specimenTypes: readonly Specim
   const typeOptions = specimenTypes.map((type) => ({ id: type.code, label: type.name }));
   return (
     <FieldList
+      name="specimens"
       legend="Specimens received"
       emptyText="Add each specimen received."
       items={specimens.fields}
