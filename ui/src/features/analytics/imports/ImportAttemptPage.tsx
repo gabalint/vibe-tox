@@ -66,7 +66,7 @@ export function ImportAttemptPage() {
             </Section>
             <ImportFile attempt={loaded} />
             {loaded.file === null ? (
-              <QuarantineItems items={loaded.quarantine} />
+              <QuarantineItems attempt={loaded} />
             ) : (
               <Tabs
                 label="Rows of the file"
@@ -77,7 +77,7 @@ export function ImportAttemptPage() {
                 {tab === "set-aside" ? (
                   <SetAsideRows rows={loaded.setAside} />
                 ) : (
-                  <QuarantineItems items={loaded.quarantine} />
+                  <QuarantineItems attempt={loaded} />
                 )}
               </Tabs>
             )}
@@ -97,7 +97,7 @@ const TABS = [
 function tabLabel(id: (typeof TABS)[number]["id"], attempt: ImportAttemptDetail): string {
   return id === "set-aside"
     ? `Set aside (${attempt.setAside.length})`
-    : `Quarantined (${attempt.quarantine.length})`;
+    : `Quarantined (${attempt.rowsQuarantined})`;
 }
 
 /** The attempt's counts; a file attempt adds the rows it counted or kept without a result. */

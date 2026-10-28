@@ -2,7 +2,7 @@
   "id": "result-imports",
   "title": "Result imports",
   "summary": "Account for received results and investigate rows that were not applied.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-10-29",
   "routes": ["/review/imports", "/review/imports/:importAttemptId/:tab?"],
   "sections": [
     {
@@ -211,14 +211,14 @@
         {
           "name": "Tabs",
           "meaning": "Separates rows requiring a decision from recorded exclusions.",
-          "values": "Quarantined and Set aside, each with a count.",
+          "values": "Quarantined and Set aside, each with a count. The Quarantined count matches the Outcome count.",
           "rules": "File attempts only. Analyzer-message attempts show quarantine directly."
         },
         {
           "name": "Quarantined: Record / Sample label / Test code / Value as received",
           "meaning": "Identifies the exact source evidence held back.",
           "values": "Row reference, source label/code, original value and units, or Not reported.",
-          "rules": "Read-only. Investigate identity before attempting any resolution."
+          "rules": "Read-only. Investigate identity before attempting any resolution. When the whole message or file was refused, its rows count as quarantined but are not listed one by one: the section says the whole message or file was held, with the row count, and points to Message failure or File failure. Fix that cause, then use Retry import."
         },
         {
           "name": "Why quarantined",

@@ -124,6 +124,24 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     expect(screen.getByText("No rows were quarantined.")).toBeTruthy();
   });
 
+  it("says the whole message was held when it was refused, not that no rows were", async () => {
+    const refused: ImportAttemptDetail = {
+      ...DETAIL,
+      outcome: "quarantined",
+      failureCode: "unregistered_source",
+      rowsTotal: 3,
+      rowsNew: 0,
+      rowsQc: 0,
+      rowsQuarantined: 3,
+      quarantine: [],
+    };
+    renderPage(`/review/imports/${ATTEMPT_ID}`, { get_import_attempt: () => refused });
+    expect(
+      await screen.findByText("The whole message was held: 3 rows. See Message failure above."),
+    ).toBeTruthy();
+    expect(screen.queryByText("No rows were quarantined.")).toBeNull();
+  });
+
   it("says when more exist than are shown", async () => {
     const many = Array.from({ length: 201 }, (_, index) => ({
       ...DETAIL,
