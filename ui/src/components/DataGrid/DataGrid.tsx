@@ -51,8 +51,16 @@ export interface DataGridColumn<Row extends RowData> {
   id: string;
   header: string;
   cell: (row: Row) => ReactNode;
-  /** The value to sort by; columns without one are not sortable. */
-  sortValue?: (row: Row) => string | number;
+  /**
+   * The value to sort by; columns without one are not sortable. Rows whose value is
+   * `undefined` stay at the bottom in either direction.
+   */
+  sortValue?: (row: Row) => string | number | undefined;
+  /**
+   * Sorts the list by this column when it first shows, instead of the engine's order. A
+   * click on the header then turns the direction around. Set on one column at most.
+   */
+  defaultSort?: "asc" | "desc";
   /** Fixed width in pixels; other columns share the remaining space. */
   width?: number;
   /**
@@ -74,7 +82,10 @@ interface DataGridProps<Row extends RowData> {
   label: string;
   /** Keep stable between renders (module constant or `useMemo`). */
   columns: readonly DataGridColumn<Row>[];
-  /** Keep stable between renders; the engine's order is shown until a column is sorted. */
+  /**
+   * Keep stable between renders; the engine's order is shown until a column is sorted,
+   * unless a column has a `defaultSort`.
+   */
   rows: readonly Row[];
   getRowId: (row: Row) => string;
   /**
@@ -159,7 +170,13 @@ function useGridModel<Row extends RowData>(
   scrollRef: RefObject<HTMLDivElement | null>,
 ) {
   const { columns, rows, getRowId, onRowAction, rowActions } = props;
-  const table = useTable({ features, columns: useColumnDefs(columns), data: rows, getRowId });
+  const table = useTable({
+    features,
+    columns: useColumnDefs(columns),
+    data: rows,
+    getRowId,
+    initialState: { sorting: initialSorting(columns) },
+  });
   const sortedRows = table.getRowModel().rows;
   const rowIds = useMemo(() => sortedRows.map((row) => row.id), [sortedRows]);
   const listed = useListedSelection(props.bulk, rowIds);
@@ -253,9 +270,21 @@ function useColumnDefs<Row extends RowData>(columns: readonly DataGridColumn<Row
 function toColumnDef<Row extends RowData>(
   column: DataGridColumn<Row>,
 ): ColumnDef<typeof features, Row> {
-  const { id, header, sortValue } = column;
+  const { id, header, sortValue, defaultSort } = column;
   if (sortValue === undefined) return { id, header, enableSorting: false };
-  return { id, header, accessorFn: sortValue, sortFn: "alphanumeric", sortDescFirst: false };
+  return {
+    id,
+    header,
+    accessorFn: sortValue,
+    sortFn: "alphanumeric",
+    sortDescFirst: defaultSort === "desc",
+    sortUndefined: "last",
+  };
+}
+
+function initialSorting<Row extends RowData>(columns: readonly DataGridColumn<Row>[]) {
+  const column = columns.find((candidate) => candidate.defaultSort !== undefined);
+  return column ? [{ id: column.id, desc: column.defaultSort === "desc" }] : [];
 }
 
 function useRowVirtualizer(count: number, scrollRef: RefObject<HTMLDivElement | null>) {

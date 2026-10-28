@@ -13,6 +13,12 @@ function renderPage(listQueues: () => unknown) {
   return renderRoutes([{ path: "/work-queues", element: <WorkQueuesPage /> }], "/work-queues");
 }
 
+const queueOrder = () =>
+  screen
+    .getAllByRole("row")
+    .slice(1)
+    .map((row) => row.querySelector('[role="gridcell"]')?.textContent);
+
 describe("WorkQueuesPage (REQ-OPS-004)", () => {
   beforeEach(() => {
     mockGridLayout();
@@ -38,6 +44,32 @@ describe("WorkQueuesPage (REQ-OPS-004)", () => {
     await expectNoA11yViolations(container, { wholePage: true });
     await openRowWithEnter(user, "3");
     expect(await screen.findByText("Navigated to /work-queues/review_ready")).toBeTruthy();
+  });
+
+  it("lists the most recent work first, queues with nothing waiting last, and turns on click", async () => {
+    const older = { ...REVIEW_QUEUE, queue: "qc_review", label: "QC requiring review" };
+    const newer = {
+      ...REVIEW_QUEUE,
+      queue: "import_quarantine",
+      label: "Open import quarantine",
+      oldestSince: "2026-10-13T11:00:00Z",
+    };
+    const { user } = renderPage(() => [LABEL_QUEUE, older, newer]);
+    expect(await screen.findByRole("gridcell", { name: "Reprint" })).toBeTruthy();
+    const header = screen.getByRole("columnheader", { name: "Oldest item waiting" });
+    expect(header.getAttribute("aria-sort")).toBe("descending");
+    expect(queueOrder()).toEqual([
+      "Open import quarantine",
+      "QC requiring review",
+      "Label print failures",
+    ]);
+    await user.click(header);
+    expect(header.getAttribute("aria-sort")).toBe("ascending");
+    expect(queueOrder()).toEqual([
+      "QC requiring review",
+      "Open import quarantine",
+      "Label print failures",
+    ]);
   });
 
   it("opens a queue with a single click, with no usage hint", async () => {
