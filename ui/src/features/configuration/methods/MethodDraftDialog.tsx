@@ -95,6 +95,7 @@ function AnalyteList() {
   const options = codedOptions(analytes.data);
   return (
     <FieldList
+      name="analytes"
       legend="Analytes measured"
       emptyText="Add at least one analyte."
       items={rows.fields}
