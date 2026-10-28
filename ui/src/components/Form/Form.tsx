@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactNode, useEffect, useRef } from "react";
+import { type FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { Form as AriaForm } from "react-aria-components";
 import { ErrorState } from "@/components/ErrorState";
 import type { CommandError } from "@/generated/CommandError";
@@ -24,9 +24,12 @@ interface FormProps {
   "aria-label"?: string;
 }
 
+const NO_NAMES: ReadonlySet<string> = new Set();
+
 /**
  * Vertical form layout. Pair with react-hook-form and the field components. When the engine
- * reports field errors, focus moves to the first invalid field.
+ * reports field errors, focus moves to the first invalid field, and a field's error goes away
+ * as soon as its value is edited.
  */
 export function Form({
   children,
@@ -38,6 +41,26 @@ export function Form({
   ...rest
 }: FormProps) {
   const formRef = useRef<HTMLFormElement>(null);
+  // Fields edited since the engine's last answer. React Aria clears an engine error only on the
+  // input's change event, which a text box fires on blur, so typing a fix left it showing.
+  const [edited, setEdited] = useState({ error, names: NO_NAMES });
+  const editedNames = edited.error === error ? edited.names : NO_NAMES;
+  const validationErrors = toValidationErrors(error, fieldPaths);
+  for (const name of editedNames) delete validationErrors[name];
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    const onInput = (event: Event) => {
+      const { name } = event.target as HTMLInputElement;
+      if (!name) return;
+      setEdited((last) => {
+        const names = last.error === error ? last.names : NO_NAMES;
+        return names.has(name) ? last : { error, names: new Set(names).add(name) };
+      });
+    };
+    form.addEventListener("input", onInput);
+    return () => form.removeEventListener("input", onInput);
+  }, [error]);
   // Moves DOM focus, which lives outside React, once the errors are on the fields.
   useEffect(() => {
     if (!error?.fieldErrors.length) return;
@@ -48,7 +71,7 @@ export function Form({
       {...rest}
       ref={formRef}
       validationBehavior="aria"
-      validationErrors={toValidationErrors(error, fieldPaths)}
+      validationErrors={validationErrors}
       className={styles.form}
       data-sticky-actions={stickyActions || undefined}
     >
