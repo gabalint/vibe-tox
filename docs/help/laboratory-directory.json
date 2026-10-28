@@ -2,7 +2,7 @@
   "id": "laboratory-directory",
   "title": "Laboratory and ordering directories",
   "summary": "Set the laboratory profile and register the clients and practitioners referenced by orders.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-10-28",
   "routes": [
     "/configuration/laboratory",
     "/configuration/clients",
@@ -330,7 +330,7 @@
         {
           "name": "Open location row / Correct location / Correct client / Save correction",
           "does": "Opens current facts and submits a versioned correction or retirement.",
-          "availableWhen": "Manage configuration, current revision, unique code and required evidence-backed reason.",
+          "availableWhen": "Manage configuration, current revision, unique code, at least one changed Code, Name or Availability value, and required evidence-backed reason.",
           "result": "Updates the same identity and appends immutable history and audit. New order selections exclude retired records; accepted orders and issued PDFs remain retained."
         },
         {
@@ -364,6 +364,10 @@
         {
           "problem": "No delivery destination is shown",
           "recovery": "This preview hides retired addresses. Check Delivery destinations with Show retired before registering a replacement."
+        },
+        {
+          "problem": "Nothing was changed",
+          "recovery": "A correction must change at least one value; the engine saves nothing, so no revision or history entry is added. Change the value the evidence supports, or Cancel."
         },
         {
           "problem": "The record changed, or a retired source is refused for a new order",
@@ -436,7 +440,7 @@
         {
           "name": "Correct practitioner / Save correction",
           "does": "Records corrected supplied names/NPI or availability on the same practitioner identity.",
-          "availableWhen": "Manage configuration, current revision, valid unique NPI and required reason.",
+          "availableWhen": "Manage configuration, current revision, valid unique NPI, at least one changed NPI, name or Availability value, and required reason.",
           "result": "Appends immutable prior/current facts and actor audit. Retired practitioners disappear from new order choices; historical lookup and accepted orders remain."
         },
         {
@@ -470,6 +474,10 @@
         {
           "problem": "This NPI is not valid. Please check the number for a typo.",
           "recovery": "The number has ten digits, but its last (check) digit does not match the other nine, which usually means a mistyped or swapped digit. Compare each digit with the source and correct it; do not change digits only to make the check pass."
+        },
+        {
+          "problem": "Nothing was changed",
+          "recovery": "A correction must change at least one value; the engine saves nothing, so no revision or history entry is added. Change the value the evidence supports, or Cancel."
         },
         {
           "problem": "The record changed, or a retired source is refused for a new order",

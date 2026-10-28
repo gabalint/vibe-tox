@@ -337,6 +337,84 @@ fn directory_correction_refuses_permission_staleness_duplicates_and_missing_reas
 }
 
 #[test]
+fn directory_correction_refuses_a_correction_that_changes_nothing() {
+    use lis_identity::{
+        DirectoryHistoryInput, DirectoryRecord, UpdateClient, UpdateClientLocation,
+        UpdatePractitioner, directory_history,
+    };
+    let t = open();
+    let client_id = client(&t, "CLI-SAME").unwrap();
+    let location_id = location(&t, client_id, "SITE-SAME").unwrap();
+    let practitioner_id = practitioner(&t, "1234567893").unwrap();
+    let reason = || "Synthetic test, no change".to_owned();
+    let refusals = [
+        run(&t, CONFIGURE, move |ctx| {
+            lis_identity::update_client(
+                ctx,
+                UpdateClient {
+                    client_id,
+                    expected_revision: 1,
+                    code: "CLI-SAME".into(),
+                    name: "Synthetic Clinic".into(),
+                    active: true,
+                    reason: reason(),
+                },
+            )
+            .map(|_| ())
+        }),
+        run(&t, CONFIGURE, move |ctx| {
+            lis_identity::update_client_location(
+                ctx,
+                UpdateClientLocation {
+                    location_id,
+                    expected_revision: 1,
+                    code: "SITE-SAME".into(),
+                    name: "Synthetic Site".into(),
+                    active: true,
+                    reason: reason(),
+                },
+            )
+            .map(|_| ())
+        }),
+        // Surrounding spaces are trimmed before the comparison.
+        run(&t, CONFIGURE, move |ctx| {
+            lis_identity::update_practitioner(
+                ctx,
+                UpdatePractitioner {
+                    practitioner_id,
+                    expected_revision: 1,
+                    npi: " 1234567893 ".into(),
+                    family_name: "Doctorperson ".into(),
+                    given_names: Some(" Delta".into()),
+                    active: true,
+                    reason: reason(),
+                },
+            )
+            .map(|_| ())
+        }),
+    ];
+    for refusal in refusals {
+        let error = refusal.unwrap_err();
+        assert!(matches!(error, IdentityError::NothingChanged), "{error:?}");
+        assert_eq!(error.code(), ErrorCode::Validation);
+    }
+    for record in [
+        DirectoryRecord::Client(client_id),
+        DirectoryRecord::Location(location_id),
+        DirectoryRecord::Practitioner(practitioner_id),
+    ] {
+        let history = read(&t, move |conn| {
+            directory_history(conn, DirectoryHistoryInput { record })
+        });
+        assert_eq!(history.len(), 1, "{record:?}");
+    }
+    assert_eq!(
+        read(&t, move |conn| get_practitioner(conn, practitioner_id)).revision,
+        1
+    );
+}
+
+#[test]
 fn migrated_directory_baseline_preserves_facts_without_inventing_attribution() {
     let conn = rusqlite::Connection::open_in_memory().unwrap();
     for migration in &lis_identity::SCHEMA.migrations[..3] {
