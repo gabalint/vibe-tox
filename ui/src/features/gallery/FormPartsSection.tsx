@@ -28,6 +28,15 @@ const SELF_APPROVAL_ASK: CommandError = {
   correlationId: "corr-0000-synthetic",
 };
 
+/** The engine's refusal of an empty repeatable list, with synthetic wording. */
+const EMPTY_LIST_REFUSAL: CommandError = {
+  code: "validation",
+  message: "Check the highlighted fields.",
+  fieldErrors: [{ field: "rows", code: "required", message: "Add at least one synthetic row." }],
+  gateReasons: [],
+  correlationId: "corr-0000-synthetic",
+};
+
 const MATRICES = [
   { id: "urine", label: "Urine" },
   { id: "oral_fluid", label: "Oral fluid" },
@@ -37,6 +46,7 @@ const MATRICES = [
 export function FormPartsSection() {
   const form = useForm({ defaultValues: { code: "", date: "", matrix: null, panels: [] } });
   const [rows, setRows] = useState<{ id: string }[]>([{ id: "row-0" }]);
+  const [listRefused, setListRefused] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [draft, setDraft] = useState("");
   const [asked, setAsked] = useState(false);
@@ -52,10 +62,17 @@ export function FormPartsSection() {
             aria-label="Form part examples"
             stickyActions
             onSubmit={form.handleSubmit(() => undefined)}
+            error={listRefused ? EMPTY_LIST_REFUSAL : null}
+            errorTitle="The synthetic record was not saved"
             actions={
-              <Button type="submit" variant="primary">
-                Check fields
-              </Button>
+              <>
+                <Button type="submit" variant="primary">
+                  Check fields
+                </Button>
+                <Button onPress={() => setListRefused((refused) => !refused)}>
+                  {listRefused ? "Clear list error" : "Show list error"}
+                </Button>
+              </>
             }
           >
             <TextInput name="code" label="Code" isRequired />
@@ -63,6 +80,7 @@ export function FormPartsSection() {
             <ChoiceInput name="matrix" label="Matrix" options={MATRICES} isRequired />
             <CheckList name="panels" legend="Panels" options={MATRICES} />
             <FieldList
+              name="rows"
               legend="Repeatable rows"
               emptyText="No rows."
               items={rows}

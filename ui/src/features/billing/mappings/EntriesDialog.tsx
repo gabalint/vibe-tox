@@ -82,6 +82,7 @@ function EntryFields() {
         <ErrorState title="The analytes could not be loaded" error={analytes.error} />
       )}
       <FieldList
+        name="entries"
         legend="Entries"
         emptyText="Add at least one analyte with its billing class."
         items={rows.fields}
