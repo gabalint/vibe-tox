@@ -27,6 +27,7 @@ pub(crate) mod analytical;
 pub(crate) mod results;
 // results: end
 // reporting: begin
+pub(crate) mod report_layouts;
 pub(crate) mod reporting;
 // reporting: end
 // billing: begin

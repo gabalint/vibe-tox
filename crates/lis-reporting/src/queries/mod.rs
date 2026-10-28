@@ -7,6 +7,7 @@ pub(crate) mod candidate;
 pub(crate) mod delivery;
 pub(crate) mod destinations;
 pub(crate) mod incidents;
+pub(crate) mod layouts;
 pub(crate) mod queues;
 pub(crate) mod report;
 pub(crate) mod workspace;

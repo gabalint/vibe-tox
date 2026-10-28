@@ -8,6 +8,7 @@ import {
   Files,
   FileText,
   Inbox,
+  LayoutTemplate,
   ListChecks,
   type LucideIcon,
   Microscope,
@@ -210,6 +211,16 @@ export const navigation: readonly NavSection[] = [
         icon: FileText,
         page: () => import("@/features/reports/history/ReportsPage").then((m) => m.ReportsPage),
         capabilities: ["deliver_reports", "manage_quality"],
+      },
+      {
+        path: "/reports/templates",
+        label: "Report templates",
+        icon: LayoutTemplate,
+        page: () =>
+          import("@/features/reports/templates/ReportTemplatesPage").then(
+            (m) => m.ReportTemplatesPage,
+          ),
+        capabilities: ["manage_configuration", "manage_quality"],
       },
     ],
   },

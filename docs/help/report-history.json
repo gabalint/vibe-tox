@@ -487,6 +487,12 @@
           "rules": "Read-only; supplied by the current record."
         },
         {
+          "name": "Layout",
+          "meaning": "The report layout this revision was printed with, chosen on Reports › Report templates.",
+          "values": "Standard, Compact, Results first or Classic (the original layout). Earlier template, before layouts, for a revision printed with a template issued before layouts were offered.",
+          "rules": "Read-only; recorded when the candidate was prepared. Approving another layout later never changes this revision or its PDF."
+        },
+        {
           "name": "Template / Fonts",
           "meaning": "Identifies the rendering configuration that produced the stored file.",
           "values": "Template identifier/version, renderer version and font names.",

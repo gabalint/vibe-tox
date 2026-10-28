@@ -98,7 +98,12 @@ describe("Side navigation", () => {
     ]);
     expect(linksIn("Bench")).toEqual(["Worklist", "Runs", "Bench setup"]);
     expect(linksIn("Review")).toEqual(["Result review", "Result imports"]);
-    expect(linksIn("Reports")).toEqual(["Release queue", "Delivery", "Reports"]);
+    expect(linksIn("Reports")).toEqual([
+      "Release queue",
+      "Delivery",
+      "Reports",
+      "Report templates",
+    ]);
     expect(linksIn("Billing")).toEqual([
       "Billing follow-up",
       "Billing work",

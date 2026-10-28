@@ -105,6 +105,7 @@ impl Engine {
         let marking = crate::demo::report_marking(self.installation_kind);
         tokio::task::spawn_blocking(move || {
             let pdf = lis_reporting::render::render_report(
+                &prepared.template,
                 &prepared.data_json,
                 prepared.prepared_at,
                 marking,

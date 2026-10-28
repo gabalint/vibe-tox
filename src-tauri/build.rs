@@ -226,6 +226,11 @@ const APP_COMMANDS: &[&str] = &[
     "replace_delivery_destination",
     "retire_delivery_destination",
     "close_preservation_incident",
+    "get_report_layouts",
+    "preview_report_layout",
+    "draft_report_layout",
+    "approve_report_layout",
+    "reject_report_layout",
     // reporting: end
     "get_patient_billing_profile",
     "set_patient_billing_profile",

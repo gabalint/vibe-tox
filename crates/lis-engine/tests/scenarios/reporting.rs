@@ -6,6 +6,7 @@
 //! implementation. Synthetic data only.
 
 mod condition_review;
+mod layouts;
 
 use std::path::PathBuf;
 
@@ -52,6 +53,9 @@ pub(crate) async fn reporting_call(
         return Some(result);
     }
     if let Some(result) = quality_call(engine, name).await {
+        return Some(result);
+    }
+    if let Some(result) = layouts::layout_call(engine, name).await {
         return Some(result);
     }
     delivery_call(engine, name).await

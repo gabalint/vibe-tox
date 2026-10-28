@@ -20,7 +20,7 @@ more than one role only when the laboratory has assessed and accepted that arran
 | Role | What the role does in the application | Important boundary |
 | --- | --- | --- |
 | Administrator | Manages accounts, approves and activates configuration under the configured separation-of-duties rule, runs backups and restore tests, handles the recovery kit, and creates exit exports | Has no clinical authority merely by being administrator |
-| Quality manager | Records quality decisions and closes a recovery reconciliation | Assigns or removes clinical roles after the first quality manager exists |
+| Quality manager | Records quality decisions, approves or rejects the report layout an administrator drafts (**Reports › Report templates**) and closes a recovery reconciliation | Assigns or removes clinical roles after the first quality manager exists |
 | Accessioner | Enters orders as supplied, receives specimens and may deliver released reports | Does not review or release results unless separately assigned |
 | Analyst | Performs analytical work | Does not gain technical-review or release authority |
 | Technical reviewer | Performs technical result review | Does not gain report-release authority |
@@ -48,7 +48,7 @@ part of [Q-37](../planning/open-questions.md#decision-and-discovery-queue).
 By default the application needs a second person to:
 
 - approve configuration someone wrote: test, panel, method and validity-policy versions, All Data
-  Reviewed, result source registrations and billing class mappings;
+  Reviewed, result source registrations, billing class mappings and the report layout;
 - release a report whose results someone reviewed technically;
 - verify a delivery destination someone created.
 

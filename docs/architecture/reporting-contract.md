@@ -19,7 +19,15 @@ A final report requires every line to be reported, cancelled or not activated. P
 
 The snapshot freezes identity, ordering source, specimen and collection context, laboratory profile, medications, exact result revisions, method names/versions/certainty, result forms, limits, validity and condition annotations. The candidate binds its signatory, preparation time, content digest, rendered-data digest, template version, renderer/fonts and artifact digest. Issued reports preserve exact bytes across catalog and template changes.
 
-Printed wording is owned by `lis-reporting/src/display.rs`. Lexical quantities and censored values remain exact. Quantitative cutoff comparison uses **Meets cutoff**, **Does not meet cutoff** or **Not classifiable**; it does not invent positive/negative clinical interpretation. Qualitative source codes retain their distinct meaning. Current report and withdrawal templates are selected in `lis-reporting/src/policy.rs` (`tox-report` v3 and `report-notice` v1).
+Printed wording is owned by `lis-reporting/src/display.rs`. Lexical quantities and censored values remain exact. Quantitative cutoff comparison uses **Meets cutoff**, **Does not meet cutoff** or **Not classifiable**; it does not invent positive/negative clinical interpretation. Qualitative source codes retain their distinct meaning. The withdrawal template is fixed in `lis-reporting/src/policy.rs` (`report-notice` v1).
+
+### Report layouts
+
+The report template follows the laboratory's report layout (REQ-RPT-007), owned by `lis-reporting/src/layouts.rs`. The ready-made layouts are **Standard** (`tox-report-standard` v1), **Compact** (`tox-report-compact` v1), **Results first** (`tox-report-results-first` v1) and **Classic** (`tox-report` v3, the default while no layout is approved). The three newer layouts share one data contract with `tox-report` v3 (`lis-report/templates/tox-layouts/contract-v1.typ`, joined with each layout file at build time) and print the same content; only the arrangement differs. Each result row also carries `comparisonCode` (`meets_cutoff`, `does_not_meet_cutoff`, `not_classifiable` or absent), from which those layouts colour the engine's comparison wording; the template never derives it from text.
+
+One laboratory-wide sequence of versions (`rpt_layout_versions`) holds the choice. Configuration staff (`manage_configuration`) draft a layout; quality staff (`manage_quality`) approve it or reject it with a reason. At most one draft waits; an approval supersedes the active version. The draft's author approves only where the separation-of-duties policy allows configuration self-approval and they confirm it (ADR 0015), which a trigger also enforces. Each step is audited (`report.draft_layout`, `report.approve_layout`, `report.reject_layout`).
+
+Preparation reads the layout in force inside its transaction and records its template on the candidate. Rendering uses the candidate's recorded template, so approval never changes a prepared candidate, an issued PDF or its provenance; a revision's provenance names its layout. A layout preview renders the built-in synthetic sample (`lis-report/preview/sample-report-v1.json`) under the pinned preview marking ("PREVIEW – NOT A REPORT"); it reads no laboratory data and stores nothing.
 
 ## Printed result expectations
 

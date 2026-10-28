@@ -15,15 +15,6 @@ pub const CANDIDATE_MAX_AGE: Duration = Duration::from_secs(60 * 60);
 /// L13: no attempt is recorded while the revision has open impact.
 pub const DELIVERY_PAUSED_WHILE_IMPACT_OPEN: bool = true;
 
-/// The report template every M3 candidate renders with.
-#[must_use]
-pub fn report_template() -> TemplateRef {
-    TemplateRef {
-        id: "tox-report".to_owned(),
-        version: 3,
-    }
-}
-
 /// The withdrawal-notice template.
 #[must_use]
 pub fn notice_template() -> TemplateRef {

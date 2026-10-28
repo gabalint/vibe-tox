@@ -29,7 +29,7 @@ pub const SELF_APPROVAL_FIELD: &str = "selfApproval";
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Duty {
     /// Approving configuration one wrote: a catalog version, the drafts of a Catalog
-    /// Preview, a result source registration or a billing class mapping.
+    /// Preview, a result source registration, a billing class mapping or the report layout.
     ConfigurationApproval,
     /// Releasing a report whose reported results one reviewed technically.
     ReportRelease,

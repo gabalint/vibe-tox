@@ -248,15 +248,17 @@ fn rows(
                 .result
                 .as_ref()
                 .ok_or(ReportingError::Inconsistent("reported line without result"))?;
-            let (limits, comparison) = match line.purpose {
+            let (limits, comparison, comparison_code) = match line.purpose {
                 ComponentPurpose::Analytical => (
                     limits(analyte)
                         .ok_or_else(|| ReportingError::GateBlocked(vec![limit_missing()]))?,
                     display::comparison_text(&result.classification).to_owned(),
+                    display::comparison_code(&result.classification),
                 ),
                 ComponentPurpose::Validity => (
                     limits(analyte).unwrap_or_else(|| display::NO_METHOD_LIMITS.to_owned()),
                     display::validity_row_text(validity_assessed(snapshot)),
+                    None,
                 ),
             };
             Ok(ToxResultRow {
@@ -270,6 +272,7 @@ fn rows(
                 units: result.units_text.clone().unwrap_or_default(),
                 limits,
                 comparison,
+                comparison_code,
                 recorded_at: result
                     .recorded_at
                     .map(|at| display::lab_time(at, &snapshot.laboratory.time_zone))

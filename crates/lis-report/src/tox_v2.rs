@@ -236,6 +236,12 @@ pub struct ToxResultRow {
     pub limits: String,
     /// The engine's comparison wording, never an interpretation by the template.
     pub comparison: String,
+    /// The comparison's code, which only chooses the label colour in the layout
+    /// templates; absent for rows without a cutoff comparison. `tox-report` v3
+    /// ignores it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional = nullable)]
+    pub comparison_code: Option<ToxComparisonCode>,
     /// Result revision recorded time, distinct from generation/release.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional = nullable)]
@@ -252,6 +258,18 @@ pub struct ToxResultRow {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[ts(as = "Option<_>", optional)]
     pub performing_sites: Vec<String>,
+}
+
+/// The engine's cutoff comparison of an analytical row; serialized in snake case.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+pub enum ToxComparisonCode {
+    /// Printed "Meets cutoff".
+    MeetsCutoff,
+    /// Printed "Does not meet cutoff".
+    DoesNotMeetCutoff,
+    /// Printed "Not classifiable".
+    NotClassifiable,
 }
 
 /// An ordered test not reported in this revision.

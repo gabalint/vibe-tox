@@ -31,6 +31,8 @@
 //! | --- | --- | --- |
 //! | `tox-report` v1 | Top of `templates/tox-report/v1.typ` | None; kept pinned, unused from M3 |
 //! | `tox-report` v2 | Top of `templates/tox-report/v2.typ` | [`tox_v2::ToxReportData`] |
+//! | `tox-report` v3 | Top of `templates/tox-report/v3.typ` | [`tox_v2::ToxReportData`] |
+//! | `tox-report-standard` v1, `tox-report-compact` v1, `tox-report-results-first` v1 | Top of `templates/tox-layouts/contract-v1.typ` | [`tox_v2::ToxReportData`] |
 //! | `report-notice` v1 | Top of `templates/report-notice/v1.typ` | [`notice_v1::ReportNoticeData`] |
 //! | `catalog-preview` v1 | Top of `templates/catalog-preview/v1.typ` | [`catalog_preview_v1::CatalogPreviewDocument`] |
 //! | `catalog-preview` v2 | Same data contract; current-value comparison labels | [`catalog_preview_v1::CatalogPreviewDocument`] |
@@ -49,6 +51,13 @@
 //! in the laboratory's time zone (REQ-RPT-001, REQ-RPT-002, REQ-RPT-005,
 //! REQ-RPT-008). The template enforces the relationship, completeness and
 //! limits rules and refuses unknown codes.
+//!
+//! The three report layouts (REQ-RPT-007) print the same content as
+//! `tox-report` v3 in other arrangements; each is the shared contract file
+//! joined with its layout file at build time, pinned as one source. They
+//! colour the engine's comparison wording by its code
+//! ([`tox_v2::ToxComparisonCode`]). [`preview`] renders any of them on a fixed
+//! synthetic report under the preview marking.
 //!
 //! `report-notice` v1 is the withdrawal notice: the laboratory, the report
 //! number, latest revision and accession, and a fixed statement that the
@@ -70,6 +79,7 @@ mod error;
 mod laboratory;
 mod marking;
 pub mod notice_v1;
+pub mod preview;
 mod renderer;
 mod template;
 pub mod tox_v2;

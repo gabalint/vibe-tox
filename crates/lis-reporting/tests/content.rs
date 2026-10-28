@@ -322,8 +322,13 @@ fn a_validity_line_prints_the_assessment_and_no_invented_limits() {
     let json = to_json(&data).unwrap();
     let prepared_at = at("2026-10-12T14:30:00.000000000Z");
     assert!(
-        lis_reporting::render::render_report(&json, prepared_at, lis_report::Marking::Unmarked)
-            .is_ok()
+        lis_reporting::render::render_report(
+            &lis_reporting::layouts::ReportLayout::DEFAULT.template(),
+            &json,
+            prepared_at,
+            lis_report::Marking::Unmarked
+        )
+        .is_ok()
     );
     let mut defined = snapshot;
     defined.lines[1].analytes[0].limit_of_quantitation = dec("1.0");
@@ -363,12 +368,20 @@ fn the_pinned_template_renders_the_printed_data_deterministically() {
         // Brief §4.4: the issued file carries no delivery status.
         assert!(!json.to_lowercase().contains("deliver"));
         let prepared_at = at("2026-10-12T14:30:00.000000000Z");
-        let first =
-            lis_reporting::render::render_report(&json, prepared_at, lis_report::Marking::Unmarked)
-                .unwrap();
-        let second =
-            lis_reporting::render::render_report(&json, prepared_at, lis_report::Marking::Unmarked)
-                .unwrap();
+        let first = lis_reporting::render::render_report(
+            &lis_reporting::layouts::ReportLayout::DEFAULT.template(),
+            &json,
+            prepared_at,
+            lis_report::Marking::Unmarked,
+        )
+        .unwrap();
+        let second = lis_reporting::render::render_report(
+            &lis_reporting::layouts::ReportLayout::DEFAULT.template(),
+            &json,
+            prepared_at,
+            lis_report::Marking::Unmarked,
+        )
+        .unwrap();
         assert!(first.bytes.starts_with(b"%PDF"));
         assert_eq!(first.bytes, second.bytes);
         assert_eq!(first.template.version, 3);
