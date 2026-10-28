@@ -36,9 +36,11 @@ declares the exact protocol profile, the local test-code-to-analyte map and the 
 of each explicitly numeric assay. Approval rechecks that the instrument still has
 the same wire settings. A changed setting requires a matching source approval;
 an old receipt retains its old settings and cannot be silently reinterpreted.
-The instrument connection screen configures AU wire settings. AU source
-registration (`auProfile`) uses the `register_source` engine/IPC command; the
-Bench setup source dialog registers ASTM sources only.
+The instrument connection screen configures AU wire settings. The Bench setup
+source dialog registers AU sources through `register_source` with an `auProfile`:
+it restates the connection's wire settings read-only, fixes barcode matching and
+no correction marker, and asks for each numeric test's two-digit code, analyte
+and declared unit.
 
 | Wire fact | Import behavior | Requirement |
 | --- | --- | --- |

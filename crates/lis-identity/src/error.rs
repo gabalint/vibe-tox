@@ -38,6 +38,9 @@ pub enum IdentityError {
     /// The identifier is already inactive.
     #[error("the identifier is already inactive")]
     IdentifierInactive,
+    /// A directory correction repeats every current value, so it would record no change.
+    #[error("Nothing was changed. Change at least one value to save a correction.")]
+    NothingChanged,
     /// A record of this kind already uses the code or NPI.
     #[error("a {0} with this code already exists")]
     Duplicate(&'static str),
@@ -52,7 +55,7 @@ impl IdentityError {
     pub fn code(&self) -> ErrorCode {
         match self {
             Self::InvalidFinancialRecord => ErrorCode::Internal,
-            Self::Invalid(_) => ErrorCode::Validation,
+            Self::Invalid(_) | Self::NothingChanged => ErrorCode::Validation,
             Self::NotFound(_) => ErrorCode::NotFound,
             Self::UserRequired => ErrorCode::Forbidden,
             Self::RevisionConflict

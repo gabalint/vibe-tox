@@ -4,6 +4,7 @@ import { Button } from "@/components/Button";
 import { Dialog } from "@/components/Dialog";
 import { Form } from "@/components/Form";
 import type { CommandError } from "@/generated/CommandError";
+import type { FieldPaths } from "@/lib/errors";
 
 interface FormDialogProps<Values extends FieldValues> {
   title: string;
@@ -17,6 +18,8 @@ interface FormDialogProps<Values extends FieldValues> {
   onClose: () => void;
   /** Buttons after the submit button, such as a reload offered after a conflict. */
   extraActions?: ReactNode;
+  /** Where engine field errors land when the input's shape differs from the form's. */
+  fieldPaths?: FieldPaths;
   children: ReactNode;
 }
 
@@ -35,6 +38,7 @@ export function FormDialog<Values extends FieldValues>({
   errorTitle,
   onClose,
   extraActions,
+  fieldPaths,
   children,
 }: FormDialogProps<Values>) {
   return (
@@ -52,6 +56,7 @@ export function FormDialog<Values extends FieldValues>({
           onSubmit={onSubmit}
           error={command.error}
           errorTitle={errorTitle}
+          fieldPaths={fieldPaths}
           actions={
             <>
               <Button type="submit" variant="primary" isPending={command.isPending}>

@@ -75,6 +75,7 @@ fn identity_not_found_is_none(error: IdentityError) -> Result<Option<String>, Id
         | IdentityError::CandidatesNotAcknowledged
         | IdentityError::HoldResolved
         | IdentityError::IdentifierInactive
+        | IdentityError::NothingChanged
         | IdentityError::Duplicate(_)
         | IdentityError::Store(_)) => Err(other),
     }

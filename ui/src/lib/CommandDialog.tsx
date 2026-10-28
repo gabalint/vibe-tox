@@ -5,6 +5,7 @@ import { asksSelfApproval, SelfApprovalConfirm } from "@/components/SelfApproval
 import { useToast } from "@/components/Toast";
 import type { CommandName } from "@/generated/CommandName";
 import { useCommandMutation } from "@/lib/commands";
+import type { FieldPaths } from "@/lib/errors";
 
 interface CommandDialogProps<Values extends FieldValues, Input, Result> {
   title: string;
@@ -23,6 +24,8 @@ interface CommandDialogProps<Values extends FieldValues, Input, Result> {
   errorTitle?: string;
   onDone?: (result: Result) => void;
   onClose: () => void;
+  /** Where engine field errors land when the input's shape differs from the form's. */
+  fieldPaths?: FieldPaths;
   /** The fields, bound to the form by name. */
   children: ReactNode;
 }
@@ -59,6 +62,7 @@ export function CommandDialog<Values extends FieldValues, Input, Result = unknow
       title={title}
       submitLabel={submitLabel}
       errorTitle={props.errorTitle ?? "Not recorded"}
+      fieldPaths={props.fieldPaths}
       // A request to confirm a self-approval is a question, shown below the fields.
       command={{ error: asksSelfApproval(run.error) ? null : run.error, isPending: run.isPending }}
       onSubmit={submit}
