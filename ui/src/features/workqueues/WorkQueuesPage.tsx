@@ -32,7 +32,9 @@ const COLUMNS: readonly DataGridColumn<WorkQueueSummary>[] = [
     id: "oldest",
     header: "Oldest item waiting",
     cell: (row) => <Age since={row.oldestSince} />,
-    sortValue: (row) => row.oldestSince ?? "",
+    sortValue: (row) => row.oldestSince ?? undefined,
+    // Most recent first; queues with nothing waiting stay at the bottom.
+    defaultSort: "desc",
     width: 320,
   },
   { id: "next", header: "Next action", cell: (row) => row.nextAction },

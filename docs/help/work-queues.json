@@ -2,7 +2,7 @@
   "id": "work-queues",
   "title": "Work queues",
   "summary": "Find work that needs attention and open the record where it can be resolved.",
-  "reviewedOn": "2026-10-15",
+  "reviewedOn": "2026-10-28",
   "routes": ["/work-queues", "/work-queues/:queue"],
   "sections": [
     {
@@ -92,7 +92,7 @@
           "name": "Oldest item waiting",
           "meaning": "Shows the age and start time of the oldest queued item.",
           "values": "Recorded age and since timestamp; — when none waits or a historical review count has not been computed.",
-          "rules": "Read-only; age reflects the latest screen render, not a promised turnaround deadline."
+          "rules": "Read-only; age reflects the latest screen render, not a promised turnaround deadline. The overview opens sorted by this column with the most recent first; queues showing — stay at the bottom in either direction."
         },
         {
           "name": "Next action",
@@ -108,6 +108,12 @@
         }
       ],
       "actions": [
+        {
+          "name": "Sort a column",
+          "does": "Reorders the queues by Queue, Items or Oldest item waiting. Each click on Oldest item waiting moves from most recent first to oldest first, then to the standard queue order.",
+          "availableWhen": "The overview lists at least one queue. Next action is not sortable.",
+          "result": "Only the order on screen changes; reopening the overview starts with the most recent first again."
+        },
         {
           "name": "Open queue row",
           "does": "Opens the queue’s oldest waiting items.",
