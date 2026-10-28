@@ -2,7 +2,7 @@
   "id": "bench-setup",
   "title": "Bench setup",
   "summary": "Review instrument readiness, result sources and material lots before analytical work.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-10-28",
   "routes": ["/bench/setup/:tab?"],
   "sections": [
     {
@@ -35,6 +35,7 @@
     "ui/src/features/analytics/bench/InstrumentSources.tsx",
     "ui/src/features/analytics/bench/InstrumentStatusDialog.tsx",
     "ui/src/features/analytics/bench/RegisterSourceDialog.tsx",
+    "ui/src/features/analytics/bench/AuSourceFacts.tsx",
     "ui/src/features/analytics/bench/ApproveSource.tsx",
     "ui/src/features/analytics/bench/LotsTab.tsx",
     "ui/src/features/analytics/bench/LotPanel.tsx",
@@ -42,6 +43,8 @@
     "ui/src/features/analytics/bench/WithdrawLotDialog.tsx",
     "ui/src/features/analytics/labels.ts",
     "crates/lis-analytical/src/commands/readiness.rs",
+    "crates/lis-analytical/src/commands/au_sources.rs",
+    "crates/lis-analytical/src/au_profile.rs",
     "crates/lis-analytical/src/commands/lots.rs",
     "crates/lis-analytical/src/commands/mod.rs",
     "ui/src/components/SelfApprovalConfirm/SelfApprovalConfirm.tsx",
@@ -87,27 +90,27 @@
         },
         {
           "name": "Register source: Sender name",
-          "meaning": "Matches the sender named in the analyzer message header.",
-          "values": "Exact source identity supplied by the analyzer.",
+          "meaning": "Matches the sender named in the analyzer message header. AU400 / AU640 messages carry no sender name, so for an AU analyzer it is the device identity the laboratory declares.",
+          "values": "Exact source identity supplied by the analyzer; for AU, the declared analyzer model, such as AU640.",
           "rules": "Required, trimmed 1–200 characters. Confirm against the actual source."
         },
         {
           "name": "Register source: Sender version",
-          "meaning": "Identifies the source software version.",
-          "values": "Version text supplied by the analyzer.",
+          "meaning": "Identifies the source software version. For an AU analyzer it is the declared software version, since AU messages carry none.",
+          "values": "Version text supplied by the analyzer, or declared for AU.",
           "rules": "Required, trimmed 1–200 characters."
         },
         {
           "name": "Sample ID is read from",
           "meaning": "Chooses which analyzer identifier carries the container label.",
           "values": "Specimen ID field or Instrument specimen ID field.",
-          "rules": "Required; no default."
+          "rules": "Required; no default. Not asked for an AU analyzer: an AU source always matches the sample ID of the AU message to the container barcode, shown as a fact in the dialog."
         },
         {
           "name": "Corrected results",
           "meaning": "Declares how this source identifies corrections.",
           "values": "The analyzer does not mark corrections; Corrections carry a corrected result status.",
-          "rules": "Required; must describe the actual source behavior."
+          "rules": "Required; must describe the actual source behavior. Not asked for an AU analyzer: an AU source is always recorded as The analyzer does not mark corrections."
         },
         {
           "name": "Reports final concentration after dilution",
@@ -118,8 +121,8 @@
         {
           "name": "Test codes: Source test code",
           "meaning": "Maps an analyzer test identifier to the catalog.",
-          "values": "Exact source code.",
-          "rules": "At least one mapping required. Each code is 1–64 characters, unique, and must have no surrounding spaces."
+          "values": "Exact source code; for AU, the analyzer's two-digit test number, 01–99.",
+          "rules": "At least one mapping required. Each code is 1–64 characters, unique, and must have no surrounding spaces. For AU, the form refuses anything but two digits from 01 to 99 before sending. Map only numeric AU assays; leave out LIH (serum index) tests, which stay held."
         },
         {
           "name": "Test codes: Analyte",
@@ -128,15 +131,27 @@
           "rules": "Required for every test-code row."
         },
         {
+          "name": "Test codes: Unit (AU only)",
+          "meaning": "Declares the unit of that numeric AU assay. AU messages carry no units, so imported values take this declared unit; result evidence still shows that no unit was reported.",
+          "values": "Unit text as the laboratory declares it, such as ng/mL; empty declares a unitless assay.",
+          "rules": "Optional; at most 64 characters, no surrounding spaces. Shown only for AU analyzers. Approved with the source; check it against the assay's actual reporting unit."
+        },
+        {
+          "name": "AU wire settings (AU only)",
+          "meaning": "Shows the AU framing and format settings the source restates from the analyzer's connection.",
+          "values": "Transmission class, start and end codes, BCC, sample ID width and result width, from Laboratory setup › Instruments.",
+          "rules": "Read-only; copied when the dialog opens. They must still equal the connection when the source is approved, so a connection change in between blocks approval; register a new source then."
+        },
+        {
           "name": "Result sources: State / Registered / Approved",
           "meaning": "Shows source version lifecycle and who authored and approved it.",
           "values": "Draft, awaiting approval; Active; Retired; recorded times, each person shown by the person's current account display name.",
           "rules": "Read-only. Approval activates a draft and retires the previous active source."
         },
         {
-          "name": "Result sources: Sample ID read from / Corrections / Reports final concentration / Test codes",
-          "meaning": "Shows the stored mapping and source declarations.",
-          "values": "Recorded choices and source-code → analyte mappings.",
+          "name": "Result sources: Sample ID read from / Corrections / AU wire settings / Reports final concentration / Test codes",
+          "meaning": "Shows the stored mapping and source declarations, so the approver sees exactly what approval activates.",
+          "values": "Recorded choices and source-code → analyte mappings. An AU source also shows its wire settings and each code's declared unit, or no unit for a unitless assay.",
           "rules": "Read-only; file sources show their result-file shape and open in the template workspace."
         },
         {
@@ -259,7 +274,7 @@
       "restrictions": [
         "Service readiness does not configure serial, network or watched-folder connections; those are in Laboratory setup.",
         "Source approval does not approve patient results. Self-approval is possible only when the laboratory separation-of-duties policy allows it and the author explicitly confirms it.",
-        "The generic source form has no AU wire-profile fields; an AU-specific profile requirement cannot be satisfied by inventing ASTM settings.",
+        "An AU source cannot have its own wire settings: they come from the analyzer's connection, which is changed only in Laboratory setup › Instruments.",
         "There is no lot-edit or restore-withdrawn-lot action here. Record material identity accurately before registration."
       ],
       "workflow": [
@@ -275,6 +290,14 @@
         {
           "problem": "The author cannot approve a source.",
           "recovery": "Use an authorized independent approver, or follow an already approved laboratory policy that permits and explicitly confirms self-approval."
+        },
+        {
+          "problem": "Registering or approving an AU source says the source format must match the instrument connection and its exact AU wire settings.",
+          "recovery": "The analyzer's connection changed after the dialog opened or after registration. Close the dialog, reopen Bench setup and register the source again so it restates the current settings."
+        },
+        {
+          "problem": "Register source says the AU tests must match the source analyte map.",
+          "recovery": "Each test-code row is one numeric AU test; remove duplicate codes and any LIH test, then register again."
         },
         {
           "problem": "No active lot is listed.",
