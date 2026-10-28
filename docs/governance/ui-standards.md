@@ -203,7 +203,7 @@ Each screen design and each feature test names which of these states apply, and 
 
 - Labels are always visible, and required fields are marked.
 - Engine field errors (`CommandError.fieldErrors`) map onto the matching fields. Editing a field hides its engine error at once; the next submit checks it again.
-- An invalid field shows its label, border and message in the danger tone until it is corrected. Submitting moves focus to the first invalid field.
+- An invalid field shows its label, border and message in the danger tone until it is corrected; an empty choice also shows its "Select…" placeholder in that tone. Submitting moves focus to the first invalid field.
 - Client-side checks are limited to presence and format, for faster feedback. The engine validates everything again.
 - Submit is disabled while pending. Input is kept after an error.
 - **Barcode scanners** act as keyboards: a text field that submits on Enter. Do not use keystroke-timing heuristics.

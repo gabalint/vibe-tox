@@ -80,6 +80,15 @@ export function FieldsSection() {
             onChange={setPanel}
             isRequired
           />
+          <Select
+            label="Required, not chosen"
+            name="unchosen"
+            options={PANELS}
+            value={null}
+            onChange={setPanel}
+            isRequired
+            errorMessage="Choose a panel."
+          />
           <Checkbox isSelected={checked} onChange={setChecked}>
             Print labels on receipt
           </Checkbox>
