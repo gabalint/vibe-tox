@@ -47,20 +47,16 @@ export function Form({
   const editedNames = edited.error === error ? edited.names : NO_NAMES;
   const validationErrors = toValidationErrors(error, fieldPaths);
   for (const name of editedNames) delete validationErrors[name];
-  useEffect(() => {
-    const form = formRef.current;
-    if (!form) return;
-    const onInput = (event: Event) => {
-      const { name } = event.target as HTMLInputElement;
-      if (!name) return;
-      setEdited((last) => {
-        const names = last.error === error ? last.names : NO_NAMES;
-        return names.has(name) ? last : { error, names: new Set(names).add(name) };
-      });
-    };
-    form.addEventListener("input", onInput);
-    return () => form.removeEventListener("input", onInput);
-  }, [error]);
+  // React's own input event, so this update renders together with the field's `onChange`. A
+  // listener outside React rendered first and put back the old value, losing the first key.
+  function onInput(event: FormEvent<HTMLDivElement>) {
+    const { name } = event.target as HTMLInputElement;
+    if (!name) return;
+    setEdited((last) => {
+      const names = last.error === error ? last.names : NO_NAMES;
+      return names.has(name) ? last : { error, names: new Set(names).add(name) };
+    });
+  }
   // Moves DOM focus, which lives outside React, once the errors are on the fields.
   useEffect(() => {
     if (!error?.fieldErrors.length) return;
@@ -76,7 +72,10 @@ export function Form({
       data-sticky-actions={stickyActions || undefined}
     >
       {error && <ErrorState title={errorTitle ?? "The action failed"} error={error} />}
-      {children}
+      {/* React Aria's Form drops `onInput`; this wrapper takes it without changing the layout. */}
+      <div className={styles.fields} onInput={onInput}>
+        {children}
+      </div>
       <div className={styles.actions}>{actions}</div>
     </AriaForm>
   );
