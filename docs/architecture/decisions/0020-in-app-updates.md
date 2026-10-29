@@ -54,12 +54,16 @@ These rules govern any updater and stay in force:
 4. **Only newer versions install.** The updater installs only a version newer than the
    running one, by Semantic Versioning precedence. The database is migrated forward only, and
    an older build cannot open a database a newer one migrated.
-5. **The existing control stays in front of every installation, nightly included.**
-   - The administrator downloads the build. The updater verifies the signature and signed
-     version, and the shell stages the package.
-   - The administrator records the approval of that staged package in the approval dialog,
-     with the release notes reviewed, a retained verified manual or pre-update backup from
-     the last 24 hours, a note and fresh identity confirmation.
+5. **The existing control stays in front of every installation, nightly included.** One
+   confirmation (**Update to version N → Update now**) runs these steps with the engine's
+   own commands, each re-checked; a failed step stops the update:
+   - The updater downloads the build and verifies the signature and signed version, and the
+     shell stages the package. A package of that version already staged is verified again
+     and reused.
+   - The app requests a pre-update backup and waits until its copy is verified.
+   - The approval of that staged package is recorded with the changes reviewed, that
+     backup, a note and fresh identity confirmation (password or security key). An earlier
+     approval of the same package is reused.
    - Installation requires `manage_configuration` and no work in progress. The engine
      re-hashes the staged package and requires a current approval naming the same SHA-256,
      not yet installed, whose backup is still verified and recent. It audits
@@ -69,7 +73,7 @@ These rules govern any updater and stay in force:
    - The new version then awaits acceptance for clinical use as before. A failed installation
      is audited, and the running version is unchanged.
 6. **Requests only on demand.** The app checks when **Available updates** opens or on
-   **Check again**, never on a schedule or at start-up.
+   **Refresh**, never on a schedule or at start-up.
 
 ## Alternatives
 
@@ -84,7 +88,7 @@ These rules govern any updater and stay in force:
 ## Consequences
 
 - **Network access.** A laboratory computer contacts `github.com` only when a person opens
-  **Available updates** or chooses **Check again**. Offline operation is unchanged
+  **Available updates** or chooses **Refresh**. Offline operation is unchanged
   ([ADR 0009](0009-single-computer-local-lis.md)).
 - **First installation is manual.** Builds published before this change, and builds without
   the update key, cannot update themselves. Install one configured build by hand.

@@ -30,12 +30,15 @@ use ts_rs::TS;
 mod address;
 mod errors;
 mod feed;
+mod staging;
 
 use address::{local_feed, valid_file_name, valid_repository};
 
-use errors::{internal, not_staged, refused, unavailable, updater_error};
+use errors::{not_staged, refused, unavailable, updater_error};
 pub(crate) use feed::{nightly_feed, release_feed};
 use feed::{nightly_index, release_url};
+pub(crate) use staging::staged_path;
+use staging::{stage, still_staged};
 
 /// The `owner/name` GitHub repository whose releases this build updates from, set by CI.
 const REPOSITORY: Option<&str> = option_env!("VIBE_TOX_UPDATE_REPOSITORY");
@@ -186,12 +189,16 @@ impl Updates {
 }
 
 /// Downloads the package of `input.version` from its channel and verifies its signature,
-/// then stages it in the app's cache folder in place of any earlier staged package.
+/// then stages it in the app's cache folder in place of any earlier staged package. A package
+/// of that version already staged is verified again and kept instead of downloaded twice.
 pub(crate) async fn download<R: Runtime>(
     app: &AppHandle<R>,
     updates: &Updates,
     input: DownloadUpdateInput,
 ) -> Result<DownloadedUpdateView, CommandError> {
+    if let Some(view) = still_staged(updates, &input.version).await {
+        return Ok(view);
+    }
     let manifest_url = manifest_url(app, updates, &input).await?;
     // The updater's own comparison: only a newer version is an update.
     let update = app
@@ -268,48 +275,6 @@ async fn manifest_url<R: Runtime>(
             "Nightly builds are offered only to nightly builds.",
         )),
     }
-}
-
-/// Writes the verified package to the app's cache folder in place of any earlier one.
-async fn stage<R: Runtime>(
-    app: &AppHandle<R>,
-    file_name: &str,
-    bytes: Vec<u8>,
-) -> Result<PathBuf, CommandError> {
-    let folder = app
-        .path()
-        .app_cache_dir()
-        .map_err(|_| internal("cache folder not resolved"))?
-        .join("updates");
-    let path = folder.join(file_name);
-    let written = tokio::task::spawn_blocking({
-        let path = path.clone();
-        move || -> std::io::Result<()> {
-            // One staged package at a time.
-            if folder.exists() {
-                std::fs::remove_dir_all(&folder)?;
-            }
-            std::fs::create_dir_all(&folder)?;
-            std::fs::write(&path, bytes)
-        }
-    })
-    .await
-    .map_err(|_| internal("staging task stopped"))?;
-    written.map_err(|error| {
-        tracing::warn!(error = ?error.kind(), "update package not staged");
-        internal("update package not staged")
-    })?;
-    Ok(path)
-}
-
-/// The staged package's path when it is `version`.
-pub(crate) fn staged_path(updates: &Updates, version: &str) -> Result<PathBuf, CommandError> {
-    updates
-        .staged()
-        .as_ref()
-        .filter(|staged| staged.view.version == version)
-        .map(|staged| staged.path.clone())
-        .ok_or_else(not_staged)
 }
 
 /// Installs the staged package of `version` after the engine allowed it, then restarts into

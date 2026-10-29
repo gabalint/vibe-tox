@@ -747,3 +747,41 @@ async fn expired_or_backwards_clock_ceremony_cannot_open_a_session() {
         );
     }
 }
+
+fn approve_downloaded(id: SecurityKeyId) -> SecurityKeyActionInput {
+    SecurityKeyActionInput {
+        credential_id: id,
+        action: SecurityKeyAction::ApproveDownloadedUpdate(lis_engine::RecordUpdateApprovalInput {
+            version: "9.9.9".to_owned(),
+            risk_class_text: "Not published (development build)".to_owned(),
+            release_notes_reviewed: true,
+            pre_update_run_id: lis_ops::backup::RunId::generate(),
+            notes: "Synthetic in-app update".to_owned(),
+            password: secret("ignored placeholder").into(),
+        }),
+    }
+}
+
+// ADR 0020: a key account approves the downloaded package with a key confirmation. Without a
+// staged package nothing is asked or recorded; with one, the confirmed approval reaches the
+// engine's own rules (here, the missing pre-update backup refuses it).
+#[tokio::test]
+async fn a_key_account_approves_a_downloaded_update_only_with_a_staged_package() {
+    let (f, _) = Fixture::signed_in().await;
+    let id = f.key_id().await;
+    let nothing_staged = f
+        .engine
+        .security_key_action(approve_downloaded(id), None, &NeverCalled)
+        .await
+        .unwrap();
+    assert_eq!(nothing_staged, Value::Null);
+    let package = f.dir.path().join("synthetic-update-9.9.9.deb");
+    std::fs::write(&package, b"synthetic package bytes").unwrap();
+    let refused = f
+        .engine
+        .security_key_action(approve_downloaded(id), Some(package), &f.key)
+        .await
+        .unwrap_err();
+    assert_eq!(refused.code(), ErrorCode::Conflict, "{refused:?}");
+    assert!(f.engine.list_update_approvals().await.unwrap().is_empty());
+}

@@ -87,7 +87,7 @@ describe("Operations frame (REQ-OPS-002, REQ-OPS-006, REQ-OPS-008)", () => {
     expect(await screen.findByText(/started without an update approval/)).toBeTruthy();
     expect(screen.queryByText(/release, delivery and billing handoff wait/)).toBeNull();
     await user.click(screen.getByRole("link", { name: "Versions and updates" }));
-    expect(await screen.findByText("Navigated to /operations/versions")).toBeTruthy();
+    expect(await screen.findByText("Navigated to /operations/versions/installed")).toBeTruthy();
   });
 
   it("dismisses the version notice with the keyboard while health and recovery remain visible", async () => {
