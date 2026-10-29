@@ -239,15 +239,41 @@ describe("RunPage (REQ-ANA-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => {
     expect(screen.queryByRole("link", { name: "Next" })).toBeNull();
   });
 
-  it("closes the run after saying what closing means", async () => {
+  it("closes the run with a reason after saying what closing means", async () => {
     const close = vi.fn(() => ({ ...RUN, state: "closed", allowedActions: [] }));
     const { user } = renderPage(RUN, { close_run: close });
     await user.click(await screen.findByRole("button", { name: "Close run" }));
     const confirm = await screen.findByRole("alertdialog", { name: "Close run" });
     expect(confirm.textContent).toContain("No more positions can be added");
     await user.click(within(confirm).getByRole("button", { name: "Close run" }));
+    expect(await within(confirm).findByText("Enter the reason for this change.")).toBeTruthy();
+    expect(close).not.toHaveBeenCalled();
+    await user.type(
+      within(confirm).getByRole("textbox", { name: /Reason/ }),
+      "  All results received and reconciled ",
+    );
+    await user.click(within(confirm).getByRole("button", { name: "Close run" }));
     expect(await screen.findByText("Run closed")).toBeTruthy();
-    expect(close).toHaveBeenCalledWith({ input: { runId: RUN_ID, expectedRevision: 3 } });
+    expect(close).toHaveBeenCalledWith({
+      input: {
+        runId: RUN_ID,
+        expectedRevision: 3,
+        reason: "All results received and reconciled",
+      },
+    });
+  });
+
+  it("shows the reason beside the closing time", async () => {
+    renderPage({
+      ...RUN,
+      state: "closed",
+      closedAt: "2026-10-12T12:00:00Z",
+      closeReason: "All results received and reconciled",
+      allowedActions: [],
+    });
+    expect(
+      await screen.findByText("2026-10-12 12:00 UTC: All results received and reconciled"),
+    ).toBeTruthy();
   });
 
   it("offers no entry on a closed run, and QC review to quality staff", async () => {
