@@ -4,13 +4,13 @@ import { Button } from "@/components/Button";
 import { Facts } from "@/components/Facts";
 import { Page, PageHeader } from "@/components/Page";
 import { QueryContent } from "@/components/QueryContent";
+import { ReasonConfirmDialog } from "@/components/ReasonConfirmDialog";
 import { RefreshControl } from "@/components/RefreshControl";
 import { StatusBadge } from "@/components/StatusBadge";
 import type { CloseRunInput } from "@/generated/CloseRunInput";
 import type { RunDetail } from "@/generated/RunDetail";
-import { CommandConfirmDialog } from "@/lib/CommandConfirmDialog";
 import { labelOf } from "@/lib/choices";
-import { useCommandQuery, useHasCapability } from "@/lib/commands";
+import { useCommandMutation, useCommandQuery, useHasCapability } from "@/lib/commands";
 import { useFormatTime } from "@/lib/format";
 import { usePersonText } from "@/lib/person";
 import { useRecordSequence } from "@/lib/recordSequence";
@@ -120,14 +120,18 @@ function LotList({ run }: { run: RunDetail }) {
   );
 }
 
+/** Closing is final, so it asks why; the reason shows beside the closing time. */
 function CloseRunDialog({ run, onClose }: { run: RunDetail; onClose: () => void }) {
+  const close = useCommandMutation<RunDetail, { input: CloseRunInput }>("close_run", {
+    invalidates: RUN_QUERIES,
+  });
   return (
-    <CommandConfirmDialog<CloseRunInput>
+    <ReasonConfirmDialog<CloseRunInput>
       title="Close run"
       confirmLabel="Close run"
       variant="danger"
-      command={{ name: "close_run", invalidates: RUN_QUERIES }}
-      input={{ runId: run.runId, expectedRevision: run.revision }}
+      command={close}
+      input={(reason) => ({ runId: run.runId, expectedRevision: run.revision, reason })}
       successTitle="Run closed"
       onClose={onClose}
     >
@@ -135,6 +139,6 @@ function CloseRunDialog({ run, onClose }: { run: RunDetail; onClose: () => void 
         No more positions can be added to this run. Results that arrive for it after closing are
         quarantined for review instead of being imported.
       </p>
-    </CommandConfirmDialog>
+    </ReasonConfirmDialog>
   );
 }
