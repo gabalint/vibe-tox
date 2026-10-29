@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/Button";
 import { DataGrid } from "@/components/DataGrid";
 import { DetailLayout } from "@/components/DetailPanel";
 import { FindCount } from "@/components/FindField";
@@ -14,6 +15,7 @@ import { openRecordPanel } from "@/lib/openRecordPanel";
 import { LIST_UPDATE_APPROVALS, VERSION_QUERIES, WITHDRAW_UPDATE_APPROVAL } from "../contract";
 import { ApprovalPanel } from "./ApprovalPanel";
 import { APPROVAL_COLUMNS, isPending } from "./approvalColumns";
+import { RecordApprovalDialog } from "./RecordApprovalDialog";
 
 const approvalId = (row: UpdateApprovalView) => row.approvalId;
 const ACTIONS: readonly OfferedAction<typeof WITHDRAW_UPDATE_APPROVAL>[] = [
@@ -32,6 +34,7 @@ export function ApprovalsSection() {
   const query = useCommandQuery<UpdateApprovalView[]>(LIST_UPDATE_APPROVALS);
   const record = useOpenRecord();
   const [withdrawing, setWithdrawing] = useState<UpdateApprovalView | null>(null);
+  const [recording, setRecording] = useState(false);
   const actionsOf = (approval: UpdateApprovalView) =>
     allowedActionItems(ACTIONS, allowed(approval), () => setWithdrawing(approval));
   const rowActions = allowedRowActions(ACTIONS, {
@@ -59,6 +62,11 @@ export function ApprovalsSection() {
       <DetailLayout panel={panel}>
         <Toolbar
           variant="collection"
+          actions={
+            <Button onPress={() => setRecording(true)}>
+              Approve a package from outside the app
+            </Button>
+          }
           count={
             query.isSuccess && (
               <FindCount
@@ -95,6 +103,7 @@ export function ApprovalsSection() {
           )}
         </QueryContent>
       </DetailLayout>
+      {recording && <RecordApprovalDialog onClose={() => setRecording(false)} />}
       {withdrawing && (
         <WithdrawDialog approval={withdrawing} onClose={() => setWithdrawing(null)} />
       )}

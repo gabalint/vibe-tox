@@ -11,36 +11,50 @@ make it safe for clinical use.
 ## Available updates
 
 **Available updates** asks the project's GitHub releases when the tab opens or when you choose
-**Check again**. It never checks on a schedule.
+**Refresh**, which spins while it checks. It never checks on a schedule.
 
-- **Official release** shows the newest official version and its changes.
-- **Nightly builds for internal testing** appears only while a nightly build runs. It lists
-  the newest retained nightly builds. A row opens the build's commit and changes.
+- **Versions and updates** opens on **Available updates**, before **Installed versions** and
+  **Update approvals**.
+- The status box at the top says **This app is up to date**, **An update is available** or
+  **Updates could not be checked**, with the installed version, when the app last checked and
+  **Refresh**. Up to date means no newer published version; it does not mean accepted for
+  clinical use.
+- Below it, **Available versions** has a **Nightly / Release** switch while a nightly build
+  runs; nightly is chosen first. An official release installation shows no switch.
+- It shows only the newest version of the chosen channel, which includes every earlier one, with
+  **Update to version N** at its bottom right when it is newer. A nightly build also shows its
+  build date, commit and the first three lines of **What's new** (**Show all N changes** shows
+  the rest); these list the changes since the previous nightly build only. An official release
+  shows its version, status and release date. When the installed version is the
+  newest, it is marked **Running** and the status box says **This app is up to date**.
 - Only a version newer than the running one can be installed. An older build cannot open a
   database that a newer version has already migrated.
 - A build without the project's update key cannot update itself and says so. This applies
   to local developer builds and to builds published before in-app updates. Install a newer
   published release by hand once.
 
-To install a newer build with configuration authority:
+To install a newer build with configuration and backup authority:
 
-1. Prepare as in [Before approving](#before-approving), including a recent verified manual
-   or pre-update backup.
-2. Choose **Download version N**. The app downloads the package for this computer's system
-   and checks its Minisign signature and the version it was signed for. A package that fails
-   the check is not kept.
-3. Choose **Approve and install** and complete the approval as in
-   [Record approval](#record-approval). The version and package come from the download, so
-   neither is typed or chosen. If a current approval already names this package, choose
-   **Install approved update**.
-4. The app refuses to install while listeners or other work are in progress. The engine
-   then checks that the approval names exactly this package and that its backup is still
-   verified and no more than 24 hours old, and audits the installation.
-5. The app closes and starts the new version.
+1. Choose **Update to version N**. If the installation has no backup folder yet, the dialog
+   says so and offers **Add backup folder**.
+2. Confirm that you reviewed the changes. The risk class and approval notes are prefilled;
+   change them if the publisher gave a risk class or other checks were made. Confirm your
+   identity and choose **Update now**.
+3. The app then runs each step, shown in the dialog:
+   - downloads the package for this computer's system and checks its Minisign signature and
+     signed version (a package already downloaded is checked again instead);
+   - takes a pre-update backup and waits until its copy is verified;
+   - records your approval of exactly this package with that backup;
+   - refuses to install while listeners or other work are in progress; the engine checks the
+     approval and the backup again and audits the installation.
+
+   A failed step stops the update with its reason; the dialog stays open to try again.
+4. The app closes and starts the new version.
    - **Windows:** the installer shows its progress.
    - **Linux:** a `.deb` installation asks for the computer's administrator password; an
      AppImage is replaced in place.
    - **macOS:** installation from the app is not yet qualified.
+5. The new version awaits acceptance for clinical use.
 6. Continue with [Install and start](#install-and-start) step 4 and
    [Accept for clinical use](#accept-for-clinical-use).
 
@@ -56,8 +70,7 @@ restarts.
    copy's recovery reconciliation or connect it to production targets, analyzers, destinations or
    printers.
 3. Check **Backups → Runs** for a recent verified manual or pre-update backup. If needed,
-   choose **Request pre-update backup** on **Versions and updates → Update approvals** or
-   directly inside the approval dialog.
+   choose **Request pre-update backup** inside the approval dialog.
 4. Wait for that run to show a verified copy. A queued or running backup is not enough.
 
 The application accepts a manual or pre-update backup only when it completed no more than
@@ -67,7 +80,8 @@ qualify because automatic retention may remove them. These are application desig
 
 ## Record approval
 
-An administrator with configuration authority chooses **Record update approval** and enters:
+An administrator with configuration authority chooses **Approve a package from outside the
+app** on **Versions and updates → Update approvals**. **Record update approval** asks for:
 
 - **Version to install**, copied from the downloaded update's release notes (package version
   detection is not implemented);
@@ -77,10 +91,10 @@ An administrator with configuration authority chooses **Record update approval**
 - approval notes;
 - identity confirmation using the account's sign-in method.
 
-For a security-key account, both **Record update approval** and **Approve and install**
-use the selected registered key. Submit the form, then enter that key's PIN or complete
-its supported biometric verification when prompted. Canceling or failing verification
-records no approval and starts no installation. The optional six-digit LIS session-unlock
+For a security-key account, both **Record update approval** and **Update now** on
+**Available updates** use the selected registered key. Submit the form, then enter that key's
+PIN or complete its supported biometric verification when prompted. Canceling or failing
+verification records no approval and starts no installation. The optional six-digit LIS session-unlock
 PIN cannot confirm an update.
 
 The backup choices come from the installation's recorded **Backups → Runs** history, not a
@@ -110,10 +124,9 @@ procedure before relying on it.
 
 ## Accept for clinical use
 
-On **Installed versions**, **Running version** is detected automatically. A person with
-configuration-approval authority can choose **Accept running version** directly, or
-**Accept this version for clinical use** in its details. Enter a note describing the checks
-and confirm your identity. This task requires neither a typed version nor an update package
+On **Installed versions**, **Running** marks the version that runs now, with its status. A person
+with configuration-approval authority chooses **Accept this version for clinical use** in its row
+menu or its details. Enter a note describing the checks and confirm your identity. This task requires neither a typed version nor an update package
 or a backup selection. The action appears while the running version awaits acceptance.
 
 Acceptance records a laboratory decision; it is not certification or software validation. The

@@ -73,7 +73,7 @@ const PATH = "/operations/versions";
 function renderPage(
   commands: Record<string, (args: unknown) => unknown> = {},
   capabilities = ALL,
-  path = PATH,
+  path = `${PATH}/installed`,
 ) {
   mockCommands({
     current_session: () => sessionWith(capabilities),
@@ -96,8 +96,16 @@ function renderPage(
 
 const panel = (name: string) => screen.getByRole("region", { name });
 
+/** The manual approval of a package from outside the app lives on the Update approvals tab. */
+async function openRecordApproval(user: ReturnType<typeof renderPage>["user"]) {
+  await user.click(await screen.findByRole("tab", { name: "Update approvals" }));
+  await user.click(
+    await screen.findByRole("button", { name: "Approve a package from outside the app" }),
+  );
+}
+
 async function openApprovalWithoutRun(user: ReturnType<typeof renderPage>["user"]) {
-  await user.click(await screen.findByRole("button", { name: "Record update approval" }));
+  await openRecordApproval(user);
   const dialog = await screen.findByRole("alertdialog", { name: "Record update approval" });
   await user.type(within(dialog).getByRole("textbox", { name: /^Version/ }), "0.5.0");
   await user.type(within(dialog).getByRole("textbox", { name: /^Risk class/ }), "Minor");
@@ -107,7 +115,7 @@ async function openApprovalWithoutRun(user: ReturnType<typeof renderPage>["user"
 }
 
 async function openApproval(user: ReturnType<typeof renderPage>["user"]) {
-  await user.click(await screen.findByRole("button", { name: "Record update approval" }));
+  await openRecordApproval(user);
   const dialog = await screen.findByRole("alertdialog", { name: "Record update approval" });
   await user.type(within(dialog).getByRole("textbox", { name: /^Version/ }), "0.5.0");
   await user.type(within(dialog).getByRole("textbox", { name: /^Risk class/ }), "Minor");
@@ -132,7 +140,7 @@ describe("VersionsPage (REQ-OPS-006)", () => {
       acceptance: { by: OTHER_USER, at: "2026-10-13T09:00:00Z" },
     }));
     const { user, container, router } = renderPage({ accept_installed_version: accept });
-    expect(await screen.findByText("Awaiting acceptance")).toBeTruthy();
+    expect(await screen.findByRole("gridcell", { name: "Awaiting acceptance" })).toBeTruthy();
     expect(screen.getByText("Previous")).toBeTruthy();
     expect(screen.queryByText(/Select the running version/)).toBeNull();
     expect(screen.queryByRole("button", { name: /Accept this version/ })).toBeNull();
@@ -152,11 +160,23 @@ describe("VersionsPage (REQ-OPS-006)", () => {
     });
   });
 
-  it("accepts the detected running version without an update package or version entry", async () => {
+  it("opens on Available updates, before Installed versions and Update approvals", async () => {
+    const empty = () => ({ runningVersion: "0.4.0", configured: true, offered: false, builds: [] });
+    renderPage({ check_release_update: empty, list_nightly_builds: empty }, ALL, PATH);
+    expect(await screen.findByRole("heading", { name: "This app is up to date" })).toBeTruthy();
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+      "Available updates",
+      "Installed versions",
+      "Update approvals",
+    ]);
+    expect(screen.queryByRole("heading", { name: /is running/ })).toBeNull();
+  });
+
+  it("accepts the running version from its row without an update package or version entry", async () => {
     const accept = vi.fn(() => ({ ...RUNNING, status: "accepted" }));
     const { user } = renderPage({ accept_installed_version: accept });
-    expect(await screen.findByRole("heading", { name: "Running version 0.4.0" })).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Accept running version" }));
+    const menu = await openRowActions(user, "version 0.4.0");
+    await user.click(within(menu).getByRole("menuitem", { name: /Accept this version/ }));
     const dialog = await screen.findByRole("alertdialog", { name: /Accept version 0.4.0/ });
     expect(within(dialog).queryByRole("textbox", { name: /^Version/ })).toBeNull();
     expect(within(dialog).queryByText(/update package/)).toBeNull();
@@ -178,17 +198,20 @@ describe("VersionsPage (REQ-OPS-006)", () => {
     expect(within(open).queryByRole("button", { name: /Accept this version/ })).toBeNull();
     await user.click(within(open).getByRole("button", { name: "Next" }));
     await user.keyboard("{Escape}");
-    await waitFor(() => expect(screen.queryByRole("region", { name: /^Version/ })).toBeNull());
+    // The running-version box is also a region; only the detail panel closes.
+    await waitFor(() =>
+      expect(screen.queryByRole("region", { name: /^Version [\d.]+$/ })).toBeNull(),
+    );
     await waitFor(() =>
       expect(document.activeElement?.closest("[role=row]")?.textContent).toContain("0.4.0"),
     );
   });
 
   it("opens the version named in the address, and says when none has run", async () => {
-    const { router } = renderPage({}, ALL, `${PATH}?open=0.4.0`);
+    const { router } = renderPage({}, ALL, `${PATH}/installed?open=0.4.0`);
     const open = await screen.findByRole("region", { name: "Version 0.4.0" });
     expect(await within(open).findByRole("button", { name: /Accept this version/ })).toBeTruthy();
-    await router.navigate(`${PATH}?open=9.9.9`);
+    await router.navigate(`${PATH}/installed?open=9.9.9`);
     expect(await screen.findByRole("region", { name: "Record not found" })).toBeTruthy();
   });
 
@@ -244,7 +267,7 @@ describe("VersionsPage (REQ-OPS-006)", () => {
         backupRun({ runId: "manual-run", kind: "manual", updateApprovalEligible: true }),
       ],
     });
-    await user.click(await screen.findByRole("button", { name: "Record update approval" }));
+    await openRecordApproval(user);
     const dialog = await screen.findByRole("alertdialog", { name: "Record update approval" });
     expect(within(dialog).queryByRole("textbox", { name: /Backup before this update/ })).toBeNull();
     await user.click(
@@ -261,7 +284,7 @@ describe("VersionsPage (REQ-OPS-006)", () => {
       (args as { input: { beforeRunId: string | null } }).input.beforeRunId ? [older] : first,
     );
     const { user } = renderPage({ list_backup_runs: list });
-    await user.click(await screen.findByRole("button", { name: "Record update approval" }));
+    await openRecordApproval(user);
     const dialog = await screen.findByRole("alertdialog", { name: "Record update approval" });
     await user.click(await within(dialog).findByRole("button", { name: "Load older backup runs" }));
     await user.click(
@@ -282,7 +305,7 @@ describe("VersionsPage (REQ-OPS-006)", () => {
       { ...verified, targetId: "pruned", targetLabel: "Pruned target", pruned: true },
     );
     const { user } = renderPage({ list_backup_runs: () => [run] });
-    await user.click(await screen.findByRole("button", { name: "Record update approval" }));
+    await openRecordApproval(user);
     const dialog = await screen.findByRole("alertdialog", { name: "Record update approval" });
     await user.click(
       await within(dialog).findByRole("button", { name: /Backup before this update$/ }),
@@ -326,7 +349,7 @@ describe("VersionsPage (REQ-OPS-006)", () => {
       }),
     );
     const { user } = renderPage({ list_backup_runs: () => runs });
-    await user.click(await screen.findByRole("button", { name: "Record update approval" }));
+    await openRecordApproval(user);
     const dialog = await screen.findByRole("alertdialog", { name: "Record update approval" });
     expect(
       await within(dialog).findByRole("combobox", { name: /Backup before this update/ }),
@@ -426,7 +449,7 @@ describe("VersionsPage (REQ-OPS-006)", () => {
   });
 
   it("shows who accepted a version as another user", async () => {
-    renderPage({}, ALL, `${PATH}?open=0.3.0`);
+    renderPage({}, ALL, `${PATH}/installed?open=0.3.0`);
     const version = within(await screen.findByRole("region", { name: "Version 0.3.0" }));
     expect(version.getByText(/by another user/)).toBeTruthy();
     expect(document.body.textContent).not.toContain(OTHER_USER);
@@ -478,21 +501,18 @@ describe("VersionsPage (REQ-OPS-006)", () => {
 
   it("requests a pre-update backup without claiming it succeeded", async () => {
     const request = vi.fn(() => backupRun({ kind: "pre_update", state: "requested" }));
-    const { user } = renderPage({ request_backup: request }, ALL, `${PATH}/approvals`);
+    const { user } = renderPage({ request_backup: request });
+    await openRecordApproval(user);
     await user.click(await screen.findByRole("button", { name: "Request pre-update backup" }));
     expect(await screen.findByText(/Pre-update backup requested/)).toBeTruthy();
     expect(request).toHaveBeenCalledWith({ input: { kind: "pre_update" } });
   });
 
   it("shows the engine's refusal of a backup request", async () => {
-    const { user } = renderPage(
-      {
-        request_backup: () =>
-          Promise.reject(engineError("conflict", "A backup is already queued.")),
-      },
-      ALL,
-      `${PATH}/approvals`,
-    );
+    const { user } = renderPage({
+      request_backup: () => Promise.reject(engineError("conflict", "A backup is already queued.")),
+    });
+    await openRecordApproval(user);
     await user.click(await screen.findByRole("button", { name: "Request pre-update backup" }));
     expect(await screen.findByText("A backup is already queued.")).toBeTruthy();
     expect(screen.getByText("corr-test-0001")).toBeTruthy();
@@ -500,9 +520,9 @@ describe("VersionsPage (REQ-OPS-006)", () => {
 
   it("offers no actions without the capabilities, and no approvals tab", async () => {
     const { user } = renderPage({}, []);
-    expect(await screen.findByText("Awaiting acceptance")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Record update approval" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Accept running version" })).toBeNull();
+    expect(await screen.findByRole("gridcell", { name: "Awaiting acceptance" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /from outside the app/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Accept for clinical use" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Request pre-update backup" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Update approvals" })).toBeNull();
     await openRow(user, "Awaiting acceptance");

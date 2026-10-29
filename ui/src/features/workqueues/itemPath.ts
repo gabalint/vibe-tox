@@ -94,7 +94,7 @@ const TARGETS: Readonly<Record<WorkItemKind, (item: ItemRef) => ItemTarget>> = {
   health_check: panel("/operations/health"),
   app_run: panel("/operations/health/history"),
   recovery_reconciliation: (item) => ({ recordId: item.itemId, path: "/operations/recovery" }),
-  app_version: panel("/operations/versions"),
+  app_version: panel("/operations/versions/installed"),
 };
 
 function billingWork(item: ItemRef): ItemTarget {
