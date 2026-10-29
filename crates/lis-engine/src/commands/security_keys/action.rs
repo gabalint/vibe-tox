@@ -5,10 +5,10 @@ use crate::Engine;
 use crate::pipeline::{Call, Failure};
 use crate::registry::CommandSpec;
 use lis_auth::{ReauthPurpose, Reauthentication, SecurityKeyId};
-use lis_core::CommandError;
+use lis_core::{CommandError, ErrorCode};
 use serde::Deserialize;
 use serde_json::Value;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use ts_rs::TS;
 
 /// Only these existing sensitive commands accept a fresh key confirmation.
@@ -45,6 +45,8 @@ pub enum SecurityKeyAction {
     CloseRecoveryReconciliation(crate::CloseRecoveryInput),
     /// Existing `record_update_approval` command, with its immutable input.
     RecordUpdateApproval(crate::RecordUpdateApprovalInput),
+    /// Existing `approve_downloaded_update` command, for the shell's staged package.
+    ApproveDownloadedUpdate(crate::RecordUpdateApprovalInput),
     /// Existing `accept_installed_version` command, with its immutable input.
     AcceptInstalledVersion(crate::AcceptInstalledVersionInput),
     /// Existing `approve_reviewed_catalog` command, with its immutable input.
@@ -82,7 +84,9 @@ impl SecurityKeyAction {
             Self::ExportRecoveryKit(_) => ReauthPurpose::RecoveryKitExport,
             Self::RequestExitExport(_) => ReauthPurpose::ExitExport,
             Self::CloseRecoveryReconciliation(_) => ReauthPurpose::RecoveryClose,
-            Self::RecordUpdateApproval(_) => ReauthPurpose::UpdateApproval,
+            Self::RecordUpdateApproval(_) | Self::ApproveDownloadedUpdate(_) => {
+                ReauthPurpose::UpdateApproval
+            }
             Self::AcceptInstalledVersion(_) => ReauthPurpose::VersionAcceptance,
             Self::ApproveReviewedCatalog(_) => ReauthPurpose::CatalogReview,
             Self::RevokeSecurityKey(_) => ReauthPurpose::SecurityKeyRevocation,
@@ -103,6 +107,7 @@ impl SecurityKeyAction {
             Self::RequestExitExport(_) => "request_exit_export",
             Self::CloseRecoveryReconciliation(_) => "close_recovery_reconciliation",
             Self::RecordUpdateApproval(_) => "record_update_approval",
+            Self::ApproveDownloadedUpdate(_) => "approve_downloaded_update",
             Self::AcceptInstalledVersion(_) => "accept_installed_version",
             Self::ApproveReviewedCatalog(_) => "approve_reviewed_catalog",
             Self::RevokeSecurityKey(_) => "revoke_security_key",
@@ -127,7 +132,9 @@ impl SecurityKeyAction {
             Self::ExportRecoveryKit(input) => input.password = proof,
             Self::RequestExitExport(input) => input.password = proof,
             Self::CloseRecoveryReconciliation(input) => input.password = proof,
-            Self::RecordUpdateApproval(input) => input.password = proof,
+            Self::RecordUpdateApproval(input) | Self::ApproveDownloadedUpdate(input) => {
+                input.password = proof;
+            }
             Self::AcceptInstalledVersion(input) => input.password = proof,
             Self::ApproveReviewedCatalog(input) => input.password = proof,
             Self::RevokeSecurityKey(input) => input.password = proof,
@@ -139,7 +146,7 @@ impl SecurityKeyAction {
 
 impl Engine {
     /// Confirms and executes the same typed action. The shell supplies only a trusted
-    /// native-dialog destination; it cannot be resubmitted by the webview after confirmation.
+    /// native-dialog destination or staged package, never resubmitted by the webview.
     pub async fn security_key_action(
         &self,
         mut input: SecurityKeyActionInput,
@@ -148,34 +155,12 @@ impl Engine {
     ) -> Result<Value, CommandError> {
         self.run(&ACTION, |call| async move {
             let _gate = self.key_ceremonies.enter()?;
-            let guard = self.key_ceremonies.guard(self.clock.now());
-            let action_call = Call {
-                spec: input.action.spec()?,
-                correlation_id: call.correlation_id,
-                principal: call.principal.clone(),
-            };
-            self.authorize(&action_call).await?;
-            if destination.is_none()
-                && matches!(
-                    input.action,
-                    SecurityKeyAction::ExportRecoveryKit(_)
-                        | SecurityKeyAction::RequestExitExport(_)
-                        | SecurityKeyAction::RecordUpdateApproval(_)
-                )
-            {
+            let Some(proof) = self
+                .confirm_key_action(&call, &input, destination.as_deref(), client)
+                .await?
+            else {
                 return Ok(Value::Null);
-            }
-            let proof = self
-                .key_action_proof(
-                    &call,
-                    &guard,
-                    input.credential_id,
-                    input.action.purpose(),
-                    client,
-                )
-                .await?;
-            self.check_key_guard(&call, &guard).await?;
-            client.finish().map_err(native_failure)?;
+            };
             input.action.confirm(proof);
             match input.action {
                 SecurityKeyAction::CreateUser(input) => encode(self.create_user(input).await),
@@ -208,6 +193,12 @@ impl Engine {
                 SecurityKeyAction::RecordUpdateApproval(input) => {
                     encode(self.record_update_approval(input, destination).await)
                 }
+                SecurityKeyAction::ApproveDownloadedUpdate(input) => {
+                    let package = destination.ok_or(Failure::Internal(
+                        "Downloaded update package was not supplied".to_owned(),
+                    ))?;
+                    encode(self.approve_downloaded_update(input, package).await)
+                }
                 SecurityKeyAction::AcceptInstalledVersion(input) => {
                     encode(self.accept_installed_version(input).await)
                 }
@@ -224,6 +215,52 @@ impl Engine {
             }
         })
         .await
+    }
+
+    async fn confirm_key_action(
+        &self,
+        call: &Call,
+        input: &SecurityKeyActionInput,
+        destination: Option<&Path>,
+        client: &impl SecurityKeyClient,
+    ) -> Result<Option<Reauthentication>, Failure> {
+        let guard = self.key_ceremonies.guard(self.clock.now());
+        let action_call = Call {
+            spec: input.action.spec()?,
+            correlation_id: call.correlation_id,
+            principal: call.principal.clone(),
+        };
+        self.authorize(&action_call).await?;
+        if destination.is_none()
+            && matches!(input.action, SecurityKeyAction::ApproveDownloadedUpdate(_))
+        {
+            return Err(Failure::refused(
+                ErrorCode::Validation,
+                "Download this version again before approving it.",
+            ));
+        }
+        if destination.is_none()
+            && matches!(
+                input.action,
+                SecurityKeyAction::ExportRecoveryKit(_)
+                    | SecurityKeyAction::RequestExitExport(_)
+                    | SecurityKeyAction::RecordUpdateApproval(_)
+            )
+        {
+            return Ok(None);
+        }
+        let proof = self
+            .key_action_proof(
+                call,
+                &guard,
+                input.credential_id,
+                input.action.purpose(),
+                client,
+            )
+            .await?;
+        self.check_key_guard(call, &guard).await?;
+        client.finish().map_err(native_failure)?;
+        Ok(Some(proof))
     }
 }
 
