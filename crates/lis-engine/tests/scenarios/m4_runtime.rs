@@ -4,7 +4,7 @@
 //! policy (idle timeout from the policy, absolute lifetime, disabled account), health and
 //! update records. Synthetic data only.
 
-use std::net::{IpAddr, Ipv4Addr, TcpListener};
+use std::net::{IpAddr, Ipv4Addr};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
@@ -26,6 +26,7 @@ use lis_engine::{
 use lis_interfaces::{ConnectionSettings, ListenerState};
 use lis_ops::health::CheckCode;
 use lis_ops::policy::DEFAULT_SETTINGS;
+use lis_store::testing::local_port;
 use lis_store::{DATABASE_FILE, PRE_MIGRATION_DIR};
 use rusqlite::Connection;
 use secrecy::SecretString;
@@ -548,14 +549,6 @@ async fn pending_migrations_on_existing_data_keep_a_pre_migration_snapshot() {
     engine.shutdown().await;
 }
 
-fn free_port() -> u16 {
-    TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
-}
-
 async fn wait_for_listening(engine: &Engine) {
     for _ in 0..200 {
         let status = engine.list_listener_status().await.unwrap();
@@ -595,7 +588,7 @@ async fn quitting_with_an_active_listener_warns_and_records_the_override() {
             name: "Synthetic analyzer".to_owned(),
             connection: ConnectionSettings::AstmTcp {
                 bind_address: IpAddr::V4(Ipv4Addr::LOCALHOST),
-                port: free_port(),
+                port: local_port(),
                 allowed_peers: vec![IpAddr::V4(Ipv4Addr::LOCALHOST)],
             },
             enabled: true,
