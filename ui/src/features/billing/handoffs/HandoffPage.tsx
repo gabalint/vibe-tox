@@ -18,7 +18,7 @@ import { handoffPath } from "../paths";
 import { HandoffItems } from "./HandoffItems";
 
 /** Where the breadcrumb leads when the handoff was not opened from a list. */
-const HOME = { label: "Billing work", href: "/billing/work" };
+const HOME = { label: "Billing handoffs", href: "/billing/handoffs" };
 
 /**
  * One billing handoff file (REQ-BIL-002): its digest, its items, and the outcome the billing

@@ -22,10 +22,11 @@ use lis_engine::{
     DerivationView, DeriveServices, DeviationTarget, DiagnosisInput, DraftClassMappingVersion,
     Engine, EvidenceInput, FailExecutionInput, GetClassMappingVersionInput, GetRunInput,
     GetServiceDerivationInput, HandoffItemKind, HandoffOutcome, HandoffStatus, HandoffView,
-    ListAuditEventsInput, ListBillingWork, OpenDeviationInput, PointOfCareResultInput,
-    PrepareReportCandidateInput, RecordHandoffOutcome, RecordReceiptDecisionInput,
-    RecordTriggerNotMetInput, ReleaseReportInput, RetireClassMappingVersion, SetLaboratoryProfile,
-    TriggerSource, UpdateClassMappingDraft, WithdrawReportInput,
+    ListAuditEventsInput, ListBillingHandoffs, ListBillingWork, OpenDeviationInput,
+    PointOfCareResultInput, PrepareReportCandidateInput, RecordHandoffOutcome,
+    RecordReceiptDecisionInput, RecordTriggerNotMetInput, ReleaseReportInput,
+    RetireClassMappingVersion, SetLaboratoryProfile, TriggerSource, UpdateClassMappingDraft,
+    WithdrawReportInput,
 };
 use lis_reporting::{ReportCompleteness, ReportId};
 use lis_specimens::{
@@ -133,6 +134,14 @@ async fn service_call(engine: &Engine, name: &str) -> Option<Result<(), CommandE
         "create_billing_handoff" => engine
             .create_billing_handoff(CreateBillingHandoff {
                 derivation_ids: vec![derivation_id],
+            })
+            .await
+            .map(drop),
+        "list_billing_handoffs" => engine
+            .list_billing_handoffs(ListBillingHandoffs {
+                limit: 10,
+                search: None,
+                before_handoff_no: None,
             })
             .await
             .map(drop),
@@ -1000,6 +1009,7 @@ async fn adjust_after_changes(desk: &Desk, original: &DerivationView, first: &Ha
     let handoff = desk.hand_off(&[&adjustment]).await.unwrap();
     let outstanding = desk.work(BillingWorkFilter::Outstanding).await;
     assert_adjustment_handoff(&handoff, first, &outstanding);
+    assert_handoff_list(desk, first, &handoff).await;
     let original = desk.derivation(original).await;
     assert_eq!(original.state, BillingDerivationState::HandedOff);
 }
@@ -1014,6 +1024,89 @@ fn assert_adjustment_handoff(handoff: &HandoffView, first: &HandoffView, work: &
         (item.kind, item.adjusts_item_id),
         (HandoffItemKind::Adjustment, Some(first.items[0].item_id))
     );
+}
+
+/// An acknowledged handoff has left billing work but stays listed, newest
+/// first, and is found by its number, an accession or the date of service.
+async fn assert_handoff_list(desk: &Desk, first: &HandoffView, second: &HandoffView) {
+    let e = desk.as_staff(Staff::Author).await;
+    let list = |search: &str, limit, before_handoff_no| ListBillingHandoffs {
+        limit,
+        search: Some(search.to_owned()),
+        before_handoff_no,
+    };
+    let newest = e.list_billing_handoffs(list("", 1, None)).await.unwrap();
+    assert_eq!(
+        (newest.len(), newest[0].handoff_no, newest[0].has_more),
+        (1, second.handoff_no, true)
+    );
+    assert_eq!(newest[0].outstanding_count, 1);
+    let older = e
+        .list_billing_handoffs(list(" ", 1, Some(second.handoff_no)))
+        .await
+        .unwrap();
+    let acknowledged = &older[0];
+    assert_eq!(
+        (acknowledged.handoff_id, acknowledged.has_more),
+        (first.handoff_id, false)
+    );
+    assert_eq!(
+        (
+            acknowledged.acknowledged_count,
+            acknowledged.outstanding_count
+        ),
+        (1, 0)
+    );
+    assert_eq!(
+        acknowledged.dates_of_service,
+        [Some("2026-10-11".to_owned())]
+    );
+    let accession = acknowledged.accession_numbers[0].to_lowercase();
+    assert_handoff_search(e, &accession, first, second).await;
+    assert_eq!(
+        desk.count(
+            "SELECT count(*) FROM audit_events WHERE stream = 'access' \
+             AND action = 'billing.list_billing_handoffs'"
+        ),
+        7
+    );
+}
+
+/// Search finds a whole handoff number, or the start of an accession or a
+/// date of service; a limit outside 1 to 500 is refused.
+async fn assert_handoff_search(
+    e: &Engine,
+    accession: &str,
+    first: &HandoffView,
+    second: &HandoffView,
+) {
+    let list = |search: &str, limit| ListBillingHandoffs {
+        limit,
+        search: Some(search.to_owned()),
+        before_handoff_no: None,
+    };
+    let found = |rows: Vec<lis_engine::BillingHandoffSummary>| {
+        rows.into_iter()
+            .map(|row| row.handoff_no)
+            .collect::<Vec<_>>()
+    };
+    let by_number = e.list_billing_handoffs(list("1", 50)).await.unwrap();
+    assert_eq!(found(by_number), [first.handoff_no]);
+    for search in [accession, "2026-10-11", "2026-10"] {
+        let rows = e.list_billing_handoffs(list(search, 50)).await.unwrap();
+        assert_eq!(
+            found(rows),
+            [second.handoff_no, first.handoff_no],
+            "{search}"
+        );
+    }
+    let none = e
+        .list_billing_handoffs(list("2026-10-12", 50))
+        .await
+        .unwrap();
+    assert!(none.is_empty());
+    let refused = e.list_billing_handoffs(list("", 0)).await.unwrap_err();
+    assert_eq!(refused.code(), ErrorCode::Validation);
 }
 
 /// A final report is frozen evidence even when a later deviation makes its

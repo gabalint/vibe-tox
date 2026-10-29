@@ -3,11 +3,11 @@
 use lis_core::CommandError;
 use lis_engine::{
     ApproveClassMappingVersion, ApproveServiceDerivation, BillingClassMappingVersionSummary,
-    BillingClassMappingVersionView, BillingHandoffInput, BillingWorkItem,
+    BillingClassMappingVersionView, BillingHandoffInput, BillingHandoffSummary, BillingWorkItem,
     ConfirmClassMappingVersion, CreateBillingHandoff, DerivationView, DeriveServices,
     DraftClassMappingVersion, Engine, ExportedHandoffFile, GetClassMappingVersionInput,
-    GetServiceDerivationInput, HandoffView, ListBillingWork, RecordHandoffOutcome,
-    RetireClassMappingVersion, UpdateClassMappingDraft,
+    GetServiceDerivationInput, HandoffView, ListBillingHandoffs, ListBillingWork,
+    RecordHandoffOutcome, RetireClassMappingVersion, UpdateClassMappingDraft,
 };
 use tauri::{AppHandle, Manager, Runtime, State};
 
@@ -72,6 +72,14 @@ pub(crate) async fn list_billing_work(
     input: ListBillingWork,
 ) -> Result<Vec<BillingWorkItem>, CommandError> {
     engine.list_billing_work(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn list_billing_handoffs(
+    engine: State<'_, Engine>,
+    input: ListBillingHandoffs,
+) -> Result<Vec<BillingHandoffSummary>, CommandError> {
+    engine.list_billing_handoffs(input).await
 }
 
 #[tauri::command]

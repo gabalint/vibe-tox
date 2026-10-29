@@ -182,11 +182,12 @@ pub use lis_billing::{
     ApproveClassMappingVersion, ApproveServiceDerivation, BillingClassMappingEntry,
     BillingClassMappingVersionId, BillingClassMappingVersionSummary,
     BillingClassMappingVersionView, BillingComponentDisposition, BillingDerivationId,
-    BillingDerivationState, BillingFlag, BillingHandoffId, BillingHandoffItemId, BillingWorkFilter,
-    BillingWorkItem, BillingWorkState, ConfirmClassMappingVersion, CreateBillingHandoff,
-    DerivationClassView, DerivationCompleteness, DerivationComponentView, DerivationSpecimenView,
-    DerivationView, DeriveServices, DraftClassMappingVersion, HandoffItemKind, HandoffItemView,
-    HandoffOutcome, HandoffStatus, HandoffView, ListBillingWork, RecordHandoffOutcome,
+    BillingDerivationState, BillingFlag, BillingHandoffId, BillingHandoffItemId,
+    BillingHandoffSummary, BillingWorkFilter, BillingWorkItem, BillingWorkState,
+    ConfirmClassMappingVersion, CreateBillingHandoff, DerivationClassView, DerivationCompleteness,
+    DerivationComponentView, DerivationSpecimenView, DerivationView, DeriveServices,
+    DraftClassMappingVersion, HandoffItemKind, HandoffItemView, HandoffOutcome, HandoffStatus,
+    HandoffView, ListBillingHandoffs, ListBillingWork, RecordHandoffOutcome,
     RetireClassMappingVersion, UpdateClassMappingDraft,
 };
 // billing: end

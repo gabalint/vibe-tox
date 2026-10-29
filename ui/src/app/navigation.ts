@@ -5,6 +5,7 @@ import {
   ContactRound,
   FileCheck,
   FileInput,
+  FileOutput,
   Files,
   FileText,
   Inbox,
@@ -244,6 +245,13 @@ export const navigation: readonly NavSection[] = [
           import("@/features/billing/work/BillingWorkPage").then((m) => m.BillingWorkPage),
         capabilities: ["billing"],
         queue: "billing_work",
+      },
+      {
+        path: "/billing/handoffs",
+        label: "Billing handoffs",
+        icon: FileOutput,
+        page: () => import("@/features/billing/handoffs/HandoffsPage").then((m) => m.HandoffsPage),
+        capabilities: ["billing"],
       },
       {
         path: "/billing/class-mappings",

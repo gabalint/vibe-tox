@@ -16,6 +16,7 @@
     "allow-get-service-derivation",
     "allow-approve-service-derivation",
     "allow-create-billing-handoff",
+    "allow-list-billing-handoffs",
     "allow-get-billing-handoff",
     "allow-export-billing-handoff",
     "allow-record-handoff-outcome"

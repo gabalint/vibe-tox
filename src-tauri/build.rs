@@ -256,6 +256,7 @@ const APP_COMMANDS: &[&str] = &[
     "get_service_derivation",
     "approve_service_derivation",
     "create_billing_handoff",
+    "list_billing_handoffs",
     "get_billing_handoff",
     "export_billing_handoff",
     "record_handoff_outcome",

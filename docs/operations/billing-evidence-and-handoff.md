@@ -57,4 +57,6 @@ External billing owns code assignment, claim creation/submission, invoices, remi
 
 Billing work is grouped by patient and collection-derived date of service, including an explicit unknown date. Queue links select that exact pair; a second date for the same patient is a different item. **Load more** continues beyond the first page with timestamp, patient and date ties preserved. **Refresh** rechecks current work and permissions. Recheck affected evidence before deriving or approving after a conflict; never recreate an order or service to reach a hidden item.
 
+A handed-off item leaves Billing work once the partner's acknowledgement is recorded. **Billing › Billing handoffs** lists every handoff, newest first, and finds one by its number, the start of an accession number or the start of a `YYYY-MM-DD` date of service. Open it to export the stored file again or review each item's outcome history.
+
 The external assembly steps above describe requirements for a laboratory-owned process, not an approved SOP supplied by this project. Managed source custody (DM-07) and patient/proxy request handling (RPT-07) remain separate scope decisions in the [scope decisions](../quality/scope-decisions.md). They are not closed by this guide.

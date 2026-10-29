@@ -269,6 +269,7 @@ pub(crate) fn handler<R: Runtime>() -> impl Fn(Invoke<R>) -> bool + Send + Sync 
         billing::get_service_derivation,
         billing::approve_service_derivation,
         billing::create_billing_handoff,
+        billing::list_billing_handoffs,
         billing::get_billing_handoff,
         billing::export_billing_handoff,
         billing::record_handoff_outcome,

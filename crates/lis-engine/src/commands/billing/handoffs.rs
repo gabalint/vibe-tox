@@ -17,7 +17,8 @@ use std::sync::Arc;
 
 use lis_audit::AuditDetail;
 use lis_billing::{
-    BillingError, BillingHandoffId, CreateBillingHandoff, HandoffView, RecordHandoffOutcome,
+    BillingError, BillingHandoffId, BillingHandoffSummary, CreateBillingHandoff, HandoffView,
+    ListBillingHandoffs, RecordHandoffOutcome,
 };
 use lis_core::{CommandError, ErrorCode};
 use lis_store::{ArtifactDigest, CommandContext, StoreError};
@@ -25,7 +26,8 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use super::{
-    CREATE_BILLING_HANDOFF, EXPORT_BILLING_HANDOFF, GET_BILLING_HANDOFF, RECORD_HANDOFF_OUTCOME,
+    CREATE_BILLING_HANDOFF, EXPORT_BILLING_HANDOFF, GET_BILLING_HANDOFF, LIST_BILLING_HANDOFFS,
+    RECORD_HANDOFF_OUTCOME,
 };
 use crate::engine::Engine;
 use crate::pipeline::{Failure, access};
@@ -92,6 +94,31 @@ impl Engine {
                 let id = lis_billing::create_billing_handoff(ctx, &plan, &digest)?;
                 handoff_read(ctx, CREATE_BILLING_HANDOFF.action, id)
             })
+            .await
+        })
+        .await
+    }
+
+    /// `list_billing_handoffs`: PHI-free past handoffs, newest first. The
+    /// search text may be an accession number, so only its use is audited.
+    pub async fn list_billing_handoffs(
+        &self,
+        input: ListBillingHandoffs,
+    ) -> Result<Vec<BillingHandoffSummary>, CommandError> {
+        self.run(&LIST_BILLING_HANDOFFS, |call| async move {
+            let searched = input
+                .search
+                .as_deref()
+                .is_some_and(|text| !text.trim().is_empty());
+            self.audited_read(
+                &call,
+                move |conn| lis_billing::list_billing_handoffs(conn, input),
+                move |rows| {
+                    access(LIST_BILLING_HANDOFFS.action)
+                        .detail("searched", AuditDetail::boolean(searched))
+                        .detail("returned", AuditDetail::count(rows.len()))
+                },
+            )
             .await
         })
         .await

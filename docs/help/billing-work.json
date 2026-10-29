@@ -2,14 +2,20 @@
   "id": "billing-work",
   "title": "Billing work and handoffs",
   "summary": "Review performed-service derivations, hand them off and reconcile the partner\u2019s outcomes.",
-  "reviewedOn": "2026-10-15",
-  "routes": ["/billing/work", "/billing/derivations/:derivationId", "/billing/handoffs/:handoffId"],
+  "reviewedOn": "2026-10-29",
+  "routes": [
+    "/billing/work",
+    "/billing/derivations/:derivationId",
+    "/billing/handoffs",
+    "/billing/handoffs/:handoffId"
+  ],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
         "Billing work groups items by what they need: derivation, review, handoff or partner follow-up. Open a row for its next step. A derivation shows the patient, date-of-service rule, mapping version, flags and the ordered, performed and reported classes for each specimen.",
         "Approve an eligible derivation after review. Select eligible items for a handoff where offered. The handoff page shows the stored file, its items and the partner\u2019s recorded outcome for each item.",
+        "A handoff leaves Billing work once every item is acknowledged. Billing handoffs lists every handoff, newest first, so any handoff can still be found by its number, an accession or its date of service, opened, exported again and its outcome history reviewed.",
         "Review order billing opens the financial selection behind a specimen. Resolve billing context conflict records an allocation agreed with the external billing owner while preserving the combined performed work and all order contexts. It does not create additional services or claims."
       ]
     },
@@ -53,7 +59,11 @@
     "crates/lis-engine/src/commands/billing/mod.rs",
     "crates/lis-engine/src/commands/billing/services.rs",
     "ui/src/features/workqueues/itemPath.ts",
-    "crates/lis-billing/src/work.rs"
+    "crates/lis-billing/src/work.rs",
+    "ui/src/features/billing/handoffs/HandoffsPage.tsx",
+    "crates/lis-billing/src/handoff_list.rs",
+    "crates/lis-engine/src/commands/billing/handoffs.rs",
+    "ui/src/app/navigation.ts"
   ],
   "pages": [
     {
@@ -213,6 +223,10 @@
         {
           "problem": "Nothing appears under the chosen category.",
           "recovery": "Choose another Show category and refresh. An empty category does not mean all billing work is complete."
+        },
+        {
+          "problem": "A handed-off row is no longer listed under any Show choice.",
+          "recovery": "Every item of its handoff has been acknowledged, so no billing work remains. Open Billing handoffs and find the handoff by its number, an accession or its date of service."
         },
         {
           "problem": "A linked patient/date work item is no longer present.",
@@ -377,6 +391,103 @@
         {
           "problem": "No billing classes for a specimen.",
           "recovery": "Inspect component dispositions and the configured mapping. Do not assume no services were performed or create mappings from positive results."
+        }
+      ]
+    },
+    {
+      "title": "Billing handoffs",
+      "routes": ["/billing/handoffs"],
+      "purpose": "Find any billing handoff, including one whose items are all acknowledged and that no longer appears in Billing work, and open it to export its file again or review each item\u2019s outcome history.",
+      "access": "Billing authority is required; the entry appears in the navigation under Billing only for sessions holding it. Opening the list is recorded in the audit trail with the number of handoffs returned and whether a search was used, not the search text.",
+      "fields": [
+        {
+          "name": "Find by handoff number, accession or date of service",
+          "meaning": "Narrows the list to handoffs that match the text.",
+          "values": "A whole handoff number such as 7; the start of an accession number such as A2600000 (letter case ignored); or the start of a date of service as YYYY, YYYY-MM or YYYY-MM-DD, such as 2026-10-20.",
+          "rules": "Optional; blank lists every handoff. The search runs after a short pause in typing, or at once on Enter; Escape or the clear button empties it. A handoff number must match exactly, so 1 does not find handoff 12. The handoff creation time is not searched; sort by Created among loaded handoffs instead. The text stays in the page address."
+        },
+        {
+          "name": "Handoff",
+          "meaning": "The handoff\u2019s sequential number, as on the handoff page and its file name.",
+          "values": "Whole number assigned in creation order, starting at 1.",
+          "rules": "Read-only. Numbers are never reused."
+        },
+        {
+          "name": "Created",
+          "meaning": "When the handoff was created from Billing work.",
+          "values": "Date and time shown in this computer\u2019s time zone.",
+          "rules": "Read-only. Exporting the file again does not change it."
+        },
+        {
+          "name": "Accessions",
+          "meaning": "The accessions whose specimens the handoff\u2019s items cover.",
+          "values": "Accession numbers, separated by commas. An adjustment item that removed every specimen shows the accessions of the derivation it adjusts.",
+          "rules": "Read-only. Patient names and other demographics are never shown in this list."
+        },
+        {
+          "name": "Date of service",
+          "meaning": "The dates of service of the handoff\u2019s items.",
+          "values": "YYYY-MM-DD, several separated by commas; Unknown for an item whose collection date was unknown.",
+          "rules": "Read-only."
+        },
+        {
+          "name": "Items",
+          "meaning": "How many items the handoff file contains.",
+          "values": "Whole number of 1 or more.",
+          "rules": "Read-only. Fixed when the handoff is created."
+        },
+        {
+          "name": "Status",
+          "meaning": "Where the handoff\u2019s items stand, showing the one that needs attention first.",
+          "values": "Awaiting outcome when any item has no partner response yet; otherwise Rejected when any item\u2019s latest response is a rejection; otherwise Acknowledged when every item is acknowledged.",
+          "rules": "Read-only. Open the handoff to see each item\u2019s status and history. Acknowledged is not payment or claim completion."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Open row",
+          "does": "Opens the handoff page.",
+          "availableWhen": "Any listed handoff.",
+          "result": "Shows the file, its items and every recorded outcome. Export file, Record outcome and Record follow-up outcome are available there as the item states allow. Previous and Next move through the handoffs in the list order, and the breadcrumb returns to Billing handoffs."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reads the list again.",
+          "availableWhen": "Always.",
+          "result": "Shows handoffs created and outcomes recorded since the list was loaded."
+        },
+        {
+          "name": "Load older handoffs",
+          "does": "Loads the next 200 matching handoffs.",
+          "availableWhen": "Shown while more matching handoffs exist beyond those loaded.",
+          "result": "Adds older handoffs below the loaded ones. The count adds \u201cmore available\u201d until the last page is loaded."
+        },
+        {
+          "name": "Show all handoffs",
+          "does": "Clears the search.",
+          "availableWhen": "Shown when a search matches no handoff.",
+          "result": "Lists every handoff again, newest first."
+        }
+      ],
+      "restrictions": [
+        "The list loads 200 handoffs per page, newest first. Sorting by a column orders only the handoffs already loaded.",
+        "This page only finds and opens handoffs; it does not create a handoff or record an outcome. Handoffs are created from Billing work under Ready for approval or handoff.",
+        "Handoffs and their outcomes are never deleted or edited, so every handoff stays listed."
+      ],
+      "workflow": [
+        "Open Billing \u203a Billing handoffs.",
+        "Type the handoff number, an accession number or the date of service in Find, or browse the newest handoffs.",
+        "Open the row.",
+        "On the handoff page, click Export file to save the stored file to the Downloads folder again, or open an item to review its outcome history."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "No handoff matches.",
+          "recovery": "Check the text: a handoff number must be whole, an accession or date must match from its first character, and a date uses YYYY-MM-DD. Click Show all handoffs and browse by Created. A derivation that was never handed off is in Billing work, not here."
+        },
+        {
+          "problem": "The handoff list could not be loaded.",
+          "recovery": "Read the message, then click Refresh. If billing authority is missing, ask an administrator; the list needs the Billing role."
         }
       ]
     },

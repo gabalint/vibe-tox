@@ -51,6 +51,7 @@ describe("Side navigation", () => {
     expect(linksIn("Billing")).toEqual([
       "Billing follow-up",
       "Billing work",
+      "Billing handoffs",
       "Billing class mappings",
     ]);
     expect(screen.queryByRole("list", { name: "Front desk" })).toBeNull();
@@ -119,6 +120,7 @@ describe("Side navigation", () => {
     expect(linksIn("Billing")).toEqual([
       "Billing follow-up",
       "Billing work",
+      "Billing handoffs",
       "Billing class mappings",
     ]);
     expect(screen.queryByRole("list", { name: "System" })).toBeNull();
