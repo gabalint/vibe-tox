@@ -14,6 +14,7 @@ use lis_analytical::RevisionIndicator;
 use lis_core::ErrorCode;
 use lis_engine::{GetAccessionInput, LabelJobView, PrintLabelsInput};
 use lis_specimens::{LabelJobKind, LabelOutcome, PrinterId, PrinterTransport};
+use lis_store::testing::local_port;
 
 use crate::m2_lab::{Lab, Role};
 use crate::m2_steps::JOURNEY;
@@ -39,11 +40,7 @@ fn silent_printer() -> (u16, mpsc::Sender<()>) {
 
 /// A local port with nothing listening on it: a printer that is switched off.
 fn switched_off_printer() -> u16 {
-    TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
+    local_port()
 }
 
 async fn configure(lab: &Lab, code: &str, port: u16) -> PrinterId {

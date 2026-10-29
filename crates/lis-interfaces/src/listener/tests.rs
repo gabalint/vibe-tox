@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 
 use lis_astm::{ACK, CR, ENQ, EOT, FrameEnd, NAK, ReceiveEvent, encode_frame, encode_records};
 use lis_core::{Capability, CorrelationId, FixedClock, Principal};
-use lis_store::testing::{TestDatabase, principal, test_start};
+use lis_store::testing::{TestDatabase, local_port, principal, test_start};
 use lis_store::{ArtifactDigest, Database, StoreError, lint_schema};
 use tempfile::TempDir;
 
@@ -105,7 +105,7 @@ fn schema_obeys_module_rules() {
 #[test]
 fn register_instrument_refuses_missing_capability_and_writes_audit() {
     let fixture = Fixture::open();
-    let connection = tcp_settings(reserve_port());
+    let connection = tcp_settings(local_port());
     let denied =
         fixture
             .database
@@ -125,7 +125,7 @@ fn register_instrument_refuses_missing_capability_and_writes_audit() {
         Err(InterfaceError::Store(StoreError::Denied(_)))
     ));
 
-    fixture.register(tcp_settings(reserve_port()), false);
+    fixture.register(tcp_settings(local_port()), false);
     let audit_count = fixture
         .database
         .read_blocking(|conn| {
@@ -143,7 +143,7 @@ fn register_instrument_refuses_missing_capability_and_writes_audit() {
 #[test]
 fn update_and_enable_refuse_missing_capability_and_stale_revision() {
     let fixture = Fixture::open();
-    let instrument = fixture.register(tcp_settings(reserve_port()), false);
+    let instrument = fixture.register(tcp_settings(local_port()), false);
     let update_id = instrument.id;
     let update_denied =
         fixture
@@ -154,7 +154,7 @@ fn update_and_enable_refuse_missing_capability_and_stale_revision() {
                     UpdateInstrumentConnection {
                         instrument_id: update_id,
                         expected_revision: 1,
-                        connection: tcp_settings(reserve_port()),
+                        connection: tcp_settings(local_port()),
                     },
                 )
             });
@@ -203,7 +203,7 @@ fn update_and_enable_refuse_missing_capability_and_stale_revision() {
 #[test]
 fn update_and_enable_increment_revision_and_write_audit() {
     let fixture = Fixture::open();
-    let instrument = fixture.register(tcp_settings(reserve_port()), false);
+    let instrument = fixture.register(tcp_settings(local_port()), false);
     let update_id = instrument.id;
     let updated = fixture
         .database
@@ -216,7 +216,7 @@ fn update_and_enable_increment_revision_and_write_audit() {
                     UpdateInstrumentConnection {
                         instrument_id: update_id,
                         expected_revision: 1,
-                        connection: tcp_settings(reserve_port()),
+                        connection: tcp_settings(local_port()),
                     },
                 )
             },
@@ -261,7 +261,7 @@ fn update_and_enable_increment_revision_and_write_audit() {
 #[test]
 fn duplicate_message_links_receipt_without_second_outbox_item() {
     let fixture = Fixture::open();
-    let instrument = fixture.register(tcp_settings(reserve_port()), true);
+    let instrument = fixture.register(tcp_settings(local_port()), true);
     let message = assembled_message(records());
     let artifact = fixture
         .database
@@ -288,8 +288,8 @@ fn duplicate_message_links_receipt_without_second_outbox_item() {
 #[test]
 fn receipt_guards_refuse_wrong_source_frame_order_and_artifact() {
     let fixture = Fixture::open();
-    let instrument = fixture.register(tcp_settings(reserve_port()), true);
-    let other = fixture.register(tcp_settings(reserve_port()), true);
+    let instrument = fixture.register(tcp_settings(local_port()), true);
+    let other = fixture.register(tcp_settings(local_port()), true);
     let receipt = begin_direct_receipt(&fixture, instrument.id);
     let receipt_id = receipt.id;
     let frame = encode_records(&records()).expect("records encode")[0].clone();
@@ -390,7 +390,7 @@ fn tcp_configuration_requires_a_nonempty_peer_allowlist() {
                     name: "No peer analyzer".to_owned(),
                     connection: ConnectionSettings::AstmTcp {
                         bind_address: IpAddr::V4(Ipv4Addr::LOCALHOST),
-                        port: reserve_port(),
+                        port: local_port(),
                         allowed_peers: Vec::new(),
                     },
                     enabled: true,
@@ -413,7 +413,7 @@ fn tcp_configuration_requires_a_nonempty_peer_allowlist() {
         .expect("instrument list reads");
     assert!(configured.is_empty());
 
-    let instrument = fixture.register(tcp_settings(reserve_port()), false);
+    let instrument = fixture.register(tcp_settings(local_port()), false);
     let instrument_id = instrument.id;
     let revision = instrument.revision;
     let update = fixture.database.write_blocking(
@@ -427,7 +427,7 @@ fn tcp_configuration_requires_a_nonempty_peer_allowlist() {
                     expected_revision: revision,
                     connection: ConnectionSettings::AstmTcp {
                         bind_address: IpAddr::V4(Ipv4Addr::LOCALHOST),
-                        port: reserve_port(),
+                        port: local_port(),
                         allowed_peers: Vec::new(),
                     },
                 },
@@ -474,7 +474,7 @@ fn configuration_and_receipt_queries_refuse_missing_capabilities() {
 #[test]
 fn startup_reconciliation_marks_receipt_interrupted_with_audit() {
     let test_db = TestDatabase::open(&[SCHEMA]).expect("test database opens");
-    let instrument = register_on(&test_db.db, tcp_settings(reserve_port()), true);
+    let instrument = register_on(&test_db.db, tcp_settings(local_port()), true);
     let instrument_id = instrument.id;
     let receipt = test_db
         .db
@@ -519,7 +519,7 @@ fn startup_reconciliation_marks_receipt_interrupted_with_audit() {
 #[test]
 fn startup_recovers_complete_frames_committed_before_eot() {
     let test_db = TestDatabase::open(&[SCHEMA]).expect("test database opens");
-    let instrument = register_on(&test_db.db, tcp_settings(reserve_port()), true);
+    let instrument = register_on(&test_db.db, tcp_settings(local_port()), true);
     let receipt_id = persist_recoverable_transfer_without_eot(&test_db.db, instrument.id);
 
     let test_db = test_db
@@ -614,7 +614,7 @@ fn persist_recoverable_transfer_without_eot(
 /// Starts an enabled TCP listener on localhost whose only allowed peer is
 /// 127.0.0.2, so every local connection is an unexpected peer.
 fn start_listener_rejecting_localhost(fixture: &Fixture) -> (u16, Instrument, ListenerSupervisor) {
-    let port = reserve_port();
+    let port = local_port();
     let connection = ConnectionSettings::AstmTcp {
         bind_address: IpAddr::V4(Ipv4Addr::LOCALHOST),
         port,
@@ -671,7 +671,7 @@ fn unexpected_tcp_peer_is_rejected_before_receipt_and_security_audited() {
 #[test]
 fn idle_tcp_client_is_closed_so_next_analyzer_can_establish() {
     let fixture = Fixture::open();
-    let port = reserve_port();
+    let port = local_port();
     fixture.register(tcp_settings(port), true);
     let supervisor = ListenerSupervisor::with_establishment_timeout(
         Arc::clone(&fixture.database),
@@ -920,7 +920,7 @@ fn register_on(database: &Database, connection: ConnectionSettings, enabled: boo
 
 fn started_tcp_listener() -> (Fixture, u16, Instrument, ListenerSupervisor) {
     let fixture = Fixture::open();
-    let port = reserve_port();
+    let port = local_port();
     let instrument = fixture.register(tcp_settings(port), true);
     let supervisor = ListenerSupervisor::new(Arc::clone(&fixture.database));
     supervisor.start_all().expect("listener starts");
@@ -1013,14 +1013,6 @@ fn serial_settings(port_path: &str) -> ConnectionSettings {
     }
 }
 
-fn reserve_port() -> u16 {
-    TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
-        .expect("port reserves")
-        .local_addr()
-        .expect("local address reads")
-        .port()
-}
-
 fn connect(port: u16) -> TcpStream {
     let stream = TcpStream::connect((Ipv4Addr::LOCALHOST, port)).expect("simulator connects");
     stream
@@ -1109,7 +1101,7 @@ fn change_settings(
 fn restart_applies_changed_connection_and_disabled_state() {
     let (fixture, old_port, instrument, supervisor) = started_tcp_listener();
     wait_until(|| listener_state(&supervisor) == Some((ListenerState::Listening, None)));
-    let new_port = reserve_port();
+    let new_port = local_port();
     change_settings(&fixture, instrument.id, 1, Some(tcp_settings(new_port)));
     supervisor.restart_all().expect("listeners restart");
     wait_until(|| listener_state(&supervisor) == Some((ListenerState::Listening, None)));

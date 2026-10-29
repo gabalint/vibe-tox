@@ -22,7 +22,7 @@ mod runs;
 mod separation;
 
 use std::io::{Read, Write};
-use std::net::{IpAddr, Ipv4Addr, TcpListener, TcpStream};
+use std::net::{IpAddr, Ipv4Addr, TcpStream};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -55,7 +55,7 @@ use lis_specimens::{
     AccessionDetail, CollectionInput, CollectionTimeInput, ContainerId, CreateAccessionInput,
     ReceiptDecision, RecordReceiptDecisionInput, SpecimenInput, VolumeKind,
 };
-use lis_store::testing::{principal, test_start};
+use lis_store::testing::{local_port, principal, test_start};
 use lis_store::{CommandContext, Database, StoreError, lint_schema};
 use rusqlite::Connection;
 use tempfile::TempDir;
@@ -151,7 +151,7 @@ pub(crate) fn fixture_on(modules: &[lis_core::ModuleSchema]) -> Fixture {
     });
     let urine = approved_assay(&db, URINE);
     let oral_fluid = approved_assay(&db, ORAL_FLUID);
-    let port = free_port();
+    let port = local_port();
     let instrument = register_instrument(&db, "syn-analyzer", port);
     Fixture {
         db,
@@ -179,14 +179,6 @@ fn synthetic_subject() -> RegisterSubject {
         identifiers: Vec::new(),
         acknowledged_candidates: Vec::new(),
     }
-}
-
-fn free_port() -> u16 {
-    TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
 }
 
 /// A loopback TCP analyzer, enabled.
