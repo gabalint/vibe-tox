@@ -4,6 +4,11 @@
   gap: var(--space-4);
 }
 
+/* Wraps the fields for their input events; they stay the form's flex items. */
+.fields {
+  display: contents;
+}
+
 /* Fields side by side where they fit. */
 .fieldGrid {
   display: grid;

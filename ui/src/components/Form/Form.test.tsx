@@ -1,5 +1,6 @@
 import { screen } from "@testing-library/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { describe, expect, it, vi } from "vitest";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/TextField";
@@ -88,5 +89,40 @@ describe("Form", () => {
     ).toBeNull();
     expect(npi.getAttribute("aria-invalid")).toBeNull();
     expect(screen.getByText("Enter family name.")).toBeTruthy();
+  });
+
+  // #4485: tracking edits re-rendered the form before React saw a field's change, which undid
+  // the change, so the first character typed in a field was lost.
+  it("keeps the first character typed in each field", async () => {
+    function Fields() {
+      const [values, setValues] = useState({ accession: "", reason: "" });
+      const outer = useRef<HTMLDivElement>(null);
+      // A browser runs pending React work between event listeners; jsdom does not.
+      useEffect(() => {
+        outer.current?.addEventListener("input", () => flushSync(() => undefined));
+      }, []);
+      return (
+        <div ref={outer}>
+          <Form aria-label="Correct" onSubmit={() => undefined} actions={null}>
+            {(["accession", "reason"] as const).map((name) => (
+              <TextField
+                key={name}
+                label={name}
+                name={name}
+                value={values[name]}
+                onChange={(value) => setValues((last) => ({ ...last, [name]: value }))}
+              />
+            ))}
+          </Form>
+        </div>
+      );
+    }
+    const { user } = renderWithProviders(<Fields />);
+    for (const name of ["accession", "reason"]) {
+      const field = screen.getByRole<HTMLInputElement>("textbox", { name });
+      await user.click(field);
+      await user.keyboard("Test reason");
+      expect(field.value).toBe("Test reason");
+    }
   });
 });
