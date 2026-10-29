@@ -77,6 +77,12 @@ An administrator with configuration authority chooses **Record update approval**
 - approval notes;
 - identity confirmation using the account's sign-in method.
 
+For a security-key account, both **Record update approval** and **Approve and install**
+use the selected registered key. Submit the form, then enter that key's PIN or complete
+its supported biometric verification when prompted. Canceling or failing verification
+records no approval and starts no installation. The optional six-digit LIS session-unlock
+PIN cannot confirm an update.
+
 The backup choices come from the installation's recorded **Backups → Runs** history, not a
 scan of files on disk. **Load older backup runs** continues past the initial 100 runs;
 **Refresh backup list** checks for newly completed work. The engine determines eligibility

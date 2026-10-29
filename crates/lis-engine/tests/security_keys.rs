@@ -5,6 +5,8 @@
 mod policy;
 #[path = "fixtures/security_key_client.rs"]
 mod security_key_client;
+#[path = "security_keys/updates.rs"]
+mod updates;
 
 use lis_auth::{
     AuthenticationMethod, CreateFirstAdministratorInput, CreateUserInput, DataKey, SecurityKeyId,

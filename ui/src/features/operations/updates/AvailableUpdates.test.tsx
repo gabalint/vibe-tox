@@ -1,4 +1,5 @@
 import { screen, waitFor, within } from "@testing-library/react";
+import type { UserEvent } from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AvailableBuild } from "@/generated/AvailableBuild";
 import type { UpdateApprovalView } from "@/generated/UpdateApprovalView";
@@ -89,43 +90,110 @@ const downloaded = {
   packageFileName: APPROVED.packageFileName,
 };
 
+async function reviewApproval(user: UserEvent, dialog: HTMLElement) {
+  await user.type(within(dialog).getByRole("textbox", { name: /^Risk class/ }), "Development");
+  await user.click(within(dialog).getByRole("checkbox", { name: /reviewed the release notes/ }));
+  await user.click(
+    await within(dialog).findByRole("button", { name: /Backup before this update$/ }),
+  );
+  await user.click(await screen.findByRole("option", { name: /Verified on/ }));
+  await user.type(within(dialog).getByRole("textbox", { name: /^Approval notes/ }), "Tested");
+}
+
 describe("Available updates (ADR 0020, REQ-OPS-006)", () => {
   beforeEach(mockGridLayout);
 
-  it("downloads, approves with a pre-update backup and installs a newer release", async () => {
-    const download = vi.fn(() => downloaded);
-    const approve = vi.fn(() => APPROVED);
-    const install = vi.fn(() => null);
-    const { user, container } = renderTab({
-      download_update: download,
+  it.each(["password_totp", "security_key"])(
+    "downloads, approves and installs with %s",
+    async (method) => {
+      const download = vi.fn(() => downloaded);
+      const approve = vi.fn(() => APPROVED);
+      const keyAction = vi.fn(() => APPROVED);
+      const install = vi.fn(() => null);
+      const { user, container } = renderTab({
+        download_update: download,
+        approve_downloaded_update: approve,
+        get_authentication_status: () => ({
+          method,
+          credentials: [{ credentialId: "synthetic-key", label: "Everyday", revision: 1 }],
+        }),
+        security_key_action: keyAction,
+        install_update: install,
+      });
+      const release = await screen.findByRole("region", { name: "Official release" });
+      expect(await within(release).findByText(/Version 0.2.0 is available/)).toBeTruthy();
+      expect(within(release).getByText(RELEASE.changes[0] as string)).toBeTruthy();
+      await expectNoA11yViolations(container, { wholePage: true });
+      await user.click(within(release).getByRole("button", { name: "Download version 0.2.0" }));
+      expect(download).toHaveBeenCalledWith({ input: { channel: "release", version: "0.2.0" } });
+      expect(await within(release).findByText(/its signature is verified/)).toBeTruthy();
+      await user.click(within(release).getByRole("button", { name: "Approve and install" }));
+      const dialog = await screen.findByRole("alertdialog", { name: "Approve version 0.2.0" });
+      // The version is the downloaded package's, never typed.
+      expect(within(dialog).queryByRole("textbox", { name: /^Version/ })).toBeNull();
+      await reviewApproval(user, dialog);
+      if (method === "password_totp") {
+        await user.type(within(dialog).getByLabelText(/^Your password/), "synthetic-secret");
+      } else {
+        expect(await within(dialog).findByRole("button", { name: /Security key/ })).toBeTruthy();
+        expect(within(dialog).queryByLabelText(/^Your password/)).toBeNull();
+      }
+      await user.click(within(dialog).getByRole("button", { name: "Approve and install" }));
+      await waitFor(() => expect(install).toHaveBeenCalledWith({ input: { version: "0.2.0" } }));
+      const input = {
+        version: "0.2.0",
+        riskClassText: "Development",
+        releaseNotesReviewed: true,
+        preUpdateRunId: RUN_ID,
+        notes: "Tested",
+        password: method === "password_totp" ? "synthetic-secret" : "",
+      };
+      if (method === "security_key") {
+        expect(keyAction).toHaveBeenCalledWith({
+          input: {
+            credentialId: "synthetic-key",
+            action: { command: "approve_downloaded_update", input },
+          },
+        });
+        expect(approve).not.toHaveBeenCalled();
+      } else {
+        expect(approve).toHaveBeenCalledWith({ input });
+        expect(keyAction).not.toHaveBeenCalled();
+      }
+      expect(await screen.findByText(/The app closes and starts version 0.2.0/)).toBeTruthy();
+    },
+  );
+
+  it.each([
+    "Security key operation cancelled.",
+    "The security key PIN was not accepted. Check it before trying again.",
+  ])("keeps the approval open and does not install when %s", async (message) => {
+    const install = vi.fn();
+    const approve = vi.fn();
+    const { user } = renderTab({
+      get_authentication_status: () => ({
+        method: "security_key",
+        credentials: [{ credentialId: "synthetic-key", label: "Everyday", revision: 1 }],
+      }),
+      download_update: () => downloaded,
       approve_downloaded_update: approve,
+      security_key_action: () => Promise.reject(engineError("validation", message)),
       install_update: install,
     });
     const release = await screen.findByRole("region", { name: "Official release" });
-    expect(await within(release).findByText(/Version 0.2.0 is available/)).toBeTruthy();
-    expect(within(release).getByText(RELEASE.changes[0] as string)).toBeTruthy();
-    await expectNoA11yViolations(container, { wholePage: true });
-    await user.click(within(release).getByRole("button", { name: "Download version 0.2.0" }));
-    expect(download).toHaveBeenCalledWith({ input: { channel: "release", version: "0.2.0" } });
-    expect(await within(release).findByText(/its signature is verified/)).toBeTruthy();
-    await user.click(within(release).getByRole("button", { name: "Approve and install" }));
+    await user.click(await within(release).findByRole("button", { name: /^Download/ }));
+    await user.click(await within(release).findByRole("button", { name: "Approve and install" }));
     const dialog = await screen.findByRole("alertdialog", { name: "Approve version 0.2.0" });
-    // The version is the downloaded package's, never typed.
-    expect(within(dialog).queryByRole("textbox", { name: /^Version/ })).toBeNull();
-    await user.type(within(dialog).getByRole("textbox", { name: /^Risk class/ }), "Development");
-    await user.click(within(dialog).getByRole("checkbox", { name: /reviewed the release notes/ }));
-    await user.click(
-      await within(dialog).findByRole("button", { name: /Backup before this update$/ }),
-    );
-    await user.click(await screen.findByRole("option", { name: /Verified on/ }));
-    await user.type(within(dialog).getByRole("textbox", { name: /^Approval notes/ }), "Tested");
-    await user.type(within(dialog).getByLabelText(/^Your password/), "synthetic-secret");
+    await reviewApproval(user, dialog);
     await user.click(within(dialog).getByRole("button", { name: "Approve and install" }));
-    await waitFor(() => expect(install).toHaveBeenCalledWith({ input: { version: "0.2.0" } }));
-    expect(approve).toHaveBeenCalledWith({
-      input: expect.objectContaining({ version: "0.2.0", releaseNotesReviewed: true }),
-    });
-    expect(await screen.findByText(/The app closes and starts version 0.2.0/)).toBeTruthy();
+    expect(await within(dialog).findByText(message)).toBeTruthy();
+    expect(within(dialog).getByText("corr-test-0001", { exact: false })).toBeTruthy();
+    expect(within(dialog).getByRole("textbox", { name: /^Approval notes/ })).toHaveProperty(
+      "value",
+      "Tested",
+    );
+    expect(approve).not.toHaveBeenCalled();
+    expect(install).not.toHaveBeenCalled();
   });
 
   it("installs an already approved download without a second approval", async () => {

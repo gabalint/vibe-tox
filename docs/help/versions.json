@@ -172,7 +172,7 @@
           "name": "Security key / Security key PIN",
           "meaning": "Confirm approval or acceptance using the registered key for a security-key account.",
           "values": "Security key lists your active registered keys and initially uses your current selection or the first available key. Enter that key’s PIN only if prompted, or complete the key’s supported biometric verification.",
-          "rules": "Conditional on security-key sign-in. Selecting a key does not confirm the decision; complete the prompted verification when submitting. No active registered key requires sign-in recovery. The key PIN is different from the LIS password."
+          "rules": "Conditional on security-key sign-in, including Approve and install for downloaded updates. Selecting a key does not confirm the decision; complete the prompted verification when submitting. No active registered key requires sign-in recovery. Use the key’s own PIN, which is different from the LIS password and the optional six-digit LIS session-unlock PIN. The session-unlock PIN cannot confirm approval or acceptance."
         },
         {
           "name": "App version notice",
@@ -203,7 +203,7 @@
         {
           "name": "Approve and install",
           "does": "Open Approve version for the downloaded package, record the approval, then install it and restart.",
-          "availableWhen": "A downloaded package without a current approval naming it; the same approval fields, qualifying backup and fresh identity confirmation as Record update approval.",
+          "availableWhen": "A downloaded package without a current approval naming it; the same approval fields, qualifying backup and fresh identity confirmation as Record update approval. Security-key accounts confirm with the selected key’s PIN or supported biometric verification; password accounts enter their password.",
           "result": "Records the approval with the downloaded package’s SHA-256, then installs it. The app checks that no listener or other work is still in progress, that the approval names exactly this package and that its backup is still verified and no more than 24 hours old. It then closes and starts the new version, which awaits acceptance. A refused or failed installation leaves the running version unchanged and the approval recorded."
         },
         {
@@ -294,6 +294,10 @@
       ],
       "troubleshooting": [
         {
+          "problem": "Security-key approval was canceled or verification failed",
+          "recovery": "No approval is recorded and installation does not start. The approval form keeps your review fields. Check the selected registered key, then submit again and complete its PIN or biometric prompt. Use the key’s own PIN, not the LIS session-unlock PIN. If the key reports a blocked PIN, follow its manufacturer’s recovery procedure or select another registered key; repeated guesses can block the key."
+        },
+        {
           "problem": "I do not know which version to enter",
           "recovery": "For acceptance of the installed app, use Accept running version; the app supplies its version. Version to install belongs to a future update approval: copy it from that download’s release notes. If the release does not supply version or risk information, obtain it from the publisher before approving."
         },
@@ -378,6 +382,11 @@
     "ui/src/lib/ReauthConfirmDialog.tsx",
     "ui/src/lib/securityKeyAuthenticationField.tsx",
     "ui/src/lib/securityKeyPrompt.tsx",
+    "ui/src/lib/commands.ts",
+    "ui/src/features/operations/updates/AvailableUpdates.test.tsx",
+    "crates/lis-engine/src/commands/security_keys/action.rs",
+    "crates/lis-engine/tests/security_keys/updates.rs",
+    "src-tauri/src/commands/security_keys.rs",
     "ui/src/components/ConfirmDialog/ConfirmDialog.tsx",
     "crates/lis-engine/src/commands/operations/updates.rs",
     "crates/lis-engine/src/commands/backup/mod.rs",
