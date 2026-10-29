@@ -1,4 +1,5 @@
 import { screen, waitFor, within } from "@testing-library/react";
+import type { UserEvent } from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { expectNoA11yViolations } from "@/lib/test/a11y";
 import { detailScreens } from "./detailScreens";
@@ -28,6 +29,11 @@ function linksIn(name: string) {
     .map((link) => link.textContent);
 }
 
+/** Opens a work area; every area starts closed. */
+async function open(user: UserEvent, name: string) {
+  await user.click(await screen.findByRole("button", { name }));
+}
+
 function currentLinks() {
   return within(screen.getByRole("navigation", { name: "Main" }))
     .getAllByRole("link")
@@ -39,8 +45,9 @@ describe("Side navigation", () => {
   beforeEach(() => localStorage.clear());
 
   it("makes financial follow-up available to billing staff without clinical front desk access", async () => {
-    renderApp("/", ["billing"]);
+    const { user } = renderApp("/", ["billing"]);
     await screen.findByRole("heading", { level: 1, name: "Work queues" });
+    await open(user, "Billing");
     expect(linksIn("Billing")).toEqual([
       "Billing follow-up",
       "Billing work",
@@ -50,8 +57,9 @@ describe("Side navigation", () => {
   });
 
   it("lets quality staff reach identity and material without order-entry navigation", async () => {
-    renderApp("/", ["manage_quality"]);
+    const { user } = renderApp("/", ["manage_quality"]);
     await screen.findByRole("heading", { level: 1, name: "Work queues" });
+    await open(user, "Front desk");
     expect(linksIn("Front desk")).toEqual(["Patients", "Storage excursions", "Container lookup"]);
     expect(screen.queryByRole("link", { name: "Orders" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Incomplete identity intake" })).toBeNull();
@@ -59,8 +67,9 @@ describe("Side navigation", () => {
 
   // Presentation only: the engine refuses the commands of screens a session cannot open.
   it("shows each work area only to sessions holding one of its capabilities", async () => {
-    renderApp("/", ["view_audit"]);
+    const { user } = renderApp("/", ["view_audit"]);
     await screen.findByRole("heading", { level: 1, name: "Work queues" });
+    await open(user, "Quality and audit");
     const nav = screen.getByRole("navigation", { name: "Main" });
     expect(
       within(nav)
@@ -72,23 +81,26 @@ describe("Side navigation", () => {
     expect(within(nav).queryByRole("link", { name: "Host health" })).toBeNull();
   });
 
-  it("orders an administrator's work areas by the laboratory's flow, setup collapsed", async () => {
-    const { container } = renderApp("/", ADMINISTRATOR);
+  it("orders an administrator's work areas by the laboratory's flow, all closed at first", async () => {
+    const { user, container } = renderApp("/", ADMINISTRATOR);
     await screen.findByRole("heading", { level: 1, name: "Work queues" });
     const groups = within(screen.getByRole("navigation", { name: "Main" })).getAllByRole("button");
     expect(groups.map((group) => [group.textContent, group.getAttribute("aria-expanded")])).toEqual(
       [
-        ["Front desk", "true"],
-        ["Bench", "true"],
-        ["Review", "true"],
-        ["Reports", "true"],
-        ["Billing", "true"],
-        ["Quality and audit", "true"],
+        ["Front desk", "false"],
+        ["Bench", "false"],
+        ["Review", "false"],
+        ["Reports", "false"],
+        ["Billing", "false"],
+        ["Quality and audit", "false"],
         ["Test catalog", "false"],
         ["Laboratory setup", "false"],
         ["System", "false"],
       ],
     );
+    for (const area of ["Front desk", "Bench", "Review", "Reports", "Billing"]) {
+      await open(user, area);
+    }
     expect(linksIn("Front desk")).toEqual([
       "Patients",
       "Orders",
@@ -141,6 +153,7 @@ describe("Side navigation", () => {
       "Versions and updates",
       "Operations settings",
     ]);
+    await open(user, "Bench");
     expect(linksIn("Bench")).toEqual(["Bench setup"]);
   });
 
@@ -178,19 +191,16 @@ describe("Side navigation", () => {
 
   it("remembers a closed or opened work area on this computer", async () => {
     const first = renderApp("/", ["perform_analysis", "backup_restore"]);
-    await first.user.click(await screen.findByRole("button", { name: "Bench" }));
-    await first.user.click(screen.getByRole("button", { name: "System" }));
-    expect(screen.queryByRole("list", { name: "Bench" })).toBeNull();
+    await open(first.user, "Bench");
+    await open(first.user, "System");
+    await open(first.user, "System");
+    expect(linksIn("Bench")).toEqual(["Worklist", "Runs", "Bench setup"]);
+    expect(screen.queryByRole("list", { name: "System" })).toBeNull();
     first.unmount();
     renderApp("/", ["perform_analysis", "backup_restore"]);
-    const bench = await screen.findByRole("button", { name: "Bench" });
-    expect(bench.getAttribute("aria-expanded")).toBe("false");
-    expect(linksIn("System")).toEqual([
-      "Host health",
-      "Backups",
-      "Recovery kit",
-      "Media disposals",
-    ]);
+    const system = await screen.findByRole("button", { name: "System" });
+    expect(system.getAttribute("aria-expanded")).toBe("false");
+    expect(linksIn("Bench")).toEqual(["Worklist", "Runs", "Bench setup"]);
   });
 
   it("opens the current screen's work area and marks only that entry current", async () => {
@@ -255,7 +265,7 @@ describe("Side navigation", () => {
 
   // REQ-OPS-004: counts come only from list_work_queues, capped counts say so.
   it("shows the engine's queue counts beside their entries", async () => {
-    renderApp("/", ["enter_orders", "review_results", "release_reports"], {
+    const { user } = renderApp("/", ["enter_orders", "review_results", "release_reports"], {
       list_work_queues: () => [
         queue({ queue: "orders_needing_decision", ownerCapability: "enter_orders", count: 3 }),
         queue({ queue: "review_ready", count: 0 }),
@@ -267,10 +277,34 @@ describe("Side navigation", () => {
         }),
       ],
     });
-    expect(await screen.findByRole("link", { name: "Orders, 3 waiting" })).toBeTruthy();
+    await open(user, "Front desk, 3 waiting");
+    await open(user, "Review");
+    await open(user, "Reports, 500 or more waiting");
+    expect(screen.getByRole("link", { name: "Orders, 3 waiting" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Release queue, 500 or more waiting" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Work queues, 503 or more waiting" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Result review" })).toBeTruthy();
+  });
+
+  // Ticket #4462: a closed area totals its entries' counts; open, each entry shows its own.
+  it("shows a closed work area's total, and each entry's count once opened", async () => {
+    const { user } = renderApp("/", ["enter_orders", "review_results"], {
+      list_work_queues: () => [
+        queue({ queue: "review_ready", count: 2 }),
+        queue({ queue: "import_quarantine", count: 2 }),
+      ],
+    });
+    const review = await screen.findByRole("button", { name: "Review, 4 waiting" });
+    expect(review.textContent).toBe("Review4");
+    expect(screen.getByRole("button", { name: "Front desk" }).textContent).toBe("Front desk");
+    await user.click(review);
+    expect(review.getAttribute("aria-expanded")).toBe("true");
+    expect(review.textContent).toBe("Review");
+    expect(screen.getByRole("button", { name: "Review" })).toBe(review);
+    expect(linksIn("Review")).toEqual(["Result review2", "Result imports2"]);
+    expect(screen.getByRole("link", { name: "Result imports, 2 waiting" })).toBeTruthy();
+    await user.click(review);
+    expect(screen.getByRole("button", { name: "Review, 4 waiting" })).toBe(review);
   });
 
   it("announces unknown historical review counts without presenting zero", async () => {
@@ -284,10 +318,11 @@ describe("Side navigation", () => {
   });
 
   it("shows no counts when the queues cannot be read", async () => {
-    renderApp("/about", ["enter_orders"], {
+    const { user } = renderApp("/about", ["enter_orders"], {
       list_work_queues: () => Promise.reject(new Error("unavailable")),
     });
     await screen.findByRole("heading", { level: 1, name: "About this app" });
+    await open(user, "Front desk");
     expect(screen.getByRole("link", { name: "Orders" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Work queues" })).toBeTruthy();
   });

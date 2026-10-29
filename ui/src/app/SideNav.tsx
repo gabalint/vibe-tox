@@ -109,8 +109,8 @@ function currentKind(screen: Screen, pathname: string): "page" | "true" {
 }
 
 /**
- * Which work areas are open: the person's choice, remembered on this computer, else the
- * section's default. Going to a screen opens its area.
+ * Which work areas are open: the person's choice, remembered on this computer, else closed, so
+ * the first view is a short list. Going to a screen opens its area.
  */
 function useOpenSections(
   active: NavSection | undefined,
@@ -118,8 +118,7 @@ function useOpenSections(
   const [prefs, setPrefs] = useState(readOpenSections);
   // Sections are rebuilt each render, so the active one is tracked by its heading.
   const [shownFor, setShownFor] = useState<string | undefined>();
-  const isOpen = (section: NavSection) =>
-    prefs[section.heading ?? ""] ?? !section.collapsedByDefault;
+  const isOpen = (section: NavSection) => prefs[section.heading ?? ""] ?? false;
   if (active?.heading !== shownFor) {
     setShownFor(active?.heading);
     if (active?.heading !== undefined && !isOpen(active)) {
