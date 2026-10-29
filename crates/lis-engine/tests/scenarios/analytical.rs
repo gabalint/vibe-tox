@@ -2,7 +2,7 @@
 //! (REQ-ANA-001, REQ-ANA-003–007, REQ-OPS-001): role separation, and the
 //! clinical audit trail of each change. Synthetic data only.
 
-use std::net::{IpAddr, Ipv4Addr, TcpListener};
+use std::net::{IpAddr, Ipv4Addr};
 
 use lis_analytical::{
     AttemptKind, CompletePrepBatchInput, DeviationId, ExecutionId, InstrumentStatus, LotId,
@@ -26,6 +26,7 @@ use lis_engine::{
     WithdrawLotInput,
 };
 use lis_interfaces::ConnectionSettings;
+use lis_store::testing::local_port;
 
 use crate::fixture::{ADMIN, NEW_PASSWORD, PASSWORD, TestEngine, code_of};
 
@@ -269,14 +270,6 @@ fn status(instrument_id: InstrumentId) -> SetInstrumentStatusInput {
     }
 }
 
-fn free_port() -> u16 {
-    TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
-}
-
 /// Two distinct administrators, a quality manager and an analyst, with their TOTP secrets.
 struct Staff {
     admin: String,
@@ -391,7 +384,7 @@ async fn configured(t: &TestEngine, staff: &Staff) -> (InstrumentId, MethodVersi
             name: "Synthetic analyzer".to_owned(),
             connection: ConnectionSettings::AstmTcp {
                 bind_address: IpAddr::V4(Ipv4Addr::LOCALHOST),
-                port: free_port(),
+                port: local_port(),
                 allowed_peers: vec![IpAddr::V4(Ipv4Addr::LOCALHOST)],
             },
             enabled: false,

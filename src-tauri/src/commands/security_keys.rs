@@ -14,6 +14,7 @@ use tauri::{AppHandle, Runtime, State};
 use crate::security_key_operations::{
     SecurityKeyOperationInput, SecurityKeyOperations, SecurityKeyPinInput, SecurityKeyStatus,
 };
+use crate::updater::{self, Updates};
 
 #[tauri::command]
 pub(crate) async fn security_key_signup(
@@ -101,7 +102,7 @@ pub(crate) async fn security_key_action<R: Runtime>(
     app: AppHandle<R>,
     engine: State<'_, Engine>,
     operations: State<'_, SecurityKeyOperations>,
-    updates: State<'_, crate::updater::Updates>,
+    updates: State<'_, Updates>,
     input: SecurityKeyActionInput,
 ) -> Result<Value, CommandError> {
     // Reuse the password route's engine preflight and native dialogs. No path can
@@ -125,9 +126,9 @@ pub(crate) async fn security_key_action<R: Runtime>(
                 .await?;
             super::operations::pick_file(app).await
         }
-        SecurityKeyAction::ApproveDownloadedUpdate(approval) => {
+        SecurityKeyAction::ApproveDownloadedUpdate(input) => {
             engine.preflight_update(UpdateRequest::Approve).await?;
-            Some(crate::updater::staged_path(&updates, &approval.version)?)
+            Some(updater::staged_path(&updates, &input.version)?)
         }
         _ => None,
     };

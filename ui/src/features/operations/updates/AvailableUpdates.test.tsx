@@ -98,11 +98,21 @@ async function showRelease(user: ReturnType<typeof renderTab>["user"]) {
   await user.click(await screen.findByRole("radio", { name: /^Release/ }));
 }
 
-async function confirmUpdate(user: ReturnType<typeof renderTab>["user"], name: RegExp | string) {
+const KEY = { credentialId: "synthetic-key", label: "Everyday", revision: 1 };
+
+async function confirmUpdate(
+  user: ReturnType<typeof renderTab>["user"],
+  name: RegExp | string,
+  method: "password_totp" | "security_key" = "password_totp",
+) {
   await user.click(within(await card()).getByRole("button", { name }));
   const dialog = await screen.findByRole("dialog", { name: /^Update to/ });
   await user.click(within(dialog).getByRole("checkbox", { name: /reviewed the changes/ }));
-  await user.type(within(dialog).getByLabelText(/^Your password/), "synthetic-secret");
+  if (method === "password_totp") {
+    await user.type(within(dialog).getByLabelText(/^Your password/), "synthetic-secret");
+  } else {
+    expect(await within(dialog).findByRole("button", { name: /Security key/ })).toBeTruthy();
+  }
   await user.click(within(dialog).getByRole("button", { name: "Update now" }));
   return dialog;
 }
@@ -147,6 +157,57 @@ describe("Available updates (ADR 0020, REQ-OPS-006)", () => {
       }),
     });
     expect(await screen.findByText(/The app closes and starts version 0.2.0/)).toBeTruthy();
+  });
+
+  it("approves the downloaded package with a security key in the same step", async () => {
+    const approve = vi.fn();
+    const keyAction = vi.fn(() => APPROVED);
+    const install = vi.fn(() => null);
+    const { user } = renderTab({
+      get_authentication_status: () => ({ method: "security_key", credentials: [KEY] }),
+      download_update: () => downloaded,
+      approve_downloaded_update: approve,
+      security_key_action: keyAction,
+      install_update: install,
+    });
+    await showRelease(user);
+    const dialog = await confirmUpdate(user, "Update to version 0.2.0", "security_key");
+    await waitFor(() => expect(install).toHaveBeenCalledWith({ input: { version: "0.2.0" } }), {
+      timeout: 4000,
+    });
+    expect(keyAction).toHaveBeenCalledWith({
+      input: {
+        credentialId: KEY.credentialId,
+        action: {
+          command: "approve_downloaded_update",
+          input: expect.objectContaining({
+            version: "0.2.0",
+            preUpdateRunId: RUN_ID,
+            password: "",
+          }),
+        },
+      },
+    });
+    expect(approve).not.toHaveBeenCalled();
+    expect(within(dialog).queryByLabelText(/^Your password/)).toBeNull();
+  });
+
+  it.each([
+    "Security key operation cancelled.",
+    "The security key PIN was not accepted. Check it before trying again.",
+  ])("keeps the dialog open and does not install when %s", async (message) => {
+    const install = vi.fn();
+    const { user } = renderTab({
+      get_authentication_status: () => ({ method: "security_key", credentials: [KEY] }),
+      download_update: () => downloaded,
+      security_key_action: () => Promise.reject(engineError("validation", message)),
+      install_update: install,
+    });
+    await showRelease(user);
+    const dialog = await confirmUpdate(user, "Update to version 0.2.0", "security_key");
+    expect(await within(dialog).findByText(message, {}, { timeout: 4000 })).toBeTruthy();
+    expect(within(dialog).getByRole("button", { name: "Update now" })).toBeTruthy();
+    expect(install).not.toHaveBeenCalled();
   });
 
   it("installs an already approved package without a second backup or approval", async () => {

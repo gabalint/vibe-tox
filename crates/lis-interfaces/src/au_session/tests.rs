@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 use std::io::{Read, Write};
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, TcpStream};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
 use std::str::FromStr;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
@@ -11,7 +11,7 @@ use lis_au::{
     WireEvent, encode_frame,
 };
 use lis_core::{Capability, CorrelationId, FixedClock, Principal};
-use lis_store::testing::{principal, test_start};
+use lis_store::testing::{local_port, principal, test_start};
 use lis_store::{ArtifactDigest, Database};
 use tempfile::TempDir;
 
@@ -514,11 +514,7 @@ fn complete_receipt_recovers_using_frozen_profile_after_instrument_changes() {
 #[test]
 fn tcp_supervisor_accepts_fragmented_native_au_frame_without_astm_enq() {
     let fixture = Fixture::open(TransmissionClass::B);
-    let port = TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
-        .expect("port reserves")
-        .local_addr()
-        .expect("local address")
-        .port();
+    let port = local_port();
     let instrument_id = fixture.instrument.id;
     let settings = fixture.settings.clone();
     fixture

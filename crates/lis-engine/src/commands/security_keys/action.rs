@@ -5,10 +5,10 @@ use crate::Engine;
 use crate::pipeline::{Call, Failure};
 use crate::registry::CommandSpec;
 use lis_auth::{ReauthPurpose, Reauthentication, SecurityKeyId};
-use lis_core::CommandError;
+use lis_core::{CommandError, ErrorCode};
 use serde::Deserialize;
 use serde_json::Value;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use ts_rs::TS;
 
 /// Only these existing sensitive commands accept a fresh key confirmation.
@@ -45,8 +45,7 @@ pub enum SecurityKeyAction {
     CloseRecoveryReconciliation(crate::CloseRecoveryInput),
     /// Existing `record_update_approval` command, with its immutable input.
     RecordUpdateApproval(crate::RecordUpdateApprovalInput),
-    /// Existing `approve_downloaded_update` command, with its immutable input; the shell
-    /// supplies the staged package (ADR 0020).
+    /// Existing `approve_downloaded_update` command, for the shell's staged package.
     ApproveDownloadedUpdate(crate::RecordUpdateApprovalInput),
     /// Existing `accept_installed_version` command, with its immutable input.
     AcceptInstalledVersion(crate::AcceptInstalledVersionInput),
@@ -147,8 +146,7 @@ impl SecurityKeyAction {
 
 impl Engine {
     /// Confirms and executes the same typed action. The shell supplies only a trusted
-    /// native-dialog destination or staged update package; it cannot be resubmitted by the
-    /// webview after confirmation.
+    /// native-dialog destination or staged package, never resubmitted by the webview.
     pub async fn security_key_action(
         &self,
         mut input: SecurityKeyActionInput,
@@ -157,115 +155,112 @@ impl Engine {
     ) -> Result<Value, CommandError> {
         self.run(&ACTION, |call| async move {
             let _gate = self.key_ceremonies.enter()?;
-            let guard = self.key_ceremonies.guard(self.clock.now());
-            let action_call = Call {
-                spec: input.action.spec()?,
-                correlation_id: call.correlation_id,
-                principal: call.principal.clone(),
-            };
-            self.authorize(&action_call).await?;
-            if destination.is_none()
-                && matches!(
-                    input.action,
-                    SecurityKeyAction::ExportRecoveryKit(_)
-                        | SecurityKeyAction::RequestExitExport(_)
-                        | SecurityKeyAction::RecordUpdateApproval(_)
-                        | SecurityKeyAction::ApproveDownloadedUpdate(_)
-                )
-            {
+            let Some(proof) = self
+                .confirm_key_action(&call, &input, destination.as_deref(), client)
+                .await?
+            else {
                 return Ok(Value::Null);
-            }
-            let proof = self
-                .key_action_proof(
-                    &call,
-                    &guard,
-                    input.credential_id,
-                    input.action.purpose(),
-                    client,
-                )
-                .await?;
-            self.check_key_guard(&call, &guard).await?;
-            client.finish().map_err(native_failure)?;
+            };
             input.action.confirm(proof);
-            self.dispatch_key_action(input.action, destination).await
+            match input.action {
+                SecurityKeyAction::CreateUser(input) => encode(self.create_user(input).await),
+                SecurityKeyAction::SetUserRoles(input) => encode(self.set_user_roles(input).await),
+                SecurityKeyAction::ResetUserCredentials(input) => {
+                    encode(self.reset_user_credentials(input).await)
+                }
+                SecurityKeyAction::DesignateOnePersonLaboratory(input) => {
+                    encode(self.designate_one_person_laboratory(input).await)
+                }
+                SecurityKeyAction::SetSeparationPolicy(input) => {
+                    encode(self.set_separation_policy(input).await)
+                }
+                SecurityKeyAction::SetSecurityPolicy(input) => {
+                    encode(self.set_security_policy(input).await)
+                }
+                SecurityKeyAction::ReleaseReport(input) => encode(self.release_report(input).await),
+                SecurityKeyAction::WithdrawReport(input) => {
+                    encode(self.withdraw_report(input).await)
+                }
+                SecurityKeyAction::ExportRecoveryKit(input) => {
+                    encode(self.export_recovery_kit(input, destination).await)
+                }
+                SecurityKeyAction::RequestExitExport(input) => {
+                    encode(self.request_exit_export(input, destination).await)
+                }
+                SecurityKeyAction::CloseRecoveryReconciliation(input) => {
+                    encode(self.close_recovery_reconciliation(input).await)
+                }
+                SecurityKeyAction::RecordUpdateApproval(input) => {
+                    encode(self.record_update_approval(input, destination).await)
+                }
+                SecurityKeyAction::ApproveDownloadedUpdate(input) => {
+                    let package = destination.ok_or(Failure::Internal(
+                        "Downloaded update package was not supplied".to_owned(),
+                    ))?;
+                    encode(self.approve_downloaded_update(input, package).await)
+                }
+                SecurityKeyAction::AcceptInstalledVersion(input) => {
+                    encode(self.accept_installed_version(input).await)
+                }
+                SecurityKeyAction::ApproveReviewedCatalog(input) => {
+                    encode(self.approve_reviewed_catalog(input).await)
+                }
+                SecurityKeyAction::RevokeSecurityKey(input) => {
+                    encode(self.revoke_security_key(input).await)
+                }
+                SecurityKeyAction::SetUnlockPin(input) => encode(self.set_unlock_pin(input).await),
+                SecurityKeyAction::DisableUnlockPin(input) => {
+                    encode(self.disable_unlock_pin(input).await)
+                }
+            }
         })
         .await
     }
 
-    /// Runs a confirmed action as its own command.
-    async fn dispatch_key_action(
+    async fn confirm_key_action(
         &self,
-        action: SecurityKeyAction,
-        destination: Option<PathBuf>,
-    ) -> Result<Value, Failure> {
-        match action {
-            SecurityKeyAction::CreateUser(input) => encode(self.create_user(input).await),
-            SecurityKeyAction::SetUserRoles(input) => encode(self.set_user_roles(input).await),
-            SecurityKeyAction::ResetUserCredentials(input) => {
-                encode(self.reset_user_credentials(input).await)
-            }
-            SecurityKeyAction::DesignateOnePersonLaboratory(input) => {
-                encode(self.designate_one_person_laboratory(input).await)
-            }
-            SecurityKeyAction::SetSeparationPolicy(input) => {
-                encode(self.set_separation_policy(input).await)
-            }
-            SecurityKeyAction::SetSecurityPolicy(input) => {
-                encode(self.set_security_policy(input).await)
-            }
-            SecurityKeyAction::ReleaseReport(input) => encode(self.release_report(input).await),
-            SecurityKeyAction::WithdrawReport(input) => encode(self.withdraw_report(input).await),
-            action @ (SecurityKeyAction::ExportRecoveryKit(_)
-            | SecurityKeyAction::RequestExitExport(_)
-            | SecurityKeyAction::CloseRecoveryReconciliation(_)
-            | SecurityKeyAction::RecordUpdateApproval(_)
-            | SecurityKeyAction::ApproveDownloadedUpdate(_)
-            | SecurityKeyAction::AcceptInstalledVersion(_)) => {
-                self.dispatch_operations_action(action, destination).await
-            }
-            SecurityKeyAction::ApproveReviewedCatalog(input) => {
-                encode(self.approve_reviewed_catalog(input).await)
-            }
-            SecurityKeyAction::RevokeSecurityKey(input) => {
-                encode(self.revoke_security_key(input).await)
-            }
-            SecurityKeyAction::SetUnlockPin(input) => encode(self.set_unlock_pin(input).await),
-            SecurityKeyAction::DisableUnlockPin(input) => {
-                encode(self.disable_unlock_pin(input).await)
-            }
+        call: &Call,
+        input: &SecurityKeyActionInput,
+        destination: Option<&Path>,
+        client: &impl SecurityKeyClient,
+    ) -> Result<Option<Reauthentication>, Failure> {
+        let guard = self.key_ceremonies.guard(self.clock.now());
+        let action_call = Call {
+            spec: input.action.spec()?,
+            correlation_id: call.correlation_id,
+            principal: call.principal.clone(),
+        };
+        self.authorize(&action_call).await?;
+        if destination.is_none()
+            && matches!(input.action, SecurityKeyAction::ApproveDownloadedUpdate(_))
+        {
+            return Err(Failure::refused(
+                ErrorCode::Validation,
+                "Download this version again before approving it.",
+            ));
         }
-    }
-
-    /// Runs a confirmed backup, recovery or update action, with its trusted destination.
-    async fn dispatch_operations_action(
-        &self,
-        action: SecurityKeyAction,
-        destination: Option<PathBuf>,
-    ) -> Result<Value, Failure> {
-        match action {
-            SecurityKeyAction::ExportRecoveryKit(input) => {
-                encode(self.export_recovery_kit(input, destination).await)
-            }
-            SecurityKeyAction::RequestExitExport(input) => {
-                encode(self.request_exit_export(input, destination).await)
-            }
-            SecurityKeyAction::CloseRecoveryReconciliation(input) => {
-                encode(self.close_recovery_reconciliation(input).await)
-            }
-            SecurityKeyAction::RecordUpdateApproval(input) => {
-                encode(self.record_update_approval(input, destination).await)
-            }
-            SecurityKeyAction::ApproveDownloadedUpdate(input) => match destination {
-                Some(package) => encode(self.approve_downloaded_update(input, package).await),
-                None => Ok(Value::Null),
-            },
-            SecurityKeyAction::AcceptInstalledVersion(input) => {
-                encode(self.accept_installed_version(input).await)
-            }
-            _ => Err(Failure::Internal(
-                "Not a backup, recovery or update action".to_owned(),
-            )),
+        if destination.is_none()
+            && matches!(
+                input.action,
+                SecurityKeyAction::ExportRecoveryKit(_)
+                    | SecurityKeyAction::RequestExitExport(_)
+                    | SecurityKeyAction::RecordUpdateApproval(_)
+            )
+        {
+            return Ok(None);
         }
+        let proof = self
+            .key_action_proof(
+                call,
+                &guard,
+                input.credential_id,
+                input.action.purpose(),
+                client,
+            )
+            .await?;
+        self.check_key_guard(call, &guard).await?;
+        client.finish().map_err(native_failure)?;
+        Ok(Some(proof))
     }
 }
 

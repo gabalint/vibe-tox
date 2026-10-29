@@ -4,7 +4,7 @@
 // Marks helpers outside `#[test]` functions as test code for clippy's test allowances.
 #![cfg(test)]
 
-use std::net::{IpAddr, Ipv4Addr, TcpListener};
+use std::net::{IpAddr, Ipv4Addr};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -18,7 +18,7 @@ use lis_interfaces::{
     RegisterInstrument, SCHEMA, SetResultFolder, StatusReport, UpdateInstrumentConnection,
     WatchedFolder,
 };
-use lis_store::testing::{TestDatabase, principal, test_start};
+use lis_store::testing::{TestDatabase, local_port, principal, test_start};
 use lis_store::{DATABASE_FILE, Database, StoreError};
 
 const EXPORT: &[u8] = b"Sample Name,Component,Final Conc\nC00000123,Morphine,152.4\n";
@@ -564,11 +564,7 @@ fn folder_status_never_replaces_a_running_listener() {
     let clock = Arc::new(FixedClock::new(test_start()));
     let db = Arc::new(Database::open(dir.path(), &[SCHEMA], clock).unwrap());
     let files = watched(&db, "LCMS-1");
-    let port = TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port();
+    let port = local_port();
     let astm = register(&db, "ASTM-1", tcp_settings(port), true);
     let supervisor = ListenerSupervisor::new(db);
     supervisor.start_all().unwrap();
