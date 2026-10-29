@@ -54,8 +54,6 @@ export interface NavSection {
   heading?: string;
   /** Stable work-area symbol, also used by the compact navigation rail. */
   icon?: LucideIcon;
-  /** Closed until the person opens it or goes to one of its screens. */
-  collapsedByDefault?: boolean;
   screens: readonly Screen[];
 }
 

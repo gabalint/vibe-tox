@@ -33,7 +33,6 @@ export const setupSections: readonly NavSection[] = [
   {
     heading: "Test catalog",
     icon: BookOpen,
-    collapsedByDefault: true,
     screens: [
       {
         path: "/configuration/orderables",
@@ -76,7 +75,6 @@ export const setupSections: readonly NavSection[] = [
   {
     heading: "Laboratory setup",
     icon: Building2,
-    collapsedByDefault: true,
     screens: [
       {
         path: "/setup/material",
@@ -165,7 +163,6 @@ export const setupSections: readonly NavSection[] = [
   {
     heading: "System",
     icon: Settings2,
-    collapsedByDefault: true,
     screens: [
       {
         path: "/operations/health",
