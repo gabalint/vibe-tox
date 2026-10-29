@@ -62,8 +62,11 @@ interface Deciding {
  * in a panel. Interim until the engine sends `allowedActions` on `QuarantineItemView`: an open
  * row offers Reject, and "Accept as reprocessing" only on the kind of row that command is for,
  * a conflicting duplicate (named by the row's `reason`). The engine still decides both.
+ * When the whole message or file was refused, its rows count as quarantined without a row
+ * each, so the section points to the failure instead of saying none were held.
  */
-export function QuarantineItems({ items }: { items: ImportAttemptDetail["quarantine"] }) {
+export function QuarantineItems({ attempt }: { attempt: ImportAttemptDetail }) {
+  const items = attempt.quarantine;
   const record = useOpenRecord();
   const [deciding, setDeciding] = useState<Deciding | null>(null);
   const panel = openRecordPanel(record, items, getRowId, (open) => (
@@ -87,7 +90,7 @@ export function QuarantineItems({ items }: { items: ImportAttemptDetail["quarant
       <DetailLayout panel={panel}>
         <h2 className={styles.subheading}>Quarantined rows</h2>
         {items.length === 0 ? (
-          <p className={styles.hint}>No rows were quarantined.</p>
+          <p className={styles.hint}>{emptyText(attempt)}</p>
         ) : (
           <DataGrid
             label="Quarantined rows"
@@ -111,4 +114,11 @@ export function QuarantineItems({ items }: { items: ImportAttemptDetail["quarant
       )}
     </>
   );
+}
+
+function emptyText(attempt: ImportAttemptDetail): string {
+  const count = attempt.rowsQuarantined;
+  if (attempt.failureCode === null || count === 0) return "No rows were quarantined.";
+  const [whole, failure] = attempt.file === null ? ["message", "Message"] : ["file", "File"];
+  return `The whole ${whole} was held: ${count} ${count === 1 ? "row" : "rows"}. See ${failure} failure above.`;
 }
