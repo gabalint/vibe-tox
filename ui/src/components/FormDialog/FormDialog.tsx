@@ -20,6 +20,8 @@ interface FormDialogProps<Values extends FieldValues> {
   extraActions?: ReactNode;
   /** Where engine field errors land when the input's shape differs from the form's. */
   fieldPaths?: FieldPaths;
+  /** `wide` for long forms grouped in `FieldSection`s; Save and Cancel stay in view. */
+  size?: "default" | "wide";
   children: ReactNode;
 }
 
@@ -39,6 +41,7 @@ export function FormDialog<Values extends FieldValues>({
   onClose,
   extraActions,
   fieldPaths,
+  size,
   children,
 }: FormDialogProps<Values>) {
   return (
@@ -49,6 +52,7 @@ export function FormDialog<Values extends FieldValues>({
         if (!isOpen) onClose();
       }}
       isDismissable={!command.isPending && !form.formState.isDirty}
+      size={size}
     >
       <FormProvider {...form}>
         <Form
@@ -57,6 +61,7 @@ export function FormDialog<Values extends FieldValues>({
           error={command.error}
           errorTitle={errorTitle}
           fieldPaths={fieldPaths}
+          stickyActions={size === "wide"}
           actions={
             <>
               <Button type="submit" variant="primary" isPending={command.isPending}>

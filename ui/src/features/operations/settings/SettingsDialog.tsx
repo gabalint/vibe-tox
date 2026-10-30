@@ -1,4 +1,5 @@
 import type { FieldValues } from "react-hook-form";
+import { FieldGrid, FieldSection } from "@/components/Form";
 import { type TextFormat, TextInput } from "@/components/FormFields";
 import { ReasonField } from "@/components/ReasonField";
 import type { CommandName } from "@/generated/CommandName";
@@ -33,7 +34,7 @@ export function SettingsFields<Values extends Record<keyof Values, number>>({
   view,
   nested,
 }: Pick<SettingsDialogProps<Values>, "fields" | "view" | "nested">) {
-  return fields.map((field) => (
+  const input = (field: SettingField<keyof Values & string>) => (
     <TextInput
       key={field.key}
       name={`${nested ? "values." : ""}${field.key}`}
@@ -41,8 +42,18 @@ export function SettingsFields<Values extends Record<keyof Values, number>>({
       format={{ ...WHOLE_NUMBER, description: description(field, view.defaults[field.key]) }}
       isRequired
     />
+  );
+  if (!hasSections(fields)) return fields.map(input);
+  const titles = [...new Set(fields.map((field) => field.section ?? ""))];
+  return titles.map((title) => (
+    <FieldSection key={title} title={title}>
+      <FieldGrid>{fields.filter((field) => (field.section ?? "") === title).map(input)}</FieldGrid>
+    </FieldSection>
   ));
 }
+
+const hasSections = (fields: readonly SettingField<string>[]) =>
+  fields.some((field) => field.section !== undefined);
 
 /**
  * Sets a new version of a settings record, prefilled from the current one. The screen checks
@@ -73,6 +84,7 @@ export function SettingsDialog<Values extends Record<keyof Values, number>>({
       submitLabel="Save settings"
       defaultValues={defaultValues}
       toInput={toInput}
+      size={hasSections(fields) ? "wide" : "default"}
     >
       <SettingsFields fields={fields} view={view} nested={nested} />
       {view.version !== null && <ReasonField />}

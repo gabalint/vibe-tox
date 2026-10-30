@@ -1,5 +1,5 @@
 import { useWatch } from "react-hook-form";
-import { FieldGrid } from "@/components/Form";
+import { FieldGrid, FieldSection } from "@/components/Form";
 import { ChoiceInput, DATE_FORMAT, TextInput } from "@/components/FormFields";
 import type { PatientCoverage } from "@/generated/PatientCoverage";
 import { optionalText } from "@/lib/choices";
@@ -58,24 +58,30 @@ export function CoverageDialog({
         };
       }}
     >
-      <FieldGrid>
-        <TextInput name="payerName" label="Payer name" isRequired />
-        <TextInput name="payerId" label="Payer identifier" />
-        <TextInput name="planName" label="Plan name" />
-        <TextInput name="memberId" label="Member identifier" />
-        <TextInput name="groupNumber" label="Group number" />
-        <TextInput name="effectiveFrom" label="Coverage starts" format={DATE_FORMAT} />
-        <TextInput name="effectiveUntil" label="Coverage ends" format={DATE_FORMAT} />
-        <TextInput name="verifiedOn" label="Coverage checked on" format={DATE_FORMAT} />
-        <TextInput name="coverageSource" label="Coverage information source" isRequired />
-      </FieldGrid>
-      <ChoiceInput
-        name="subscriberStatus"
-        label="Subscriber details"
-        options={SUBSCRIBER}
-        isRequired
-      />
-      <SubscriberFields />
+      <FieldSection title="Coverage">
+        <FieldGrid>
+          <TextInput name="payerName" label="Payer name" isRequired />
+          <TextInput name="payerId" label="Payer identifier" />
+          <TextInput name="planName" label="Plan name" />
+          <TextInput name="memberId" label="Member identifier" />
+          <TextInput name="groupNumber" label="Group number" />
+          <TextInput name="effectiveFrom" label="Coverage starts" format={DATE_FORMAT} />
+          <TextInput name="effectiveUntil" label="Coverage ends" format={DATE_FORMAT} />
+          <TextInput name="verifiedOn" label="Coverage checked on" format={DATE_FORMAT} />
+          <TextInput name="coverageSource" label="Coverage information source" isRequired />
+        </FieldGrid>
+      </FieldSection>
+      <FieldSection title="Subscriber">
+        <FieldGrid>
+          <ChoiceInput
+            name="subscriberStatus"
+            label="Subscriber details"
+            options={SUBSCRIBER}
+            isRequired
+          />
+        </FieldGrid>
+        <SubscriberFields />
+      </FieldSection>
     </PatientProfileDialog>
   );
 }

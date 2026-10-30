@@ -26,6 +26,8 @@ interface CommandDialogProps<Values extends FieldValues, Input, Result> {
   onClose: () => void;
   /** Where engine field errors land when the input's shape differs from the form's. */
   fieldPaths?: FieldPaths;
+  /** `wide` for long forms grouped in `FieldSection`s. */
+  size?: "default" | "wide";
   /** The fields, bound to the form by name. */
   children: ReactNode;
 }
@@ -63,6 +65,7 @@ export function CommandDialog<Values extends FieldValues, Input, Result = unknow
       submitLabel={submitLabel}
       errorTitle={props.errorTitle ?? "Not recorded"}
       fieldPaths={props.fieldPaths}
+      size={props.size}
       // A request to confirm a self-approval is a question, shown below the fields.
       command={{ error: asksSelfApproval(run.error) ? null : run.error, isPending: run.isPending }}
       onSubmit={submit}

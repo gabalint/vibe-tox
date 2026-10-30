@@ -1,3 +1,4 @@
+import { FieldSection } from "@/components/Form";
 import { contactInput, contactValues } from "./contactValues";
 import { ContactFields } from "./FinancialFields";
 import { PatientProfileDialog, type ProfileDialogProps } from "./PatientProfileDialog";
@@ -14,7 +15,9 @@ export function ContactDialog(props: ProfileDialogProps) {
       }}
       update={(content, values) => ({ ...content, contact: contactInput(values.contact) })}
     >
-      <ContactFields prefix="contact" />
+      <FieldSection title="Address and contact">
+        <ContactFields prefix="contact" />
+      </FieldSection>
     </PatientProfileDialog>
   );
 }

@@ -6,7 +6,7 @@ import type { SetPatientBillingProfileInput } from "@/generated/SetPatientBillin
 import { CommandDialog } from "@/lib/CommandDialog";
 import { contactInput, contactValues } from "./contactValues";
 import { FINANCIAL_QUERIES } from "./contract";
-import { ChangeEvidenceFields } from "./FinancialFields";
+import { ChangeSection } from "./FinancialFields";
 
 export interface ProfileDialogProps {
   view: PatientBillingProfileView;
@@ -51,9 +51,10 @@ export function PatientProfileDialog<
       })}
       successTitle="Billing details saved"
       onClose={onClose}
+      size="wide"
     >
       {children}
-      <ChangeEvidenceFields />
+      <ChangeSection />
     </CommandDialog>
   );
 }

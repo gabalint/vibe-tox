@@ -1,4 +1,5 @@
 import { useWatch } from "react-hook-form";
+import { FieldGrid, FieldSection } from "@/components/Form";
 import { ChoiceInput } from "@/components/FormFields";
 import { partyInput, partyValues } from "./contactValues";
 import { PartyFields } from "./FinancialFields";
@@ -26,13 +27,17 @@ export function GuarantorDialog(props: ProfileDialogProps) {
         guarantor: values.status === "recorded" ? partyInput(values.party) : null,
       })}
     >
-      <ChoiceInput
-        name="status"
-        label="Responsible party details"
-        options={PARTY_STATUS}
-        isRequired
-      />
-      <GuarantorFields />
+      <FieldSection title="Responsible party">
+        <FieldGrid>
+          <ChoiceInput
+            name="status"
+            label="Responsible party details"
+            options={PARTY_STATUS}
+            isRequired
+          />
+        </FieldGrid>
+        <GuarantorFields />
+      </FieldSection>
     </PatientProfileDialog>
   );
 }

@@ -22,6 +22,8 @@ interface DraftDialogProps<Values extends FieldValues, View, NewInput, EditInput
   editInput: (draft: View, values: Values) => EditInput;
   onSaved: (draft: CatalogVersionRef) => void;
   onClose: () => void;
+  /** `wide` for long drafts grouped in `FieldSection`s. */
+  size?: "default" | "wide";
   children: ReactNode;
 }
 
@@ -40,6 +42,7 @@ export function DraftDialog<
   editInput,
   onSaved,
   onClose,
+  size,
   children,
 }: DraftDialogProps<Values, View, NewInput, EditInput>) {
   const toast = useToast();
@@ -73,6 +76,7 @@ export function DraftDialog<
       command={save}
       errorTitle="The draft was not saved"
       onClose={onClose}
+      size={size}
     >
       {children}
     </FormDialog>

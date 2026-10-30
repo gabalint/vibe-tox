@@ -1,3 +1,4 @@
+import { FieldGrid, FieldSection } from "@/components/Form";
 import type { TextFormat } from "@/components/FormFields";
 import { NPI_FORMAT, TextInput } from "@/components/FormFields";
 import { ReasonField } from "@/components/ReasonField";
@@ -85,23 +86,40 @@ export function ProfileDialog({ profile, onClose }: ProfileDialogProps) {
       successTitle="Laboratory profile saved"
       errorTitle="Not saved"
       onClose={onClose}
+      size="wide"
     >
       <p>Reports print these details. Times on every screen show in this time zone.</p>
-      <TextInput name="name" label="Laboratory name" isRequired autoFocus />
-      <TextInput name="addressLines.0" label="Address line 1" isRequired />
-      <TextInput name="addressLines.1" label="Address line 2" />
-      <TextInput name="addressLines.2" label="Address line 3" />
-      <TextInput name="cliaId" label="CLIA number" format={CLIA_FORMAT} isRequired />
-      <TextInput name="director" label="Laboratory director" isRequired />
-      <TextInput name="phone" label="Phone" isRequired />
-      <TextInput
-        name="timeZone"
-        label="Time zone"
-        description="IANA name, such as America/Chicago"
-        isRequired
-      />
-      <TextInput name="billingNpi" label="Billing NPI" format={NPI_FORMAT} />
-      <TextInput name="taxId" label="Tax ID" description="Nine digits, optionally as NN-NNNNNNN" />
+      <FieldSection title="Laboratory">
+        <FieldGrid>
+          <TextInput name="name" label="Laboratory name" isRequired autoFocus />
+          <TextInput name="cliaId" label="CLIA number" format={CLIA_FORMAT} isRequired />
+          <TextInput name="director" label="Laboratory director" isRequired />
+          <TextInput name="phone" label="Phone" isRequired />
+          <TextInput
+            name="timeZone"
+            label="Time zone"
+            description="IANA name, such as America/Chicago"
+            isRequired
+          />
+        </FieldGrid>
+      </FieldSection>
+      <FieldSection title="Address">
+        <FieldGrid>
+          <TextInput name="addressLines.0" label="Address line 1" isRequired />
+          <TextInput name="addressLines.1" label="Address line 2" />
+          <TextInput name="addressLines.2" label="Address line 3" />
+        </FieldGrid>
+      </FieldSection>
+      <FieldSection title="Billing">
+        <FieldGrid>
+          <TextInput name="billingNpi" label="Billing NPI" format={NPI_FORMAT} />
+          <TextInput
+            name="taxId"
+            label="Tax ID"
+            description="Nine digits, optionally as NN-NNNNNNN"
+          />
+        </FieldGrid>
+      </FieldSection>
       {profile && <ReasonField />}
     </CommandDialog>
   );

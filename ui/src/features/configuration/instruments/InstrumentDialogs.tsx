@@ -1,4 +1,5 @@
 import { useWatch } from "react-hook-form";
+import { FieldGrid, FieldSection } from "@/components/Form";
 import { ChoiceInput } from "@/components/FormFields";
 import type { InstrumentChangeResult } from "@/generated/InstrumentChangeResult";
 import type { InstrumentConfiguration } from "@/generated/InstrumentConfiguration";
@@ -57,10 +58,15 @@ export function RegisterDialog({ onSaved, onClose }: ChangeDialogProps) {
       onDone={onSaved}
       errorTitle="Not saved"
       onClose={onClose}
+      size="wide"
     >
-      <CodedNameFields />
+      <FieldSection title="Analyzer">
+        <FieldGrid>
+          <CodedNameFields />
+          <EnabledField />
+        </FieldGrid>
+      </FieldSection>
       <ConnectionFields />
-      <EnabledField />
     </CommandDialog>
   );
 }
@@ -89,6 +95,7 @@ export function ConnectionDialog({
       onDone={onSaved}
       errorTitle="Not saved"
       onClose={onClose}
+      size="wide"
     >
       <ConnectionFields />
     </CommandDialog>
