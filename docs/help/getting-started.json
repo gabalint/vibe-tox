@@ -20,6 +20,7 @@
       "title": "Good practice",
       "paragraphs": [
         "Tab moves between controls; arrow keys move between grid cells. Space selects a row only in tables offering bulk actions. Escape closes the innermost open menu, dialog or panel.",
+        "Long dialogs open wider and group their fields under titled sections, with short fields side by side. The dialog title stays at the top and its Save and Cancel buttons stay at the bottom while the fields scroll. On a narrow window the fields fall back to one column.",
         "This help describes the software. Follow your laboratory’s approved procedures for laboratory decisions. A page guide does not supply clinical interpretations, assay settings or authorization to perform a task."
       ]
     },

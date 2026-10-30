@@ -17,6 +17,11 @@ interface CheckboxGroupProps {
   onChange: (value: string[]) => void;
   isRequired?: boolean;
   errorMessage?: string | undefined;
+  /**
+   * `columns` for a long list in a wide dialog: a titled section like `FieldSection`, with the
+   * options side by side.
+   */
+  layout?: "list" | "columns";
 }
 
 /** A labelled group of checkboxes that selects a list of IDs. */
@@ -27,6 +32,7 @@ export function CheckboxGroup({
   onChange,
   isRequired,
   errorMessage,
+  layout = "list",
 }: CheckboxGroupProps) {
   const errorId = useId();
   return (
@@ -34,6 +40,7 @@ export function CheckboxGroup({
       className={styles.group}
       aria-describedby={errorMessage ? errorId : undefined}
       data-invalid={errorMessage ? true : undefined}
+      data-layout={layout}
     >
       <legend className={styles.legend}>
         {legend}
@@ -44,21 +51,23 @@ export function CheckboxGroup({
           </span>
         )}
       </legend>
-      {options.map((option) => (
-        <div key={option.id} className={styles.option}>
-          <Checkbox
-            isSelected={value.includes(option.id)}
-            onChange={(isSelected) => onChange(toggle(value, option.id, isSelected))}
-          >
-            {option.label}
-          </Checkbox>
-          {option.details?.map((detail) => (
-            <p key={detail} className={styles.detail}>
-              {detail}
-            </p>
-          ))}
-        </div>
-      ))}
+      <div className={styles.options}>
+        {options.map((option) => (
+          <div key={option.id} className={styles.option}>
+            <Checkbox
+              isSelected={value.includes(option.id)}
+              onChange={(isSelected) => onChange(toggle(value, option.id, isSelected))}
+            >
+              {option.label}
+            </Checkbox>
+            {option.details?.map((detail) => (
+              <p key={detail} className={styles.detail}>
+                {detail}
+              </p>
+            ))}
+          </div>
+        ))}
+      </div>
       {errorMessage && (
         <p id={errorId} className={styles.error}>
           {errorMessage}

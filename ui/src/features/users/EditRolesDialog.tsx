@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { FieldGrid, FieldSection } from "@/components/Form";
 import { ReasonField } from "@/components/ReasonField";
 import { useToast } from "@/components/Toast";
 import type { RoleCode } from "@/generated/RoleCode";
@@ -59,10 +60,15 @@ export function EditRolesDialog({ user, roles, onClose, onReload }: EditRolesDia
       command={change}
       onClose={onClose}
       onReload={onReload}
+      size="wide"
     >
       <RoleChecklist roles={roles} />
-      <ReasonField />
-      <AuthenticationField />
+      <FieldSection title="Reason and confirmation">
+        <FieldGrid>
+          <ReasonField />
+          <AuthenticationField />
+        </FieldGrid>
+      </FieldSection>
     </UserFormDialog>
   );
 }

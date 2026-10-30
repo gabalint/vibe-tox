@@ -229,7 +229,7 @@
       "actions": [
         {
           "name": "Register analyzer",
-          "does": "Open the connection form and save a new analyzer.",
+          "does": "Open the connection form and save a new analyzer. For an AU400/AU640 connection the form widens and groups its fields under Analyzer, Connection, AU framing and timing, AU sample and result fields and AU optional patient fields; Register analyzer and Cancel stay at the bottom while the fields scroll. Other connections keep one column.",
           "availableWhen": "Manage configuration; unique Code, Name and all required settings for the chosen connection.",
           "result": "Creates the versioned connection. Message listeners are restarted; the result reports whether restart succeeded. Result-file connections need a folder for automatic pickup."
         },
@@ -241,7 +241,7 @@
         },
         {
           "name": "Edit connection / Save connection",
-          "does": "Replace the selected analyzer’s communication settings.",
+          "does": "Replace the selected analyzer’s communication settings. For an AU400/AU640 connection the form widens into the same sections as Register analyzer, without Analyzer.",
           "availableWhen": "Manage configuration and the current saved revision.",
           "result": "The new revision is saved and message listeners are restarted. Review the feedback for startup failure before relying on receipt."
         },

@@ -180,13 +180,13 @@
       "actions": [
         {
           "name": "Create user",
-          "does": "Register a new active account with the chosen roles and temporary password.",
+          "does": "Register a new active account with the chosen roles and temporary password. The wide form groups its fields under Account, Roles (side by side, each with what it allows) and Sign-in and confirmation.",
           "availableWhen": "Manage users; granting clinical roles also needs Manage quality, subject to first-quality-manager setup.",
           "result": "The user must change the temporary password and set up an authenticator at first sign-in. Additional staff cannot register a key directly in this creation dialog; after completing their first sign-in they can switch their own account to a security key."
         },
         {
           "name": "Edit roles / Save roles",
-          "does": "Replace the authorized set of roles for another account.",
+          "does": "Replace the authorized set of roles for another account. The wide form shows the roles side by side, then Reason and confirmation.",
           "availableWhen": "Authority for each role granted or revoked, fresh account confirmation, reason and current revision.",
           "result": "New privileges are recorded; earlier grants/revocations remain in history."
         },

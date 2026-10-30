@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
 import { DataGrid } from "@/components/DataGrid";
+import { FieldSection } from "@/components/Form";
 import { CheckList, ChoiceInput, TextInput } from "@/components/FormFields";
 import { Section } from "@/components/Section";
 import type { AmendOrderEvidenceInput } from "@/generated/AmendOrderEvidenceInput";
@@ -191,18 +192,21 @@ function AmendEvidence({ order, onClose }: { order: OrderDetail; onClose: () => 
       })}
       successTitle="Evidence amendment saved"
       onClose={onClose}
+      size="wide"
     >
       <p>
         Enter only newly supplied evidence. Select superseded entries explicitly; they remain in
         history. Do not infer diagnoses, medical necessity or medications.
       </p>
       <EvidenceFields />
-      <CheckList
-        name="removeEvidenceIds"
-        legend="Supersede these existing entries"
-        options={options}
-      />
-      <TextInput name="reason" label="Reason and source for amendment" isRequired />
+      <FieldSection title="Amendment">
+        <CheckList
+          name="removeEvidenceIds"
+          legend="Supersede these existing entries"
+          options={options}
+        />
+        <TextInput name="reason" label="Reason and source for amendment" isRequired />
+      </FieldSection>
     </CommandDialog>
   );
 }

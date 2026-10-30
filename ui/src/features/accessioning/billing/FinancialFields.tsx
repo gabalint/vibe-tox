@@ -1,4 +1,4 @@
-import { FieldGrid } from "@/components/Form";
+import { FieldGrid, FieldSection } from "@/components/Form";
 import { ChoiceInput, DATE_FORMAT, TextInput } from "@/components/FormFields";
 import { RELATIONSHIPS } from "./contactValues";
 
@@ -54,5 +54,14 @@ export function ChangeEvidenceFields() {
       />
       <TextInput name="reason" label="Reason for change" isRequired />
     </FieldGrid>
+  );
+}
+
+/** The source and reason, as the last section of a long billing form. */
+export function ChangeSection() {
+  return (
+    <FieldSection title="Source and reason">
+      <ChangeEvidenceFields />
+    </FieldSection>
   );
 }

@@ -19,6 +19,36 @@
   align-items: start;
 }
 
+/* A titled group in a long form; the rule above the title separates it from the last group. */
+.fieldSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  margin: 0;
+  padding: var(--space-4) 0 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.fieldSection:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* Inside a section, a lone short field keeps its column width instead of the whole row. */
+.fieldSection .fieldGrid {
+  grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
+}
+
+.fieldSectionTitle {
+  float: left;
+  width: 100%;
+  padding: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

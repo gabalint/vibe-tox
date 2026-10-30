@@ -24,6 +24,7 @@ interface UserFormDialogProps<Values extends FieldValues> {
    * a conflict does not involve an existing user, such as a username already in use.
    */
   onReload?: () => void;
+  size?: "default" | "wide";
   children: ReactNode;
 }
 
