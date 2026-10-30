@@ -5,7 +5,8 @@ import { RecordActions } from "@/components/RowActions";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Timestamp } from "@/components/Timestamp";
 import type { InstrumentReadinessView } from "@/generated/InstrumentReadinessView";
-import { instrumentStatus, sourceText } from "../labels";
+import { instrumentStatus } from "@/lib/instrumentStatus";
+import { sourceText } from "../labels";
 import { InstrumentSources } from "./InstrumentSources";
 
 interface InstrumentPanelProps {

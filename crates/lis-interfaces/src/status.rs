@@ -70,6 +70,11 @@ pub struct ListenerStatus {
     /// For a watched folder, the files over the size limit found since the
     /// app started; absent for an ASTM listener.
     pub files_too_large: Option<u32>,
+    /// The latest error since the app started, kept after the listener
+    /// recovers; `None` when there has been none.
+    pub last_error: Option<ListenerDetailCode>,
+    /// When that error began.
+    pub last_error_at: Option<UtcTimestamp>,
 }
 
 impl ListenerStatus {

@@ -53,10 +53,11 @@ pub use instrument_commands::{
 };
 pub use listener::{DEFAULT_ESTABLISHMENT_TIMEOUT, ListenerSupervisor, ListenerSupervisorError};
 pub use model::{
-    AbortCode, AuConnectionSettings, ConnectionSettings, DataBits, FileFacts, FileOrigin,
-    FileSource, Instrument, InstrumentTransport, Parity, PresentFile, Receipt, ReceiptFileView,
-    ReceiptFrame, ReceiptId, ReceiptState, ReceiveResultFileInput, RegisterInstrument,
-    SetInstrumentEnabled, SetResultFolder, StopBits, UpdateInstrumentConnection, WatchedFolder,
+    AbortCode, AuConnectionSettings, ChangeStamp, ConnectionSettings, DataBits, FileFacts,
+    FileOrigin, FileSource, Instrument, InstrumentTransport, Parity, PresentFile, Receipt,
+    ReceiptFileView, ReceiptFrame, ReceiptId, ReceiptState, ReceiveResultFileInput,
+    RegisterInstrument, SetInstrumentEnabled, SetResultFolder, StopBits,
+    UpdateInstrumentConnection, WatchedFolder,
 };
 pub use queries::{
     get_instrument, get_receipt, instrument_au_profile, instrument_names, instrument_transport,
@@ -97,6 +98,11 @@ pub const MIGRATIONS: &[Migration] = &[
         version: 4,
         name: "au_protocol",
         sql: include_str!("../migrations/0004_au_protocol.sql"),
+    },
+    Migration {
+        version: 5,
+        name: "instrument_changes",
+        sql: include_str!("../migrations/0005_instrument_changes.sql"),
     },
 ];
 

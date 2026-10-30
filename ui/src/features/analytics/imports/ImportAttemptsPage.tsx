@@ -5,12 +5,14 @@ import { ListCount } from "@/components/ListLimit";
 import { Page, PageHeader } from "@/components/Page";
 import { QueryContent } from "@/components/QueryContent";
 import { RefreshControl } from "@/components/RefreshControl";
+import { Select } from "@/components/Select";
 import { Timestamp } from "@/components/Timestamp";
 import { Toolbar } from "@/components/Toolbar";
 import type { ImportAttemptSummary } from "@/generated/ImportAttemptSummary";
 import type { InstrumentReadinessView } from "@/generated/InstrumentReadinessView";
 import { useCommandPages, useCommandQuery, useHasCapability } from "@/lib/commands";
 import { useOpenRecordPage } from "@/lib/recordSequence";
+import { useSearchParam } from "@/lib/searchParam";
 import {
   LIST_IMPORT_ATTEMPTS,
   LIST_INSTRUMENT_READINESS,
@@ -27,6 +29,9 @@ function originText(row: ImportAttemptSummary): string {
   if (row.origin === "folder") return "File from the watched folder";
   return "Analyzer message";
 }
+
+/** The filter's choice for every instrument; the URL then has no `instrument`. */
+const ALL_INSTRUMENTS = "all";
 
 /** The processing time identifies the attempt; a click or Enter on the row opens it. */
 function attemptColumns(
@@ -76,13 +81,15 @@ function attemptColumns(
 /**
  * Each attempt to import a received analyzer message (REQ-ANA-003), newest first, with its
  * counts only. Opening one shows its quarantined rows. New messages arrive while the screen is
- * open, so the list says when it was read.
+ * open, so the list says when it was read. `?instrument=` shows one instrument's imports, as
+ * its panel under Laboratory setup links them.
  */
 export function ImportAttemptsPage() {
+  const [instrumentId, setInstrumentId] = useSearchParam("instrument");
   const attempts = useCommandPages<ImportAttemptSummary, string>(LIST_IMPORT_ATTEMPTS, {
-    key: { directory: true },
+    key: { directory: true, instrumentId },
     pageArgs: (afterImportAttemptId) => ({
-      input: { instrumentId: null, limit: LIST_LIMIT, before: null, afterImportAttemptId },
+      input: { instrumentId, limit: LIST_LIMIT, before: null, afterImportAttemptId },
     }),
     nextCursor: (page) =>
       page.length > LIST_LIMIT ? page[LIST_LIMIT - 1]?.importAttemptId : undefined,
@@ -112,6 +119,20 @@ export function ImportAttemptsPage() {
           )
         }
       >
+        <Select
+          layout="inline"
+          label="Instrument"
+          name="instrument"
+          options={[
+            { id: ALL_INSTRUMENTS, label: "All instruments" },
+            ...(instruments.data ?? []).map((instrument) => ({
+              id: instrument.instrumentId,
+              label: instrument.name,
+            })),
+          ]}
+          value={instrumentId ?? ALL_INSTRUMENTS}
+          onChange={(next) => setInstrumentId(next === ALL_INSTRUMENTS ? null : next)}
+        />
         <RefreshControl query={attempts} />
       </Toolbar>
       <QueryContent
@@ -121,7 +142,10 @@ export function ImportAttemptsPage() {
         empty={{
           when: (data) => data.pages.flat().length === 0,
           title: "No imports",
-          description: "No analyzer message has been processed yet.",
+          description:
+            instrumentId === null
+              ? "No analyzer message has been processed yet."
+              : "No message from this instrument has been processed yet.",
         }}
       >
         {() => <AttemptList answer={rows} columns={columns} />}

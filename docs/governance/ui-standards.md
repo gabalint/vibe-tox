@@ -136,6 +136,7 @@ Sources: ENG-161 to ENG-163, ENG-165 to ENG-167. Clinical systems use the same s
 - The open record is in the URL (`?open=<id>`).
 - Escape closes the panel when focus is in it and no menu or dialog is open, and focus returns to the row.
 - When the panel would leave the list narrower than about 40rem, it replaces the list and offers "Back to list".
+- A configuration record whose settings outgrow one column of facts, such as an analyzer connection, shows them read-only in the groups and order of its edit form. Each group's title collapses it. Live state and links to related screens follow the settings.
 
 ### Record page body
 

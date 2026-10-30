@@ -209,7 +209,7 @@ describe("InstrumentsPage (REQ-INT-005)", { timeout: WALKTHROUGH_TIMEOUT_MS }, (
     await openRowWithEnter(user, "SYN-AN2");
     const panel = await screen.findByRole("region", { name: "SYN-AN2" });
     expect(router.state.location.search).toBe(`?open=${SERIAL.id}`);
-    expect(within(panel).getByText("Serial /dev/ttyUSB0, 9600 baud, 8N1")).toBeTruthy();
+    expect(within(panel).getByText("/dev/ttyUSB0")).toBeTruthy();
     expect(within(panel).getByRole("button", { name: "Enable listening" })).toBeTruthy();
     await expectNoA11yViolations(container);
     await user.click(within(panel).getByRole("heading", { name: "SYN-AN2" }));

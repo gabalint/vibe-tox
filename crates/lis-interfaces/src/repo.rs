@@ -22,7 +22,7 @@ pub(crate) use receipts::{
 
 use crate::InterfaceError;
 use crate::model::{
-    ConnectionSettings, DataBits, Instrument, InstrumentTransport, Parity, StopBits,
+    ChangeStamp, ConnectionSettings, DataBits, Instrument, InstrumentTransport, Parity, StopBits,
 };
 
 pub(crate) fn insert_instrument(
@@ -34,8 +34,9 @@ pub(crate) fn insert_instrument(
         "INSERT INTO ifc_instruments (
             id, code, name, connection_kind, tcp_bind_address, tcp_port, tcp_allowed_peers,
             serial_port_path, serial_baud_rate, serial_data_bits, serial_parity,
-            serial_stop_bits, result_folder, enabled, revision, au_settings
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            serial_stop_bits, result_folder, enabled, revision, au_settings,
+            created_by, created_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         params![
             instrument.id,
             instrument.code,
@@ -53,7 +54,22 @@ pub(crate) fn insert_instrument(
             instrument.enabled,
             instrument.revision,
             fields.au_settings,
+            instrument.created.as_ref().map(|stamp| &stamp.by),
+            instrument.created.as_ref().map(|stamp| stamp.at),
         ],
+    )?;
+    Ok(())
+}
+
+/// Records who changed the configuration and when, beside the change itself.
+pub(crate) fn record_change(
+    conn: &Connection,
+    instrument_id: InstrumentId,
+    stamp: &ChangeStamp,
+) -> Result<(), InterfaceError> {
+    conn.execute(
+        "UPDATE ifc_instruments SET changed_by = ?, changed_at = ? WHERE id = ?",
+        params![stamp.by, stamp.at, instrument_id],
     )?;
     Ok(())
 }
@@ -112,7 +128,8 @@ pub(crate) fn instrument_by_id(
     conn.query_row(
         "SELECT id, code, name, connection_kind, tcp_bind_address, tcp_port, tcp_allowed_peers,
                 serial_port_path, serial_baud_rate, serial_data_bits, serial_parity,
-                serial_stop_bits, enabled, revision, result_folder, au_settings
+                serial_stop_bits, enabled, revision, result_folder, au_settings,
+                created_by, created_at, changed_by, changed_at
          FROM ifc_instruments WHERE id = ?",
         [instrument_id],
         map_instrument,
@@ -125,7 +142,8 @@ pub(crate) fn all_instruments(conn: &Connection) -> Result<Vec<Instrument>, Inte
     let mut statement = conn.prepare_cached(
         "SELECT id, code, name, connection_kind, tcp_bind_address, tcp_port, tcp_allowed_peers,
                 serial_port_path, serial_baud_rate, serial_data_bits, serial_parity,
-                serial_stop_bits, enabled, revision, result_folder, au_settings
+                serial_stop_bits, enabled, revision, result_folder, au_settings,
+                created_by, created_at, changed_by, changed_at
          FROM ifc_instruments ORDER BY code",
     )?;
     let rows = statement.query_map([], map_instrument)?;
@@ -212,7 +230,20 @@ fn map_instrument(row: &Row<'_>) -> rusqlite::Result<Instrument> {
         result_folder: row.get(14)?,
         enabled: row.get(12)?,
         revision: row.get(13)?,
+        created: change_stamp(row, 16)?,
+        changed: change_stamp(row, 18)?,
     })
+}
+
+/// The stamp in columns `by` and `by + 1`; absent when it was never recorded.
+fn change_stamp(row: &Row<'_>, by: usize) -> rusqlite::Result<Option<ChangeStamp>> {
+    let who: Option<String> = row.get(by)?;
+    let at = row.get(by + 1)?;
+    Ok(who.zip(at).map(|(by, at)| ChangeStamp {
+        by,
+        by_display: None,
+        at,
+    }))
 }
 
 fn parse_au_settings(row: &Row<'_>) -> rusqlite::Result<crate::AuConnectionSettings> {

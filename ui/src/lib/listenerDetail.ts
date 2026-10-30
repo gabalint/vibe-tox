@@ -1,7 +1,20 @@
 // Listener and watched-folder detail codes in plain words (REQ-OPS-013; result-files brief §6).
 // The one place they are worded: the listener list and the instrument panel both show them.
+import type { Tone } from "@/components/tones";
 import type { ListenerDetailCode } from "@/generated/ListenerDetailCode";
+import type { ListenerState } from "@/generated/ListenerState";
 import type { ListenerStatusView } from "@/generated/ListenerStatusView";
+
+/** Each listener state in words, with its badge tone. */
+export const LISTENER_STATES: Record<ListenerState, { tone: Tone; label: string }> = {
+  disabled: { tone: "neutral", label: "Disabled" },
+  listening: { tone: "info", label: "Listening" },
+  connected: { tone: "neutral", label: "Connected" },
+  receiving: { tone: "info", label: "Receiving" },
+  error: { tone: "danger", label: "Error" },
+  // An enabled result-file instrument without a watched folder: files are loaded by hand.
+  manual_only: { tone: "neutral", label: "Manual loading only" },
+};
 
 /** Plain-language reasons; the engine sends only these codes, never payload text. */
 const DETAILS: Record<ListenerDetailCode, string> = {

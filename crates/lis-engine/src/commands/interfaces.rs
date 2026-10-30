@@ -18,6 +18,7 @@ use lis_interfaces::{
 use serde::Serialize;
 use ts_rs::TS;
 
+use crate::commands::people::{display_names, name_of};
 use crate::engine::Engine;
 use crate::pipeline::domain_error;
 use crate::registry::{Access, CommandSpec, spec};
@@ -61,12 +62,15 @@ pub struct InstrumentChangeResult {
 domain_error!(InterfaceError, InterfaceError::field_errors);
 
 impl Engine {
-    /// `list_instruments`: every analyzer configuration, by name.
+    /// `list_instruments`: every analyzer configuration, by name, with who
+    /// registered and last changed it.
     pub async fn list_instruments(&self) -> Result<Vec<Instrument>, CommandError> {
         self.run(&LIST_INSTRUMENTS, |call| async move {
             let principal = call.principal.clone();
             self.read(&call, move |conn| {
-                lis_interfaces::list_instruments(conn, &principal)
+                let mut instruments = lis_interfaces::list_instruments(conn, &principal)?;
+                name_changes(conn, &mut instruments)?;
+                Ok::<_, InterfaceError>(instruments)
             })
             .await
         })
@@ -154,4 +158,26 @@ impl Engine {
             }
         }
     }
+}
+
+/// Current account display names of who registered and last changed each analyzer. The
+/// configuration keeps only the immutable ID; the name is looked up on every read.
+fn name_changes(
+    conn: &rusqlite::Connection,
+    instruments: &mut [Instrument],
+) -> Result<(), InterfaceError> {
+    let ids = instruments
+        .iter()
+        .flat_map(|instrument| [&instrument.created, &instrument.changed])
+        .flatten()
+        .map(|stamp| stamp.by.as_str());
+    let names = display_names(conn, ids)?;
+    for stamp in instruments
+        .iter_mut()
+        .flat_map(|instrument| [&mut instrument.created, &mut instrument.changed])
+        .flatten()
+    {
+        stamp.by_display = name_of(&names, &stamp.by);
+    }
+    Ok(())
 }
