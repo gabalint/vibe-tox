@@ -257,6 +257,12 @@
           "rules": "Read-only; resolve the responsible record, then prepare a new candidate when stale."
         },
         {
+          "name": "Revision N is current",
+          "meaning": "Shown instead of Blocking release when the only gate is that nothing changed since the current revision, as right after a release.",
+          "values": "The current revision number and report number; View report and delivery for people who can read reports (delivery or quality authority).",
+          "rules": "Read-only and not a block: there is nothing new to release. Content as it would print then names the issued revision and, for report readers, links View revision N as issued. Prepare candidate stays unavailable until results or report details change. If any other gate also applies, Blocking release is shown with every gate instead."
+        },
+        {
           "name": "Printed report: Report number / Revision / Status / Relationship",
           "meaning": "Identifies the issued version and its relationship to earlier reporting.",
           "values": "Report number; sequential revision; Final or Partial; Initial report, Supplement or Correction.",
@@ -424,6 +430,10 @@
         {
           "problem": "Content as it would print is unavailable.",
           "recovery": "Resolve the named missing data or blocking condition in the workspace; no candidate can substitute for missing required content."
+        },
+        {
+          "problem": "After a release the workspace shows Revision N is current and no preview.",
+          "recovery": "This is expected: the released revision already holds the current content. Use View report and delivery or View revision N as issued; prepare a new candidate only after results or report details change."
         },
         {
           "problem": "A correction reason is unexpectedly required.",
@@ -637,7 +647,7 @@
           "name": "Release report",
           "does": "Confirms and issues the exact reviewed candidate content.",
           "availableWhen": "Candidate is Prepared, current, unexpired and owned by the signatory; fresh account confirmation, authority, integrity, review attribution and every release gate pass.",
-          "result": "Records an immutable issued revision and creates delivery obligations immediately; returns to the report workspace."
+          "result": "Records an immutable issued revision and creates delivery obligations immediately; a Report … revision N released message appears and the report workspace opens showing Revision N is current, with View report and delivery."
         },
         {
           "name": "Open the report workspace / Report workspace",
