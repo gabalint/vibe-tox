@@ -202,7 +202,7 @@ Each screen design and each feature test names which of these states apply, and 
 ## Forms
 
 - Labels are always visible, and required fields are marked.
-- Engine field errors (`CommandError.fieldErrors`) map onto the matching fields. Editing a field hides its engine error at once; the next submit checks it again. An error for a whole list of choices or rows, such as an empty test-code map, shows under that list's legend until the next submit.
+- Engine field errors (`CommandError.fieldErrors`) map onto the matching fields. Editing a field hides its engine error at once; the next submit checks it again. An error for a whole list of choices or rows, such as an empty test-code map, shows under that list's legend until the next submit. A field error that no field on the form shows, such as one about the instrument behind the form, appears in the error box above the fields; when no field is highlighted it replaces the engine's "Check the highlighted fields" message.
 - An invalid field shows its label, border and message in the danger tone until it is corrected; an empty choice also shows its "Select…" placeholder in that tone. Submitting moves focus to the first invalid field.
 - Client-side checks are limited to presence and format, for faster feedback. The engine validates everything again.
 - Submit is disabled while pending. Input is kept after an error.

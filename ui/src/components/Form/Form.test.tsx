@@ -53,6 +53,62 @@ describe("Form", () => {
     await expectNoA11yViolations(container);
   });
 
+  it("shows a field error that no field on the form shows in place of the generic message", () => {
+    const error = engineError("validation", "Check the highlighted fields.", {
+      fieldErrors: [
+        {
+          field: "instrumentId",
+          code: "source_format_mismatch",
+          message: "The source format must match the instrument connection.",
+        },
+      ],
+    });
+    renderWithProviders(
+      <Form
+        aria-label="Register source"
+        onSubmit={() => undefined}
+        error={error}
+        errorTitle="Not recorded"
+        actions={<Button type="submit">Register source</Button>}
+      >
+        <TextField
+          label="Sender name"
+          name="senderName"
+          value="AU-SIM"
+          onChange={() => undefined}
+        />
+      </Form>,
+    );
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toContain("The source format must match the instrument connection.");
+    expect(alert.textContent).not.toContain("Check the highlighted fields.");
+    expect(screen.getByRole("textbox", { name: "Sender name" }).getAttribute("aria-invalid")).toBe(
+      null,
+    );
+  });
+
+  it("keeps the generic message beside a field error no field shows when another is highlighted", () => {
+    const error = engineError("validation", "Check the highlighted fields.", {
+      fieldErrors: [
+        { field: "senderName", code: "required", message: "Enter the sender name." },
+        { field: "instrumentId", code: "retired", message: "The instrument is retired." },
+      ],
+    });
+    renderWithProviders(
+      <Form
+        aria-label="Register source"
+        onSubmit={() => undefined}
+        error={error}
+        actions={<Button type="submit">Register source</Button>}
+      >
+        <TextField label="Sender name" name="senderName" value="" onChange={() => undefined} />
+      </Form>,
+    );
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toContain("Check the highlighted fields. The instrument is retired.");
+    expect(alert.textContent).not.toContain("Enter the sender name.");
+  });
+
   it("hides a field's engine error as soon as the field is edited", async () => {
     const error = engineError("validation", "Check the highlighted fields.", {
       fieldErrors: [
