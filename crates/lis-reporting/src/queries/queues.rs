@@ -47,6 +47,9 @@ pub enum ReleaseQueue {
 /// oldest review first: `res_v_reviewed_lines` anti-joined with current
 /// `rpt_v_released_lines` (brief §6). Withdrawn reports are excluded. Ready
 /// and blocked are told apart before the limit, so neither hides the other.
+/// A change to released content without a new result revision (a corrected
+/// collection time, say) is not listed here: it opens impact review, and a
+/// required correction is listed by [`impact_queue`] (REQ-RPT-002).
 pub fn release_queue(
     conn: &Connection,
     queue: ReleaseQueue,
