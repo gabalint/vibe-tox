@@ -1,4 +1,5 @@
 import { Controller, useForm } from "react-hook-form";
+import { FieldGrid, FieldSection } from "@/components/Form";
 import { TextField } from "@/components/TextField";
 import { useToast } from "@/components/Toast";
 import type { CreateUserInput } from "@/generated/CreateUserInput";
@@ -61,38 +62,47 @@ export function CreateUserDialog({ roles, onCreated, onClose }: CreateUserDialog
       onSubmit={onSubmit}
       command={create}
       onClose={onClose}
+      size="wide"
     >
-      <Controller
-        control={form.control}
-        name="username"
-        rules={{ required: "Enter a username." }}
-        render={(controller) => (
-          <TextField
-            {...textFieldProps(controller)}
-            label="Username"
-            autoComplete="off"
-            isRequired
-            autoFocus
+      <FieldSection title="Account">
+        <FieldGrid>
+          <Controller
+            control={form.control}
+            name="username"
+            rules={{ required: "Enter a username." }}
+            render={(controller) => (
+              <TextField
+                {...textFieldProps(controller)}
+                label="Username"
+                autoComplete="off"
+                isRequired
+                autoFocus
+              />
+            )}
           />
-        )}
-      />
-      <Controller
-        control={form.control}
-        name="displayName"
-        rules={{ required: "Enter the person's name." }}
-        render={(controller) => (
-          <TextField
-            {...textFieldProps(controller)}
-            label="Display name"
-            description="Shown in the app and the audit trail."
-            autoComplete="off"
-            isRequired
+          <Controller
+            control={form.control}
+            name="displayName"
+            rules={{ required: "Enter the person's name." }}
+            render={(controller) => (
+              <TextField
+                {...textFieldProps(controller)}
+                label="Display name"
+                description="Shown in the app and the audit trail."
+                autoComplete="off"
+                isRequired
+              />
+            )}
           />
-        )}
-      />
+        </FieldGrid>
+      </FieldSection>
       <RoleChecklist roles={roles} />
-      <TemporaryPasswordField />
-      <AuthenticationField />
+      <FieldSection title="Sign-in and confirmation">
+        <FieldGrid>
+          <TemporaryPasswordField />
+          <AuthenticationField />
+        </FieldGrid>
+      </FieldSection>
     </UserFormDialog>
   );
 }

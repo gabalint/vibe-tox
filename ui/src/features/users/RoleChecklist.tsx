@@ -27,6 +27,7 @@ export function RoleChecklist({ roles }: { roles: readonly RoleInfo[] }) {
             ) : (
               <CheckboxGroup
                 legend="Roles"
+                layout="columns"
                 options={offered.map((role) => ({
                   id: role.code,
                   label: role.label,
