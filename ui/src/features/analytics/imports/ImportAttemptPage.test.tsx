@@ -264,6 +264,27 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     });
   });
 
+  it("shows one instrument's imports when the address names it", async () => {
+    const list = vi.fn(() => []);
+    renderPage(`/review/imports?instrument=${INSTRUMENT.instrumentId}`, {
+      list_import_attempts: list,
+    });
+    expect(
+      await screen.findByText("No message from this instrument has been processed yet."),
+    ).toBeTruthy();
+    expect(list).toHaveBeenCalledWith({
+      input: {
+        instrumentId: INSTRUMENT.instrumentId,
+        limit: 200,
+        before: null,
+        afterImportAttemptId: undefined,
+      },
+    });
+    expect(
+      await screen.findByRole("button", { name: /Synthetic analyzer 1 Instrument/ }),
+    ).toBeTruthy();
+  });
+
   it("says when nothing has been imported", async () => {
     renderPage("/review/imports", { list_import_attempts: () => [] });
     expect(await screen.findByText("No imports")).toBeTruthy();

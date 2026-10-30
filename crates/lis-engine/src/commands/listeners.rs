@@ -36,6 +36,14 @@ pub struct ListenerStatusView {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub files_too_large: Option<u32>,
+    /// The latest error since the app started, kept after the listener recovers.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub last_error: Option<ListenerDetailCode>,
+    /// When that error began.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub last_error_at: Option<UtcTimestamp>,
 }
 
 impl Engine {
@@ -62,7 +70,9 @@ impl Engine {
                         last_activity_at: status.as_ref().and_then(|s| s.last_activity_at),
                         detail: status.as_ref().and_then(|s| s.detail_code),
                         files_waiting: status.as_ref().and_then(|s| s.files_waiting),
-                        files_too_large: status.and_then(|s| s.files_too_large),
+                        files_too_large: status.as_ref().and_then(|s| s.files_too_large),
+                        last_error: status.as_ref().and_then(|s| s.last_error),
+                        last_error_at: status.and_then(|s| s.last_error_at),
                     }
                 })
                 .collect())

@@ -243,6 +243,21 @@ fn update_and_enable_increment_revision_and_write_audit() {
         .expect("instrument enables");
     assert_eq!(enabled.revision, 3);
     assert!(enabled.enabled);
+    let created = instrument.created.clone().expect("registration is stamped");
+    assert!(instrument.changed.is_none());
+    assert_eq!(enabled.created, Some(created.clone()));
+    let changed = enabled.changed.clone().expect("the change is stamped");
+    assert_ne!(changed.by, created.by, "each command's own principal");
+    let listed = fixture
+        .database
+        .read_blocking(|conn| {
+            list_instruments(
+                conn,
+                &Principal::system("test-reader", [Capability::ManageConfiguration]),
+            )
+        })
+        .expect("instrument list reads");
+    assert_eq!(listed, vec![enabled]);
     let audit_count = fixture
         .database
         .read_blocking(|conn| {
@@ -1124,6 +1139,28 @@ fn restart_applies_changed_connection_and_disabled_state() {
     );
     assert!(TcpStream::connect((Ipv4Addr::LOCALHOST, new_port)).is_err());
     supervisor.stop_all().expect("listeners stop");
+}
+
+#[test]
+fn status_keeps_the_latest_error_and_its_start_after_recovery() {
+    let statuses = StatusMap::default();
+    let id = InstrumentId::generate();
+    let error = |state| set_status(&statuses, id, state, Some(ListenerDetailCode::OpenFailed));
+    let snapshot = || statuses.lock().expect("status lock")[&id].clone();
+    error(ListenerState::Error);
+    let began = snapshot().last_error_at.expect("error time");
+    thread::sleep(Duration::from_millis(5));
+    error(ListenerState::Error);
+    assert_eq!(
+        snapshot().last_error_at,
+        Some(began),
+        "a repeated report keeps its start"
+    );
+    set_status(&statuses, id, ListenerState::Listening, None);
+    let recovered = snapshot();
+    assert_eq!(recovered.detail_code, None);
+    assert_eq!(recovered.last_error, Some(ListenerDetailCode::OpenFailed));
+    assert_eq!(recovered.last_error_at, Some(began));
 }
 
 #[test]

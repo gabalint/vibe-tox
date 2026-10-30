@@ -2,13 +2,13 @@
   "id": "instruments",
   "title": "Instruments",
   "summary": "Configure analyzer connections and result-file intake for registered instruments.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-10-30",
   "routes": ["/configuration/instruments"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
-        "Register analyzer creates an instrument connection. Open its panel to inspect the connection, enabled state and listener or folder status. Network connections use an allowed-address list; result-file instruments can use manual loading or a chosen watched folder.",
+        "Register analyzer creates an instrument connection. Open its panel to read every saved setting without opening Edit connection: General, Connection and, for AU400 / AU640, AU settings, in the order of the Edit connection form. Below them, Live status, Result source, Activity and Changes show the running listener or folder with its last error, the approved sender, recent imports, and who registered and last changed the analyzer. Select a group's title to collapse or expand it. Network connections use an allowed-address list; result-file instruments can use manual loading or a chosen watched folder.",
         "Connection changes restart the affected listeners, and the outcome appears in the panel. A watched folder belongs to its instrument. Files already present when it is selected are not automatically loaded, while later eligible files are read while the application is open."
       ]
     },
@@ -62,6 +62,18 @@
           "meaning": "Choose whether automatic receipt starts for this connection.",
           "values": "Listen for this analyzer or Keep disabled for now for message transports; Pick up files once a folder is chosen or Keep disabled for now for result files.",
           "rules": "Required on registration. Enabled result-file pickup also requires a chosen readable folder. The saved Listening value is configuration, not proof that a listener successfully started."
+        },
+        {
+          "name": "General: Connection type",
+          "meaning": "The saved transport, in the panel.",
+          "values": "The Connection choices of the form.",
+          "rules": "Read-only in the panel; change it with Edit connection."
+        },
+        {
+          "name": "General: Service status",
+          "meaning": "Whether the instrument may be used, as recorded under Bench setup.",
+          "values": "In service; Out of service; Status not recorded; Checking; Status unavailable.",
+          "rules": "Read-only here. Quality staff set it under Bench setup › Instruments."
         },
         {
           "name": "Listen on address",
@@ -214,10 +226,70 @@
           "rules": "Available only for Result files. A folder can belong to only one analyzer. The saved absolute path is read-only here; use Choose folder or Change folder."
         },
         {
-          "name": "Folder pickup status",
-          "meaning": "Current observation of automatic file pickup.",
-          "values": "Checking; Status unavailable; Disabled; Watching; Error or a detailed failure message.",
-          "rules": "Read-only. Warnings report files waiting more than five minutes and oversized files. Status depends on the running app; the saved enabled switch alone does not prove successful pickup."
+          "name": "Live status: Status",
+          "meaning": "Current state of the analyzer's listener, or of a result-file instrument's watched folder.",
+          "values": "Disabled; Listening; Connected; Receiving; Error; Manual loading only; Watching for a watched folder. Not started yet when the app has no listener for it.",
+          "rules": "Read-only, from the running app, refreshed while the top-bar listener summary is shown. The saved Enabled value alone does not prove that a listener or folder pickup works."
+        },
+        {
+          "name": "Live status: Last activity",
+          "meaning": "When the listener last connected, received bytes or changed state.",
+          "values": "Date and time in the laboratory time zone; None yet.",
+          "rules": "Read-only. While the status is Error, this is when the error began."
+        },
+        {
+          "name": "Live status: Detail",
+          "meaning": "Why the listener or folder is not working normally, when it is not in error.",
+          "values": "A plain reason such as Turned off in the instrument settings, or files waiting to be read for more than 5 minutes.",
+          "rules": "Shown only while such a condition exists."
+        },
+        {
+          "name": "Live status: Last error",
+          "meaning": "The latest error of this listener or watched folder since the app started, and when it began.",
+          "values": "A plain reason, such as Could not open the connection, followed by its date and time.",
+          "rules": "Read-only. Kept after the listener recovers, until a newer error replaces it. Absent when there has been none since the app started; restarting the app clears it."
+        },
+        {
+          "name": "Result source: Sender",
+          "meaning": "The registered sender name and version results are imported from.",
+          "values": "The approved source's sender and version, or the draft's while it waits for approval.",
+          "rules": "Read-only. Absent when no source is registered. Sources are registered and approved under Bench setup › Instruments."
+        },
+        {
+          "name": "Result source: Mapped test codes",
+          "meaning": "How many of the analyzer's test codes the shown source maps to catalog analytes.",
+          "values": "Whole number.",
+          "rules": "Read-only. Absent when no source is registered."
+        },
+        {
+          "name": "Result source: Status",
+          "meaning": "Whether results from this analyzer can be imported.",
+          "values": "Approved; Waiting for approval; Not registered.",
+          "rules": "Read-only. Only an approved source's results are imported."
+        },
+        {
+          "name": "Activity: Last import",
+          "meaning": "The analyzer's most recent import attempt.",
+          "values": "Its processing date and time, as a link to the attempt; None yet.",
+          "rules": "Shown only with Review results, the capability Result imports needs."
+        },
+        {
+          "name": "Activity: Imports with quarantined rows",
+          "meaning": "How many recent import attempts held rows in quarantine.",
+          "values": "A count of the analyzer's last 50 imports, such as 1 of the last 50, as a link to Result imports filtered on this analyzer; None.",
+          "rules": "Shown only with Review results. Counts attempts whose outcome was not fully processed, including ones resolved later."
+        },
+        {
+          "name": "Changes: Registered",
+          "meaning": "Who registered the analyzer, and when.",
+          "values": "Date and time, then the person's current display name; Not recorded.",
+          "rules": "Read-only. Not recorded for an analyzer registered before the app kept this; its audit events still show it."
+        },
+        {
+          "name": "Changes: Last changed",
+          "meaning": "Who last changed the analyzer's configuration, and when: its connection, Listening or Folder pickup, or watched folder.",
+          "values": "Date and time, then the person's current display name; Not changed since it was registered; Not recorded.",
+          "rules": "Read-only. Service status and result sources are recorded under Bench setup and are not counted here."
         },
         {
           "name": "Files already in the folder",
@@ -235,9 +307,27 @@
         },
         {
           "name": "Open row / Previous / Next / Close",
-          "does": "Inspect saved connection settings and move through analyzers.",
+          "does": "Read an analyzer's saved settings, live status, result source and recent imports, and move through analyzers.",
           "availableWhen": "A row is listed.",
-          "result": "The analyzer panel opens without changing connection or service status."
+          "result": "The analyzer panel opens read-only, with Edit connection and Enable or Disable at the top, without changing connection or service status."
+        },
+        {
+          "name": "Collapse or expand a group",
+          "does": "Hide or show one group of the panel, such as AU settings.",
+          "availableWhen": "The panel is open. Every group starts expanded.",
+          "result": "Only the display changes; nothing is saved."
+        },
+        {
+          "name": "Bench setup › Instruments link",
+          "does": "Open this analyzer under Bench setup to register or approve its result source or set its service status.",
+          "availableWhen": "The panel is open; Bench setup needs analysis, quality or configuration rights.",
+          "result": "Bench setup opens with the analyzer's panel."
+        },
+        {
+          "name": "Last import / Imports with quarantined rows links",
+          "does": "Open the latest import attempt, or Result imports filtered on this analyzer.",
+          "availableWhen": "Review results, and at least one import of this analyzer.",
+          "result": "The import attempt, or the filtered list, opens."
         },
         {
           "name": "Edit connection / Save connection",
@@ -326,7 +416,8 @@
     "ui/src/features/configuration/instruments/AuFields.tsx",
     "ui/src/features/configuration/instruments/EnableInstrumentDialog.tsx",
     "ui/src/features/configuration/instruments/FolderDialogs.tsx",
-    "ui/src/features/configuration/instruments/FolderStatus.tsx",
+    "ui/src/features/configuration/instruments/LiveGroups.tsx",
+    "ui/src/features/configuration/instruments/settingsFacts.ts",
     "ui/src/features/configuration/instruments/InstrumentPanel.tsx",
     "ui/src/features/configuration/instruments/InstrumentActions.tsx",
     "ui/src/features/configuration/instruments/connectionValues.ts",
@@ -337,6 +428,9 @@
     "crates/lis-interfaces/src/model/serial.rs",
     "crates/lis-interfaces/src/model/au.rs",
     "crates/lis-interfaces/src/model/files.rs",
-    "crates/lis-au/src/config.rs"
+    "crates/lis-au/src/config.rs",
+    "crates/lis-interfaces/src/repo.rs",
+    "crates/lis-interfaces/src/listener.rs",
+    "crates/lis-engine/src/commands/interfaces.rs"
   ]
 }
