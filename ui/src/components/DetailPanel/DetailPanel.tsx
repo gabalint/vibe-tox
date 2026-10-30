@@ -1,5 +1,6 @@
 import { ArrowLeft, ChevronDown, ChevronUp, X } from "lucide-react";
 import {
+  type CSSProperties,
   type KeyboardEvent,
   type ReactNode,
   type RefObject,
@@ -13,6 +14,7 @@ import { Link } from "react-router";
 import { Button } from "@/components/Button";
 import { NarrowLayoutContext } from "./DetailLayout";
 import styles from "./DetailPanel.module.css";
+import { type PanelWidth, PanelWidthContext } from "./usePanelWidth";
 
 interface DetailPanelProps {
   /** The record's identifier: the panel's `h2` and the region's name. */
@@ -44,6 +46,7 @@ export function DetailPanel(props: DetailPanelProps) {
   const { identifier, onClose, onPrevious, onNext } = props;
   const headingId = useId();
   const narrow = useContext(NarrowLayoutContext);
+  const width = useContext(PanelWidthContext);
   const { panelRef, headingRef } = useKeepFocusInPanel(narrow, identifier);
 
   function closeOnEscape(event: KeyboardEvent<HTMLElement>) {
@@ -60,8 +63,12 @@ export function DetailPanel(props: DetailPanelProps) {
       ref={panelRef}
       aria-labelledby={headingId}
       className={styles.panel}
+      data-resizing={width?.dragging || undefined}
+      // Runtime geometry from the resize control; all visual styling stays in the CSS module.
+      style={width ? ({ "--panel-width": `${width.size}px` } as CSSProperties) : undefined}
       onKeyDown={closeOnEscape}
     >
+      {width && !narrow && <PanelSplitter width={width} identifier={identifier} />}
       <header className={styles.header}>
         {narrow && (
           <Button variant="quiet" onPress={onClose}>
@@ -85,6 +92,26 @@ export function DetailPanel(props: DetailPanelProps) {
       </header>
       <PanelBody identifier={identifier}>{props.children}</PanelBody>
     </section>
+  );
+}
+
+/** The panel's left edge: drag it, or use the arrow keys, to change the panel's width. */
+function PanelSplitter({ width, identifier }: { width: PanelWidth; identifier: string }) {
+  return (
+    // biome-ignore lint/a11y/useSemanticElements: A focusable ARIA window splitter has drag and keyboard behavior; it is not a static hr.
+    <div
+      role="separator"
+      tabIndex={0}
+      aria-label={`Width of ${identifier}`}
+      aria-description="Use Left and Right arrows to resize; Home for minimum, End for maximum."
+      aria-orientation="vertical"
+      aria-valuemin={width.min}
+      aria-valuemax={width.max}
+      aria-valuenow={width.size}
+      aria-valuetext={`${width.size} pixels`}
+      className={styles.resize}
+      {...width.separatorProps}
+    />
   );
 }
 

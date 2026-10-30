@@ -146,3 +146,8 @@ export function connectionText(settings: InstrumentConnectionSettings): string {
   ].join("");
   return `${prefix}Serial ${settings.portPath}, ${settings.baudRate} baud, ${frame}`;
 }
+
+/** AU400/AU640 connections carry the long parameter sheet, so only their form is wide. */
+export function isAuKind(kind: string | null | undefined): boolean {
+  return kind === "au_tcp" || kind === "au_serial";
+}

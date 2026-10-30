@@ -2,13 +2,14 @@
   "id": "getting-started",
   "title": "Using page help",
   "summary": "Read the user manual beside your work, look up individual fields and actions, and adjust the panel to the space you need.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-10-30",
   "routes": [],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
-        "Use the navigation to choose a work area. Open a record by clicking its row or pressing Enter on a focused row. Related records and breadcrumbs help you move between the list and its details."
+        "Use the navigation to choose a work area. Open a record by clicking its row or pressing Enter on a focused row. Related records and breadcrumbs help you move between the list and its details.",
+        "On lists such as Practitioners, Clients or Instruments, the record opens in a side panel on the right. Drag the panel’s left edge to make it wider or narrower, or focus the edge with Tab and use Left and Right arrows (32 pixels a step), Home for the narrowest width (22rem) and End for the widest. The widest leaves the list at least 38rem wide and is never more than 64rem. The width you choose is remembered on this computer for each page. Some content, such as a correction history, widens the panel while it is shown; hiding it returns the panel to your width. When the window is too narrow for both, the panel replaces the list and offers Back to list."
       ],
       "steps": [
         "Open Page help from the application header to read guidance for the current page.",
@@ -20,6 +21,7 @@
       "title": "Good practice",
       "paragraphs": [
         "Tab moves between controls; arrow keys move between grid cells. Space selects a row only in tables offering bulk actions. Escape closes the innermost open menu, dialog or panel.",
+        "Long dialogs open wider and group their fields under titled sections, with short fields side by side. The dialog title stays at the top and its Save and Cancel buttons stay at the bottom while the fields scroll. On a narrow window the fields fall back to one column.",
         "This help describes the software. Follow your laboratory’s approved procedures for laboratory decisions. A page guide does not supply clinical interpretations, assay settings or authorization to perform a task."
       ]
     },
@@ -32,6 +34,9 @@
   ],
   "reviewSources": [
     "ui/src/app/AppShell.tsx",
+    "ui/src/components/DetailPanel/DetailLayout.tsx",
+    "ui/src/components/DetailPanel/DetailPanel.tsx",
+    "ui/src/components/DetailPanel/usePanelWidth.ts",
     "ui/src/app/help/PageHelp.tsx",
     "ui/src/app/help/HelpHeader.tsx",
     "ui/src/app/help/HelpTopics.tsx",

@@ -20,6 +20,11 @@ interface DialogProps {
    * the actions, calls it.
    */
   onSubmit?: () => void;
+  /**
+   * `wide` for long forms whose fields sit side by side in sections (`FieldSection`). The title
+   * stays at the top and the actions at the bottom while the content scrolls between them.
+   */
+  size?: "default" | "wide";
 }
 
 /** A modal dialog: traps focus while open and returns it to the trigger when closed. */
@@ -33,6 +38,7 @@ export function Dialog({
   isDismissable = true,
   isKeyboardDismissDisabled = !isDismissable,
   onSubmit,
+  size = "default",
 }: DialogProps) {
   const content = (
     <>
@@ -54,7 +60,7 @@ export function Dialog({
       isKeyboardDismissDisabled={isKeyboardDismissDisabled}
       className={styles.overlay}
     >
-      <Modal className={styles.modal}>
+      <Modal className={styles.modal} data-size={size}>
         <AriaDialog role={role} className={styles.dialog}>
           <Heading slot="title" className={styles.title}>
             {title}

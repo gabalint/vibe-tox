@@ -160,6 +160,7 @@ function PatientEvidenceDialog(props: ProfileDialogProps) {
     <PatientProfileDialog
       {...props}
       title="Add patient financial evidence"
+      size="wide"
       defaultValues={{ ...EMPTY_EVIDENCE, source: "", reason: "" }}
       update={(content, values) => ({
         ...content,

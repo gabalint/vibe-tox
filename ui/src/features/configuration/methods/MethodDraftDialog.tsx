@@ -1,5 +1,6 @@
 import { useFieldArray, useForm, useFormContext } from "react-hook-form";
 import { FieldList } from "@/components/FieldList";
+import { FieldGrid, FieldSection } from "@/components/Form";
 import { ChoiceInput, TextInput } from "@/components/FormFields";
 import type { AnalyteView } from "@/generated/AnalyteView";
 import type { CatalogVersionRef } from "@/generated/CatalogVersionRef";
@@ -53,6 +54,7 @@ export function MethodDraftDialog({ methodId, mode, onSaved, onClose }: MethodDr
       })}
       onSaved={onSaved}
       onClose={onClose}
+      size="wide"
     >
       <MethodFields />
     </DraftDialog>
@@ -63,26 +65,35 @@ function MethodFields() {
   const specimenTypes = useCommandQuery<SpecimenTypeView[]>(LIST_SPECIMEN_TYPES);
   return (
     <>
-      <ChoiceInput
-        name="specimenTypeId"
-        label="Specimen type"
-        options={codedOptions(specimenTypes.data)}
-        isRequired
-      />
-      <ChoiceInput name="certainty" label="Certainty" options={CERTAINTIES} isRequired />
-      <ChoiceInput name="outputScale" label="Result scale" options={OUTPUT_SCALES} isRequired />
-      <ChoiceInput name="thresholdRule" label="Cutoff rule" options={THRESHOLD_RULES} isRequired />
-      <ChoiceInput
-        name="thresholdRounding"
-        label="Cutoff comparison"
-        options={THRESHOLD_ROUNDINGS}
-        isRequired
-      />
-      <TextInput
-        name="reportNotes"
-        label="Report limitations and notes"
-        description="Optional laboratory-approved method information for patient reports, up to 4000 characters. No clinical text is supplied automatically."
-      />
+      <FieldSection title="Method">
+        <FieldGrid>
+          <ChoiceInput
+            name="specimenTypeId"
+            label="Specimen type"
+            options={codedOptions(specimenTypes.data)}
+            isRequired
+          />
+          <ChoiceInput name="certainty" label="Certainty" options={CERTAINTIES} isRequired />
+          <ChoiceInput name="outputScale" label="Result scale" options={OUTPUT_SCALES} isRequired />
+          <ChoiceInput
+            name="thresholdRule"
+            label="Cutoff rule"
+            options={THRESHOLD_RULES}
+            isRequired
+          />
+          <ChoiceInput
+            name="thresholdRounding"
+            label="Cutoff comparison"
+            options={THRESHOLD_ROUNDINGS}
+            isRequired
+          />
+          <TextInput
+            name="reportNotes"
+            label="Report limitations and notes"
+            description="Optional laboratory-approved method information for patient reports, up to 4000 characters. No clinical text is supplied automatically."
+          />
+        </FieldGrid>
+      </FieldSection>
       <AnalyteList />
     </>
   );

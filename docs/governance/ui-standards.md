@@ -111,6 +111,7 @@ No action on one record ever requires ticking a box first, and no toolbar button
 
 - A short change opens a dialog from the action, titled with the record, for example "Edit connection of Chem analyzer 2". A short change is up to about 8 fields, or one decision with its reason.
 - Longer edits put the record page into an edit state with Save and Cancel.
+- A dialog that still needs a lot of scrolling, such as the AU400/AU640 connection settings, is wide (`size="wide"`). Its fields sit in `FieldSection`s: each has a visible title, and its short fields sit side by side, falling back to one column on a narrow window. The title stays at the top and Save and Cancel stay at the bottom while the fields scroll. Dialogs that fit on the screen keep the default width and a single column. A dialog that is long only for some choices widens only then: Register analyzer and Edit connection stay narrow until an AU400/AU640 connection is chosen. A long checkbox list in a wide dialog, such as Roles in Create user, uses `CheckboxGroup` with `layout="columns"`: a titled section with the options side by side.
 - Every save is one engine command that carries the record's revision. Never edit in grid cells and never save when a field loses focus. Each change to audited data is a deliberate act that can be attributed to one person. This is a project rule, consistent with the explicit-confirm rule of inline-edit guidance (ENG-164, ENG-166).
 - Closing a panel, dialog or page with unsaved input asks first.
 
@@ -136,6 +137,8 @@ Sources: ENG-161 to ENG-163, ENG-165 to ENG-167. Clinical systems use the same s
 - The open record is in the URL (`?open=<id>`).
 - Escape closes the panel when focus is in it and no menu or dialog is open, and focus returns to the row.
 - When the panel would leave the list narrower than about 40rem, it replaces the list and offers "Back to list".
+- Its left edge is a splitter, like the navigation's: drag it, or use Left and Right arrows, Home and End. The width runs from 22rem to 64rem and never leaves the list narrower than 38rem. It is remembered on this computer for each page.
+- Content too wide for the panel, such as a correction history table, asks for the widest panel while it is shown (`useWidePanel`). Hiding it returns the panel to the width chosen before.
 - A configuration record whose settings outgrow one column of facts, such as an analyzer connection, shows them read-only in the groups and order of its edit form. Each group's title collapses it. Live state and links to related screens follow the settings.
 
 ### Record page body

@@ -21,25 +21,106 @@ export interface SettingField<Key extends string> {
   label: string;
   unit: string;
   range?: string;
+  /** The titled group the field sits in, in a long settings form. */
+  section?: string;
 }
 
 /** Operations settings (design brief §2.2, §3.4, §6.1); laboratory questions L2 to L6. */
 export const OPERATIONS_FIELDS: readonly SettingField<keyof OperationsSettings>[] = [
-  { key: "backupIntervalMinutes", label: "Backup interval", unit: "minutes", range: "5 to 1440" },
-  { key: "keepRecent", label: "Recent backup sets kept", unit: "sets", range: "2 to 96" },
-  { key: "keepDaily", label: "Daily backup sets kept", unit: "days", range: "0 to 90" },
-  { key: "keepWeekly", label: "Weekly backup sets kept", unit: "weeks", range: "0 to 104" },
-  { key: "backupWarnMinutes", label: "Backup age warning", unit: "minutes" },
-  { key: "backupAlertMinutes", label: "Backup age alert", unit: "minutes" },
-  { key: "offhostWarnHours", label: "Off-host copy age warning", unit: "hours" },
-  { key: "offlineWarnDays", label: "Offline copy age warning", unit: "days" },
-  { key: "restoreTestWarnDays", label: "Restore test age warning", unit: "days" },
-  { key: "kitConfirmWarnDays", label: "Recovery kit confirmation warning", unit: "days" },
-  { key: "anchorWarnMinutes", label: "Audit anchor lag warning", unit: "minutes" },
-  { key: "anchorIncidentHours", label: "Audit anchor lag incident", unit: "hours" },
-  { key: "diskFreeWarnGib", label: "Free disk space warning", unit: "GiB" },
-  { key: "osSupportWarnDays", label: "Warning before operating system support ends", unit: "days" },
-  { key: "clockJumpSeconds", label: "Clock jump recorded as a gap above", unit: "seconds" },
+  {
+    key: "backupIntervalMinutes",
+    label: "Backup interval",
+    unit: "minutes",
+    range: "5 to 1440",
+    section: "Backups",
+  },
+  {
+    key: "keepRecent",
+    label: "Recent backup sets kept",
+    unit: "sets",
+    range: "2 to 96",
+    section: "Backups",
+  },
+  {
+    key: "keepDaily",
+    label: "Daily backup sets kept",
+    unit: "days",
+    range: "0 to 90",
+    section: "Backups",
+  },
+  {
+    key: "keepWeekly",
+    label: "Weekly backup sets kept",
+    unit: "weeks",
+    range: "0 to 104",
+    section: "Backups",
+  },
+  {
+    key: "backupWarnMinutes",
+    label: "Backup age warning",
+    unit: "minutes",
+    section: "Backup and recovery warnings",
+  },
+  {
+    key: "backupAlertMinutes",
+    label: "Backup age alert",
+    unit: "minutes",
+    section: "Backup and recovery warnings",
+  },
+  {
+    key: "offhostWarnHours",
+    label: "Off-host copy age warning",
+    unit: "hours",
+    section: "Backup and recovery warnings",
+  },
+  {
+    key: "offlineWarnDays",
+    label: "Offline copy age warning",
+    unit: "days",
+    section: "Backup and recovery warnings",
+  },
+  {
+    key: "restoreTestWarnDays",
+    label: "Restore test age warning",
+    unit: "days",
+    section: "Backup and recovery warnings",
+  },
+  {
+    key: "kitConfirmWarnDays",
+    label: "Recovery kit confirmation warning",
+    unit: "days",
+    section: "Backup and recovery warnings",
+  },
+  {
+    key: "anchorWarnMinutes",
+    label: "Audit anchor lag warning",
+    unit: "minutes",
+    section: "Audit anchoring",
+  },
+  {
+    key: "anchorIncidentHours",
+    label: "Audit anchor lag incident",
+    unit: "hours",
+    section: "Audit anchoring",
+  },
+  {
+    key: "diskFreeWarnGib",
+    label: "Free disk space warning",
+    unit: "GiB",
+    section: "This computer",
+  },
+  {
+    key: "osSupportWarnDays",
+    label: "Warning before operating system support ends",
+    unit: "days",
+    section: "This computer",
+  },
+  {
+    key: "clockJumpSeconds",
+    label: "Clock jump recorded as a gap above",
+    unit: "seconds",
+    section: "This computer",
+  },
 ];
 
 export type NumericSecurityPolicy = Pick<
