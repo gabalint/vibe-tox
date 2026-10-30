@@ -181,6 +181,10 @@
         {
           "problem": "A previously ready item now fails.",
           "recovery": "Read the current workspace gates; new results, holds or review changes may have altered readiness."
+        },
+        {
+          "problem": "A released report whose results were re-reviewed after a change is not in Reports ready for release.",
+          "recovery": "Reports ready for release lists reviewed results not yet on a current revision. A change after release, such as a corrected collection time, opens Report impact review instead. Quality staff assess it there; when the assessment requires a correction, the report appears in Report corrections due."
         }
       ]
     },
