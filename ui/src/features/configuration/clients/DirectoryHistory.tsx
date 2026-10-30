@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
 import { DataGrid, type DataGridColumn } from "@/components/DataGrid";
+import { useWidePanel } from "@/components/DetailPanel";
 import { QueryContent } from "@/components/QueryContent";
 import { Timestamp } from "@/components/Timestamp";
 import type { DirectoryHistoryEntry } from "@/generated/DirectoryHistoryEntry";
@@ -43,9 +44,13 @@ function columns(
   ];
 }
 
-/** History is loaded only when the operator explicitly asks for this record's evidence. */
+/**
+ * History is loaded only when the operator explicitly asks for this record's evidence. In a side
+ * panel, the panel widens while it is shown, so the table's columns fit.
+ */
 export function DirectoryHistory({ record }: { record: DirectoryRecord }) {
   const [open, setOpen] = useState(false);
+  useWidePanel(open);
   const person = usePersonText();
   const query = useCommandQuery<DirectoryHistoryEntry[]>(
     "directory_history",

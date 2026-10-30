@@ -19,12 +19,13 @@
   display: none;
 }
 
-/* The lower bound matches PANEL_MIN_REM in DetailLayout.tsx, which explains the widths. */
+/* `--panel-width` comes from usePanelWidth.ts; the fallback is its default width. */
 .panel {
+  position: relative;
   display: flex;
   flex: none;
   flex-direction: column;
-  width: clamp(22rem, 35%, 34rem);
+  width: var(--panel-width, clamp(22rem, 35%, 34rem));
   max-height: 100%;
   overflow: hidden;
   border: 1px solid var(--color-border);
@@ -36,6 +37,35 @@
 .list[hidden] + .panel {
   flex: 1 1 0;
   width: auto;
+}
+
+/* The left edge, over the panel's border; wide enough to grab. */
+.resize {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: var(--space-2);
+  z-index: var(--z-sticky);
+  cursor: col-resize;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.resize:hover,
+.resize:focus-visible,
+.panel[data-resizing] .resize {
+  border-inline-start: 2px solid var(--color-accent);
+}
+
+.resize:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+.panel[data-resizing] {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .header {
