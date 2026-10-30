@@ -11,7 +11,7 @@ import { chooseWithKeyboard, WALKTHROUGH_TIMEOUT_MS } from "@/lib/test/keyboard"
 import { mockGridLayout } from "@/lib/test/layout";
 import { renderRoutes } from "@/lib/test/router";
 import { closePanelWithEscape, panel, rowActionLabels } from "../panelTest";
-import { CONTROL_LOT, RUN_ID, sessionWith } from "../testData";
+import { CONTROL_LOT, RUN, RUN_ID, sessionWith } from "../testData";
 import { RunQcPage } from "./RunQcPage";
 
 const ANALYTE_ID = "00000000-0000-7000-8000-000000000b01";
@@ -111,6 +111,7 @@ function renderPage(
   mockCommands({
     current_session: () => sessionWith(["manage_quality"]),
     get_run_qc: () => QC,
+    get_run: () => RUN,
     list_lots: () => [CONTROL_LOT],
     ...commands,
   });
@@ -153,6 +154,18 @@ describe("RunQcPage (REQ-ANA-004, REQ-ANA-005)", { timeout: WALKTHROUGH_TIMEOUT_
     ).toBeTruthy();
     expect(within(grid).getAllByRole("row")).toHaveLength(4);
     await expectNoA11yViolations(container, { wholePage: true });
+  });
+
+  it("leads back to the run and to Runs from its breadcrumb", async () => {
+    renderPage();
+    const breadcrumb = await screen.findByRole("navigation", { name: "Breadcrumb" });
+    const run = await within(breadcrumb).findByRole("link", { name: /^Run of / });
+    expect(run.getAttribute("href")).toBe(`/bench/runs/${RUN_ID}`);
+    expect(within(breadcrumb).getByRole("link", { name: "Runs" }).getAttribute("href")).toBe(
+      "/bench/runs",
+    );
+    expect(within(breadcrumb).getByText("QC review")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Open run" })).toBeNull();
   });
 
   it("shows every observation in one grid exactly as received", async () => {

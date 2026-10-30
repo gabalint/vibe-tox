@@ -2,14 +2,14 @@
   "id": "run-qc",
   "title": "Run QC review",
   "summary": "Review observations and record scoped quality decisions for a run.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-10-30",
   "routes": ["/bench/runs/:runId/qc/:tab?", "/quality/deviations/:deviationId"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
         "Use Assessments for the current QC decisions, Observations for the evidence received, Changed QC rows for conflicting imports and Deviations for recorded issues. Tabs with open work show its count.",
-        "Open the relevant observation or assessment to inspect its details before using the available decision action. The workspace covers the run, individual analytes and preparation batches where applicable. Open run returns to positions when your account can perform analysis."
+        "Open the relevant observation or assessment to inspect its details before using the available decision action. The workspace covers the run, individual analytes and preparation batches where applicable. The breadcrumb above the title, Runs › the run › QC review, returns to the run or to Runs."
       ]
     },
     {
@@ -53,7 +53,7 @@
       "title": "Run QC review",
       "routes": ["/bench/runs/:runId/qc/:tab?"],
       "purpose": "Assess the exact QC evidence for each analyte, the whole run and associated preparation batches; investigate changed rows and deviations.",
-      "access": "Requires quality-management authority. Open run additionally requires analysis authority.",
+      "access": "Requires quality-management authority. Adding positions or closing the run on the run page needs analysis authority.",
       "fields": [
         {
           "name": "Tabs",
@@ -238,10 +238,10 @@
           "result": "Opens a panel with Previous, Next and Close."
         },
         {
-          "name": "Open run",
-          "does": "Returns to this run’s material and positions.",
-          "availableWhen": "Analysis authority.",
-          "result": "Opens the run without changing QC."
+          "name": "Runs / run breadcrumb",
+          "does": "The run’s title returns to its material and positions; Runs returns to the run list.",
+          "availableWhen": "Always, above the page title.",
+          "result": "Opens the run or the list without changing QC."
         },
         {
           "name": "Cancel",
