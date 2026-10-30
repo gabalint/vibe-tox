@@ -289,7 +289,13 @@ fn an_installed_database_keeps_its_registrations_and_guards_through_the_rebuild(
         "DROP TRIGGER cat_method_report_notes_frozen;
          ALTER TABLE cat_method_versions DROP COLUMN report_notes;
          ALTER TABLE cat_method_version_analytes DROP COLUMN reference_interval;
-         ALTER TABLE cat_method_version_analytes DROP COLUMN range_policy;",
+         ALTER TABLE cat_method_version_analytes DROP COLUMN range_policy;
+         DROP TRIGGER cat_analytes_versioned;
+         DROP TABLE cat_analyte_history;
+         ALTER TABLE cat_analytes DROP COLUMN active;
+         ALTER TABLE cat_analytes DROP COLUMN revision;
+         CREATE TRIGGER cat_analytes_no_update BEFORE UPDATE ON cat_analytes
+         BEGIN SELECT RAISE(ABORT, 'catalog reference data is immutable'); END;",
     )
     .unwrap();
     let before: Vec<_> = TABLES.iter().map(|table| rows(&f.raw(), table)).collect();

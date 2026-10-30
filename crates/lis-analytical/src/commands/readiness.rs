@@ -1,7 +1,7 @@
 //! Instrument readiness and analyzer source registrations (REQ-ANA-003
 //! registration part, REQ-ANA-007).
 
-use std::collections::BTreeSet;
+use std::collections::BTreeMap;
 
 use lis_audit::{AuditDetail, AuditEvent};
 use lis_auth::Duty;
@@ -197,7 +197,7 @@ pub(super) fn insert_draft(
     Ok((id, event))
 }
 
-/// Validates the test-code map: at least one, unique, exact codes for known analytes.
+/// Validates the test-code map: at least one, unique, exact codes for known, active analytes.
 pub(super) fn test_codes(
     ctx: &CommandContext<'_>,
     input: &[SourceTestCodeInput],
@@ -209,9 +209,9 @@ pub(super) fn test_codes(
             "Map at least one source test code.",
         ));
     }
-    let known: BTreeSet<AnalyteId> = lis_catalog::list_analytes(ctx.tx())?
+    let known: BTreeMap<AnalyteId, bool> = lis_catalog::list_analytes(ctx.tx())?
         .into_iter()
-        .map(|analyte| analyte.id)
+        .map(|analyte| (analyte.id, analyte.active))
         .collect();
     let mut codes = Vec::new();
     for (index, entry) in input.iter().enumerate() {
@@ -224,8 +224,13 @@ pub(super) fn test_codes(
         if codes.iter().any(|(seen, _)| *seen == code) {
             return Err(invalid(&field, "duplicate", "Each test code appears once."));
         }
-        if !known.contains(&entry.analyte_id) {
-            return Err(AnalyticalError::NotFound("analyte"));
+        match known.get(&entry.analyte_id) {
+            None => return Err(AnalyticalError::NotFound("analyte")),
+            Some(false) => {
+                let field = format!("testCodes[{index}].analyteId");
+                return Err(invalid(&field, "retired", "Choose an active analyte."));
+            }
+            Some(true) => {}
         }
         codes.push((code, entry.analyte_id));
     }

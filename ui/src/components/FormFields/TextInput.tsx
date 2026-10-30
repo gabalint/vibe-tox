@@ -27,6 +27,8 @@ interface TextInputProps {
   name: string;
   label: string;
   isRequired?: boolean;
+  /** Shown but not editable, such as a value the engine no longer lets change. */
+  isDisabled?: boolean;
   description?: string;
   format?: TextFormat;
   autoFocus?: boolean;
@@ -39,6 +41,7 @@ export function TextInput({
   name,
   label,
   isRequired,
+  isDisabled,
   description,
   format,
   autoFocus,
@@ -62,6 +65,7 @@ export function TextInput({
           label={label}
           description={description ?? format?.description}
           isRequired={isRequired}
+          isDisabled={isDisabled}
           autoFocus={autoFocus}
           autoComplete="off"
         />

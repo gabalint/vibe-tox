@@ -13,7 +13,7 @@ use crate::error::{CatalogError, invalid};
 use crate::lifecycle::VersionRef;
 use crate::model::{MethodId, MethodVersion, MethodVersionId, REASON_MAX, text};
 use crate::repo::methods::{self as repo, NewMethodVersion};
-use crate::repo::reference;
+use crate::repo::{analytes, reference};
 use lis_store::CommandContext;
 
 /// Input of [`draft_method_version`].
@@ -236,7 +236,7 @@ fn check_analytes_in_use(
     ))
 }
 
-/// Refuses unknown specimen types and analytes as input errors.
+/// Refuses unknown specimen types and unknown or retired analytes as input errors.
 fn check_references(conn: &Connection, content: &MethodVersionContent) -> Result<(), CatalogError> {
     if !reference::specimen_type_exists(conn, content.specimen_type_id)? {
         return Err(invalid(
@@ -246,12 +246,11 @@ fn check_references(conn: &Connection, content: &MethodVersionContent) -> Result
         ));
     }
     for (index, analyte) in content.analytes.iter().enumerate() {
-        if !reference::analyte_exists(conn, analyte.analyte_id)? {
-            return Err(invalid(
-                &format!("analytes[{index}].analyteId"),
-                "unknown",
-                "Choose an existing analyte.",
-            ));
+        let field = format!("analytes[{index}].analyteId");
+        match analytes::get(conn, analyte.analyte_id)?.map(|found| found.active) {
+            None => return Err(invalid(&field, "unknown", "Choose an existing analyte.")),
+            Some(false) => return Err(invalid(&field, "retired", "Choose an active analyte.")),
+            Some(true) => {}
         }
     }
     Ok(())

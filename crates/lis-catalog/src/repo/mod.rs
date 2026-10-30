@@ -1,5 +1,6 @@
 //! SQL for this module's tables, one function per statement.
 
+pub(crate) mod analytes;
 pub(crate) mod lifecycle;
 pub(crate) mod methods;
 pub(crate) mod orderables;

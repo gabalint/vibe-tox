@@ -2,7 +2,7 @@
   "id": "catalog-vocabulary",
   "title": "Analytes and specimen types",
   "summary": "Maintain named catalog items and the versioned validity policies attached to specimen types.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-10-30",
   "routes": [
     "/configuration/analytes",
     "/configuration/specimen-types",
@@ -12,7 +12,7 @@
     {
       "title": "How to use this page",
       "paragraphs": [
-        "Analytes lists the substances and validity markers methods measure. Search by code, name or LOINC, then open a row to inspect its supplied identifiers. Add analyte records a new catalog item.",
+        "Analytes lists the substances and validity markers methods measure. Search by code, name or LOINC, then open a row to inspect its supplied identifiers, availability, revision and correction history. Add analyte records a new catalog item; Correct analyte fixes or retires one as a new revision with a reason.",
         "Specimen types lists the types used during receipt and their validity-policy version states. Open a type to inspect its policy versions, categories, actions and qualifier text. A new policy draft follows the available review and approval actions."
       ]
     },
@@ -44,10 +44,16 @@
           "rules": "Optional directory filter."
         },
         {
+          "name": "Show retired",
+          "meaning": "Includes retired analytes in the list and the count.",
+          "values": "Off (default) or on; kept in the address as ?retired=show.",
+          "rules": "Optional. With it off, the count says retired excluded. An analyte opened by its address still opens when retired."
+        },
+        {
           "name": "Code",
           "meaning": "Stable laboratory identifier used to recognize and reference the record.",
           "values": "Laboratory-assigned letters, digits, period, underscore or hyphen.",
-          "rules": "Required; at most 64 characters; unique for this record type. Choose carefully: this screen does not rename codes."
+          "rules": "Required; at most 64 characters; unique among analytes, including retired ones. Correct analyte can change it only while nothing uses the analyte: no method version, source test-code map, billing class mapping, result, QC record or report line refers to it. Once used, the code is permanent: Correct analyte shows it in a disabled Code field and says why in its information box; fix a wrong code by retiring the analyte and adding a new one."
         },
         {
           "name": "Name",
@@ -66,6 +72,24 @@
           "meaning": "Laboratory-provided grouping identifier.",
           "values": "Code, or blank.",
           "rules": "Optional; same code syntax and length limit. Do not infer a class from the analyte name; missing values show Not provided."
+        },
+        {
+          "name": "Availability / Revision",
+          "meaning": "Whether the analyte is offered for new use, and which correction revision is shown.",
+          "values": "Active or Retired; revision 1 or higher.",
+          "rules": "Read-only in the panel. A retired analyte is not offered for new method versions, source test-code maps or file templates, and the engine refuses it there; existing methods, maps, results and reports keep it."
+        },
+        {
+          "name": "Correct analyte: Code, Name, LOINC code, Drug class code, Availability for new use, Reason",
+          "meaning": "Corrects the same analyte from supplied evidence, or retires it from new use.",
+          "values": "Current values prefilled; Active or Retired preselected to the current state; Reason starts blank.",
+          "rules": "Name 1–200 characters; LOINC and drug class codes optional, same syntax as Code; Reason 1–1000 characters and required. At least one value must change. Code is editable only while unused (see Code). An information box at the top says whether the code can change, lists the method versions in effect or in draft that include the analyte, and says what issued records keep. Retired is refused while any method version is listed."
+        },
+        {
+          "name": "Correction history: Revision / Saved facts / Recorded / Recorded by / Reason",
+          "meaning": "Shows the analyte's addition and each correction or retirement in revision order.",
+          "values": "Saved code, name, LOINC, drug class and availability; time; the acting person's account name; reason.",
+          "rules": "Read-only and immutable; loaded when you choose Show correction history. Analytes added before history was kept start with Unknown — legacy baseline and their creation time; no author is invented."
         }
       ],
       "actions": [
@@ -76,13 +100,23 @@
           "result": "The analyte becomes available to method drafts."
         },
         {
+          "name": "Correct analyte",
+          "does": "Save corrected values or a retirement as a new revision with the reason, and record it in the audit trail as catalog.update_analyte.",
+          "availableWhen": "Manage configuration. The engine refuses a stale revision (someone saved first), an unchanged form, a code change once the analyte is used, a duplicate code, and retirement while a method version in effect or in draft includes it.",
+          "result": "The panel shows the new revision. Methods, tests and lists show the current name and codes. Results, reports and catalog previews already issued keep what they showed when issued; a report candidate prepared before the change must be prepared again. The change is not routed through Catalog review."
+        },
+        {
           "name": "Open row / Previous / Next / Close",
           "does": "Inspect saved identifiers and move through the filtered list.",
           "availableWhen": "A record is listed.",
-          "result": "Read-only details open; this screen has no rename or delete action."
+          "result": "The details open with Correct analyte (Manage configuration) and Show correction history. Analytes are never deleted."
         }
       ],
-      "restrictions": ["A registered analyte is not an approved assay or interpretation rule."],
+      "restrictions": [
+        "A registered analyte is not an approved assay or interpretation rule.",
+        "A used analyte's code never changes; retire it and add a new analyte instead.",
+        "An analyte in a method version in effect or in draft cannot be retired until a new method version leaves it out."
+      ],
       "workflow": [
         "Search by code, name and any known LOINC mapping.",
         "Enter the authorized code and name plus supplied external identifiers.",
@@ -92,6 +126,18 @@
         {
           "problem": "The code already exists",
           "recovery": "Open and check the existing record. Do not create a slightly altered duplicate to bypass the conflict."
+        },
+        {
+          "problem": "The code is shown as permanent",
+          "recovery": "Records already use the analyte. Retire it with a reason and add a new analyte with the right code, then use the new one in new method versions and maps."
+        },
+        {
+          "problem": "Retired is refused",
+          "recovery": "Draft a new version of each listed method without the analyte and have it approved, or remove the analyte from the open draft; then retire the analyte."
+        },
+        {
+          "problem": "The record changed since it was read",
+          "recovery": "Close the dialog, reopen the analyte to see the latest revision, and correct again if still needed."
         }
       ]
     },
@@ -299,6 +345,10 @@
     "crates/lis-catalog/src/model.rs",
     "crates/lis-catalog/src/content.rs",
     "ui/src/features/configuration/analytes/AnalytesPage.tsx",
+    "ui/src/features/configuration/analytes/CorrectAnalyteDialog.tsx",
+    "ui/src/features/configuration/CorrectionHistory.tsx",
+    "crates/lis-catalog/src/commands/analytes.rs",
+    "crates/lis-catalog/src/repo/analytes.rs",
     "ui/src/features/configuration/validity/SpecimenTypesPage.tsx",
     "ui/src/features/configuration/validity/ValidityDraftDialog.tsx",
     "ui/src/features/configuration/validity/ValidityPolicyPage.tsx",

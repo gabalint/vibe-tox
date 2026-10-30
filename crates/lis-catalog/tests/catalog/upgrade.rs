@@ -182,7 +182,14 @@ fn an_installed_catalog_keeps_every_version_and_guard_through_the_rebuild() {
         migrations: &MIGRATIONS[..4],
         ..SCHEMA
     };
-    let c = Catalog::on(TestDatabase::open(&[lis_auth::SCHEMA, legacy]).unwrap());
+    let t = TestDatabase::open(&[lis_auth::SCHEMA, legacy]).unwrap();
+    // Today's analyte command records history: expose it while seeding too.
+    let file = t.data_dir().join(DATABASE_FILE);
+    Connection::open(&file)
+        .unwrap()
+        .execute_batch(MIGRATIONS[7].sql)
+        .unwrap();
+    let c = Catalog::on(t);
     // Today's seed commands write optional report fields. Temporarily expose
     // those columns while seeding, then restore the exact v4 schema before
     // testing the historical rebuild. No legacy row receives invented content.
@@ -195,7 +202,13 @@ fn an_installed_catalog_keeps_every_version_and_guard_through_the_rebuild() {
             "DROP TRIGGER cat_method_report_notes_frozen;
          ALTER TABLE cat_method_versions DROP COLUMN report_notes;
          ALTER TABLE cat_method_version_analytes DROP COLUMN reference_interval;
-         ALTER TABLE cat_method_version_analytes DROP COLUMN range_policy;",
+         ALTER TABLE cat_method_version_analytes DROP COLUMN range_policy;
+         DROP TRIGGER cat_analytes_versioned;
+         DROP TABLE cat_analyte_history;
+         ALTER TABLE cat_analytes DROP COLUMN active;
+         ALTER TABLE cat_analytes DROP COLUMN revision;
+         CREATE TRIGGER cat_analytes_no_update BEFORE UPDATE ON cat_analytes
+         BEGIN SELECT RAISE(ABORT, 'catalog reference data is immutable'); END;",
         )
         .unwrap();
     let before: Vec<_> = TABLES.iter().map(|table| rows(&c.raw(), table)).collect();

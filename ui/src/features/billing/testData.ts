@@ -30,6 +30,8 @@ export const AMPHETAMINE: AnalyteView = {
   name: "Synthetic amphetamine",
   loincCode: null,
   drugClassCode: null,
+  active: true,
+  revision: 1,
 };
 
 export const OPIATE: AnalyteView = {
@@ -38,6 +40,8 @@ export const OPIATE: AnalyteView = {
   name: "Synthetic opiate",
   loincCode: null,
   drugClassCode: null,
+  active: true,
+  revision: 1,
 };
 
 export const CURRENT: BillingClassMappingVersionSummary = {

@@ -195,6 +195,12 @@ pub struct AnalyteView {
     pub loinc_code: Option<String>,
     /// Drug class code as provided.
     pub drug_class_code: Option<String>,
+    /// Offered for new method versions and source test-code maps; a retired
+    /// analyte stays in existing records.
+    pub active: bool,
+    /// Current revision; each correction or retirement adds one.
+    #[ts(type = "number")]
+    pub revision: i64,
 }
 
 /// A method; its content lives in its versions.

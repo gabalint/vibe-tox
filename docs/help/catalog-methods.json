@@ -154,7 +154,7 @@
         {
           "name": "Analyte (each Analytes measured row)",
           "meaning": "Substance or validity marker measured by this method.",
-          "values": "Choose from the analyte directory.",
+          "values": "Choose from the active analytes in the analyte directory; retired analytes are not offered, and the engine refuses them.",
           "rules": "At least one row is required; an analyte may appear only once in this method version."
         },
         {
