@@ -2,7 +2,7 @@
   "id": "host-health",
   "title": "Host health and history",
   "summary": "Inspect the host’s current checks and investigate changes, stops and listening gaps.",
-  "reviewedOn": "2026-10-15",
+  "reviewedOn": "2026-10-30",
   "routes": ["/operations/health", "/operations/health/history/:tab?"],
   "sections": [
     {
@@ -404,9 +404,9 @@
           "result": "Refreshes the displayed matching history."
         },
         {
-          "name": "Host health",
+          "name": "Host health breadcrumb",
           "does": "Return to current checks.",
-          "availableWhen": "Signed in.",
+          "availableWhen": "Above the title, as Host health › Health history.",
           "result": "Shows the latest evaluated health state."
         },
         {

@@ -208,7 +208,11 @@ describe("WorkQueuePage (REQ-OPS-004)", () => {
     renderPage("/work-queues/review_ready", () => []);
     expect(await screen.findByText("Nothing waiting")).toBeTruthy();
     expect(screen.queryByRole("grid")).toBeNull();
-    expect(screen.getByRole("button", { name: "All queues" })).toBeTruthy();
+    // The breadcrumb, not a button, leads back to the overview.
+    expect(screen.getByRole("link", { name: "Work queues" }).getAttribute("href")).toBe(
+      "/work-queues",
+    );
+    expect(screen.queryByRole("button", { name: "All queues" })).toBeNull();
   });
 
   it("shows the engine's error", async () => {

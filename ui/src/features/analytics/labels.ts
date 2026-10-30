@@ -10,6 +10,7 @@ import type { QcOutcome } from "@/generated/QcOutcome";
 import type { QcRole } from "@/generated/QcRole";
 import type { RegistrationState } from "@/generated/RegistrationState";
 import type { RevisionIndicator } from "@/generated/RevisionIndicator";
+import type { RunDetail } from "@/generated/RunDetail";
 import type { RunState } from "@/generated/RunState";
 import type { SampleIdField } from "@/generated/SampleIdField";
 import type { Choice } from "@/lib/choices";
@@ -73,6 +74,13 @@ export const ATTEMPT_KINDS: readonly Choice<AttemptKind>[] = [
   { id: "reextraction", label: "Re-extraction" },
   { id: "dilution", label: "Dilution" },
 ];
+
+/** A run's title: its method version and instrument, or "Run" until they load. */
+export function runTitle(run: RunDetail | undefined): string {
+  return run
+    ? `Run of ${run.methodCode} version ${run.methodVersion} on ${run.instrumentName}`
+    : "Run";
+}
 
 export function runStatus(state: RunState): Status {
   return state === "open"

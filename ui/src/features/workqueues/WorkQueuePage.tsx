@@ -1,5 +1,4 @@
-import { useNavigate, useParams } from "react-router";
-import { Button } from "@/components/Button";
+import { useParams } from "react-router";
 import type { DataGridColumn } from "@/components/DataGrid";
 import { Page, PageHeader } from "@/components/Page";
 import { RefreshControl } from "@/components/RefreshControl";
@@ -78,7 +77,6 @@ function sameKindRecords(
  * comes from the engine's summary, so a list cut at the limit says how many wait.
  */
 export function WorkQueuePage() {
-  const navigate = useNavigate();
   const queue = useParams().queue ?? "";
   const queues = useCommandQuery<WorkQueueSummary[]>(LIST_WORK_QUEUES);
   const summary = queues.data?.find((candidate) => candidate.queue === queue);
@@ -108,7 +106,10 @@ export function WorkQueuePage() {
       <PageHeader
         title={label}
         description="Oldest first. Items without a screen show their next action only."
-        actions={<Button onPress={() => navigate("/work-queues")}>All queues</Button>}
+        breadcrumbs={[
+          { label: "Work queues", href: "/work-queues" },
+          { label, href: `/work-queues/${queue}` },
+        ]}
       />
       <WorkQueueList
         query={items}

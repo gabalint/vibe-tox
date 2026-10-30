@@ -15,7 +15,7 @@ import { useFormatTime } from "@/lib/format";
 import { usePersonText } from "@/lib/person";
 import { useRecordSequence } from "@/lib/recordSequence";
 import { GET_RUN, MANAGE_QUALITY, RUN_QUERIES } from "../contract";
-import { lotStatus, lotText, MATERIAL_KINDS, runStatus } from "../labels";
+import { lotStatus, lotText, MATERIAL_KINDS, runStatus, runTitle } from "../labels";
 import { RUNS_LIST, runPath, runQcPath } from "../paths";
 import { PerformingSite } from "./PerformingSite";
 import { Positions } from "./Positions";
@@ -36,9 +36,7 @@ export function RunPage() {
   const run = useCommandQuery<RunDetail>(GET_RUN, { input: { runId } });
   const { list, sequence } = useRecordSequence(runId, RUNS_LIST, runPath);
   const detail = run.data;
-  const title = detail
-    ? `Run of ${detail.methodCode} version ${detail.methodVersion} on ${detail.instrumentName}`
-    : "Run";
+  const title = runTitle(detail);
   const status = detail && runStatus(detail.state);
   return (
     <Page>

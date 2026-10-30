@@ -1,4 +1,3 @@
-import { Link } from "react-router";
 import { Page, PageHeader } from "@/components/Page";
 import { Tabs } from "@/components/Tabs";
 import { useRouteTabs } from "@/lib/routeTabs";
@@ -24,7 +23,10 @@ export function HealthHistoryPage() {
       <PageHeader
         title="Health history"
         description="Each start and stop of the app, and changes of each health check."
-        actions={<Link to="/operations/health">Host health</Link>}
+        breadcrumbs={[
+          { label: "Host health", href: "/operations/health" },
+          { label: "Health history", href: PATH },
+        ]}
       />
       <Tabs contentLayout="collection" label="Health history" tabs={tabs} selectedId={tab}>
         {tab === "runs" ? <AppRuns /> : <CheckHistory />}

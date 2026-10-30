@@ -1,14 +1,15 @@
-import { useNavigate, useParams } from "react-router";
-import { Button } from "@/components/Button";
+import { useParams } from "react-router";
 import { EmptyState } from "@/components/EmptyState";
 import { Page, PageHeader } from "@/components/Page";
 import { QueryContent } from "@/components/QueryContent";
 import { Tabs } from "@/components/Tabs";
+import type { RunDetail } from "@/generated/RunDetail";
 import type { RunQcView } from "@/generated/RunQcView";
-import { useCommandQuery, useHasCapability } from "@/lib/commands";
+import { useCommandQuery } from "@/lib/commands";
 import { useRouteTabs } from "@/lib/routeTabs";
-import { GET_RUN_QC, PERFORM_ANALYSIS } from "../contract";
-import { runPath, runQcPath } from "../paths";
+import { GET_RUN, GET_RUN_QC } from "../contract";
+import { runTitle } from "../labels";
+import { RUNS_LIST, runPath, runQcPath } from "../paths";
 import { AssessmentsTab } from "./AssessmentsTab";
 import { ConflictsTab } from "./ConflictsTab";
 import { DeviationsTab } from "./DeviationsTab";
@@ -41,19 +42,23 @@ function tabLabel(id: TabId, label: string, view: RunQcView): string {
  * QC of one run (REQ-ANA-004, REQ-ANA-005), one list per tab: the assessment of each
  * analyte, the run and each preparation batch; every control and calibrator observation;
  * changed QC rows awaiting a decision; and deviations. Accepted QC is not result approval.
+ * Its breadcrumb leads back to the run and to Runs.
  */
 export function RunQcPage() {
   const { runId = "" } = useParams();
   const { selectedId: selected, tabs } = useRouteTabs(runQcPath(runId), TABS);
-  const navigate = useNavigate();
-  const canOpenRun = useHasCapability(PERFORM_ANALYSIS);
+  const run = useCommandQuery<RunDetail>(GET_RUN, { input: { runId } });
   const qc = useCommandQuery<RunQcView>(GET_RUN_QC, { input: { runId } });
   return (
     <Page>
       <PageHeader
         title="Run QC review"
         description="Assess each analyte's QC from the observations received for this run."
-        actions={canOpenRun && <Button onPress={() => navigate(runPath(runId))}>Open run</Button>}
+        breadcrumbs={[
+          RUNS_LIST,
+          { label: runTitle(run.data), href: runPath(runId) },
+          { label: "QC review", href: runQcPath(runId) },
+        ]}
       />
       <QueryContent query={qc} what="run QC" loadingRows={8}>
         {(view) => (

@@ -2,7 +2,7 @@
   "id": "work-queues",
   "title": "Work queues",
   "summary": "Find work that needs attention and open the record where it can be resolved.",
-  "reviewedOn": "2026-10-29",
+  "reviewedOn": "2026-10-30",
   "routes": ["/work-queues", "/work-queues/:queue"],
   "sections": [
     {
@@ -226,9 +226,9 @@
           "result": "Starts a fresh check at the beginning; earlier loaded pages and cursors are cleared. Updated records may have moved or left the queue."
         },
         {
-          "name": "All queues",
+          "name": "Work queues breadcrumb",
           "does": "Returns to the overview.",
-          "availableWhen": "The page is open.",
+          "availableWhen": "Above the queue's title, as Work queues › the queue's name.",
           "result": "Shows every queue available to your account."
         },
         {
@@ -272,7 +272,7 @@
         },
         {
           "problem": "The queue is not permitted or is unknown.",
-          "recovery": "Return to All queues and open a queue actually offered to the signed-in account."
+          "recovery": "Return to Work queues with the breadcrumb and open a queue actually offered to the signed-in account."
         },
         {
           "problem": "The linked delivery obligation is not loaded.",
