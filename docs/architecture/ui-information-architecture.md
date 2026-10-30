@@ -23,7 +23,7 @@ The navigation and route definitions are maintained in [`navigation.ts`](../../u
 | Bench | Worklist, Runs, Bench setup |
 | Review | Result review, Result imports |
 | Reports | Release queue, Delivery, Reports, Report templates |
-| Billing | Billing follow-up, Billing work, Billing class mappings |
+| Billing | Billing follow-up, Billing work, Billing handoffs, Billing class mappings |
 | Quality and audit | Audit trail, Audit anchors |
 | Test catalog | Tests and panels, Methods, Analytes, Specimen types |
 | Laboratory setup | Material configuration, Laboratory profile, Catalog review, Clients, Practitioners, Delivery destinations, Instruments, Users, Starter data |
@@ -71,7 +71,7 @@ Versioned record pages show the version in effect and any open draft in the head
 | Report and revision | Reports or Release queue → page | Frozen candidate, release and revision history remain distinct |
 | Delivery obligation | Reports › Delivery → panel | Attempts and their channel/evidence level belong to the exact obligation |
 | Billing evidence | Billing › Billing follow-up or order billing context | Financial evidence does not authorize clinical work |
-| Billing derivation and handoff | Billing work → derivation or handoff page | Bulk handoff selection is explicit; individual outcomes belong to the handoff item |
+| Billing derivation and handoff | Billing work → derivation or handoff page; Billing handoffs → handoff page | Bulk handoff selection is explicit; individual outcomes belong to the handoff item. A handoff whose items are all acknowledged leaves Billing work and is found in Billing handoffs |
 
 [`itemPath.ts`](../../ui/src/features/workqueues/itemPath.ts) owns work-item routing. Deviations, preservation incidents, delivery obligations, billing patient/date work and handoff items retain their exact identities across list limits. Unknown item kinds do not get a guessed record link. The connected workflow is described in [daily operation](../operations/daily-operation.md).
 

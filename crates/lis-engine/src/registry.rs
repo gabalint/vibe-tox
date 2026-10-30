@@ -279,6 +279,7 @@ pub const COMMANDS: &[CommandSpec] = &[
     crate::commands::billing::GET_SERVICE_DERIVATION,
     crate::commands::billing::APPROVE_SERVICE_DERIVATION,
     crate::commands::billing::CREATE_BILLING_HANDOFF,
+    crate::commands::billing::LIST_BILLING_HANDOFFS,
     crate::commands::billing::GET_BILLING_HANDOFF,
     crate::commands::billing::EXPORT_BILLING_HANDOFF,
     crate::commands::billing::RECORD_HANDOFF_OUTCOME,

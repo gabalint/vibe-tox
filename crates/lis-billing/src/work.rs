@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::error::{BillingError, invalid};
+use crate::handoff_list::derivation_accessions;
 use crate::model::{
     BillingDerivationId, BillingDerivationState, BillingHandoffId, BillingHandoffItemId,
     HandoffStatus,
@@ -379,18 +380,10 @@ fn accession_numbers(
         .into_iter()
         .map(|s| s.accession_number)
         .collect();
-    if numbers.is_empty() {
-        let mut previous = repo::latest_handed_off(conn, subject_id, date_of_service)?;
-        while let Some(id) = previous {
-            for specimen in repo::specimens(conn, id)? {
-                let accession = lis_specimens::specimen_accession(conn, specimen.specimen_id)?;
-                numbers.push(lis_specimens::get_accession(conn, accession)?.accession_number);
-            }
-            if !numbers.is_empty() {
-                break;
-            }
-            previous = repo::load(conn, id)?.adjustment_of_id;
-        }
+    if numbers.is_empty()
+        && let Some(id) = repo::latest_handed_off(conn, subject_id, date_of_service)?
+    {
+        numbers = derivation_accessions(conn, id)?;
     }
     numbers.sort();
     numbers.dedup();
