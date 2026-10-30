@@ -101,7 +101,7 @@ pub(crate) fn history<K: Versioned>(
 /// effective period still open. The period starts at approval (never in the
 /// future) and ends when a newer version is approved or this one is retired.
 /// The `*_one_current` unique indexes allow at most one per parent.
-const IN_EFFECT: &str = "v.status = 'approved' AND v.effective_to IS NULL";
+pub(crate) const IN_EFFECT: &str = "v.status = 'approved' AND v.effective_to IS NULL";
 
 /// The approved version of `parent` whose effective period is open.
 pub(crate) fn current<K: Versioned>(

@@ -103,7 +103,8 @@ function AnalyteList() {
   const { control } = useFormContext<MethodFormValues>();
   const rows = useFieldArray({ control, name: "analytes" });
   const analytes = useCommandQuery<AnalyteView[]>(LIST_ANALYTES);
-  const options = codedOptions(analytes.data);
+  // Retired analytes are not offered for new method versions (the engine refuses them).
+  const options = codedOptions(analytes.data?.filter((analyte) => analyte.active));
   return (
     <FieldList
       name="analytes"

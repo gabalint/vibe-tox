@@ -7,6 +7,7 @@
 //! needs `manage_configuration` and approval or retirement
 //! `approve_configuration`, checked in each domain command.
 
+pub(crate) mod analytes;
 pub(crate) mod preview;
 mod preview_document;
 pub(crate) mod standard;

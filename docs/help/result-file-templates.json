@@ -187,7 +187,7 @@
         {
           "name": "Analytes: Catalog analyte",
           "meaning": "Maps each source analyte name or selected wide column to its catalog identity.",
-          "values": "Configured analytes, searchable by name/code.",
+          "values": "Active configured analytes, searchable by name/code; retired analytes are not offered, and the engine refuses them.",
           "rules": "At least one source mapping required; every chosen wide analyte column must be mapped. Source names are unique, at most 64 characters, without surrounding spaces."
         },
         {

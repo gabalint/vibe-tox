@@ -109,6 +109,31 @@ async fn reference_call(engine: &Engine, name: &str) -> Option<Result<(), Comman
             .await
             .map(drop),
         "list_active_orderables" => engine.list_active_orderables().await.map(drop),
+        "update_analyte" => engine
+            .update_analyte(lis_catalog::UpdateAnalyte {
+                analyte_id: lis_catalog::AnalyteId::generate(),
+                expected_revision: 1,
+                code: "SYN-A".to_owned(),
+                name: "Synthetic analyte".to_owned(),
+                loinc_code: None,
+                drug_class_code: None,
+                active: false,
+                reason: "Synthetic correction".to_owned(),
+            })
+            .await
+            .map(drop),
+        "analyte_history" => engine
+            .analyte_history(lis_catalog::AnalyteInput {
+                analyte_id: lis_catalog::AnalyteId::generate(),
+            })
+            .await
+            .map(drop),
+        "analyte_usage" => engine
+            .analyte_usage(lis_catalog::AnalyteInput {
+                analyte_id: lis_catalog::AnalyteId::generate(),
+            })
+            .await
+            .map(drop),
         _ => return None,
     })
 }

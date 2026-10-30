@@ -1,6 +1,6 @@
 //! Same-identity directory maintenance and retained version history.
 use super::MANAGE_CONFIGURATION;
-use crate::commands::people::{display_names, name_of};
+use crate::commands::people::name_recorders;
 use crate::{
     Engine,
     registry::{CommandSpec, spec},
@@ -80,11 +80,11 @@ fn named_history(
     input: DirectoryHistoryInput,
 ) -> Result<Vec<lis_identity::DirectoryHistoryEntry>, lis_identity::IdentityError> {
     let mut rows = lis_identity::directory_history(conn, input)?;
-    let ids = rows.iter().filter_map(|row| row.recorded_by.as_deref());
-    let names = display_names(conn, ids)?;
-    for row in &mut rows {
-        let recorded_by = row.recorded_by.as_deref();
-        row.recorded_by_display = recorded_by.and_then(|id| name_of(&names, id));
-    }
+    name_recorders(
+        conn,
+        &mut rows,
+        |row| row.recorded_by.as_deref(),
+        |row, name| row.recorded_by_display = name,
+    )?;
     Ok(rows)
 }

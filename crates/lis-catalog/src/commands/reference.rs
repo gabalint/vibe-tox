@@ -1,6 +1,7 @@
 //! Reference data: specimen types, analytes, methods and orderables. These
-//! rows are immutable once created; their meaning becomes usable only
-//! through an approved method or orderable version.
+//! rows are immutable once created, except analytes ([`super::analytes`]);
+//! their meaning becomes usable only through an approved method or orderable
+//! version.
 
 use lis_audit::{AuditEvent, Outcome, Stream};
 use lis_core::Capability;
@@ -13,7 +14,8 @@ use crate::model::{
     AnalyteId, MethodId, NAME_MAX, OrderableId, OrderableKind, SpecimenTypeId, code, optional_code,
     text,
 };
-use crate::repo::reference::{self as repo, CodeTable, NewAnalyte};
+use crate::repo::analytes::{self, AnalyteFacts};
+use crate::repo::reference::{self as repo, CodeTable};
 
 /// Input of [`create_specimen_type`] and [`create_method`].
 #[derive(Debug, Clone, Deserialize, TS)]
@@ -117,17 +119,15 @@ pub fn create_analyte(
     let loinc_code = optional_code("loincCode", input.loinc_code.as_deref())?;
     let drug_class_code = optional_code("drugClassCode", input.drug_class_code.as_deref())?;
     let id = AnalyteId::generate();
-    repo::insert_analyte(
-        ctx.tx(),
-        &NewAnalyte {
-            id,
-            code: &code,
-            name: &name,
-            loinc_code: loinc_code.as_deref(),
-            drug_class_code: drug_class_code.as_deref(),
-            created_at: ctx.now(),
-        },
-    )?;
+    let facts = AnalyteFacts {
+        code: &code,
+        name: &name,
+        loinc_code: loinc_code.as_deref(),
+        drug_class_code: drug_class_code.as_deref(),
+        active: true,
+    };
+    analytes::insert(ctx.tx(), id, &facts, ctx.now())?;
+    super::analytes::record_registration(ctx, id, facts)?;
     audit_created(ctx, "catalog.create_analyte", "analyte", id)?;
     Ok(id)
 }
