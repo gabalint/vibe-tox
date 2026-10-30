@@ -306,21 +306,35 @@ pub(crate) fn set_status(
     put_status(statuses, instrument_id, report);
 }
 
+/// Replaces the status, keeping the latest error once the listener recovers. A
+/// repeated report of the same error, such as each folder scan, keeps its start.
 fn put_status(statuses: &StatusMap, instrument_id: InstrumentId, report: StatusReport) {
-    statuses
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .insert(
+    let now = SystemClock.now();
+    let mut statuses = statuses.lock().unwrap_or_else(PoisonError::into_inner);
+    let previous = statuses.get(&instrument_id);
+    let ongoing = previous.is_some_and(|status| {
+        status.state == ListenerState::Error && status.detail_code == report.detail_code
+    });
+    let (last_error, last_error_at) = if report.state == ListenerState::Error && !ongoing {
+        (report.detail_code, Some(now))
+    } else {
+        previous.map_or((None, None), |status| {
+            (status.last_error, status.last_error_at)
+        })
+    };
+    statuses.insert(
+        instrument_id,
+        ListenerStatus {
             instrument_id,
-            ListenerStatus {
-                instrument_id,
-                state: report.state,
-                last_activity_at: Some(SystemClock.now()),
-                detail_code: report.detail_code,
-                files_waiting: report.files_waiting,
-                files_too_large: report.files_too_large,
-            },
-        );
+            state: report.state,
+            last_activity_at: Some(now),
+            detail_code: report.detail_code,
+            files_waiting: report.files_waiting,
+            files_too_large: report.files_too_large,
+            last_error,
+            last_error_at,
+        },
+    );
 }
 
 pub(crate) fn touch_status(statuses: &StatusMap, instrument_id: InstrumentId) {

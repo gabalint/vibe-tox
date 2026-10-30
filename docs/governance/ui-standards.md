@@ -139,6 +139,7 @@ Sources: ENG-161 to ENG-163, ENG-165 to ENG-167. Clinical systems use the same s
 - When the panel would leave the list narrower than about 40rem, it replaces the list and offers "Back to list".
 - Its left edge is a splitter, like the navigation's: drag it, or use Left and Right arrows, Home and End. The width runs from 22rem to 64rem and never leaves the list narrower than 38rem. It is remembered on this computer for each page.
 - Content too wide for the panel, such as a correction history table, asks for the widest panel while it is shown (`useWidePanel`). Hiding it returns the panel to the width chosen before.
+- A configuration record whose settings outgrow one column of facts, such as an analyzer connection, shows them read-only in the groups and order of its edit form. Each group's title collapses it. Live state and links to related screens follow the settings.
 
 ### Record page body
 

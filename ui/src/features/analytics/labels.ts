@@ -26,13 +26,6 @@ export const INSTRUMENT_STATUSES: readonly Choice<InstrumentStatus>[] = [
   { id: "out_of_service", label: "Out of service" },
 ];
 
-/** `null` means nobody has recorded a status yet; the engine treats that as not ready. */
-export function instrumentStatus(status: InstrumentStatus | null): Status {
-  if (status === "in_service") return { label: "In service", tone: "neutral" };
-  if (status === "out_of_service") return { label: "Out of service", tone: "danger" };
-  return { label: "Status not recorded", tone: "warning" };
-}
-
 /** The instrument's approved result source, as its sender name and version. */
 export function sourceText(instrument: InstrumentReadinessView): string {
   const source = instrument.activeRegistration;

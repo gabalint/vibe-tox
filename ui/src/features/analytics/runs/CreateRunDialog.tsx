@@ -6,8 +6,9 @@ import type { RunDetail } from "@/generated/RunDetail";
 import { CommandDialog } from "@/lib/CommandDialog";
 import { checked, labelOf } from "@/lib/choices";
 import { useCommandQuery } from "@/lib/commands";
+import { instrumentStatus } from "@/lib/instrumentStatus";
 import { LIST_INSTRUMENT_READINESS, LIST_LOTS, RUN_QUERIES } from "../contract";
-import { instrumentStatus, lotText, MATERIAL_KINDS } from "../labels";
+import { lotText, MATERIAL_KINDS } from "../labels";
 
 interface CreateRunDialogProps {
   methodVersionId: string;

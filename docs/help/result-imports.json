@@ -2,13 +2,13 @@
   "id": "result-imports",
   "title": "Result imports",
   "summary": "Account for received results and investigate rows that were not applied.",
-  "reviewedOn": "2026-10-29",
+  "reviewedOn": "2026-10-30",
   "routes": ["/review/imports", "/review/imports/:importAttemptId/:tab?"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
-        "Result imports lists attempts to process received data. Load results file lets you choose a registered instrument and a file. Open an attempt to see its outcome, counts and refusal reasons; file attempts also show file provenance and the template version used.",
+        "Result imports lists attempts to process received data, for every instrument or the one chosen in the Instrument filter. Load results file lets you choose a registered instrument and a file. Open an attempt to see its outcome, counts and refusal reasons; file attempts also show file provenance and the template version used.",
         "Quarantined rows need investigation. Set aside lists rows kept outside patient results. Retry import processes the received message again as a new attempt and replaces earlier open quarantine outcomes with the retry’s outcome."
       ]
     },
@@ -50,6 +50,12 @@
       "purpose": "Find every recent attempt to process analyzer messages or result files, and load an approved result file manually.",
       "access": "Viewing import work requires result-review authority. Load results file additionally requires analysis authority.",
       "fields": [
+        {
+          "name": "Instrument filter",
+          "meaning": "Show the import attempts of one instrument only.",
+          "values": "All instruments (default) or one registered instrument by name.",
+          "rules": "Optional. Kept in the address (?instrument=), so Back, reload and an instrument's panel under Laboratory setup › Instruments open the same filtered list."
+        },
         {
           "name": "Processed",
           "meaning": "Identifies when an import attempt ran.",

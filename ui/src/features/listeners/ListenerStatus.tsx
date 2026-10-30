@@ -7,21 +7,11 @@ import type { Tone } from "@/components/tones";
 import type { ListenerState } from "@/generated/ListenerState";
 import type { ListenerStatusView } from "@/generated/ListenerStatusView";
 import { useCommandQuery } from "@/lib/commands";
-import { listenerDetailText } from "@/lib/listenerDetail";
+import { LISTENER_STATES, listenerDetailText } from "@/lib/listenerDetail";
 import styles from "./listeners.module.css";
 
 /** How often the state is asked for again while it is on screen. */
 const POLL_INTERVAL_MS = 10_000;
-
-const STATES: Record<ListenerState, { tone: Tone; label: string }> = {
-  disabled: { tone: "neutral", label: "Disabled" },
-  listening: { tone: "info", label: "Listening" },
-  connected: { tone: "neutral", label: "Connected" },
-  receiving: { tone: "info", label: "Receiving" },
-  error: { tone: "danger", label: "Error" },
-  // An enabled result-file instrument without a watched folder: files are loaded by hand.
-  manual_only: { tone: "neutral", label: "Manual loading only" },
-};
 
 /** The order states are counted in the top-bar summary: the ones needing attention first. */
 const SUMMARY_ORDER: readonly ListenerState[] = [
@@ -88,7 +78,7 @@ function summarize(listeners: ListenersQuery): { tone: Tone; text: string } {
   if (all.length === 0) return { tone: "neutral", text: "No instruments configured" };
   const counts = SUMMARY_ORDER.flatMap((state) => {
     const count = all.filter((listener) => listener.state === state).length;
-    return count === 0 ? [] : [`${count} ${STATES[state].label.toLowerCase()}`];
+    return count === 0 ? [] : [`${count} ${LISTENER_STATES[state].label.toLowerCase()}`];
   });
   return {
     tone: summaryTone(new Set(all.map((listener) => listener.state))),
@@ -119,7 +109,7 @@ function ListenerList({ listeners, stacked }: { listeners: ListenersQuery; stack
 }
 
 function ListenerItem({ listener }: { listener: ListenerStatusView }) {
-  const state = STATES[listener.state];
+  const state = LISTENER_STATES[listener.state];
   const detail = listenerDetailText(listener);
   return (
     <li className={styles.listener}>
