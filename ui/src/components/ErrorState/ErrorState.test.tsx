@@ -44,6 +44,23 @@ describe("ErrorState", () => {
     await expectNoA11yViolations(container);
   });
 
+  it("shows a gate repeated by several causal records once", () => {
+    const changed = {
+      code: "collection_time_changed",
+      message: "The specimen collection time changed after review.",
+    };
+    const error = engineError(
+      "gate_blocked",
+      "This action is blocked by one or more review gates.",
+      {
+        gateReasons: [changed, changed, changed, changed],
+      },
+    );
+    renderWithProviders(<ErrorState error={error} />);
+    const gates = screen.getByRole("list", { name: "Blocked by" });
+    expect(gates.querySelectorAll("li")).toHaveLength(1);
+  });
+
   it("omits an empty support reference", () => {
     renderWithProviders(
       <ErrorState error={engineError("unavailable", "Not available.", { correlationId: "" })} />,
