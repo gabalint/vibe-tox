@@ -14,6 +14,7 @@ import {
   type ConnectionValues,
   connectionValues,
   EMPTY_CONNECTION,
+  isAuKind,
   toConnection,
 } from "./connectionValues";
 
@@ -58,15 +59,9 @@ export function RegisterDialog({ onSaved, onClose }: ChangeDialogProps) {
       onDone={onSaved}
       errorTitle="Not saved"
       onClose={onClose}
-      size="wide"
+      size={connectionSize}
     >
-      <FieldSection title="Analyzer">
-        <FieldGrid>
-          <CodedNameFields />
-          <EnabledField />
-        </FieldGrid>
-      </FieldSection>
-      <ConnectionFields />
+      <RegisterFields />
     </CommandDialog>
   );
 }
@@ -95,10 +90,40 @@ export function ConnectionDialog({
       onDone={onSaved}
       errorTitle="Not saved"
       onClose={onClose}
-      size="wide"
+      size={connectionSize}
     >
       <ConnectionFields />
     </CommandDialog>
+  );
+}
+
+/** Only the long AU400/AU640 connection form needs a wide dialog. */
+function connectionSize(values: { connection?: { kind: string | null } }) {
+  return isAuKind(values.connection?.kind) ? "wide" : "default";
+}
+
+/** One column as before, or for an AU400/AU640 connection the analyzer's own section first. */
+function RegisterFields() {
+  const kind = useWatch<RegisterValues, "connection.kind">({ name: "connection.kind" });
+  if (!isAuKind(kind)) {
+    return (
+      <>
+        <CodedNameFields />
+        <ConnectionFields />
+        <EnabledField />
+      </>
+    );
+  }
+  return (
+    <>
+      <FieldSection title="Analyzer">
+        <FieldGrid>
+          <CodedNameFields autoFocus={false} />
+          <EnabledField />
+        </FieldGrid>
+      </FieldSection>
+      <ConnectionFields />
+    </>
   );
 }
 

@@ -6,7 +6,7 @@ import type { SetPatientBillingProfileInput } from "@/generated/SetPatientBillin
 import { CommandDialog } from "@/lib/CommandDialog";
 import { contactInput, contactValues } from "./contactValues";
 import { FINANCIAL_QUERIES } from "./contract";
-import { ChangeSection } from "./FinancialFields";
+import { ChangeEvidenceFields, ChangeSection } from "./FinancialFields";
 
 export interface ProfileDialogProps {
   view: PatientBillingProfileView;
@@ -28,11 +28,14 @@ export function PatientProfileDialog<
   title,
   defaultValues,
   update,
+  size = "default",
   children,
 }: ProfileDialogProps & {
   title: string;
   defaultValues: DefaultValues<Values>;
   update: (content: PatientBillingContent, values: Values) => PatientBillingContent;
+  /** `wide` for the long editors, whose fields are grouped in sections. */
+  size?: "default" | "wide";
   children: ReactNode;
 }) {
   const [base] = useState(view);
@@ -51,10 +54,10 @@ export function PatientProfileDialog<
       })}
       successTitle="Billing details saved"
       onClose={onClose}
-      size="wide"
+      size={size}
     >
       {children}
-      <ChangeSection />
+      {size === "wide" ? <ChangeSection /> : <ChangeEvidenceFields />}
     </CommandDialog>
   );
 }

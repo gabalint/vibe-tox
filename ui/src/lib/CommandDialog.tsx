@@ -1,11 +1,13 @@
 import { type ReactNode, useState } from "react";
-import { type DefaultValues, type FieldValues, useForm } from "react-hook-form";
+import { type DefaultValues, type FieldValues, useForm, useWatch } from "react-hook-form";
 import { FormDialog } from "@/components/FormDialog";
 import { asksSelfApproval, SelfApprovalConfirm } from "@/components/SelfApprovalConfirm";
 import { useToast } from "@/components/Toast";
 import type { CommandName } from "@/generated/CommandName";
 import { useCommandMutation } from "@/lib/commands";
 import type { FieldPaths } from "@/lib/errors";
+
+type DialogSize = "default" | "wide";
 
 interface CommandDialogProps<Values extends FieldValues, Input, Result> {
   title: string;
@@ -26,8 +28,11 @@ interface CommandDialogProps<Values extends FieldValues, Input, Result> {
   onClose: () => void;
   /** Where engine field errors land when the input's shape differs from the form's. */
   fieldPaths?: FieldPaths;
-  /** `wide` for long forms grouped in `FieldSection`s. */
-  size?: "default" | "wide";
+  /**
+   * `wide` for long forms grouped in `FieldSection`s, or how to choose from the values when
+   * only some choices make the form long.
+   */
+  size?: DialogSize | ((values: Values) => DialogSize);
   /** The fields, bound to the form by name. */
   children: ReactNode;
 }
@@ -49,6 +54,8 @@ export function CommandDialog<Values extends FieldValues, Input, Result = unknow
     invalidates: command.invalidates,
   });
   const form = useForm<Values>({ defaultValues });
+  const values = useWatch({ control: form.control }) as Values;
+  const size = typeof props.size === "function" ? props.size(values) : props.size;
   const submit = form.handleSubmit((values) => {
     const onSuccess = (result: Result) => {
       const notice = typeof successTitle === "string" ? successTitle : successTitle(values, result);
@@ -65,7 +72,7 @@ export function CommandDialog<Values extends FieldValues, Input, Result = unknow
       submitLabel={submitLabel}
       errorTitle={props.errorTitle ?? "Not recorded"}
       fieldPaths={props.fieldPaths}
-      size={props.size}
+      size={size}
       // A request to confirm a self-approval is a question, shown below the fields.
       command={{ error: asksSelfApproval(run.error) ? null : run.error, isPending: run.isPending }}
       onSubmit={submit}
