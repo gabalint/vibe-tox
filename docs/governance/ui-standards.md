@@ -136,6 +136,8 @@ Sources: ENG-161 to ENG-163, ENG-165 to ENG-167. Clinical systems use the same s
 - The open record is in the URL (`?open=<id>`).
 - Escape closes the panel when focus is in it and no menu or dialog is open, and focus returns to the row.
 - When the panel would leave the list narrower than about 40rem, it replaces the list and offers "Back to list".
+- Its left edge is a splitter, like the navigation's: drag it, or use Left and Right arrows, Home and End. The width runs from 22rem to 64rem and never leaves the list narrower than 38rem. It is remembered on this computer for each page.
+- Content too wide for the panel, such as a correction history table, asks for the widest panel while it is shown (`useWidePanel`). Hiding it returns the panel to the width chosen before.
 
 ### Record page body
 

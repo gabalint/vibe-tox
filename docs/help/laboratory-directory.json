@@ -2,7 +2,7 @@
   "id": "laboratory-directory",
   "title": "Laboratory and ordering directories",
   "summary": "Set the laboratory profile and register the clients and practitioners referenced by orders.",
-  "reviewedOn": "2026-10-28",
+  "reviewedOn": "2026-10-30",
   "routes": [
     "/configuration/laboratory",
     "/configuration/clients",
@@ -337,7 +337,7 @@
           "name": "Show correction history / Hide correction history",
           "does": "Loads or hides the selected record’s retained revision history.",
           "availableWhen": "The client or practitioner detail or location panel is open.",
-          "result": "Shows all saved versions in revision order; opening history changes no records."
+          "result": "Shows all saved versions in revision order; opening history changes no records. In a side panel, the panel widens as far as the window allows while keeping the list at least 38rem wide, so all columns fit; you can still drag its left edge. Hide correction history returns the panel to its earlier width. A value shortened with … shows its full text when you point at it."
         },
         {
           "name": "Cancel",
@@ -447,7 +447,7 @@
           "name": "Show correction history / Hide correction history",
           "does": "Loads or hides the selected record’s retained revision history.",
           "availableWhen": "The client or practitioner detail or location panel is open.",
-          "result": "Shows all saved versions in revision order; opening history changes no records."
+          "result": "Shows all saved versions in revision order; opening history changes no records. In a side panel, the panel widens as far as the window allows while keeping the list at least 38rem wide, so all columns fit; you can still drag its left edge. Hide correction history returns the panel to its earlier width. A value shortened with … shows its full text when you point at it."
         },
         {
           "name": "Cancel",
