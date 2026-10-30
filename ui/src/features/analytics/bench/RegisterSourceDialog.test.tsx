@@ -144,4 +144,23 @@ describe("RegisterSourceDialog for an AU analyzer (REQ-INT-001)", {
     expect(await screen.findByText("Remove surrounding spaces.")).toBeTruthy();
     expect(unit.getAttribute("aria-invalid")).toBe("true");
   });
+
+  it("shows the engine's reason in the error box when it names no field on the form", async () => {
+    const refusal = engineError("validation", "Check the highlighted fields.", {
+      fieldErrors: [
+        {
+          field: "instrumentId",
+          code: "source_format_mismatch",
+          message:
+            "The source format must match the instrument connection and its exact AU wire settings.",
+        },
+      ],
+    });
+    const { user } = renderDialog(() => Promise.reject(refusal));
+    const dialog = await fillAuSource(user, "01");
+    await user.click(within(dialog).getByRole("button", { name: "Register source" }));
+    const alert = await within(dialog).findByRole("alert");
+    expect(alert.textContent).toContain("its exact AU wire settings.");
+    expect(alert.textContent).not.toContain("Check the highlighted fields.");
+  });
 });

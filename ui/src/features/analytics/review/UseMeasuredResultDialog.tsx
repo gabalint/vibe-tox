@@ -27,7 +27,9 @@ const REFUSALS: Record<string, string> = {
 /** The refusal with its field errors said in plain words, since no field here holds them. */
 function inPlainWords(error: CommandError | null): CommandError | null {
   const words = error?.fieldErrors.flatMap(({ code }) => REFUSALS[code] ?? []) ?? [];
-  return error && words.length > 0 ? { ...error, message: words.join(" ") } : error;
+  return error && words.length > 0
+    ? { ...error, message: words.join(" "), fieldErrors: [] }
+    : error;
 }
 
 interface UseMeasuredResultDialogProps {
