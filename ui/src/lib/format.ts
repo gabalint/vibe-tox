@@ -100,15 +100,17 @@ function parseCalendarDate(text: string): CalendarDate | null {
   return { year, month, day };
 }
 
-/** Today's calendar date in `timeZone` (UTC without one, or for a zone this engine lacks). */
-function calendarToday(now: Date, timeZone: string | null): CalendarDate | null {
-  let day: string;
+/** Today's `YYYY-MM-DD` in `timeZone` (UTC without one, or for a zone this engine lacks). */
+export function calendarDayToday(now: Date, timeZone: string | null): string {
   try {
-    day = zonedParts(now, timeZone ?? "UTC", false).day;
+    return zonedParts(now, timeZone ?? "UTC", false).day;
   } catch {
-    day = zonedParts(now, "UTC", false).day;
+    return zonedParts(now, "UTC", false).day;
   }
-  return parseCalendarDate(day);
+}
+
+function calendarToday(now: Date, timeZone: string | null): CalendarDate | null {
+  return parseCalendarDate(calendarDayToday(now, timeZone));
 }
 
 /**

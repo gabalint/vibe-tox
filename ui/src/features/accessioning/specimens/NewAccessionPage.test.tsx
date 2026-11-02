@@ -99,6 +99,7 @@ describe("NewAccessionPage (REQ-SPC-001, REQ-SPC-002)", { timeout: WALKTHROUGH_T
     await user.click(await screen.findByRole("checkbox", { name: /SYN-SCR/ }));
     await chooseWithKeyboard(user, /Collection time known$/, "Unknown");
     expect(screen.queryByRole("textbox", { name: /^Collection date/ })).toBeNull();
+    screen.getByText(/billing for this order will be held/);
     await chooseWithKeyboard(user, /Specimen type$/, "Urine");
     await typeInto(user, /^Containers/, "1");
     await chooseWithKeyboard(user, /Volume is$/, "Unknown");
@@ -199,6 +200,7 @@ describe("NewAccessionPage (REQ-SPC-001, REQ-SPC-002)", { timeout: WALKTHROUGH_T
     await chooseWithKeyboard(user, /Collection time known$/, "Date only; time not recorded");
     await typeInto(user, /^Collection date/, "2026-10-12");
     expect(screen.queryByRole("textbox", { name: /^Collection time/ })).toBeNull();
+    screen.getByText('The report will show "time not recorded".');
     await chooseWithKeyboard(user, /Specimen type$/, "Urine");
     await typeInto(user, /^Containers/, "1");
     await chooseWithKeyboard(user, /Volume is$/, "Unknown");
