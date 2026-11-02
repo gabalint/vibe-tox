@@ -96,7 +96,8 @@ Never stack two growing grids. They create nested scrollbars and push the second
 
 - Space toggles a row;
 - a bar above the grid shows how many rows are selected, the bulk actions and Clear;
-- changing the find or a filter clears the selection and says so.
+- changing the find or a filter clears the selection and says so;
+- a row the bulk action cannot take shows no check box, select all skips it, and a column says why, such as an analyte whose QC cannot be accepted with others on Run QC review.
 
 No action on one record ever requires ticking a box first, and no toolbar button waits for a selection.
 
