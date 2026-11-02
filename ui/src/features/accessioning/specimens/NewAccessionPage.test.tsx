@@ -119,6 +119,31 @@ describe("NewAccessionPage (REQ-SPC-001, REQ-SPC-002)", { timeout: WALKTHROUGH_T
     });
   });
 
+  it("asks for the volume and its unit when measured, and clears them when unknown (REQ-SPC-003)", async () => {
+    const create = vi.fn(() => ACCESSION);
+    const { user } = renderPage({ create_accession: create });
+    await user.click(await screen.findByRole("checkbox", { name: /SYN-SCR/ }));
+    await chooseWithKeyboard(user, /Collection time known$/, "Unknown");
+    await chooseWithKeyboard(user, /Specimen type$/, "Urine");
+    await typeInto(user, /^Containers/, "1");
+    await chooseWithKeyboard(user, /Volume is$/, "Measured");
+    const volume = screen.getByRole("textbox", { name: /^Volume\b(?! unit)/ });
+    const unit = screen.getByRole("textbox", { name: /^Volume unit/ });
+    expect(volume.getAttribute("aria-required")).toBe("true");
+    expect(unit.getAttribute("aria-required")).toBe("true");
+    await user.click(screen.getByRole("button", { name: "Receive specimens" }));
+    expect(await screen.findByText("Enter volume.")).toBeTruthy();
+    expect(screen.getByText("Enter volume unit.")).toBeTruthy();
+    expect(volume.getAttribute("aria-invalid")).toBe("true");
+    expect(create).not.toHaveBeenCalled();
+
+    await typeInto(user, /^Volume\b(?! unit)/, "30");
+    await chooseWithKeyboard(user, /Volume is$/, "Unknown");
+    expect(volume).toHaveProperty("disabled", true);
+    expect(volume).toHaveProperty("value", "");
+    expect(screen.queryByText("Enter volume unit.")).toBeNull();
+  });
+
   it("opens the created accession after eligibility refresh removes its tests", async () => {
     let saved = false;
     const { user } = renderPage({

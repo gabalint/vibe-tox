@@ -2,7 +2,7 @@
   "id": "receive-specimens",
   "title": "Receiving specimens",
   "summary": "Register material for an accepted order, then verify labels and record receipt decisions.",
-  "reviewedOn": "2026-10-22",
+  "reviewedOn": "2026-11-02",
   "routes": ["/orders/:orderId/accession", "/accessions/:accessionId"],
   "sections": [
     {
@@ -186,10 +186,10 @@
           "rules": "Required in each specimen row. The form starts with one blank specimen row, without assuming a count."
         },
         {
-          "name": "Volume / Volume unit / Volume is",
-          "meaning": "Quantity and measurement provenance recorded for the primary containers in this specimen row.",
-          "values": "Positive exact decimal and a unit up to 16 characters; Estimated, Measured or Unknown.",
-          "rules": "Choose how the volume was obtained. Estimated/Measured require amount and unit together; Unknown requires both blank. The row’s volume applies to each generated container, not a split total."
+          "name": "Volume is / Volume / Volume unit",
+          "meaning": "How the volume was obtained, then the quantity, for the primary containers in this specimen row.",
+          "values": "Measured, Estimated or Unknown; a positive exact decimal and a unit up to 16 characters.",
+          "rules": "Volume is comes first, is required and starts empty. Measured or Estimated marks Volume and Volume unit required; leaving either empty highlights it when you save. Unknown empties and disables both. The row’s volume applies to each generated container, not a split total."
         }
       ],
       "actions": [
