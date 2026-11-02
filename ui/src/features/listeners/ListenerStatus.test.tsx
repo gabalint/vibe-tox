@@ -140,6 +140,22 @@ describe("ListenerSummary (REQ-OPS-013)", () => {
     expect(within(dialog).getAllByText("2026-10-12 14:03 UTC")).toHaveLength(2);
   });
 
+  it("shows Connected in the same badge style as Listening (ticket #4484)", async () => {
+    mockCommands({
+      list_listener_status: () => [
+        { ...ANALYZER, state: "listening" },
+        { ...ANALYZER, instrumentId: "00000000-0000-7000-8000-0000000000a2", state: "connected" },
+        { ...ANALYZER, instrumentId: "00000000-0000-7000-8000-0000000000a3", state: "disabled" },
+      ],
+    });
+    renderWithProviders(<ListenerStatus />);
+    const tone = async (label: string) =>
+      (await screen.findByText(label)).closest("[data-tone]")?.getAttribute("data-tone");
+    expect(await tone("Listening")).toBe("info");
+    expect(await tone("Connected")).toBe("info");
+    expect(await tone("Disabled")).toBe("neutral");
+  });
+
   it("names one analyzer in the singular", async () => {
     mockCommands({ list_listener_status: () => [ANALYZER] });
     renderWithProviders(<ListenerSummary />);
