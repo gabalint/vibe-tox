@@ -178,10 +178,12 @@ function TestCodeList({ isAu }: { isAu: boolean }) {
   const { control } = useFormContext<SourceValues>();
   const codes = useFieldArray({ control, name: "testCodes" });
   const analytes = useCommandQuery<AnalyteView[]>(LIST_ANALYTES);
-  const options = (analytes.data ?? []).map((analyte) => ({
-    id: analyte.id,
-    label: `${analyte.name} (${analyte.code})`,
-  }));
+  const options = (analytes.data ?? [])
+    .filter((analyte) => analyte.active)
+    .map((analyte) => ({
+      id: analyte.id,
+      label: `${analyte.name} (${analyte.code})`,
+    }));
   return (
     <FieldList
       name="testCodes"

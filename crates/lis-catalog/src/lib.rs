@@ -3,7 +3,11 @@
 //!
 //! - **Reference data**: specimen types, analytes (local code, name, LOINC
 //!   and drug class codes as provided), methods and orderables (tests and
-//!   panels). Rows are immutable once created (triggers).
+//!   panels). Rows are immutable once created (triggers), except analytes:
+//!   [`update_analyte`] corrects or retires one as a new revision with a
+//!   reason and an immutable history. Its code is permanent once anything
+//!   refers to the analyte; a retired analyte is refused for new method
+//!   versions and source test-code maps.
 //! - **Method versions** hold the specimen type, method certainty
 //!   (presumptive or definitive), output scale (qualitative or quantitative),
 //!   the threshold rule (positive at ≥ or >) and whether the comparison uses
@@ -74,6 +78,10 @@ mod views;
 
 use lis_core::{Migration, ModuleSchema};
 
+pub use commands::analytes::{
+    AnalyteHistoryEntry, AnalyteInput, AnalyteMethodUse, AnalyteUsage, UpdateAnalyte,
+    analyte_history, analyte_usage, update_analyte,
+};
 pub use commands::methods::{
     ApproveMethodVersion, DraftMethodVersion, RetireMethodVersion, UpdateMethodDraft,
     approve_method_version, draft_method_version, retire_method_version, update_method_draft,
@@ -177,6 +185,11 @@ pub const MIGRATIONS: &[Migration] = &[
         version: 7,
         name: "external_approval_references",
         sql: include_str!("../migrations/0007_external_approval_references.sql"),
+    },
+    Migration {
+        version: 8,
+        name: "analyte_corrections",
+        sql: include_str!("../migrations/0008_analyte_corrections.sql"),
     },
 ];
 

@@ -36,6 +36,12 @@ export function FeedbackSection() {
         <Alert tone="danger" title="Label print failed">
           The synthetic label was not printed.
         </Alert>
+        <Alert tone="info" compact>
+          <ul>
+            <li>Code SYN-AMP is permanent because records use it.</li>
+            <li>Results and reports already issued keep what they showed.</li>
+          </ul>
+        </Alert>
         <Facts
           items={[
             { label: "Accession", value: "SYN-000123" },

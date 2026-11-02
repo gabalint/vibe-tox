@@ -127,7 +127,7 @@
         {
           "name": "Test codes: Analyte",
           "meaning": "Chooses the analyte reported by that source code.",
-          "values": "Configured catalog analytes, by name and code.",
+          "values": "Active catalog analytes, by name and code; retired analytes are not offered, and the engine refuses them.",
           "rules": "Required for every test-code row."
         },
         {

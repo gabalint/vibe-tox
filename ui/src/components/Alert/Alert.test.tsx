@@ -31,6 +31,22 @@ describe("Alert", () => {
     await expectNoA11yViolations(container);
   });
 
+  it("shows a compact note list, centring the icon of an untitled alert", async () => {
+    const { container } = renderWithProviders(
+      <Alert tone="info" compact>
+        <ul>
+          <li>Synthetic first note.</li>
+          <li>Synthetic second note.</li>
+        </ul>
+      </Alert>,
+    );
+    const note = screen.getByRole("status");
+    expect(note.hasAttribute("data-compact")).toBe(true);
+    expect(note.hasAttribute("data-titled")).toBe(false);
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    await expectNoA11yViolations(container);
+  });
+
   it("keeps an alert on screen until the page removes it", async () => {
     vi.useFakeTimers();
     try {

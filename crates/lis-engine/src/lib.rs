@@ -68,13 +68,14 @@ pub use commands::catalog::versions::{
 };
 pub use commands::catalog::{GetValidityPolicyInput, ListValidityPolicyVersionsInput};
 pub use lis_catalog::{
-    AnalyteId, AnalyteView, ApproveMethodVersion, ApproveOrderableVersion,
-    ApproveValidityPolicyVersion, CodedName, CreateAnalyte, CreateOrderable, DraftMethodVersion,
-    DraftOrderableVersion, DraftValidityPolicyVersion, MethodId, MethodVersion, MethodVersionView,
-    MethodView, OrderableId, OrderableVersion, OrderableVersionView, OrderableView,
-    RetireMethodVersion, RetireOrderableVersion, RetireValidityPolicyVersion, SpecimenTypeId,
-    SpecimenTypeView, UpdateMethodDraft, UpdateOrderableDraft, UpdateValidityPolicyDraft,
-    ValidityPolicyVersion, ValidityPolicyView, VersionRef, VersionSummary,
+    AnalyteHistoryEntry, AnalyteId, AnalyteInput, AnalyteUsage, AnalyteView, ApproveMethodVersion,
+    ApproveOrderableVersion, ApproveValidityPolicyVersion, CodedName, CreateAnalyte,
+    CreateOrderable, DraftMethodVersion, DraftOrderableVersion, DraftValidityPolicyVersion,
+    MethodId, MethodVersion, MethodVersionView, MethodView, OrderableId, OrderableVersion,
+    OrderableVersionView, OrderableView, RetireMethodVersion, RetireOrderableVersion,
+    RetireValidityPolicyVersion, SpecimenTypeId, SpecimenTypeView, UpdateAnalyte,
+    UpdateMethodDraft, UpdateOrderableDraft, UpdateValidityPolicyDraft, ValidityPolicyVersion,
+    ValidityPolicyView, VersionRef, VersionSummary,
 };
 pub use lis_catalog::{
     CatalogBlankCutoff, CatalogPreviewBlankCutoff, CatalogPreviewId, CatalogPreviewSummary,

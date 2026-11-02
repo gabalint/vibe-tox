@@ -1,13 +1,14 @@
-//! SQL for the immutable reference rows: specimen types, analytes, methods
-//! and orderables. The directories carry each record's version state.
+//! SQL for the reference rows: specimen types, analytes, methods and
+//! orderables. Analytes are written through [`super::analytes`]. The
+//! directories carry each record's version state.
 
 use lis_core::{Id, UtcTimestamp};
 use rusqlite::{Connection, OptionalExtension, Row, params};
 
 use crate::lifecycle::Versioned;
 use crate::model::{
-    AnalyteId, MethodId, MethodVersion, OrderableId, OrderableKind, OrderableVersion,
-    SpecimenTypeId, ValidityPolicyVersion,
+    MethodId, MethodVersion, OrderableId, OrderableKind, OrderableVersion, SpecimenTypeId,
+    ValidityPolicyVersion,
 };
 use crate::repo::lifecycle::version_state_columns;
 use crate::views::{AnalyteView, MethodView, OrderableView, SpecimenTypeView};
@@ -53,11 +54,6 @@ pub(crate) fn specimen_type_exists(
         .query_row([id], |row| row.get(0))
 }
 
-pub(crate) fn analyte_exists(conn: &Connection, id: AnalyteId) -> rusqlite::Result<bool> {
-    conn.prepare_cached("SELECT EXISTS (SELECT 1 FROM cat_analytes WHERE id = ?1)")?
-        .query_row([id], |row| row.get(0))
-}
-
 pub(crate) fn insert_specimen_type(
     conn: &Connection,
     id: SpecimenTypeId,
@@ -83,31 +79,6 @@ pub(crate) fn insert_method(
         "INSERT INTO cat_methods (id, code, name, created_at) VALUES (?1, ?2, ?3, ?4)",
     )?
     .execute(params![id, code, name, now])?;
-    Ok(())
-}
-
-pub(crate) struct NewAnalyte<'a> {
-    pub(crate) id: AnalyteId,
-    pub(crate) code: &'a str,
-    pub(crate) name: &'a str,
-    pub(crate) loinc_code: Option<&'a str>,
-    pub(crate) drug_class_code: Option<&'a str>,
-    pub(crate) created_at: UtcTimestamp,
-}
-
-pub(crate) fn insert_analyte(conn: &Connection, new: &NewAnalyte<'_>) -> rusqlite::Result<()> {
-    conn.prepare_cached(
-        "INSERT INTO cat_analytes (id, code, name, loinc_code, drug_class_code, created_at) \
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-    )?
-    .execute(params![
-        new.id,
-        new.code,
-        new.name,
-        new.loinc_code,
-        new.drug_class_code,
-        new.created_at,
-    ])?;
     Ok(())
 }
 
@@ -150,17 +121,10 @@ pub(crate) fn specimen_types(conn: &Connection) -> rusqlite::Result<Vec<Specimen
 
 pub(crate) fn analytes(conn: &Connection) -> rusqlite::Result<Vec<AnalyteView>> {
     conn.prepare_cached(
-        "SELECT id, code, name, loinc_code, drug_class_code FROM cat_analytes ORDER BY code",
+        "SELECT id, code, name, loinc_code, drug_class_code, active, revision \
+         FROM cat_analytes ORDER BY code",
     )?
-    .query_map([], |row| {
-        Ok(AnalyteView {
-            id: row.get(0)?,
-            code: row.get(1)?,
-            name: row.get(2)?,
-            loinc_code: row.get(3)?,
-            drug_class_code: row.get(4)?,
-        })
-    })?
+    .query_map([], super::analytes::view)?
     .collect()
 }
 

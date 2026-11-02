@@ -35,11 +35,13 @@ export function AnalytesSection({ names, isLong, mappings, onChange }: AnalytesS
       </p>
       <QueryContent query={analytes} what="analytes">
         {(catalog) => {
-          const options: RecordOption[] = catalog.map((analyte) => ({
-            id: analyte.id,
-            label: analyte.name,
-            description: analyte.code,
-          }));
+          const options: RecordOption[] = catalog
+            .filter((analyte) => analyte.active)
+            .map((analyte) => ({
+              id: analyte.id,
+              label: analyte.name,
+              description: analyte.code,
+            }));
           return (
             <div className={styles.mappings}>
               {names.map((name, index) => (

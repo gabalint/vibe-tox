@@ -50,6 +50,8 @@ export const ANALYTE = {
   name: "Synthetic amphetamine",
   loincCode: null,
   drugClassCode: null,
+  active: true,
+  revision: 1,
 };
 
 export const DRAFT_SOURCE: SourceRegistrationView = {

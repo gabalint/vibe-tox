@@ -119,13 +119,15 @@ pub(crate) fn fixture_on(modules: &[lis_core::ModuleSchema]) -> Fixture {
         .iter()
         .any(|m| m.module == lis_catalog::SCHEMA.module && m.migrations.len() < 6)
     {
-        // Temporary seed compatibility only; the legacy-upgrade test removes
-        // these fields before snapshotting its exact historical schema.
+        // Temporary seed compatibility only (report fields, analyte history);
+        // the legacy-upgrade test removes them before snapshotting its exact
+        // historical schema.
         let conn = Connection::open(dir.path().join(lis_store::DATABASE_FILE)).unwrap();
         conn.execute_batch(include_str!(
             "../../../lis-catalog/migrations/0006_report_content.sql"
         ))
         .unwrap();
+        conn.execute_batch(lis_catalog::MIGRATIONS[7].sql).unwrap();
     }
     let subject_id = setup(&db, |ctx| {
         lis_identity::register_subject(ctx, synthetic_subject()).map(|done| done.subject_id)

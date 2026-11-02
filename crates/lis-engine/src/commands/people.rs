@@ -30,3 +30,19 @@ pub(crate) fn display_names<'a>(
 pub(crate) fn name_of(names: &HashMap<String, String>, id: &str) -> Option<String> {
     names.get(id).cloned()
 }
+
+/// Names who recorded each row: `recorded_by` reads a row's user ID text and `set` stores that
+/// account's current display name, looked up once for all rows.
+pub(crate) fn name_recorders<T>(
+    conn: &rusqlite::Connection,
+    rows: &mut [T],
+    recorded_by: impl Fn(&T) -> Option<&str>,
+    set: impl Fn(&mut T, Option<String>),
+) -> Result<(), StoreError> {
+    let names = display_names(conn, rows.iter().filter_map(&recorded_by))?;
+    for row in rows.iter_mut() {
+        let name = recorded_by(row).and_then(|id| name_of(&names, id));
+        set(row, name);
+    }
+    Ok(())
+}
