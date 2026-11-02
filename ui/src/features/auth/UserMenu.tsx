@@ -1,8 +1,10 @@
-import { ChevronDown, Info, KeyRound, Lock, LogOut, UserRound } from "lucide-react";
+import { Check, ChevronDown, Info, KeyRound, Lock, LogOut, UserRound } from "lucide-react";
 import { useState } from "react";
 import {
+  Header,
   Menu,
   MenuItem,
+  MenuSection,
   MenuTrigger,
   Popover,
   Separator,
@@ -13,6 +15,7 @@ import { Button } from "@/components/Button";
 import { useToast } from "@/components/Toast";
 import type { CommandError } from "@/generated/CommandError";
 import type { SessionInfo } from "@/generated/SessionInfo";
+import { APPEARANCES, type Appearance, useAppearance } from "@/lib/appearance";
 import { useCommandMutation, useCommandQuery } from "@/lib/commands";
 import { toUserMessage } from "@/lib/errors";
 import type { AuthenticationStatus } from "@/lib/securityKey";
@@ -22,8 +25,8 @@ import { UnlockPinDialog } from "./UnlockPinDialog";
 import styles from "./UserMenu.module.css";
 
 /**
- * The signed-in person's menu: change password, lock, sign out, and "About this app" (the app
- * and web engine versions). Lock and sign-out clear every cached engine result, so nothing
+ * The signed-in person's menu: change password, lock, sign out, Appearance (light, dark or the
+ * system's setting, applied at once) and "About this app" (the app and web engine versions). Lock and sign-out clear every cached engine result, so nothing
  * from this session is shown to the next person (REQ-IDN-004).
  */
 export function UserMenu({ session }: { session: SessionInfo }) {
@@ -32,6 +35,7 @@ export function UserMenu({ session }: { session: SessionInfo }) {
   const [changingPassword, setChangingPassword] = useState(false);
   const [managingKeys, setManagingKeys] = useState(false);
   const [managingPin, setManagingPin] = useState(false);
+  const [appearance, chooseAppearance] = useAppearance(session.userId);
   const authentication = useCommandQuery<AuthenticationStatus>("get_authentication_status");
   const lock = useCommandMutation<null>("lock_session", { invalidates: "all" });
   const signOut = useCommandMutation<null>("sign_out", { invalidates: "all" });
@@ -95,6 +99,37 @@ export function UserMenu({ session }: { session: SessionInfo }) {
               <LogOut aria-hidden="true" className={styles.icon} />
               Sign out
             </MenuItem>
+            <Separator className={styles.separator} />
+            <MenuSection
+              selectionMode="single"
+              disallowEmptySelection
+              selectedKeys={[appearance]}
+              onSelectionChange={(keys) => {
+                const [key] = keys === "all" ? [] : keys;
+                if (key !== undefined) chooseAppearance(key as Appearance);
+              }}
+            >
+              <Header className={styles.header}>Appearance</Header>
+              {APPEARANCES.map((option) => (
+                <MenuItem
+                  key={option.id}
+                  id={option.id}
+                  className={styles.item}
+                  textValue={option.label}
+                >
+                  {({ isSelected }) => (
+                    <>
+                      <Check
+                        aria-hidden="true"
+                        className={styles.icon}
+                        visibility={isSelected ? "visible" : "hidden"}
+                      />
+                      {option.label}
+                    </>
+                  )}
+                </MenuItem>
+              ))}
+            </MenuSection>
             <Separator className={styles.separator} />
             <MenuItem
               className={styles.item}

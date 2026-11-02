@@ -1,7 +1,7 @@
 {
   "id": "users",
   "title": "Users and access",
-  "summary": "Manage individual accounts and roles, and maintain your own security keys and optional unlock PIN from the signed-in menu.",
+  "summary": "Manage individual accounts and roles, and maintain your own security keys, optional unlock PIN and appearance from the signed-in menu.",
   "reviewedOn": "2026-10-15",
   "routes": ["/users"],
   "sections": [
@@ -34,6 +34,17 @@
         "Open Signed in as … → Unlock PIN and choose Enable PIN or Change PIN.",
         "Enter and confirm a personal six-digit PIN, then confirm with your password or registered security key. Read the success message and reopen Unlock PIN to verify Enabled.",
         "When your session locks, enter the PIN or choose your normal unlock method. Choose Disable PIN in the settings dialog when you no longer want this option."
+      ]
+    },
+    {
+      "title": "Choose light or dark appearance",
+      "paragraphs": [
+        "Each person can show the app in a light or a dark theme. Screens, statuses and their meanings are the same in both; only the colors change. Report PDFs and printed labels always stay light, because they are printed on white paper."
+      ],
+      "steps": [
+        "Open Signed in as … and choose Light, Dark or System under Appearance. A check mark shows the current choice.",
+        "The app, including the window title bar, changes at once. No restart is needed.",
+        "System follows the computer’s light or dark setting, and changes when that setting changes."
       ]
     }
   ],
@@ -163,6 +174,12 @@
           "meaning": "Whether your account has enabled the optional PIN for resuming its current locked session.",
           "values": "Enabled or Disabled; disabled by default.",
           "rules": "Read-only in the Unlock PIN dialog. Changes require your password or registered security key. This setting is personal, not shared by the workstation."
+        },
+        {
+          "name": "Appearance",
+          "meaning": "Whether the app shows in a light or a dark theme for you.",
+          "values": "Light, Dark or System; System by default. System follows the computer’s light or dark setting.",
+          "rules": "Personal and remembered on this computer for your account; on another computer, choose it again. It applies when you sign in and stays after you sign out or lock until the next person signs in. Before anyone signs in, the app follows the computer’s setting. Report PDFs and printed labels stay light."
         },
         {
           "name": "New unlock PIN",
@@ -299,6 +316,12 @@
           "result": "An unsent form does not change the PIN. Submitted changes take effect only on success."
         },
         {
+          "name": "Signed in as … / Light, Dark, System",
+          "does": "Changes your appearance and remembers the choice for your account on this computer.",
+          "availableWhen": "Any signed-in user. No password, reason or permission is needed.",
+          "result": "The app and the window title bar change at once and the menu closes. It is a display preference, so nothing is added to the audit trail."
+        },
+        {
           "name": "Try again (Unlock PIN status)",
           "does": "Checks your PIN configuration again after a status error.",
           "availableWhen": "The status could not be read.",
@@ -370,12 +393,17 @@
         {
           "problem": "The unlock PIN disappeared after account recovery or credential reset",
           "recovery": "This is expected. Complete normal sign-in and enable a new personal unlock PIN if you still want it."
+        },
+        {
+          "problem": "The app opens light or dark when you did not expect it",
+          "recovery": "Appearance is remembered for each account on each computer, and after a sign-out the sign-in screen keeps the last person’s choice. After you sign in, your own choice applies; choose it again under Signed in as … on a computer you have not used before."
         }
       ]
     }
   ],
   "reviewSources": [
     "ui/src/features/users/UsersPage.tsx",
+    "ui/src/lib/appearance.ts",
     "ui/src/features/users/UserAdministration.tsx",
     "ui/src/features/users/UserPanel.tsx",
     "ui/src/features/users/userColumns.tsx",
