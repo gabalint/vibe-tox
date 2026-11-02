@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocation } from "react-router";
 import { LIST_WORK_QUEUES, type WorkQueueSummary } from "@/features/workqueues/contract";
 import { useCommandQuery } from "@/lib/commands";
@@ -9,9 +9,6 @@ import styles from "./SideNav.module.css";
 
 /** How often the queue counts are asked for again; the count is a cheap, unaudited read. */
 const COUNT_POLL_MS = 60_000;
-
-/** The local UI preference: which work areas the person opened or closed. No clinical data. */
-const OPEN_SECTIONS_KEY = "vibe-tox.navigation.open-sections";
 
 type OpenSections = Record<string, boolean>;
 
@@ -109,13 +106,14 @@ function currentKind(screen: Screen, pathname: string): "page" | "true" {
 }
 
 /**
- * Which work areas are open: the person's choice, remembered on this computer, else closed, so
- * the first view is a short list. Going to a screen opens its area.
+ * Which work areas are open: the person's choice for this sign-in, else closed, so each sign-in
+ * starts from a short list. Nothing is stored: signing out or locking unmounts the navigation
+ * and forgets it. Going to a screen opens its area.
  */
 function useOpenSections(
   active: NavSection | undefined,
 ): [(section: NavSection) => boolean, (section: NavSection) => void] {
-  const [prefs, setPrefs] = useState(readOpenSections);
+  const [prefs, setPrefs] = useState<OpenSections>({});
   // Sections are rebuilt each render, so the active one is tracked by its heading.
   const [shownFor, setShownFor] = useState<string | undefined>();
   const isOpen = (section: NavSection) => prefs[section.heading ?? ""] ?? false;
@@ -125,28 +123,9 @@ function useOpenSections(
       setPrefs({ ...prefs, [active.heading]: true });
     }
   }
-  useEffect(() => {
-    try {
-      localStorage.setItem(OPEN_SECTIONS_KEY, JSON.stringify(prefs));
-    } catch {
-      // Navigation still works when local presentation preferences cannot be stored.
-    }
-  }, [prefs]);
   const toggle = (section: NavSection) =>
     setPrefs((last) => ({ ...last, [section.heading ?? ""]: !isOpen(section) }));
   return [isOpen, toggle];
-}
-
-function readOpenSections(): OpenSections {
-  try {
-    const stored: unknown = JSON.parse(localStorage.getItem(OPEN_SECTIONS_KEY) ?? "{}");
-    if (typeof stored !== "object" || stored === null) return {};
-    return Object.fromEntries(
-      Object.entries(stored).filter(([, value]) => typeof value === "boolean"),
-    );
-  } catch {
-    return {};
-  }
 }
 
 /** Counts only from `list_work_queues`; none while it is loading or failed, never a guess. */

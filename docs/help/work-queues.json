@@ -2,7 +2,7 @@
   "id": "work-queues",
   "title": "Work queues",
   "summary": "Find work that needs attention and open the record where it can be resolved.",
-  "reviewedOn": "2026-10-30",
+  "reviewedOn": "2026-11-02",
   "routes": ["/work-queues", "/work-queues/:queue"],
   "sections": [
     {
@@ -17,7 +17,7 @@
       "title": "Counts in the navigation",
       "paragraphs": [
         "The navigation shows a queue’s count beside its entry, for example Result imports 2, and the total of every queue you can see beside Work queues. A number followed by + means at least that many; ? means the count is unknown. No number means nothing is waiting, or the counts could not be read. Counts refresh about once a minute.",
-        "Work areas such as Front desk, Review and Billing start closed. Select an area’s name to open or close it. A closed area shows the total of its entries’ counts: 2 in Result review and 2 in Result imports show 4 beside Review. When you open the area, the total disappears and each entry shows its own count. The navigation remembers on this computer which areas you opened or closed, and going to a page opens its area."
+        "Work areas such as Front desk, Review and Billing are closed when you sign in. Select an area’s name to open or close it. A closed area shows the total of its entries’ counts: 2 in Result review and 2 in Result imports show 4 beside Review. When you open the area, the total disappears and each entry shows its own count. Areas you open or close stay that way until you sign out or the app locks; every sign-in or unlock starts with all areas closed. Going to a page opens its area."
       ]
     },
     {
