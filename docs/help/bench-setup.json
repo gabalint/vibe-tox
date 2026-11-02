@@ -2,7 +2,7 @@
   "id": "bench-setup",
   "title": "Bench setup",
   "summary": "Review instrument readiness, result sources and material lots before analytical work.",
-  "reviewedOn": "2026-10-28",
+  "reviewedOn": "2026-11-02",
   "routes": ["/bench/setup/:tab?"],
   "sections": [
     {
@@ -188,7 +188,7 @@
           "name": "Sample label",
           "meaning": "Identifies the control/calibrator label sent by the analyzer.",
           "values": "Exact label text.",
-          "rules": "Required for Control and Calibrator, despite the form not marking it required; 1–64 characters. Leave blank for Reagent and Internal standard."
+          "rules": "Shown and required (*) only for Control and Calibrator; trimmed 1–64 characters. Hidden for Reagent and Internal standard, which have no sample label."
         },
         {
           "name": "Expires on / Expires",
