@@ -83,7 +83,7 @@ function liveState(
 
 /**
  * The approved source results are imported from (REQ-ANA-003), or the draft waiting for
- * approval, with a link to Bench setup where sources are registered and approved.
+ * approval. Sources are registered and approved in Bench setup, which General links to.
  */
 export function ResultSource({ instrument }: { instrument: InstrumentConfiguration }) {
   const sources = useCommandQuery<SourceRegistrationView[]>("list_source_registrations", {
@@ -105,14 +105,6 @@ export function ResultSource({ instrument }: { instrument: InstrumentConfigurati
                     ]
                   : []),
                 { label: "Status", value: <SourceStatus approved={active} shown={shown} /> },
-                {
-                  label: "Registered in",
-                  value: (
-                    <Link to={`/bench/setup/instruments?open=${instrument.id}`}>
-                      Bench setup › Instruments
-                    </Link>
-                  ),
-                },
               ]}
             />
           );

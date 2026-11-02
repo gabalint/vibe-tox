@@ -3,12 +3,12 @@ import type { UserEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { AuConnectionSettings } from "@/generated/AuConnectionSettings";
 import type { InstrumentConfiguration } from "@/generated/InstrumentConfiguration";
+import { connectionText } from "@/lib/instrumentPages";
 import { listenerDetailText } from "@/lib/listenerDetail";
 import { expectNoA11yViolations } from "@/lib/test/a11y";
 import { engineError, mockCommands } from "@/lib/test/ipc";
 import { tabTo, WALKTHROUGH_TIMEOUT_MS } from "@/lib/test/keyboard";
 import { renderWithProviders } from "@/lib/test/render";
-import { connectionText } from "./connectionValues";
 import { ConnectionDialog, RegisterDialog } from "./InstrumentDialogs";
 
 const AU: AuConnectionSettings = {

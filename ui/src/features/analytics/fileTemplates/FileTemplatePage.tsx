@@ -7,8 +7,9 @@ import { Page, PageHeader } from "@/components/Page";
 import type { InstrumentReadinessView } from "@/generated/InstrumentReadinessView";
 import type { SessionInfo } from "@/generated/SessionInfo";
 import { CURRENT_SESSION, useCommandQuery } from "@/lib/commands";
+import { benchInstrumentPath } from "@/lib/instrumentPages";
 import { LIST_INSTRUMENT_READINESS, MANAGE_CONFIGURATION } from "../contract";
-import { BENCH_INSTRUMENTS, benchInstrumentPath, fileTemplatePath } from "../paths";
+import { BENCH_INSTRUMENTS, fileTemplatePath } from "../paths";
 import { TemplateForm } from "./TemplateForm";
 
 const TITLE = "New file template";

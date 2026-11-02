@@ -1,6 +1,7 @@
 import { useFormContext, useWatch } from "react-hook-form";
 import { FieldGrid, FieldSection } from "@/components/Form";
 import { ChoiceInput, TextInput } from "@/components/FormFields";
+import { DATA_BITS, PARITIES, STOP_BITS } from "@/lib/instrumentPages";
 import styles from "@/styles/layout.module.css";
 import { WHOLE_NUMBER_FORMAT } from "../formats";
 import { AuFields } from "./AuFields";
@@ -8,10 +9,7 @@ import {
   AU_DATA_BITS,
   CONNECTION_KINDS,
   type ConnectionValues,
-  DATA_BITS,
   isAuKind,
-  PARITIES,
-  STOP_BITS,
 } from "./connectionValues";
 
 /**

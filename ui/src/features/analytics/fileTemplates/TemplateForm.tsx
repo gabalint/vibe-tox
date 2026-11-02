@@ -11,9 +11,9 @@ import type { RegisterFileSourceInput } from "@/generated/RegisterFileSourceInpu
 import type { SourceRegistrationView } from "@/generated/SourceRegistrationView";
 import type { SourceTestCodeInput } from "@/generated/SourceTestCodeInput";
 import { useCommandMutation } from "@/lib/commands";
+import { benchInstrumentPath } from "@/lib/instrumentPages";
 import { UnsavedChangesGuard } from "@/lib/UnsavedChangesGuard";
 import { SOURCE_QUERIES } from "../contract";
-import { benchInstrumentPath } from "../paths";
 import { CheckSection } from "./CheckSection";
 import { ColumnsSection, UnitsSection } from "./ColumnsSection";
 import { MappingSteps } from "./MappingSteps";

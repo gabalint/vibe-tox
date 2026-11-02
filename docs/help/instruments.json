@@ -2,13 +2,13 @@
   "id": "instruments",
   "title": "Instruments",
   "summary": "Configure analyzer connections and result-file intake for registered instruments.",
-  "reviewedOn": "2026-10-30",
+  "reviewedOn": "2026-11-03",
   "routes": ["/configuration/instruments"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
-        "Register analyzer creates an instrument connection. Open its panel to read every saved setting without opening Edit connection: General, Connection and, for AU400 / AU640, AU settings, in the order of the Edit connection form. Below them, Live status, Result source, Activity and Changes show the running listener or folder with its last error, the approved sender, recent imports, and who registered and last changed the analyzer. Select a group's title to collapse or expand it. Network connections use an allowed-address list; result-file instruments can use manual loading or a chosen watched folder.",
+        "Register analyzer creates an instrument connection. Open its panel to read every saved setting without opening Edit connection: General, Connection and, for AU400 / AU640, AU settings, in the order of the Edit connection form. Below them, Live status, Result source, Activity and Changes show the running listener or folder with its last error, the approved sender, recent imports, and who registered and last changed the analyzer. Select a group's title to collapse or expand it. General also shows the analyzer's service status and approved result source from Bench setup, with a Readiness and sources link to the same analyzer there. Network connections use an allowed-address list; result-file instruments can use manual loading or a chosen watched folder.",
         "Connection changes restart the affected listeners, and the outcome appears in the panel. A watched folder belongs to its instrument. Files already present when it is selected are not automatically loaded, while later eligible files are read while the application is open."
       ]
     },
@@ -74,6 +74,12 @@
           "meaning": "Whether the instrument may be used, as recorded under Bench setup.",
           "values": "In service; Out of service; Status not recorded; Checking; Status unavailable.",
           "rules": "Read-only here. Quality staff set it under Bench setup › Instruments."
+        },
+        {
+          "name": "General: Result source",
+          "meaning": "Whether results from this analyzer have an approved source, as recorded under Bench setup.",
+          "values": "Source approved: the sender name and version; No approved source; Checking; Status unavailable.",
+          "rules": "Read-only here. A draft waiting for approval counts as no approved source; the Result source group below shows it. Sources are registered and approved under Bench setup › Instruments."
         },
         {
           "name": "Listen on address",
@@ -303,7 +309,7 @@
           "name": "Register analyzer",
           "does": "Open the connection form and save a new analyzer. For an AU400/AU640 connection the form widens and groups its fields under Analyzer, Connection, AU framing and timing, AU sample and result fields and AU optional patient fields; Register analyzer and Cancel stay at the bottom while the fields scroll. Other connections keep one column.",
           "availableWhen": "Manage configuration; unique Code, Name and all required settings for the chosen connection.",
-          "result": "Creates the versioned connection. Message listeners are restarted; the result reports whether restart succeeded. Result-file connections need a folder for automatic pickup."
+          "result": "Creates the versioned connection and opens its panel. Message listeners are restarted; the confirmation reports whether restart succeeded and offers the next steps: Set in service (with Manage quality) and Register source (New file template for a result-file instrument), each opening the analyzer under Bench setup › Instruments with that action started. Result-file connections need a folder for automatic pickup."
         },
         {
           "name": "Open row / Previous / Next / Close",
@@ -318,8 +324,8 @@
           "result": "Only the display changes; nothing is saved."
         },
         {
-          "name": "Bench setup › Instruments link",
-          "does": "Open this analyzer under Bench setup to register or approve its result source or set its service status.",
+          "name": "Readiness and sources link",
+          "does": "Open this analyzer under Bench setup to register or approve its result source or set its service status. It is in the General group.",
           "availableWhen": "The panel is open; Bench setup needs analysis, quality or configuration rights.",
           "result": "Bench setup opens with the analyzer's panel."
         },
@@ -422,6 +428,7 @@
     "ui/src/features/configuration/instruments/InstrumentActions.tsx",
     "ui/src/features/configuration/instruments/connectionValues.ts",
     "ui/src/features/configuration/instruments/auValues.ts",
+    "ui/src/lib/instrumentPages.ts",
     "crates/lis-interfaces/src/instrument_commands.rs",
     "crates/lis-interfaces/src/validation.rs",
     "crates/lis-interfaces/src/model/connection.rs",

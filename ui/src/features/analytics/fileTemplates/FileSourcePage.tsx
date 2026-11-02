@@ -13,6 +13,7 @@ import type { InstrumentReadinessView } from "@/generated/InstrumentReadinessVie
 import type { LayoutCheck } from "@/generated/LayoutCheck";
 import type { SourceRegistrationView } from "@/generated/SourceRegistrationView";
 import { useCommandMutation, useCommandQuery } from "@/lib/commands";
+import { benchInstrumentPath } from "@/lib/instrumentPages";
 import { ApproveSource } from "../bench/ApproveSource";
 import {
   CHECK_FILE_LAYOUT,
@@ -20,7 +21,7 @@ import {
   LIST_SOURCE_REGISTRATIONS,
 } from "../contract";
 import { registrationStatus } from "../labels";
-import { BENCH_INSTRUMENTS, benchInstrumentPath, fileSourcePath } from "../paths";
+import { BENCH_INSTRUMENTS, fileSourcePath } from "../paths";
 import { useAnalyteName } from "../useAnalyteName";
 import { LayoutCheckResult } from "./LayoutCheckResult";
 import { OpenSample } from "./OpenSample";
