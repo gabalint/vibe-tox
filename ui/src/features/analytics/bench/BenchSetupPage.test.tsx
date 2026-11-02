@@ -370,6 +370,25 @@ describe("BenchSetupPage (REQ-ANA-003, REQ-ANA-007)", { timeout: WALKTHROUGH_TIM
     });
   });
 
+  it("asks for a sample label on controls and calibrators only", async () => {
+    const register = vi.fn(() => CONTROL_LOT);
+    const { user } = renderPage("/bench/setup/lots", ["manage_quality"], {
+      register_lot: register,
+    });
+    await user.click(await screen.findByRole("button", { name: "Register lot" }));
+    const dialog = await screen.findByRole("dialog");
+    await chooseWithKeyboard(user, /Material$/, "Reagent");
+    expect(within(dialog).queryByRole("textbox", { name: /^Sample label/ })).toBeNull();
+
+    await chooseWithKeyboard(user, /Material$/, "Control");
+    await user.type(within(dialog).getByRole("textbox", { name: /^Product/ }), "AMP control");
+    await user.type(within(dialog).getByRole("textbox", { name: /^Lot number/ }), "LOT-TEST-2");
+    await user.type(within(dialog).getByRole("textbox", { name: /^Expires on/ }), "2027-02-28");
+    await user.click(within(dialog).getByRole("button", { name: "Register lot" }));
+    expect(await within(dialog).findByText("Enter sample label.")).toBeTruthy();
+    expect(register).not.toHaveBeenCalled();
+  });
+
   it("offers no withdrawal of a withdrawn lot, and none to analysts", async () => {
     const { user } = renderPage(`/bench/setup/lots?show=all&open=${WITHDRAWN_LOT.lotId}`, [
       "manage_quality",
