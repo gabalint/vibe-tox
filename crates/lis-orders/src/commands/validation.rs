@@ -6,7 +6,7 @@ use lis_catalog::{OrderableId, OrderableVersionId, VersionStatus};
 use lis_identity::{ClientId, ClientLocationId, PractitionerId, SubjectId};
 use rusqlite::Connection;
 
-use crate::error::{OrderError, invalid};
+use crate::error::{OrderError, OrderGate, invalid};
 use crate::inputs::{EvidenceInput, RegisterOrderInput};
 
 pub(super) const TEXT_MAX: usize = 1000;
@@ -232,7 +232,7 @@ pub(super) fn active_orderable(
 ) -> Result<lis_catalog::OrderableVersionView, OrderError> {
     let view = lis_catalog::get_orderable_version(conn, id)?;
     if view.lifecycle.status != VersionStatus::Approved || view.lifecycle.effective_to.is_some() {
-        return Err(OrderError::GateBlocked);
+        return Err(OrderError::GateBlocked(OrderGate::InactiveTestVersion));
     }
     Ok(view)
 }

@@ -5,7 +5,7 @@ use lis_core::Capability;
 use lis_store::CommandContext;
 use rusqlite::{OptionalExtension, params};
 
-use crate::error::{OrderError, invalid};
+use crate::error::{OrderError, OrderGate, invalid};
 use crate::inputs::{DecideFollowOnInput, LaboratoryResultFollowOnInput, RequestFollowOnInput};
 use crate::queries::get_order;
 use crate::{Decision, ItemKind, ItemState, OrderId, OrderItemId, OrderStatus};
@@ -62,6 +62,18 @@ fn request_follow_on_at_boundary(
             "kind",
             "follow_on_required",
             "Choose add-on or reflex.",
+        ));
+    }
+    if input.kind == ItemKind::AddOn
+        && input
+            .authority_reference
+            .as_deref()
+            .is_none_or(|reference| reference.trim().is_empty())
+    {
+        return Err(invalid(
+            "authorityReference",
+            "required",
+            "Enter the document or call that authorizes this add-on.",
         ));
     }
     let version = active_orderable(ctx.tx(), input.orderable_version_id)?;
@@ -173,7 +185,7 @@ pub fn decide_follow_on(
         && kind == ItemKind::AddOn
         && authority_reference.is_none_or(|reference| reference.trim().is_empty())
     {
-        return Err(OrderError::GateBlocked);
+        return Err(OrderError::GateBlocked(OrderGate::AddOnWithoutAuthority));
     }
     if input.decision == Decision::Accept {
         freeze_components(ctx, input.item_id, version_id, sequence_role)?;

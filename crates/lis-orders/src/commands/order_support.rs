@@ -7,7 +7,7 @@ use lis_catalog::{OrderableId, OrderableVersionId};
 use lis_store::CommandContext;
 use rusqlite::{OptionalExtension, params};
 
-use crate::error::OrderError;
+use crate::error::{OrderError, OrderGate};
 use crate::inputs::{AcceptOrderInput, RegisterOrderInput, TemplateUseInput};
 use crate::{
     ClarificationDeficiency, ClarificationHoldId, OrderComponentId, OrderId, OrderItemId,
@@ -106,7 +106,7 @@ pub(super) fn ensure_no_open_holds(
     if open_holds == 0 {
         Ok(())
     } else {
-        Err(OrderError::GateBlocked)
+        Err(OrderError::GateBlocked(OrderGate::OpenClarificationHold))
     }
 }
 

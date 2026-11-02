@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Alert } from "@/components/Alert";
 import { DataGrid, type DataGridColumn } from "@/components/DataGrid";
 import { ReasonConfirmDialog } from "@/components/ReasonConfirmDialog";
 import { Section } from "@/components/Section";
@@ -117,6 +118,9 @@ interface DecideFollowOnProps {
 function DecideFollowOn({ item, test, decision, onClose }: DecideFollowOnProps) {
   const decide = useOrderCommand<DecideFollowOnInput>("decide_follow_on");
   const accepting = decision === "accept";
+  // The engine accepts an add-on only with its authority evidence, and the reference cannot
+  // be added to a recorded request.
+  const missingAuthority = accepting && item.kind === "add_on" && !item.authorityReference?.trim();
   return (
     <ReasonConfirmDialog
       title={`${accepting ? "Accept" : "Decline"} the request for ${test}?`}
@@ -132,11 +136,17 @@ function DecideFollowOn({ item, test, decision, onClose }: DecideFollowOnProps) 
       successTitle={`Request ${accepting ? "accepted" : "declined"}`}
       onClose={onClose}
     >
-      <p>
-        {accepting
-          ? "The test is added to the order and can be performed on suitable material."
-          : "The test is not performed. The request and this decision are kept."}
-      </p>
+      {missingAuthority ? (
+        <Alert tone="warning" title="This add-on has no authority reference">
+          Decline it and record a new request with the document or call that authorizes it.
+        </Alert>
+      ) : (
+        <p>
+          {accepting
+            ? "The test is added to the order and can be performed on suitable material."
+            : "The test is not performed. The request and this decision are kept."}
+        </p>
+      )}
     </ReasonConfirmDialog>
   );
 }

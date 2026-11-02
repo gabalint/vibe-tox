@@ -2,7 +2,7 @@
   "id": "orders",
   "title": "Orders and decisions",
   "summary": "Review the supplied request, its tests, evidence, holds and specimen progress.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-11-02",
   "routes": ["/orders", "/orders/:orderId"],
   "sections": [
     {
@@ -241,7 +241,7 @@
           "name": "Authority reference",
           "meaning": "Source of new authority for an add-on or supporting reflex context.",
           "values": "Text, up to 1000 characters.",
-          "rules": "The request form permits blank, but an add-on cannot be accepted without new authority reference."
+          "rules": "Required when the kind is Add-on, with new authority; the request is not recorded without it. Optional for a reflex. The reference cannot be added to a recorded request later."
         },
         {
           "name": "Reason — Record request",
@@ -549,7 +549,7 @@
           "name": "Accept request / Decline request",
           "does": "Decides an individual requested follow-on with a reason.",
           "availableWhen": "A Requested add-on or reflex item, current revision and order-entry authority.",
-          "result": "Acceptance makes the authorized test available for suitable material; decline preserves the request without performing it."
+          "result": "Acceptance makes the authorized test available for suitable material; decline preserves the request without performing it. An add-on recorded without an authority reference cannot be accepted: the dialog says so, and the way forward is to decline it and record a new request with the reference. When a gate refuses the decision, the message names it, for example an open clarification hold or a parent test outside the reflex scope."
         },
         {
           "name": "Reject order",
@@ -667,7 +667,7 @@
         },
         {
           "problem": "Add-on acceptance is blocked.",
-          "recovery": "Check the recorded authority reference and catalog availability. A saved request without new authority is still only a request."
+          "recovery": "Read the message: it names the gate. An add-on without an authority reference cannot get one later; decline it and record a new request with the document or call that authorizes it. For an inactive test version, record the request again with a current version."
         },
         {
           "problem": "A cancellation or evidence amendment is stale",
