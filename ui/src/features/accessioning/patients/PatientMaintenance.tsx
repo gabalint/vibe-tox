@@ -230,7 +230,13 @@ function DemographicCorrection({
             <FieldGrid>
               <TextInput name="familyName" label="Family name" isRequired />
               <TextInput name="givenNames" label="Given names" />
-              <TextInput name="birthDate" label="Birth date" format={DATE_FORMAT} isRequired />
+              <TextInput
+                name="birthDate"
+                label="Birth date"
+                format={DATE_FORMAT}
+                isRequired
+                isPastOnly
+              />
               <TextInput name="administrativeSex" label="Administrative sex" />
               <TextInput name="source" label="Source of corrected details" isRequired />
               <TextInput name="reason" label="Reason for correction" isRequired />
