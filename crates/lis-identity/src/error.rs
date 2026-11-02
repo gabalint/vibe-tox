@@ -38,8 +38,8 @@ pub enum IdentityError {
     /// The identifier is already inactive.
     #[error("the identifier is already inactive")]
     IdentifierInactive,
-    /// A directory correction repeats every current value, so it would record no change.
-    #[error("Nothing was changed. Change at least one value to save a correction.")]
+    /// A correction or new version repeats every current value, so it would record no change.
+    #[error("Nothing was changed. Change at least one value before saving.")]
     NothingChanged,
     /// A record of this kind already uses the code or NPI.
     #[error("a {0} with this code already exists")]

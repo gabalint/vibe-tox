@@ -2,7 +2,7 @@
   "id": "laboratory-directory",
   "title": "Laboratory and ordering directories",
   "summary": "Set the laboratory profile and register the clients and practitioners referenced by orders.",
-  "reviewedOn": "2026-10-30",
+  "reviewedOn": "2026-11-02",
   "routes": [
     "/configuration/laboratory",
     "/configuration/clients",
@@ -115,8 +115,8 @@
         {
           "name": "Save profile",
           "does": "Persist the complete laboratory details.",
-          "availableWhen": "Valid required values and the current profile revision.",
-          "result": "The new version becomes current and the display time zone refreshes."
+          "availableWhen": "Valid required values, at least one value different from the current version, and the current profile revision.",
+          "result": "The new version becomes current and the display time zone refreshes. When every value equals the current version, nothing is saved: no new version and no audit event."
         }
       ],
       "restrictions": [
@@ -136,6 +136,10 @@
         {
           "problem": "Another profile version was saved meanwhile",
           "recovery": "Reload the profile and compare the latest details before retrying your change."
+        },
+        {
+          "problem": "Nothing was changed",
+          "recovery": "A new version must change at least one value; a reason alone is not a change. Spaces around values and letter case in the CLIA number do not count. Change the value the approved details support, or Cancel."
         }
       ]
     },
