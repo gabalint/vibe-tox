@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { FormProvider, useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import { expectNoA11yViolations } from "@/lib/test/a11y";
@@ -71,6 +71,16 @@ describe("FormFields", () => {
       { code: "SYN-1", date: "2026-10-12", matrix: "urine", site: null, panels: ["a"] },
       expect.anything(),
     );
+  });
+
+  it("gives a date field a calendar that fills it as YYYY-MM-DD", async () => {
+    const { user } = renderWithProviders(<Harness onSubmit={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: "Choose the collection date" }));
+    const grid = await screen.findByRole("grid");
+    await user.click(within(grid).getByText("15"));
+    expect(
+      (screen.getByRole("textbox", { name: /Collection date/ }) as HTMLInputElement).value,
+    ).toMatch(/^\d{4}-\d{2}-15$/);
   });
 
   it("disables a choice that has nothing to choose yet", () => {

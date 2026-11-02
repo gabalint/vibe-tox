@@ -2,11 +2,11 @@ import { useContext } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
-import { DatePickerButton, TimePickerButton } from "@/components/FieldPicker";
+import { TimePickerButton } from "@/components/FieldPicker";
 import { FieldAction, FieldGrid } from "@/components/Form";
 import { ChoiceInput, DATE_FORMAT, TextInput } from "@/components/FormFields";
 import { Section } from "@/components/Section";
-import { calendarDayToday, LabTimeZoneContext } from "@/lib/format";
+import { LabTimeZoneContext } from "@/lib/format";
 import type { AccessionFormValues } from "./accessionValues";
 import { OFFSET_FORMAT, TIME_FORMAT } from "./formats";
 import { COLLECTION_TIME_KINDS } from "./labels";
@@ -34,13 +34,7 @@ export function CollectionFields({ includeCollector = true }: { includeCollector
             label="Collection date"
             format={DATE_FORMAT}
             isRequired
-            picker={(_, pick) => (
-              <DatePickerButton
-                label="Choose the collection date"
-                latest={calendarDayToday(new Date(), labTimeZone)}
-                onPick={pick}
-              />
-            )}
+            isPastOnly
           />
         )}
         {(timeKind === "datetime" || timeKind === "zoned") && (

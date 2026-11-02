@@ -2,7 +2,7 @@
   "id": "receive-specimens",
   "title": "Receiving specimens",
   "summary": "Register material for an accepted order, then verify labels and record receipt decisions.",
-  "reviewedOn": "2026-11-02",
+  "reviewedOn": "2026-11-03",
   "routes": ["/orders/:orderId/accession", "/accessions/:accessionId"],
   "sections": [
     {
@@ -580,7 +580,7 @@
         {
           "name": "Valid from / Valid until",
           "meaning": "The dates over which the source states this evidence applies.",
-          "values": "Real dates in YYYY-MM-DD format.",
+          "values": "Real dates in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field.",
           "rules": "Each optional; an end date cannot precede the start date."
         },
         {

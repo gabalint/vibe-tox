@@ -2,7 +2,7 @@
   "id": "new-order",
   "title": "Entering a new order",
   "summary": "Choose the patient and capture the ordering source’s request before acceptance and receipt.",
-  "reviewedOn": "2026-10-15",
+  "reviewedOn": "2026-11-03",
   "routes": ["/orders/new"],
   "sections": [
     {
@@ -80,7 +80,7 @@
         {
           "name": "Find by name: Family name / Given names / Birth date",
           "meaning": "Searches name prefixes, optionally restricted by birth date.",
-          "values": "Family-name prefix when used alone; complete family name plus a given-name prefix when both are entered; optional real birth date in YYYY-MM-DD format.",
+          "values": "Family-name prefix when used alone; complete family name plus a given-name prefix when both are entered; optional real birth date in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field, which offers no day after today.",
           "rules": "Family name is required for detailed name search; names up to 200 characters. A similar name is a candidate, not identity confirmation."
         },
         {
@@ -248,7 +248,7 @@
         {
           "name": "Provided on / List current as of",
           "meaning": "When the medication information was supplied and the date it describes.",
-          "values": "Dates entered as YYYY-MM-DD.",
+          "values": "Dates entered as YYYY-MM-DD. Type it, or pick it from the calendar button in the field.",
           "rules": "Optional. A missing as-of date remains unknown; the list is not assumed current."
         },
         {
