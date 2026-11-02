@@ -12,6 +12,7 @@ mod listeners;
 mod security_keys;
 mod session;
 mod users;
+mod window_theme;
 // Wave 3+: one adapter module per area. Edit only your block.
 // identity: begin
 mod identity;
@@ -113,7 +114,7 @@ mod tests {
 
     /// Shell-only commands: granted and handled, but not engine commands, so not in the
     /// registry (`app_info` is in it as a public command).
-    const SHELL_ONLY: [&str; 8] = [
+    const SHELL_ONLY: [&str; 9] = [
         "security_key_status",
         "security_key_pin",
         "security_key_cancel",
@@ -122,6 +123,7 @@ mod tests {
         "open_demo_laboratory",
         "leave_demo_laboratory",
         "reset_demo_laboratory",
+        "set_window_theme",
     ];
 
     fn window(app: &App<MockRuntime>, label: &str) -> WebviewWindow<MockRuntime> {
@@ -152,6 +154,7 @@ mod tests {
         assert_eq!(invoke(&main, "app_info"), Ok(()));
         assert_eq!(invoke(&main, "setup_status"), Ok(()));
         assert_eq!(invoke(&main, "startup_status"), Ok(()));
+        assert_eq!(invoke(&main, "set_window_theme"), Ok(()));
     }
 
     // NFR-31: every registered command is wired and granted; refusals come

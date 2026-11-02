@@ -204,4 +204,30 @@ describe("UserMenu", () => {
     expect(screen.getByText("Test Analyst")).toBeTruthy();
     expect(screen.getByLabelText<HTMLInputElement>(/^New password/).value).toBe(NEW_PASSWORD);
   });
+
+  it("applies the Appearance choice at once and remembers it for this account", async () => {
+    const themes: unknown[] = [];
+    mockCommands({
+      current_session: () => TEST_SESSION,
+      set_window_theme: (args) => {
+        themes.push(args);
+        return null;
+      },
+    });
+    const { user } = renderMenu();
+    await user.click(await screen.findByRole("button", { name: "Signed in as Test Analyst" }));
+    const choices = within(await screen.findByRole("group", { name: "Appearance" }));
+    expect(
+      choices.getAllByRole("menuitemradio").map((item) => [item.textContent, item.ariaChecked]),
+    ).toEqual([
+      ["Light", "false"],
+      ["Dark", "false"],
+      ["System", "true"],
+    ]);
+    await user.click(choices.getByRole("menuitemradio", { name: "Dark" }));
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe("dark"));
+    expect(themes.at(-1)).toEqual({ theme: "dark" });
+    expect(localStorage.getItem(`vibe-tox.appearance-v1.${TEST_SESSION.userId}`)).toBe("dark");
+    localStorage.clear();
+  });
 });

@@ -23,6 +23,7 @@ const APP_COMMANDS: &[&str] = &[
     "get_excursion",
     "resolve_receipt_chronology",
     "app_info",
+    "set_window_theme",
     "security_key_signup",
     "acknowledge_key_recovery",
     "security_key_sign_in",

@@ -240,7 +240,10 @@ It must stay smooth at 10,000 rows in WebView2, WKWebView and WebKitGTK (NFR-33)
   - a 4px spacing scale;
   - a light gray page with white panels, grids and dialogs, because a tinted page reduces glare over a long shift (ENG-176, ENG-187).
 - **Accessibility tokens.** A visible 2px focus ring. Controls at least 32px high; never below the WCAG 2.2 minimum target size of 24×24.
-- **Light theme only.** Tokens are named by role, so a dark theme can be added later without any color changing its meaning. Add one only when a requirement asks for it. Light text on a dark background is not easier to read for most people (ENG-189).
+- **Light and dark themes.** Each person chooses Light, Dark or System under Appearance in the user menu; System, the default, follows the operating system. The choice is remembered on this computer for each account and applies at once, title bar included. Light stays the reference design, because light text on a dark background is not easier to read for most people (ENG-189); dark is an option for long shifts and dim rooms (ticket #4487).
+  - The dark theme is a second set of values for the same role tokens (`:root[data-theme="dark"]` in `tokens.css`). Screens never test the theme or add their own dark colors.
+  - `color-scheme` follows the theme, so native scrollbars and controls match it.
+  - The dark values apply on screen only. Printing stays light, and the neutral scale is not themed: `--color-neutral-0` remains the white of paper behind QR codes and report thumbnails. Report PDFs and labels are rendered by the engine and never use these tokens.
 - **Motion.** No animation over 150ms. Honor `prefers-reduced-motion`. Nothing flashes or blinks (ENG-178).
 - **Rendering.** No canvas, WebGL or experimental CSS. Anything used must work in WebKitGTK 4.1.
 
@@ -283,6 +286,8 @@ The accent is blue because blue carries no hazard meaning in medical alarm and s
 | `danger` | Clinical work is stopped or has failed, or the laboratory's rules flag a result as critical | Solid | Fill `#b3221b` with white text; alert tint `#fdeceb` with text `#a3170f` | Label print failed, Out of service, Quarantined, Release blocked |
 | `success` | A check or action the person just ran has passed | Tint, only in toasts and in outcomes of a check | Fill `#e5f3e9`, border `#2f7d4a`, text `#165c31` | Saved, Restore test passed, Chain verified |
 
+**Dark theme values.** The same roles and minimums. Surfaces get lighter as they rise: page `#15191e`, panels `#1e232a`, hover `#2a3039`. Text `#e6e9ee` (13.0:1 on panels), muted text `#a9b2bf` (8.2:1 on the page), control border `#7d8797` (4.4:1), accent `#6aa8ec` (6.3:1 on panels), row tint `#1c3250`. Text on the accent and on solid badges is dark (`--color-text-inverse` `#11151a`, 7.4:1 on the accent). Tones keep their meaning with dark tints and light text: info `#232c38`/`#c0cbdb`, warning `#362a0a`/`#f2d081`, success `#143021`/`#a3dbb4`, danger `#3d1715`/`#ffb3ad` with solid `#f08a84`, hold `#371830`/`#f7bde1` with solid `#e48ac2`, neutral `#2a3039`/`#c8ced8`. Checked on 2026-11-02 under the Machado 2009 model: hold, danger and the accent stay apart under protanopia and deuteranopia (smallest CIELAB difference 17, hold against accent under protanopia).
+
 Every text value is at least 6.6:1 on its fill, above the 4.5:1 that WCAG AA requires. Fills and borders are at least 3:1 against white, except tints, which always carry text and an icon. All values were checked on 2026-10-13 for WCAG contrast. They were also checked for separation under simulated protanopia and deuteranopia (the Machado 2009 model, ENG-190). Hold, danger and the accent stay apart under both.
 
 **Rules for using color:**
@@ -294,7 +299,7 @@ Every text value is at least 6.6:1 on its fill, above the 4.5:1 that WCAG AA req
 - **Rows.** Hover uses `--color-surface-hover`. The open or selected row uses the accent-subtle tint plus a 3px accent bar on its left edge, so the shape marks it without relying on color. There is no zebra striping.
 - **Result flags.** Flags come only from the engine, which applies the laboratory's rules. The flag's text and icon sit next to the value. A critical flag uses `danger`, and any other flag uses `warning`. A result with no flag gets no color and no "Normal" label, because a missing flag does not mean normal (ENG-180). Never color a value merely because it is positive or high; this is a project display rule.
 - **Charts** use a categorical palette that stays distinct for color-vision deficiencies (Okabe-Ito, ENG-186), never the status colors. No chart exists yet; choose the palette with the first one.
-- **Checking changes.** Any change to a color token re-runs the contrast and color-vision checks. The token test (`ui/src/styles/tokens.test.ts`) holds the pairs above.
+- **Checking changes.** Any change to a color token re-runs the contrast and color-vision checks. The token test (`ui/src/styles/tokens.test.ts`) holds the pairs above and checks them in both themes.
 
 ## Clinical display rules
 
