@@ -1,6 +1,8 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import type { UserEvent } from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
+import { TEST_SESSION } from "@/features/auth/testSession";
+import type { SessionInfo } from "@/generated/SessionInfo";
 import { expectNoA11yViolations } from "@/lib/test/a11y";
 import { detailScreens } from "./detailScreens";
 import { queue, renderApp } from "./frameTestData";
@@ -191,25 +193,46 @@ describe("Side navigation", () => {
     expect(currentLinks()).toEqual([["Tests and panels", "page"]]);
   });
 
-  it("remembers a closed or opened work area on this computer", async () => {
-    const first = renderApp("/", ["perform_analysis", "backup_restore"]);
-    await open(first.user, "Bench");
-    await open(first.user, "System");
-    await open(first.user, "System");
+  // Ticket #4462: the choices last for one sign-in; the next sign-in starts with all closed.
+  it("keeps opened work areas for the sign-in and closes them all at the next", async () => {
+    const signedIn = { ...TEST_SESSION, capabilities: ["perform_analysis", "backup_restore"] };
+    let session: SessionInfo | null = signedIn;
+    const { user, router } = renderApp("/", signedIn.capabilities, {
+      current_session: () => session,
+      setup_status: () => ({ needsAdministrator: false }),
+      sign_out: () => {
+        session = null;
+        return null;
+      },
+      sign_in: () => ({ kind: "mfaRequired", challengeId: "challenge-1" }),
+      verify_mfa: () => {
+        session = signedIn;
+        return signedIn;
+      },
+    });
+    await open(user, "Bench");
+    await open(user, "System");
+    await open(user, "System");
+    await router.navigate("/about");
+    await screen.findByRole("heading", { level: 1, name: "About this app" });
     expect(linksIn("Bench")).toEqual(["Worklist", "Runs", "Bench setup"]);
     expect(screen.queryByRole("list", { name: "System" })).toBeNull();
-    first.unmount();
-    renderApp("/", ["perform_analysis", "backup_restore"]);
-    const system = await screen.findByRole("button", { name: "System" });
-    expect(system.getAttribute("aria-expanded")).toBe("false");
-    expect(linksIn("Bench")).toEqual(["Worklist", "Runs", "Bench setup"]);
+
+    await user.click(screen.getByRole("button", { name: "Signed in as Test Analyst" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Sign out" }));
+    await user.type(await screen.findByRole("textbox", { name: /Username/ }), "analyst");
+    await user.type(screen.getByLabelText(/^Password/, { selector: "input" }), "synthetic");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    await user.type(await screen.findByRole("textbox", { name: /Verification code/ }), "123456");
+    await user.click(screen.getByRole("button", { name: "Verify" }));
+    const bench = await screen.findByRole("button", { name: "Bench" });
+    expect(bench.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByRole("button", { name: "System" }).getAttribute("aria-expanded")).toBe(
+      "false",
+    );
   });
 
   it("opens the current screen's work area and marks only that entry current", async () => {
-    localStorage.setItem(
-      "vibe-tox.navigation.open-sections",
-      JSON.stringify({ "Laboratory setup": false }),
-    );
     renderApp("/users", ["manage_users"]);
     await screen.findByRole("heading", { level: 1, name: "Users" });
     expect(

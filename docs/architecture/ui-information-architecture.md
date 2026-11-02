@@ -14,7 +14,7 @@ Record names follow the [domain model](domain-model.md); capacity and platform q
 
 ## Navigation
 
-The navigation and route definitions are maintained in [`navigation.ts`](../../ui/src/app/navigation.ts), [`setupNavigation.ts`](../../ui/src/app/setupNavigation.ts) and [`routes.tsx`](../../ui/src/app/routes.tsx). Areas appear only when the current session can reach at least one screen. Every area starts collapsed; a collapsed area shows the total of its entries' queue counts. The navigation remembers which areas the person opened or closed on that computer, and going to a screen opens its area.
+The navigation and route definitions are maintained in [`navigation.ts`](../../ui/src/app/navigation.ts), [`setupNavigation.ts`](../../ui/src/app/setupNavigation.ts) and [`routes.tsx`](../../ui/src/app/routes.tsx). Areas appear only when the current session can reach at least one screen. Every area is collapsed at each sign-in; a collapsed area shows the total of its entries' queue counts. Areas the person opens or closes stay that way until sign-out or lock and are not stored; going to a screen opens its area.
 
 | Area | Screens in navigation order |
 | --- | --- |
