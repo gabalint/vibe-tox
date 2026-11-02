@@ -45,6 +45,7 @@
   "reviewSources": [
     "ui/src/features/accessioning/specimens/AccessionForm.tsx",
     "ui/src/features/accessioning/specimens/CollectionFields.tsx",
+    "ui/src/components/FieldPicker/FieldPicker.tsx",
     "ui/src/features/accessioning/specimens/SpecimenList.tsx",
     "ui/src/features/accessioning/specimens/AccessionTestSelection.tsx",
     "ui/src/features/accessioning/specimens/accessionValues.ts",
@@ -141,18 +142,18 @@
           "name": "Collection time known",
           "meaning": "Precision of the collection timing actually supplied.",
           "values": "Date and time (UTC offset supplied); Date and time (named timezone); Date only; time not recorded; Unknown.",
-          "rules": "Required; no default. Choose Unknown if neither date nor time is supplied; do not substitute receipt time."
+          "rules": "Required; no default. Choose Unknown if neither date nor time is supplied; do not substitute receipt time. Choosing Unknown shows a warning: without a collection date, billing for the order is held (Date of service unknown), and correcting it later requires a collection correction and quality review. Date only shows a note that the report will show time not recorded."
         },
         {
           "name": "Collection date",
           "meaning": "Local calendar date at the collection site.",
-          "values": "Real date in YYYY-MM-DD format.",
+          "values": "Real date in YYYY-MM-DD format. Type it, or use the calendar button in the field: the picked day is filled in as YYYY-MM-DD, and days after today in the laboratory timezone cannot be picked.",
           "rules": "Required except when Unknown. Date-only entry cannot exceed the current UTC date by more than one day; this accommodates timezone differences and is not permission to invent a date."
         },
         {
           "name": "Collection time",
           "meaning": "Local clock time at collection.",
-          "values": "24-hour HH:MM, without seconds.",
+          "values": "24-hour HH:MM, without seconds. Type it, or use the clock button in the field: pick the hour, then the minutes; the value is filled in as HH:MM.",
           "rules": "Required for either date-and-time choice; hidden for date-only or Unknown. The resulting instant cannot be in the future."
         },
         {
@@ -222,6 +223,12 @@
           "does": "Copies the configured laboratory timezone into the collection-site field.",
           "availableWhen": "Named-timezone entry and a laboratory timezone is configured.",
           "result": "Changes only the unsaved timezone value; use it only when it is the collection site’s correct zone."
+        },
+        {
+          "name": "Choose the collection date / Choose the collection time",
+          "does": "The calendar and clock buttons inside Collection date and Collection time open a calendar, or hour and minute lists (24-hour).",
+          "availableWhen": "The date or time field is shown for the chosen collection precision.",
+          "result": "Fills the field as YYYY-MM-DD or HH:MM and closes; picking an hour keeps any minutes already entered. The value is checked like a typed one: a future collection instant is still refused on saving. Escape closes without a change."
         },
         {
           "name": "Receive specimens",
@@ -430,18 +437,18 @@
           "name": "Collection time known",
           "meaning": "Precision of the collection timing actually supplied.",
           "values": "Date and time (UTC offset supplied); Date and time (named timezone); Date only; time not recorded; Unknown.",
-          "rules": "Required; no default. Choose Unknown if neither date nor time is supplied; do not substitute receipt time."
+          "rules": "Required; no default. Choose Unknown if neither date nor time is supplied; do not substitute receipt time. Choosing Unknown shows a warning: without a collection date, billing for the order is held (Date of service unknown), and correcting it later requires a collection correction and quality review. Date only shows a note that the report will show time not recorded."
         },
         {
           "name": "Collection date",
           "meaning": "Local calendar date at the collection site.",
-          "values": "Real date in YYYY-MM-DD format.",
+          "values": "Real date in YYYY-MM-DD format. Type it, or use the calendar button in the field: the picked day is filled in as YYYY-MM-DD, and days after today in the laboratory timezone cannot be picked.",
           "rules": "Required except when Unknown. Date-only entry cannot exceed the current UTC date by more than one day; this accommodates timezone differences and is not permission to invent a date."
         },
         {
           "name": "Collection time",
           "meaning": "Local clock time at collection.",
-          "values": "24-hour HH:MM, without seconds.",
+          "values": "24-hour HH:MM, without seconds. Type it, or use the clock button in the field: pick the hour, then the minutes; the value is filled in as HH:MM.",
           "rules": "Required for either date-and-time choice; hidden for date-only or Unknown. The resulting instant cannot be in the future."
         },
         {
@@ -769,6 +776,12 @@
           "does": "Copies the configured laboratory timezone into the collection-site field.",
           "availableWhen": "Named-timezone entry and a laboratory timezone is configured.",
           "result": "Changes only the unsaved timezone value; use it only when it is the collection site’s correct zone."
+        },
+        {
+          "name": "Choose the collection date / Choose the collection time",
+          "does": "The calendar and clock buttons inside Collection date and Collection time open a calendar, or hour and minute lists (24-hour).",
+          "availableWhen": "The date or time field is shown for the chosen collection precision.",
+          "result": "Fills the field as YYYY-MM-DD or HH:MM and closes; picking an hour keeps any minutes already entered. The value is checked like a typed one: a future collection instant is still refused on saving. Escape closes without a change."
         },
         {
           "name": "Resolve collection review / Resolve review",

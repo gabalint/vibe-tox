@@ -83,6 +83,19 @@
   max-width: 100%;
 }
 
+/* An empty line the height of a label puts the button level with the inputs beside it. */
+.fieldAction {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.fieldAction::before {
+  content: "\00a0";
+  font-weight: var(--font-weight-semibold);
+}
+
 .label {
   font-weight: var(--font-weight-semibold);
 }
@@ -113,6 +126,22 @@
   border-radius: var(--radius-md);
   background: var(--color-surface);
   text-align: start;
+}
+
+/* A field with a button inside it, such as a date picker: the button sits at the end. */
+.adorned {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.adorned > .control {
+  padding-right: var(--space-8);
+}
+
+.adorned > :last-child:not(.control) {
+  position: absolute;
+  right: var(--space-1);
 }
 
 .control[data-focused],

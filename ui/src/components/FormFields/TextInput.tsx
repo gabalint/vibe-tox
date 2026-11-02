@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { TextField } from "@/components/TextField";
 import { textFieldProps } from "@/lib/form";
@@ -34,6 +35,8 @@ interface TextInputProps {
   autoFocus?: boolean;
   /** Additional lexical or range validation; blank handling is owned by isRequired. */
   validate?: (value: string) => true | string;
+  /** A picker button inside the field, given the current value and a setter that validates. */
+  picker?: (value: string, pick: (value: string) => void) => ReactNode;
 }
 
 /** A text field bound to the surrounding react-hook-form form. */
@@ -46,8 +49,9 @@ export function TextInput({
   format,
   autoFocus,
   validate,
+  picker,
 }: TextInputProps) {
-  const { control } = useFormContext();
+  const { control, setValue } = useFormContext();
   return (
     <Controller
       control={control}
@@ -68,6 +72,9 @@ export function TextInput({
           isDisabled={isDisabled}
           autoFocus={autoFocus}
           autoComplete="off"
+          adornment={picker?.(controller.field.value, (value) =>
+            setValue(name, value, { shouldDirty: true, shouldValidate: true }),
+          )}
         />
       )}
     />
