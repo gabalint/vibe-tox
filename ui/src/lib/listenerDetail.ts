@@ -5,11 +5,11 @@ import type { ListenerDetailCode } from "@/generated/ListenerDetailCode";
 import type { ListenerState } from "@/generated/ListenerState";
 import type { ListenerStatusView } from "@/generated/ListenerStatusView";
 
-/** Each listener state in words, with its badge tone. */
+/** Each listener state in words, with its badge tone: every working state is "info". */
 export const LISTENER_STATES: Record<ListenerState, { tone: Tone; label: string }> = {
   disabled: { tone: "neutral", label: "Disabled" },
   listening: { tone: "info", label: "Listening" },
-  connected: { tone: "neutral", label: "Connected" },
+  connected: { tone: "info", label: "Connected" },
   receiving: { tone: "info", label: "Receiving" },
   error: { tone: "danger", label: "Error" },
   // An enabled result-file instrument without a watched folder: files are loaded by hand.
