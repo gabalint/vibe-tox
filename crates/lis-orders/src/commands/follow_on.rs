@@ -55,27 +55,7 @@ fn request_follow_on_at_boundary(
     boundary: TriggerBoundary,
 ) -> Result<crate::OrderDetail, OrderError> {
     require_at_boundary(ctx, boundary)?;
-    reason("reason", &input.reason)?;
-    optional("authorityReference", input.authority_reference.as_deref())?;
-    if input.kind == ItemKind::Initial {
-        return Err(invalid(
-            "kind",
-            "follow_on_required",
-            "Choose add-on or reflex.",
-        ));
-    }
-    if input.kind == ItemKind::AddOn
-        && input
-            .authority_reference
-            .as_deref()
-            .is_none_or(|reference| reference.trim().is_empty())
-    {
-        return Err(invalid(
-            "authorityReference",
-            "required",
-            "Enter the document or call that authorizes this add-on.",
-        ));
-    }
+    check_request(&input)?;
     let version = active_orderable(ctx.tx(), input.orderable_version_id)?;
     validate_follow_on_trigger(ctx, &input, boundary)?;
     if input.kind == ItemKind::Reflex
@@ -138,6 +118,32 @@ fn request_follow_on_at_boundary(
         params![input.order_id, next],
     )?;
     get_order(ctx.tx(), input.order_id)
+}
+
+/// The request's own fields: a follow-on kind, a reason, and an add-on's authority reference.
+fn check_request(input: &RequestFollowOnInput) -> Result<(), OrderError> {
+    reason("reason", &input.reason)?;
+    optional("authorityReference", input.authority_reference.as_deref())?;
+    if input.kind == ItemKind::Initial {
+        return Err(invalid(
+            "kind",
+            "follow_on_required",
+            "Choose add-on or reflex.",
+        ));
+    }
+    if input.kind == ItemKind::AddOn
+        && input
+            .authority_reference
+            .as_deref()
+            .is_none_or(|reference| reference.trim().is_empty())
+    {
+        return Err(invalid(
+            "authorityReference",
+            "required",
+            "Enter the document or call that authorizes this add-on.",
+        ));
+    }
+    Ok(())
 }
 
 /// Accepts or declines a pending follow-on; acceptance freezes its components.
