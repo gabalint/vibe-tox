@@ -46,7 +46,7 @@ A **panel** opens beside its directory or workspace; a **page** has its own reco
 | Client location | Client page | Add or correct location with attributable history |
 | Practitioner | Laboratory setup › Practitioners → panel | Name, NPI, factual correction and active state; local Find field |
 | Delivery destination | Laboratory setup › Delivery destinations or client page → panel | Verification, replacement and retirement; available verification evidence |
-| Instrument | Laboratory setup › Instruments → panel | Connection, listener configuration and outcome of the last change |
+| Instrument | Laboratory setup › Instruments → panel | Connection, listener configuration and outcome of the last change; service status and approved source read from Bench setup, linked to the same instrument there |
 | User | Laboratory setup › Users → panel | Roles, active state and permitted sign-in recovery actions |
 | Laboratory profile | Laboratory setup › Laboratory profile → page | Versioned reporting and performing-laboratory facts |
 | Material configuration | Laboratory setup › Material configuration → page | Label profiles and storage configuration |
@@ -64,7 +64,7 @@ Versioned record pages show the version in effect and any open draft in the head
 | Order | Front desk › Orders → page | Supplied evidence revisions, cancellation decisions and billing context remain attributable |
 | Accession and container | Order page, scan field or Container lookup → page | Connected intake preserves patient/order context; receiving, allocation, collection facts and label decisions are explicit |
 | Run | Bench › Runs → page | Positions, QC and expected results remain linked to their exact run |
-| Lot and instrument readiness | Bench › Bench setup → tab and panel | Lots expose withdrawal; instrument panels expose service status and approved result sources |
+| Lot and instrument readiness | Bench › Bench setup → tab and panel | Lots expose withdrawal; instrument panels expose service status and approved result sources, and for configuration staff a one-line connection linked back to Laboratory setup |
 | Deviation | Work item or related record → `/quality/deviations/:deviationId` | Exact audited read independent of run scope |
 | Specimen results | Review › Result review → page | Result lines form the technical-review workspace |
 | Import attempt | Review › Result imports → page | Quarantine decisions operate on the selected retained attempt/item |
@@ -107,6 +107,6 @@ The component contracts and presentation rules are maintained in [UI standards](
 | Practitioner-to-client relationships | Order entry offers practitioners independently of client. A maintained relationship and laboratory workflow are needed before narrowing by client. FHIR's practitioner-role model is supporting prior art, not an implemented feature ([DOM-102](../research/sources-domain.md#ui-information-architecture-sources-2026-10-13)). |
 | Practitioner search at scale | The current engine lists practitioners and the UI filters them locally. A bounded engine query with explicit continuation needs design and workload evidence if that list approaches the NFR-33 capacity target. |
 | NPI registry prefill | Outside current scope. A future NPPES lookup would require an explicit network/data-flow decision and staff confirmation of imported values ([DOM-103](../research/sources-domain.md#ui-information-architecture-sources-2026-10-13)). |
-| Instruments in two areas | Connection administration and bench readiness have different permissions. Combining them needs a read-model and visibility decision; current navigation keeps both homes. |
+| Instruments in two areas | Connection administration and bench readiness have different permissions. Combining them needs a read-model and visibility decision; current navigation keeps both homes, each panel linking to the same instrument in the other, and a new analyzer's confirmation offering Set in service and Register source there. |
 | Collection capacity | Per-directory capacity requires laboratory counts and reference-host measurements. NFR-33 is a target; synthetic lists and catalog content do not establish a laboratory's actual workload. |
 | Action metadata | Some views still derive visibility from capability and status fields rather than an `allowedActions` collection. Every engine command must continue enforcing the authoritative gate. |

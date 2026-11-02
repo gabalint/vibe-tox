@@ -112,7 +112,13 @@ function renderPage(capabilities: string[], commands: Record<string, () => unkno
       },
     ],
     list_instrument_readiness: () => [
-      { instrumentId: AU_SERIAL.id, name: AU_SERIAL.name, status: "in_service", since: null },
+      {
+        instrumentId: AU_SERIAL.id,
+        name: AU_SERIAL.name,
+        status: "in_service",
+        since: null,
+        activeRegistration: { sender: "SYN-AU-SW", version: "1.0" },
+      },
     ],
     list_source_registrations: () => [],
     list_import_attempts: () => [],
@@ -161,8 +167,9 @@ describe("InstrumentPanel (REQ-INT-005)", { timeout: WALKTHROUGH_TIMEOUT_MS }, (
     expect((await within(panel).findByText("SYN-AU-SW 1.0")).tagName).toBe("DD");
     expect(fact(panel, "Mapped test codes")?.textContent).toBe("2");
     expect(within(panel).getByText("Approved")).toBeTruthy();
+    expect(fact(panel, "Result source")?.textContent).toBe("Source approved: SYN-AU-SW 1.0");
     expect(
-      within(panel).getByRole("link", { name: "Bench setup › Instruments" }).getAttribute("href"),
+      within(panel).getByRole("link", { name: "Readiness and sources" }).getAttribute("href"),
     ).toBe(`/bench/setup/instruments?open=${AU_SERIAL.id}`);
     const imports = await within(panel).findByRole("link", { name: "1 of 2" });
     expect(imports.getAttribute("href")).toBe(`/review/imports?instrument=${AU_SERIAL.id}`);
@@ -191,6 +198,7 @@ describe("InstrumentPanel (REQ-INT-005)", { timeout: WALKTHROUGH_TIMEOUT_MS }, (
     expect(fact(panel, "Last changed")?.textContent).toBe("Not recorded");
     expect(await within(panel).findByText("Not registered")).toBeTruthy();
     expect(within(panel).getByText("Status not recorded")).toBeTruthy();
+    expect(fact(panel, "Result source")?.textContent).toBe("No approved source");
     expect(within(panel).queryByText("Activity")).toBeNull();
   });
 });
