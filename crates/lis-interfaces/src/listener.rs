@@ -167,6 +167,17 @@ impl ListenerSupervisor {
         }
     }
 
+    /// The instruments whose listener opened and is running.
+    #[must_use]
+    pub fn running(&self) -> Vec<InstrumentId> {
+        self.workers
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .iter()
+            .map(|worker| worker.instrument_id)
+            .collect()
+    }
+
     /// Returns a PHI-free, instrument-ordered point-in-time status snapshot.
     #[must_use]
     pub fn status_snapshot(&self) -> Vec<ListenerStatus> {

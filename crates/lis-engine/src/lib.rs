@@ -220,8 +220,8 @@ mod ops_worker;
 pub use commands::dialogs::DialogCommand;
 pub use commands::operations::{
     AcceptInstalledVersionInput, AcknowledgeListeningGapInput, AttestHealthCheckInput,
-    ListAppRunsInput, ListHealthHistoryInput, RecordUpdateApprovalInput,
-    RestoreInstallationKeyInput, UpdateRequest,
+    ListAppRunsInput, ListHealthHistoryInput, ListenerRestartView, RecordUpdateApprovalInput,
+    RestoreInstallationKeyInput, StoppedListenersView, UpdateRequest,
 };
 pub use keep_awake::{Guard, Inhibitor, KeepAwakeView};
 pub use keys::{InstallationKeyStateView, KeyState, MemoryKeyStore};

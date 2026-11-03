@@ -13,6 +13,7 @@ import type { DownloadUpdateInput } from "@/generated/DownloadUpdateInput";
 import type { InstallUpdateInput } from "@/generated/InstallUpdateInput";
 import type { RecordUpdateApprovalInput } from "@/generated/RecordUpdateApprovalInput";
 import type { RequestBackupInput } from "@/generated/RequestBackupInput";
+import type { StoppedListenersView } from "@/generated/StoppedListenersView";
 import type { TargetView } from "@/generated/TargetView";
 import type { UpdateApprovalView } from "@/generated/UpdateApprovalView";
 import { useCommandMutation, useCommandQuery, useHasCapability } from "@/lib/commands";
@@ -30,6 +31,7 @@ import {
   LIST_BACKUP_TARGETS,
   LIST_UPDATE_APPROVALS,
   REQUEST_BACKUP,
+  STOP_LISTENERS_FOR_UPDATE,
   VERSION_QUERIES,
 } from "../contract";
 
@@ -42,11 +44,12 @@ interface UpdateValues {
   password: string;
 }
 
-type Step = "download" | "backup" | "approve" | "install";
+type Step = "download" | "backup" | "approve" | "listeners" | "install";
 const STEPS: readonly { id: Step; label: string }[] = [
   { id: "download", label: "Download the package and check its signature" },
   { id: "backup", label: "Back up this installation and verify the copy" },
   { id: "approve", label: "Record your approval of this package" },
+  { id: "listeners", label: "Stop analyzer listeners" },
   { id: "install", label: "Install and restart" },
 ];
 
@@ -59,7 +62,8 @@ interface UpdateDialogProps {
 /**
  * Updates to `build` in one confirmation (ADR 0020; REQ-OPS-006, NFR-24). The app downloads
  * and verifies the package, takes and verifies a pre-update backup, records the approval of
- * that exact package and installs it. Each step is the engine's own command, so every rule
+ * that exact package, stops the analyzer listeners once the messages being received are
+ * acknowledged, and installs it. Each step is the engine's own command, so every rule
  * still applies; a failed step stops the update and leaves the dialog open to try again.
  */
 export function UpdateDialog({ build, onClose, onInstalling }: UpdateDialogProps) {
@@ -68,6 +72,7 @@ export function UpdateDialog({ build, onClose, onInstalling }: UpdateDialogProps
   const [step, setStep] = useState<Step | null>(null);
   const [runId, setRunId] = useState<string | null>(null);
   const [failure, setFailure] = useState<CommandError | null>(null);
+  const [stopped, setStopped] = useState<number | null>(null);
   const values = useRef<UpdateValues | null>(null);
   const targets = useCommandQuery<TargetView[]>(LIST_BACKUP_TARGETS);
   const approvals = useCommandQuery<UpdateApprovalView[]>(LIST_UPDATE_APPROVALS);
@@ -82,8 +87,11 @@ export function UpdateDialog({ build, onClose, onInstalling }: UpdateDialogProps
     APPROVE_DOWNLOADED_UPDATE,
     { invalidates: VERSION_QUERIES },
   );
+  const stopListeners = useCommandMutation<StoppedListenersView>(STOP_LISTENERS_FOR_UPDATE, {
+    invalidates: ["list_listener_status"],
+  });
   const install = useCommandMutation<null, { input: InstallUpdateInput }>(INSTALL_UPDATE, {
-    invalidates: VERSION_QUERIES,
+    invalidates: [...VERSION_QUERIES, "list_listener_status"],
   });
   const run = useExactJob<BackupRunView>(
     LIST_BACKUP_RUNS,
@@ -107,10 +115,20 @@ export function UpdateDialog({ build, onClose, onInstalling }: UpdateDialogProps
     setRunId(null);
   };
   const installNow = () => {
-    setStep("install");
-    install.mutate(
-      { input: { version: build.version } },
-      { onSuccess: onInstalling, onError: stop },
+    setStep("listeners");
+    stopListeners.mutate(
+      {},
+      {
+        onError: stop,
+        onSuccess: (view) => {
+          setStopped(view.stopped);
+          setStep("install");
+          install.mutate(
+            { input: { version: build.version } },
+            { onSuccess: onInstalling, onError: stop },
+          );
+        },
+      },
     );
   };
 
@@ -188,7 +206,10 @@ export function UpdateDialog({ build, onClose, onInstalling }: UpdateDialogProps
         <div className={layout.stack}>
           <p>
             The app downloads this version, backs up your data first, records your approval and
-            installs it. It then restarts, and the new version awaits acceptance for clinical use.
+            installs it. Before installing, it waits for any analyzer message being received and
+            stops the analyzer listeners; each analyzer keeps its enabled setting. It then restarts,
+            starts the enabled listeners again, and the new version awaits acceptance for clinical
+            use.
           </p>
           {!canBackUp && (
             <Alert tone="warning" title="Your account cannot start backups">
@@ -203,7 +224,7 @@ export function UpdateDialog({ build, onClose, onInstalling }: UpdateDialogProps
             </Alert>
           )}
           {busy ? (
-            <Progress step={step} />
+            <Progress step={step} stopped={stopped} />
           ) : (
             <>
               <CheckList
@@ -234,13 +255,16 @@ export function UpdateDialog({ build, onClose, onInstalling }: UpdateDialogProps
   );
 }
 
-function Progress({ step }: { step: Step | null }) {
+function Progress({ step, stopped }: { step: Step | null; stopped: number | null }) {
   const current = STEPS.findIndex((each) => each.id === step);
   return (
     <ol aria-label="Update progress" className={layout.list}>
       {STEPS.map((each, index) => (
         <li key={each.id}>
           {each.label} {index < current && <StatusBadge tone="success">Done</StatusBadge>}
+          {index < current && each.id === "listeners" && stopped !== null && (
+            <> {stopped === 1 ? "1 listener stopped" : `${stopped} listeners stopped`}</>
+          )}
           {index === current && <StatusBadge tone="info">In progress</StatusBadge>}
         </li>
       ))}

@@ -195,7 +195,6 @@ async fn session_call(engine: &Engine, name: &str) -> Option<Result<(), CommandE
             .await
             .map(drop),
         "current_session" => engine.current_session().await.map(drop),
-        "list_listener_status" => engine.list_listener_status().await.map(drop),
         "touch_session" => engine.touch_session().await,
         "lock_session" => engine.lock_session().await,
         "unlock_session" => engine
@@ -241,6 +240,15 @@ async fn pin_call(engine: &Engine, name: &str) -> Option<Result<(), CommandError
             })
             .await
             .map(drop),
+        _ => return listener_call(engine, name).await,
+    })
+}
+
+/// The public analyzer listener queries.
+async fn listener_call(engine: &Engine, name: &str) -> Option<Result<(), CommandError>> {
+    Some(match name {
+        "list_listener_status" => engine.list_listener_status().await.map(drop),
+        "get_listener_restart" => engine.get_listener_restart().await.map(drop),
         _ => return None,
     })
 }

@@ -64,6 +64,10 @@ These rules govern any updater and stay in force:
    - The approval of that staged package is recorded with the changes reviewed, that
      backup, a note and fresh identity confirmation (password or security key). An earlier
      approval of the same package is reused.
+   - `stop_listeners_for_update` (`manage_configuration`) waits up to one minute until no
+     analyzer message is being received, then stops every analyzer listener and audits
+     `ops.stop_listeners_for_update`. No instrument's enabled setting changes. Watched result
+     folders stop between files when the app closes.
    - Installation requires `manage_configuration` and no work in progress. The engine
      re-hashes the staged package and requires a current approval naming the same SHA-256,
      not yet installed, whose backup is still verified and recent. It audits
@@ -72,6 +76,11 @@ These rules govern any updater and stay in force:
      engine shuts down before the installer replaces the app.
    - The new version then awaits acceptance for clinical use as before. A failed installation
      is audited, and the running version is unchanged.
+   - Every enabled listener starts again: in the new version, as at every start, or at once
+     when the installation did not happen. Either restart is audited as
+     `ops.restart_listeners_after_update` with how many listen and how many failed. After the
+     first start of a new version, the sign-in screen and the top-bar listener window show that summary and the reason for
+     each analyzer that did not start (`get_listener_restart`, public).
 6. **Requests only on demand.** The app checks when **Available updates** opens or on
    **Refresh**, never on a schedule or at start-up.
 

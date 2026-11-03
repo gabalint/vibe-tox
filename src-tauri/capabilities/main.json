@@ -45,6 +45,7 @@
     "allow-designate-one-person-laboratory",
     "allow-list-audit-events",
     "allow-verify-audit-chain",
-    "allow-list-listener-status"
+    "allow-list-listener-status",
+    "allow-get-listener-restart"
   ]
 }

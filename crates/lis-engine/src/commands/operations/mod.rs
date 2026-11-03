@@ -14,6 +14,7 @@
 mod health;
 mod keys;
 mod settings;
+mod update_listeners;
 mod updates;
 
 use lis_auth::AuthError;
@@ -29,6 +30,8 @@ pub use health::{
 };
 pub use keys::RestoreInstallationKeyInput;
 pub(crate) use keys::reconcile_key_restores;
+pub use update_listeners::{ListenerRestartView, StoppedListenersView};
+pub(crate) use update_listeners::{RestartedListeners, listeners_after_new_version};
 pub use updates::{AcceptInstalledVersionInput, RecordUpdateApprovalInput, UpdateRequest};
 
 const CONFIGURE: Access = Access::Capability(Capability::ManageConfiguration);
@@ -124,6 +127,11 @@ pub(crate) const DOWNLOAD_UPDATE: CommandSpec =
 pub(crate) const INSTALL_UPDATE: CommandSpec = spec(
     "install_update",
     lis_ops::updates::INSTALL_UPDATE,
+    CONFIGURE,
+);
+pub(crate) const STOP_LISTENERS_FOR_UPDATE: CommandSpec = spec(
+    "stop_listeners_for_update",
+    lis_ops::updates::STOP_LISTENERS_FOR_UPDATE,
     CONFIGURE,
 );
 pub(crate) const ACCEPT_INSTALLED_VERSION: CommandSpec = spec(

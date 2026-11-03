@@ -77,3 +77,8 @@ pub(crate) const LIST_LISTENER_STATUS: CommandSpec = spec(
     "interfaces.listener_status",
     Access::Public,
 );
+pub(crate) const GET_LISTENER_RESTART: CommandSpec = spec(
+    "get_listener_restart",
+    "interfaces.listener_restart",
+    Access::Public,
+);

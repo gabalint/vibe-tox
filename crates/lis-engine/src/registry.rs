@@ -84,6 +84,7 @@ pub const COMMANDS: &[CommandSpec] = &[
     LIST_AUDIT_EVENTS,
     VERIFY_AUDIT_CHAIN,
     LIST_LISTENER_STATUS,
+    GET_LISTENER_RESTART,
     // Wave 3+: each area lists its CommandSpec constants (defined in its own
     // commands module) here. Edit only your block.
     // identity: begin
@@ -340,6 +341,7 @@ pub const COMMANDS: &[CommandSpec] = &[
     crate::commands::operations::LIST_NIGHTLY_BUILDS,
     crate::commands::operations::DOWNLOAD_UPDATE,
     crate::commands::operations::INSTALL_UPDATE,
+    crate::commands::operations::STOP_LISTENERS_FOR_UPDATE,
     crate::commands::operations::RECORD_MEDIA_DISPOSAL,
     crate::commands::operations::LIST_MEDIA_DISPOSALS,
     crate::commands::operations::GET_INSTALLATION_KEY_STATE,
