@@ -1,0 +1,520 @@
+{
+  "id": "interfaces",
+  "title": "Interfaces",
+  "summary": "Send billing handoff files to outside systems through a folder, follow every message in Logs, and decide on messages no connection matched.",
+  "reviewedOn": "2026-11-03",
+  "routes": [
+    "/interfaces/connections",
+    "/interfaces/connections/:connectionId/:tab?",
+    "/interfaces/logs/:tab?",
+    "/interfaces/unrouted"
+  ],
+  "sections": [
+    {
+      "title": "How to use this area",
+      "paragraphs": [
+        "A connection says which messages go to an outside system, where, and when. This release has one message type, Billing JSON: the billing handoff file, made when a billing handoff is created. It is written to a folder on this computer or on the lab network, which the billing company's system reads. Analyzers are not set up here; they stay in Laboratory setup › Instruments.",
+        "When a handoff is created, the LIS checks it against every Billing JSON connection's routing rules in the same step. It goes to each connection whose rules all match. If no connection matches, it waits in Unrouted messages. If the laboratory has no Billing JSON connection at all, nothing is made, and handoff files are exported by hand from the handoff page as before.",
+        "The LIS writes a connection's messages only while it is started and a destination check covers its current folder. It tries every 10 seconds, at the sign-in screen too, but not while the app is closed. Logs show every message with what the folder can prove: written, failed or not sent. A folder never confirms that the other system used the file, so a written file always shows Outcome unknown, never Delivered."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Save a new connection stopped, test the folder, send a test message, and have the partner confirm they received it. Then have a second person record the destination check, and start the connection.",
+        "Keep rules specific. A billing file with patients of several clients goes only to a connection whose rules accept every one of those clients, so one client's billing company never receives another client's patients.",
+        "The partner receiving patient data must be covered by a business associate agreement. That is the laboratory's responsibility; the LIS shows it as a reminder when the destination check is recorded."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "A connection in Error could not write its latest message. Its Overview names the problem. Fix the folder or its permissions, then use Send again on the failed message in Logs; it was retried automatically up to 5 times. A message that matched no connection waits in Unrouted messages until someone decides."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Connections",
+      "routes": ["/interfaces/connections"],
+      "purpose": "See every connection to an outside system, how it is working, and add a connection.",
+      "access": "Manage configuration is required to see the Interfaces menu and every action on it.",
+      "fields": [
+        {
+          "name": "Active connections / With errors / Waiting for acknowledgement / Unrouted messages",
+          "meaning": "Counts that need attention: started connections working normally, started connections whose latest attempt failed, messages sent that wait for the partner's acknowledgement, and messages waiting for a decision.",
+          "values": "Whole numbers; … while loading. With errors shows in red, the other two in amber, when not zero.",
+          "rules": "Read-only. A folder never answers, so folder connections never wait for an acknowledgement and that count stays 0. Unrouted messages also shows beside the menu entry."
+        },
+        {
+          "name": "All / Orders in / Results out / Report PDFs / Billing",
+          "meaning": "Which kind of exchange the list shows, with its number of connections.",
+          "values": "All; Orders in; Results out; Report PDFs; Billing (Billing JSON connections).",
+          "rules": "Orders in, Results out and Report PDFs stay empty in this release. The tab stays in the address (?type=)."
+        },
+        {
+          "name": "Name, Partner, Message, Dir., Protocol, Destination",
+          "meaning": "What the connection carries and where: its name, the client or billing company, the message type, the direction (Out: the LIS sends), the protocol and the folder.",
+          "values": "As saved on the connection.",
+          "rules": "Read-only. Open the row to change it."
+        },
+        {
+          "name": "Status",
+          "meaning": "Whether the connection works now.",
+          "values": "Active: started, and its latest attempt worked or none was made. Stopped: a person stopped it. Error: started, but its latest attempt failed.",
+          "rules": "A stopped connection writes nothing; its messages wait."
+        },
+        {
+          "name": "Destination check",
+          "meaning": "Whether someone recorded how the current folder was confirmed as the partner's.",
+          "values": "Verified; Not verified.",
+          "rules": "Patient data is never written to a folder that is not verified. Choosing another folder needs a new check."
+        },
+        {
+          "name": "Last attempt, Waiting, Errors",
+          "meaning": "When the LIS last tried to write a file, how many messages wait to be written, and how many have failed attempts.",
+          "values": "A time or None yet; whole numbers.",
+          "rules": "Synthetic test messages are not counted in Waiting or Errors."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Add connection",
+          "does": "Opens the Add connection dialog.",
+          "availableWhen": "Manage configuration.",
+          "result": "See Add or change a connection below."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reloads the list.",
+          "availableWhen": "Always.",
+          "result": "Shows the latest status and counts."
+        },
+        {
+          "name": "Open row",
+          "does": "Opens the connection's page.",
+          "availableWhen": "A listed connection.",
+          "result": "Overview, Rules, Logs and History of that connection."
+        }
+      ],
+      "restrictions": [
+        "This release sends Billing JSON files to a folder only. Report PDFs, HL7 results and orders, SFTP and MLLP are not available.",
+        "Connections are stopped, never deleted, so their history and messages stay."
+      ],
+      "workflow": [
+        "Add the connection and Save as stopped.",
+        "On its page, use Test connection, then Send test message, and ask the partner to confirm the test file.",
+        "Have a second person use Record destination check.",
+        "Start the connection. New billing handoffs are then written to the folder."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A connection shows Error",
+          "recovery": "Open it: Overview names the latest problem, such as Folder not found or This computer may not write there. Fix the folder, use Test connection, then send the failed messages again from Logs › Failed."
+        },
+        {
+          "problem": "Waiting does not go down",
+          "recovery": "Check that the connection is started, that its destination check is Verified, and its schedule. Logs show the reason on each waiting message. Nothing is written while a recovery reconciliation after a restore is open."
+        }
+      ]
+    },
+    {
+      "title": "Add or change a connection",
+      "routes": ["/interfaces/connections/:connectionId/:tab?"],
+      "purpose": "Set what a connection carries, its folder, its routing rules and when it writes; then manage, test and check it.",
+      "access": "Manage configuration. Recording the destination check follows the laboratory's separation-of-duties policy.",
+      "fields": [
+        {
+          "name": "Name",
+          "meaning": "How staff recognize the connection.",
+          "values": "Free text, such as Billing - RCM.",
+          "rules": "Required; up to 80 characters; no two connections may share a name (case is ignored)."
+        },
+        {
+          "name": "Partner (client)",
+          "meaning": "The client or billing company that receives the files.",
+          "values": "Free text, such as the billing company's name.",
+          "rules": "Required; up to 80 characters."
+        },
+        {
+          "name": "Message",
+          "meaning": "What the connection carries, which also fixes the direction and when a message is made.",
+          "values": "Billing JSON: the billing handoff file (format bil-handoff-v2), sent out when a billing handoff is created.",
+          "rules": "Required; nothing is preselected. It cannot change after saving; add another connection instead."
+        },
+        {
+          "name": "Direction",
+          "meaning": "Whether the LIS sends or receives on this connection.",
+          "values": "Out – LIS sends.",
+          "rules": "Read-only; the message type fixes it."
+        },
+        {
+          "name": "Protocol",
+          "meaning": "How files travel, chosen among cards.",
+          "values": "Folder: shared folder on the lab network. SFTP, MLLP – LIS connects and MLLP – LIS listens are shown but not available yet.",
+          "rules": "Folder is selected and is the only choice in this release."
+        },
+        {
+          "name": "Output folder",
+          "meaning": "Where the LIS writes the files, for the partner's system to read.",
+          "values": "A folder chosen with Choose folder…; it cannot be typed.",
+          "rules": "Required. The LIS writes each file under a temporary .tmp name and renames it only when complete. It never replaces a file: a name already taken by other content gets -1, -2 and so on before .json."
+        },
+        {
+          "name": "Routing rules",
+          "meaning": "Which messages go to this connection. A rule is a field, a condition and a value.",
+          "values": "Field: Client (client code), Practitioner (NPI), Location (client location code), Test (orderable code). Condition: equals; is one of (codes separated by commas, up to 50); starts with.",
+          "rules": "Up to 20 rules; values up to 200 characters; codes are compared exactly. All rules must match, and a rule matches only when every value of its field in the message meets it; a message with no value for the field does not match. With no rules, every message of the type goes to the connection. A message goes to every connection whose rules match."
+        },
+        {
+          "name": "Send when",
+          "meaning": "What makes a message.",
+          "values": "Billing handoff created.",
+          "rules": "The only choice for Billing JSON; the message type fixes it."
+        },
+        {
+          "name": "Schedule, Minutes, Time",
+          "meaning": "When waiting messages are written.",
+          "values": "Immediately (within about 10 seconds); Every N minutes (1 to 1440, at multiples of N minutes since midnight UTC); Daily at a time (HH:MM, in the laboratory's time zone).",
+          "rules": "The schedule applies to a message's first attempt; retries do not wait for it. A daily schedule needs the laboratory profile's time zone."
+        },
+        {
+          "name": "File name",
+          "meaning": "The name pattern of each file.",
+          "values": "Letters, digits, '.', '_', '-' and the placeholders {handoff} (the handoff number), {date} (YYYYMMDD) and {time} (HHMMSS), in the laboratory's time zone, from when the message was queued for this connection. Default: billing-{handoff}_{date}.json.",
+          "rules": "Required; up to 120 characters; must contain {handoff} and end in .json; may not start with a dot."
+        },
+        {
+          "name": "Reason",
+          "meaning": "Why the connection is changed, started or stopped.",
+          "values": "Free text up to 500 characters.",
+          "rules": "Required for Edit, Start and Stop; recorded in History and the audit trail."
+        },
+        {
+          "name": "How it was confirmed",
+          "meaning": "How the current folder was confirmed as the partner's.",
+          "values": "Free text up to 500 characters, such as a call-back to the partner's IT.",
+          "rules": "Required to record the destination check."
+        },
+        {
+          "name": "Overview: Connection and Checks and contract",
+          "meaning": "Connection: partner, message, protocol, folder, send when and schedule, file name and rules. Checks and contract: who verified the destination, when and how; the last connection and its result; messages awaiting the partner's application acknowledgement; the last change with its reason.",
+          "values": "As recorded. Awaiting application ACK is 0 messages for a folder, which never answers.",
+          "rules": "Read-only. Interface contracts and acceptance tests are not part of this release."
+        },
+        {
+          "name": "Rules, Code mappings, Logs, History",
+          "meaning": "The routing rules; code mappings to a partner's codes; this connection's messages; every change with who, when, the settings changed and the reason or method.",
+          "values": "As recorded, newest first. Code mappings is empty for Billing JSON, whose file carries the LIS's own codes.",
+          "rules": "Read-only. History is never edited."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Choose folder…",
+          "does": "Opens the system folder dialog.",
+          "availableWhen": "In the Add or Edit dialog.",
+          "result": "The folder shows in Output folder. Cancelling the dialog changes nothing."
+        },
+        {
+          "name": "Test folder / Test connection",
+          "does": "Creates, writes and removes a small probe file in the folder.",
+          "availableWhen": "A chosen folder, or a saved connection.",
+          "result": "Says whether the LIS can write there; no message is made and nothing is logged."
+        },
+        {
+          "name": "+ Add rule / × (Remove rule)",
+          "does": "Adds a rule line (field, condition, value) or removes one.",
+          "availableWhen": "In the dialog; up to 20 rules.",
+          "result": "Saved with the connection."
+        },
+        {
+          "name": "Cancel / Save as stopped / Save",
+          "does": "Cancel closes without saving; Save as stopped adds the connection stopped; Save adds it started, or saves the change.",
+          "availableWhen": "Valid fields; Save as stopped only when adding.",
+          "result": "The connection's page opens. A new connection writes no patient data until its destination check is recorded."
+        },
+        {
+          "name": "Record destination check",
+          "does": "Records how the current folder was confirmed.",
+          "availableWhen": "No check covers the current folder. The person who chose the folder may record it only if the laboratory's separation-of-duties policy allows and they confirm it.",
+          "result": "Destination check shows Verified; waiting messages are written if the connection is started."
+        },
+        {
+          "name": "Edit",
+          "does": "Opens the dialog with the current settings.",
+          "availableWhen": "Always; a reason is required.",
+          "result": "A new folder makes the check Not verified until it is recorded again. Changed rules apply to new messages and to Retry routing."
+        },
+        {
+          "name": "Stop / Start",
+          "does": "Stops or starts writing, with a reason.",
+          "availableWhen": "Always.",
+          "result": "A stopped connection writes nothing; its messages wait and are written after Start."
+        },
+        {
+          "name": "Send test message",
+          "does": "Writes a synthetic file, vibetox-test-<date>-<time>.json, with no patient data, to the folder now.",
+          "availableWhen": "A saved connection, stopped or not verified too.",
+          "result": "The file name, or the problem, shows; the test appears in Logs as Test message. A failed test is not retried."
+        }
+      ],
+      "restrictions": [
+        "The message type cannot change after saving.",
+        "A routing rule compares codes exactly; it does not search names.",
+        "Code mappings, interface contracts and acceptance tests are not part of this release."
+      ],
+      "workflow": [
+        "Fill in General, choose the folder and test it.",
+        "Add rules if only some handoffs belong to this partner.",
+        "Choose the schedule and file name, and save stopped.",
+        "Send a test message, have a second person record the destination check, then Start."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Choose the folder again",
+          "recovery": "The chosen folder is kept only for your session and the last 8 choices. Use Choose folder… again and save."
+        },
+        {
+          "problem": "Record destination check is refused for you",
+          "recovery": "You chose the folder, and the laboratory's policy needs a second person. Ask another person with Manage configuration to record it."
+        },
+        {
+          "problem": "This connection was changed by someone else",
+          "recovery": "Reload the page and make the change again on the current settings."
+        },
+        {
+          "problem": "Test connection says Folder not found or This computer may not write there",
+          "recovery": "Check that the folder or network share is reachable from this computer and that the app's user may create and delete files there."
+        }
+      ]
+    },
+    {
+      "title": "Logs",
+      "routes": ["/interfaces/logs/:tab?"],
+      "purpose": "Follow every message sent to an outside system, with what the transport can prove and what the other system confirmed.",
+      "access": "Manage configuration.",
+      "fields": [
+        {
+          "name": "Period (Today)",
+          "meaning": "How far back the rows go.",
+          "values": "Today (default, from midnight in the laboratory's time zone); Last 7 days; Last 30 days; All time.",
+          "rules": "The newest 500 rows are shown; narrow the period to see older ones."
+        },
+        {
+          "name": "Connection (All connections)",
+          "meaning": "One connection's rows only.",
+          "values": "All connections, or one by name.",
+          "rules": "Unrouted messages belong to no connection and show only under All connections."
+        },
+        {
+          "name": "Direction (In and out)",
+          "meaning": "Messages received, sent, or both.",
+          "values": "In and out (default); Out; In.",
+          "rules": "Every message of this release is sent out, so In shows none."
+        },
+        {
+          "name": "Outcome (All outcomes)",
+          "meaning": "Narrow by what the transport can prove.",
+          "values": "All outcomes (default); Written; Failed; Not sent (not written yet, unrouted messages included).",
+          "rules": "Combines with the tab; the tabs count what the other filters leave."
+        },
+        {
+          "name": "Search",
+          "meaning": "Narrow the rows.",
+          "values": "A handoff number (digits only, exact), or part of a file name or folder.",
+          "rules": "Optional; kept in the address."
+        },
+        {
+          "name": "All / Failed / Rejected / Awaiting ACK / Outcome unknown / Duplicates",
+          "meaning": "Which rows the tab shows, with their number.",
+          "values": "Failed: a write failed and is retried or given up. Rejected: the other system refused it. Awaiting ACK: sent and waiting for the other system's answer. Outcome unknown: written to a folder, which never confirms. Duplicates: received again.",
+          "rules": "A folder never answers and nothing is received in this release, so Rejected, Awaiting ACK and Duplicates stay at 0. The tab is part of the address."
+        },
+        {
+          "name": "Time, Dir., Connection, Message, Record",
+          "meaning": "When the row last changed (written, tried or made), the direction, the connection (None matched for an unrouted message), the message type and the billing handoff or Test message.",
+          "values": "As recorded.",
+          "rules": "Read-only."
+        },
+        {
+          "name": "Transport",
+          "meaning": "Did it leave: what the folder can prove.",
+          "values": "Written; Failed; Not sent.",
+          "rules": "Never Delivered."
+        },
+        {
+          "name": "Application",
+          "meaning": "Did the other system accept it.",
+          "values": "Outcome unknown for a written file: a folder never confirms; — otherwise.",
+          "rules": "The billing company's acknowledgement or rejection is recorded on the billing handoff page, by people with Billing."
+        },
+        {
+          "name": "Details",
+          "meaning": "Why the row stands where it does.",
+          "values": "Written as <folder and file>; <problem>; attempt N of 5 at <time>; <problem>; not written after 5 attempts; Connection stopped; Destination check not recorded; Waiting for the connection's schedule; Written at the next pass; No connection rule matched; or the decision on an unrouted message.",
+          "rules": "Read-only."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Send again",
+          "does": "Puts a message whose attempts all failed back in the queue with 5 new attempts.",
+          "availableWhen": "From the row's ⋯ menu, on a failed message that is not a test message.",
+          "result": "It is written at the next pass if the connection is started and verified. The same file is sent; no new message or report is made."
+        },
+        {
+          "name": "Export CSV",
+          "does": "Saves the rows shown, with the current tab and filters.",
+          "availableWhen": "At least one row is shown and the Downloads folder is available.",
+          "result": "An interface-log-<date>.csv file in your Downloads folder, with codes as stored. The export is recorded in the audit trail."
+        },
+        {
+          "name": "Open row",
+          "does": "Opens the connection, or Unrouted messages for an unrouted message.",
+          "availableWhen": "A listed row.",
+          "result": "Nothing changes."
+        }
+      ],
+      "restrictions": [
+        "Failed writes are retried automatically after 1, 2, 4 and 8 minutes; after the fifth failure the message waits for Send again and appears in the Interface messages not written work queue.",
+        "Message content is not shown here. The billing handoff file is opened from Billing › Billing handoffs, by people with Billing; opening it is audited."
+      ],
+      "workflow": [
+        "Check the Failed tab daily.",
+        "Fix the cause shown in Details, then use Send again.",
+        "Confirm with the partner when Outcome unknown matters, and record the billing outcome on the handoff."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A row stays Not sent with Destination check not recorded",
+          "recovery": "Open the connection and have a second person use Record destination check."
+        },
+        {
+          "problem": "Send again is missing",
+          "recovery": "It appears only after all 5 attempts failed. While a retry is planned, Details shows the time of the next attempt."
+        },
+        {
+          "problem": "Export CSV says the Downloads folder is not available",
+          "recovery": "The operating system reports no Downloads folder for this user; ask the computer's administrator to restore it."
+        }
+      ]
+    },
+    {
+      "title": "Unrouted messages",
+      "routes": ["/interfaces/unrouted"],
+      "purpose": "Decide on outgoing messages that matched no connection's rules. Nothing is lost: each waits here until someone decides.",
+      "access": "Manage configuration.",
+      "fields": [
+        {
+          "name": "Waiting since, Message, Record, Client, Practitioner, Reason, Next action",
+          "meaning": "When the message was made and how long it has waited, its type, the billing handoff, the clients and practitioners in it, why it is here and what to do.",
+          "values": "As recorded, such as 2026-11-03 10:40 (3 h); Reason is No rule matched; Next action is Send to a connection.",
+          "rules": "Oldest first. A row shows its details below the table; the oldest is shown until you choose another. The count also shows beside the menu entry and in the Unrouted interface messages work queue."
+        },
+        {
+          "name": "Created, Checked against, Client, Closest rule",
+          "meaning": "The chosen message's details: when it was made, how many connections of its type its rules were checked against, its clients, and the rule of the closest connection it does not meet.",
+          "values": "As recorded; Closest rule as field, condition and value (did not match), or None when no connection has rules.",
+          "rules": "Read-only. The closest rule is computed from the rules as they are now."
+        },
+        {
+          "name": "Send to",
+          "meaning": "The connection for Send once.",
+          "values": "Send to: <connection> for each connection that carries the message's type; the closest connection is offered first.",
+          "rules": "Required for Send once."
+        },
+        {
+          "name": "How it was delivered / Reason",
+          "meaning": "For Deliver another way, how the file was delivered; for Dismiss, why it is not delivered.",
+          "values": "Free text up to 500 characters.",
+          "rules": "Required for those actions; recorded in the audit trail."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Send once",
+          "does": "Sends this message once to the chosen connection, without changing its rules.",
+          "availableWhen": "A connection is chosen.",
+          "result": "It is written under the connection's usual checks: started, verified and its schedule. It leaves this list and shows in Logs."
+        },
+        {
+          "name": "Add a rule for <client>",
+          "does": "Opens the closest connection's Rules tab, or Connections when there is none.",
+          "availableWhen": "Always.",
+          "result": "After changing a rule with Edit, come back and use Retry routing."
+        },
+        {
+          "name": "Retry routing",
+          "does": "Checks the message against every connection's rules as they are now.",
+          "availableWhen": "Always.",
+          "result": "It goes to every connection whose rules match, or stays here with a message that no rule matches yet."
+        },
+        {
+          "name": "Deliver another way…",
+          "does": "Records that the file was delivered outside the LIS, such as by fax.",
+          "availableWhen": "Always; the method is required.",
+          "result": "It leaves this list and Logs show Delivery recorded another way, so it is still reconciled. The LIS writes no file."
+        },
+        {
+          "name": "Dismiss with reason",
+          "does": "Leaves the message undelivered.",
+          "availableWhen": "Always; a reason is required.",
+          "result": "It leaves this list; Logs show it as Dismissed."
+        }
+      ],
+      "restrictions": [
+        "Every decision is final and audited.",
+        "A message here was made because at least one connection of its type existed; without any connection of the type, no message is made."
+      ],
+      "workflow": [
+        "Open the oldest message.",
+        "Read the closest rule to see why it did not match.",
+        "Fix the rule and use Retry routing, or Send once when the partner is right this time only.",
+        "Use Deliver another way or Dismiss only when the file should not go through a connection."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Retry routing says no connection's rules match yet",
+          "recovery": "Change the rule first (Add a rule, then Edit on the connection), or use Send once."
+        },
+        {
+          "problem": "This message is no longer waiting",
+          "recovery": "Someone already decided. Refresh the list; Logs show the decision."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/interfaces/connections/ConnectionsPage.tsx",
+    "ui/src/features/interfaces/connections/connectionColumns.tsx",
+    "ui/src/features/interfaces/connections/ConnectionDialog.tsx",
+    "ui/src/features/interfaces/connections/ConnectionSections.tsx",
+    "ui/src/features/interfaces/connections/ProtocolCards.tsx",
+    "ui/src/features/interfaces/connections/connectionForm.ts",
+    "ui/src/features/interfaces/connections/FolderFields.tsx",
+    "ui/src/features/interfaces/connections/RuleFields.tsx",
+    "ui/src/features/interfaces/connections/ConnectionPage.tsx",
+    "ui/src/features/interfaces/connections/ConnectionActions.tsx",
+    "ui/src/features/interfaces/connections/ConnectionOverview.tsx",
+    "ui/src/features/interfaces/connections/ConnectionHistory.tsx",
+    "ui/src/features/interfaces/connections/CheckDialog.tsx",
+    "ui/src/features/interfaces/logs/LogsPage.tsx",
+    "ui/src/features/interfaces/logs/MessagesSection.tsx",
+    "ui/src/features/interfaces/logs/messageColumns.tsx",
+    "ui/src/features/interfaces/unrouted/UnroutedPage.tsx",
+    "ui/src/features/interfaces/unrouted/UnroutedDetails.tsx",
+    "ui/src/features/interfaces/unrouted/AnotherWayDialog.tsx",
+    "ui/src/features/interfaces/labels.ts",
+    "crates/lis-interfaces/src/partner/settings.rs",
+    "crates/lis-interfaces/src/partner/rules.rs",
+    "crates/lis-interfaces/src/partner/connections.rs",
+    "crates/lis-interfaces/src/partner/messages.rs",
+    "crates/lis-interfaces/src/partner/delivery.rs",
+    "crates/lis-interfaces/src/partner/message_queries.rs",
+    "crates/lis-engine/src/partner_delivery.rs",
+    "crates/lis-engine/src/partner_delivery/folder_write.rs",
+    "crates/lis-engine/src/commands/partner/folder_choices.rs",
+    "crates/lis-engine/src/commands/partner/messages.rs"
+  ]
+}

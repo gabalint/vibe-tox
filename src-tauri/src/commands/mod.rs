@@ -23,6 +23,7 @@ mod catalog_review;
 // catalog: end
 // interfaces: begin
 mod interfaces;
+mod partner;
 // interfaces: end
 // orders: begin
 mod orders;

@@ -25,6 +25,7 @@ The navigation and route definitions are maintained in [`navigation.ts`](../../u
 | Reports | Release queue, Delivery, Reports, Report templates |
 | Billing | Billing follow-up, Billing work, Billing handoffs, Billing class mappings |
 | Quality and audit | Audit trail, Audit anchors |
+| Interfaces | Connections, Logs, Unrouted messages |
 | Test catalog | Tests and panels, Methods, Analytes, Specimen types |
 | Laboratory setup | Material configuration, Laboratory profile, Catalog review, Clients, Practitioners, Delivery destinations, Instruments, Users, Starter data |
 | System | Host health, Backups, Recovery kit, Versions and updates, Operations settings, Media disposals, Exit export |
@@ -72,6 +73,9 @@ Versioned record pages show the version in effect and any open draft in the head
 | Delivery obligation | Reports › Delivery → panel | Attempts and their channel/evidence level belong to the exact obligation |
 | Billing evidence | Billing › Billing follow-up or order billing context | Financial evidence does not authorize clinical work |
 | Billing derivation and handoff | Billing work → derivation or handoff page; Billing handoffs → handoff page | Bulk handoff selection is explicit; individual outcomes belong to the handoff item. A handoff whose items are all acknowledged leaves Billing work and is found in Billing handoffs |
+| Interface connection | Interfaces › Connections → page with Overview, Rules, Logs and History tabs | Edit, Start/Stop with a reason, destination check, folder test and synthetic test message; analyzers stay under Laboratory setup › Instruments |
+| Interface message | Interfaces › Logs → tab by outcome; a row opens its connection | Transport and application outcomes are separate; never a bare "Delivered"; Send again only after every attempt failed |
+| Unrouted message | Interfaces › Unrouted messages → panel | Send once, Retry routing, Deliver another way or Dismiss with reason; Add a rule opens the closest connection |
 
 [`itemPath.ts`](../../ui/src/features/workqueues/itemPath.ts) owns work-item routing. Deviations, preservation incidents, delivery obligations, billing patient/date work and handoff items retain their exact identities across list limits. Unknown item kinds do not get a guessed record link. The connected workflow is described in [daily operation](../operations/daily-operation.md).
 

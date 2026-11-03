@@ -7,6 +7,7 @@
 
 mod billing_items;
 mod catalog;
+mod interface_items;
 mod ops_items;
 mod owner_items;
 mod reporting_items;
@@ -126,6 +127,8 @@ pub(super) enum WorkQueueError {
     #[error(transparent)]
     Billing(#[from] lis_billing::BillingError),
     #[error(transparent)]
+    Interfaces(#[from] lis_interfaces::partner::PartnerError),
+    #[error(transparent)]
     Runtime(#[from] lis_ops::RuntimeError),
     #[error(transparent)]
     Backup(#[from] lis_ops::backup::BackupError),
@@ -145,6 +148,7 @@ impl ModuleError for WorkQueueError {
             | Self::Result(_)
             | Self::Reporting(_)
             | Self::Billing(_)
+            | Self::Interfaces(_)
             | Self::Runtime(_)
             | Self::Backup(_) => None,
         }
@@ -322,6 +326,9 @@ fn load_items(
         | "recovery_reconciliation"
         | "version_acceptance"
         | "results_expected" => ops_items::ops_items(conn, definition, query_limit, principal)?,
+        "unrouted_messages" | "interface_failures" => {
+            interface_items::interface_items(conn, definition, query_limit)?
+        }
         _ => reporting_items::reporting_items(conn, definition, query_limit)?,
     };
     // A bounded owner scan can contain several events for one task. Its deduplicated

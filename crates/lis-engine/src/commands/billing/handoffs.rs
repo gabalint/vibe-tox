@@ -3,7 +3,8 @@
 //!
 //! - **Create**: the file is built on a read connection and stored as an
 //!   artifact; one transaction then rebuilds it, checks its digest and
-//!   every derivation again, and records the handoff.
+//!   every derivation again, records the handoff and routes it to the
+//!   Billing JSON connections (Interfaces).
 //! - **Export**: the stored bytes are read back with digest verification
 //!   and published as a new `billing-handoff-<id>.json` in the folder the
 //!   desktop shell resolves (the OS Downloads folder) after an audited
@@ -29,6 +30,7 @@ use super::{
     CREATE_BILLING_HANDOFF, EXPORT_BILLING_HANDOFF, GET_BILLING_HANDOFF, LIST_BILLING_HANDOFFS,
     RECORD_HANDOFF_OUTCOME,
 };
+use crate::commands::partner::{HandoffError, route_billing_handoff};
 use crate::engine::Engine;
 use crate::pipeline::{Failure, access};
 use crate::report_rendering::ExportFile;
@@ -92,7 +94,9 @@ impl Engine {
             self.write(&call, move |ctx| {
                 ensure_outbound(ctx.tx())?;
                 let id = lis_billing::create_billing_handoff(ctx, &plan, &digest)?;
-                handoff_read(ctx, CREATE_BILLING_HANDOFF.action, id)
+                let view = handoff_read(ctx, CREATE_BILLING_HANDOFF.action, id)?;
+                route_billing_handoff(ctx, &view)?;
+                Ok::<_, HandoffError>(view)
             })
             .await
         })

@@ -1,0 +1,43 @@
+// Interfaces (ticket #4555; REQ-INT-001–003, REQ-RPT-003, REQ-RPT-011–012, REQ-BIL-002):
+// connections to outside systems, the message log and Unrouted messages. Every command needs
+// `manage_configuration`. A connection's folder comes only from the native dialog; the UI holds
+// the handle `choose_partner_folder` returns, never a path it sends.
+import type { CommandName } from "@/generated/CommandName";
+
+/** `list_partner_connections() → PartnerConnection[]`. */
+export const LIST_CONNECTIONS = "list_partner_connections" satisfies CommandName;
+/** `get_partner_connection({input:{connectionId}}) → PartnerConnectionDetail`. */
+export const GET_CONNECTION = "get_partner_connection" satisfies CommandName;
+/** `choose_partner_folder() → ChosenPartnerFolder | null` (opens the native dialog). */
+export const CHOOSE_FOLDER = "choose_partner_folder" satisfies CommandName;
+/** `test_partner_folder({input:{folderChoice}|{connectionId}}) → FolderTestResult`. */
+export const TEST_FOLDER = "test_partner_folder" satisfies CommandName;
+export const CREATE_CONNECTION = "create_partner_connection" satisfies CommandName;
+export const UPDATE_CONNECTION = "update_partner_connection" satisfies CommandName;
+export const SET_ACTIVE = "set_partner_connection_active" satisfies CommandName;
+export const RECORD_CHECK = "record_partner_destination_check" satisfies CommandName;
+export const SEND_TEST_MESSAGE = "send_partner_test_message" satisfies CommandName;
+/** `list_partner_messages({input:ListPartnerMessages}) → PartnerMessagePage`. */
+export const LIST_MESSAGES = "list_partner_messages" satisfies CommandName;
+export const EXPORT_MESSAGES = "export_partner_messages" satisfies CommandName;
+/** `list_unrouted_partner_messages() → UnroutedMessage[]`. */
+export const LIST_UNROUTED = "list_unrouted_partner_messages" satisfies CommandName;
+export const RESOLVE_UNROUTED = "resolve_unrouted_message" satisfies CommandName;
+export const RESEND_DELIVERY = "resend_partner_delivery" satisfies CommandName;
+
+const WORK_QUEUES = "list_work_queues" satisfies CommandName;
+
+/** What a connection change makes stale. */
+export const CONNECTION_QUERIES: readonly CommandName[] = [
+  LIST_CONNECTIONS,
+  GET_CONNECTION,
+  LIST_MESSAGES,
+];
+/** What a message decision makes stale, the navigation badge included. */
+export const MESSAGE_QUERIES: readonly CommandName[] = [
+  LIST_CONNECTIONS,
+  GET_CONNECTION,
+  LIST_MESSAGES,
+  LIST_UNROUTED,
+  WORK_QUEUES,
+];

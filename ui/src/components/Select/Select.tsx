@@ -22,6 +22,11 @@ interface SelectProps {
   label: string;
   /** Compact collection filter; form fields keep their stacked label. */
   layout?: "inline";
+  /**
+   * The label is read by screen readers only, for a filter whose options name it ("All
+   * connections", "All outcomes") or a row whose columns do.
+   */
+  isLabelHidden?: boolean;
   name: string;
   options: readonly SelectOption[];
   value: string | null;
@@ -38,6 +43,7 @@ interface SelectProps {
 export function Select({
   label,
   layout,
+  isLabelHidden,
   options,
   onChange,
   description,
@@ -58,7 +64,9 @@ export function Select({
       onChange={(key) => onChange(key === null ? null : String(key))}
       className={formStyles.field}
     >
-      <FieldLabel isRequired={isRequired}>{label}</FieldLabel>
+      <FieldLabel isRequired={isRequired} isHidden={isLabelHidden}>
+        {label}
+      </FieldLabel>
       <Button ref={inputRef} className={`${formStyles.control} ${styles.trigger}`}>
         <SelectValue className={styles.value} />
         <ChevronDown aria-hidden="true" className={styles.chevron} />

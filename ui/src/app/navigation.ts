@@ -1,9 +1,11 @@
 import {
   Anchor,
+  Cable,
   ClipboardCheck,
   ClipboardList,
   ContactRound,
   FileCheck,
+  FileClock,
   FileInput,
   FileOutput,
   Files,
@@ -13,8 +15,10 @@ import {
   ListChecks,
   type LucideIcon,
   Microscope,
+  Network,
   Receipt,
   ReceiptText,
+  Route,
   ScanBarcode,
   ScrollText,
   Send,
@@ -280,6 +284,39 @@ export const navigation: readonly NavSection[] = [
         icon: Anchor,
         page: () => import("@/features/audit/anchors/AnchorsPage").then((m) => m.AnchorsPage),
         capabilities: ["view_audit"],
+      },
+    ],
+  },
+  {
+    heading: "Interfaces",
+    icon: Network,
+    screens: [
+      {
+        path: "/interfaces/connections",
+        label: "Connections",
+        icon: Cable,
+        page: () =>
+          import("@/features/interfaces/connections/ConnectionsPage").then(
+            (m) => m.ConnectionsPage,
+          ),
+        capabilities: ["manage_configuration"],
+      },
+      {
+        path: "/interfaces/logs",
+        label: "Logs",
+        icon: FileClock,
+        page: () => import("@/features/interfaces/logs/LogsPage").then((m) => m.LogsPage),
+        capabilities: ["manage_configuration"],
+        tabbed: true,
+      },
+      {
+        path: "/interfaces/unrouted",
+        label: "Unrouted messages",
+        icon: Route,
+        page: () =>
+          import("@/features/interfaces/unrouted/UnroutedPage").then((m) => m.UnroutedPage),
+        capabilities: ["manage_configuration"],
+        queue: "unrouted_messages",
       },
     ],
   },

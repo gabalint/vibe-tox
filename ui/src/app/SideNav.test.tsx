@@ -96,6 +96,7 @@ describe("Side navigation", () => {
         ["Reports", "false"],
         ["Billing", "false"],
         ["Quality and audit", "false"],
+        ["Interfaces", "false"],
         ["Test catalog", "false"],
         ["Laboratory setup", "false"],
         ["System", "false"],
@@ -157,6 +158,8 @@ describe("Side navigation", () => {
       "Versions and updates",
       "Operations settings",
     ]);
+    await user.click(screen.getByRole("button", { name: "Interfaces" }));
+    expect(linksIn("Interfaces")).toEqual(["Connections", "Logs", "Unrouted messages"]);
     await open(user, "Bench");
     expect(linksIn("Bench")).toEqual(["Bench setup"]);
   });

@@ -3,8 +3,8 @@
 use super::{
     analytical, anchors, app_info, audit, backup, billing, billing_intake, catalog, catalog_review,
     collection_corrections, demo, file_templates, identity, interfaces, listeners, operations,
-    orders, report_layouts, reporting, result_files, results, security_keys, session, specimens,
-    updates, users, window_theme, work_queues,
+    orders, partner, report_layouts, reporting, result_files, results, security_keys, session,
+    specimens, updates, users, window_theme, work_queues,
 };
 
 use tauri::Runtime;
@@ -142,6 +142,20 @@ pub(crate) fn handler<R: Runtime>() -> impl Fn(Invoke<R>) -> bool + Send + Sync 
         interfaces::register_instrument,
         interfaces::update_instrument_connection,
         interfaces::set_instrument_enabled,
+        partner::list_partner_connections,
+        partner::get_partner_connection,
+        partner::choose_partner_folder,
+        partner::test_partner_folder,
+        partner::create_partner_connection,
+        partner::update_partner_connection,
+        partner::set_partner_connection_active,
+        partner::record_partner_destination_check,
+        partner::send_partner_test_message,
+        partner::list_partner_messages,
+        partner::export_partner_messages,
+        partner::list_unrouted_partner_messages,
+        partner::resolve_unrouted_message,
+        partner::resend_partner_delivery,
         // interfaces: end
         // orders: begin
         orders::register_order,

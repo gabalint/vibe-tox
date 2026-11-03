@@ -31,7 +31,6 @@
 
 mod files;
 mod intake;
-mod poller;
 mod state;
 
 use std::collections::HashSet;
@@ -49,9 +48,10 @@ use lis_store::Database;
 use self::files::Candidate;
 pub(crate) use self::files::{candidates, modified_at, open_for_reading};
 use self::intake::Taken;
-pub(crate) use self::poller::FolderPoller;
 use self::state::PollState;
+use crate::engine::Engine;
 use crate::ops_worker::locked;
+use crate::poller::{Poller, Scan, scan_off_runtime};
 
 /// How often the folders are listed.
 const SCAN_INTERVAL: Duration = Duration::from_secs(10);
@@ -73,13 +73,13 @@ impl ResultFolders {
         db: &Arc<Database>,
         clock: &Arc<dyn Clock>,
         listeners: &Arc<ListenerSupervisor>,
-    ) -> (Arc<Self>, FolderPoller) {
+    ) -> (Arc<Self>, Poller) {
         let folders = Arc::new(Self::new(
             Arc::clone(db),
             Arc::clone(clock),
             Arc::clone(listeners),
         ));
-        let poller = FolderPoller::start(Arc::clone(&folders), SCAN_INTERVAL);
+        let poller = Poller::start(folders.clone(), SCAN_INTERVAL);
         (folders, poller)
     }
 
@@ -154,11 +154,6 @@ impl ResultFolders {
             Some(folder) => self.scan_folder(state, instrument.id, folder, now),
             None => unwatched(ListenerState::ManualOnly, None),
         }
-    }
-
-    /// Stops a scan in progress between files, for shutdown.
-    pub(crate) fn cancel(&self) {
-        self.cancel.store(true, Ordering::Release);
     }
 
     fn scan_folder(
@@ -284,6 +279,25 @@ impl ResultFolders {
             );
         }
         self.listeners.report_folder_status(instrument_id, report);
+    }
+}
+
+impl Scan for ResultFolders {
+    fn scan(&self) {
+        ResultFolders::scan(self);
+    }
+
+    /// Stops a scan in progress between files, for shutdown.
+    fn cancel(&self) {
+        self.cancel.store(true, Ordering::Release);
+    }
+}
+
+impl Engine {
+    /// One watched-folder scan now, as the poller runs every 10 seconds from start, at the
+    /// sign-in screen too (F13). Scenario tests drive the poller with it and the clock.
+    pub async fn scan_result_folders(&self) {
+        scan_off_runtime(self.result_folders.clone()).await;
     }
 }
 

@@ -51,6 +51,9 @@ pub(crate) async fn billing_call(
     if let Some(result) = service_call(engine, name).await {
         return Some(result);
     }
+    if let Some(result) = interfaces::partner_call(engine, name).await {
+        return Some(result);
+    }
     let version_id = BillingClassMappingVersionId::generate();
     Some(match name {
         "list_class_mapping_versions" => engine.list_class_mapping_versions().await.map(drop),
@@ -1462,3 +1465,6 @@ mod empty_date;
 
 #[path = "billing_paging.rs"]
 mod paging;
+
+#[path = "billing_interfaces.rs"]
+mod interfaces;

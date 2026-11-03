@@ -12,6 +12,7 @@ pub(crate) mod catalog;
 // catalog: end
 // interfaces: begin
 pub(crate) mod interfaces;
+pub(crate) mod partner;
 // interfaces: end
 // orders: begin
 pub(crate) mod orders;

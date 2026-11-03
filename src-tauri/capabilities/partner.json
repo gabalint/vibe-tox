@@ -1,0 +1,22 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "partner",
+  "description": "Interfaces commands for the main window: connections to outside systems, their folder chosen in a native dialog, the message log and Unrouted messages (REQ-INT-001-003, REQ-RPT-003, REQ-RPT-011-012; NFR-31).",
+  "windows": ["main"],
+  "permissions": [
+    "allow-list-partner-connections",
+    "allow-get-partner-connection",
+    "allow-choose-partner-folder",
+    "allow-test-partner-folder",
+    "allow-create-partner-connection",
+    "allow-update-partner-connection",
+    "allow-set-partner-connection-active",
+    "allow-record-partner-destination-check",
+    "allow-send-partner-test-message",
+    "allow-list-partner-messages",
+    "allow-export-partner-messages",
+    "allow-list-unrouted-partner-messages",
+    "allow-resolve-unrouted-message",
+    "allow-resend-partner-delivery"
+  ]
+}
