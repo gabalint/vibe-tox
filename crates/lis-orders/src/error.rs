@@ -21,9 +21,9 @@ pub enum OrderError {
     /// Current state refuses the transition.
     #[error("the requested order transition is not allowed")]
     InvalidTransition,
-    /// A safety gate blocks the action.
-    #[error("an order gate blocks this action")]
-    GateBlocked,
+    /// A safety gate blocks the action; the message names the gate.
+    #[error("{0}")]
+    GateBlocked(OrderGate),
     /// A requested item predates the explicit sequence-role requirement.
     #[error("a legacy order item needs an explicit sequence role before acceptance")]
     LegacySequenceRoleMissing,
@@ -41,6 +41,41 @@ pub enum OrderError {
     Catalog(#[from] lis_catalog::CatalogError),
 }
 
+/// The order gate that refused an action, named in plain words for the user.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+pub enum OrderGate {
+    /// The test version is not approved or has been retired.
+    #[error("The test version is not approved or is no longer in use. Choose a current version.")]
+    InactiveTestVersion,
+    /// An open clarification hold blocks acceptance.
+    #[error("The order has an open clarification hold. Resolve the hold first.")]
+    OpenClarificationHold,
+    /// An add-on is accepted only with the evidence that authorizes it.
+    #[error(
+        "This add-on has no authority reference. Decline it and record a new request with \
+         the document or call that authorizes it."
+    )]
+    AddOnWithoutAuthority,
+    /// The parent test is on a different order.
+    #[error("The parent test belongs to a different order.")]
+    ParentOnOtherOrder,
+    /// A reflex needs the test that triggered it.
+    #[error("A reflex needs the test that triggered it.")]
+    ParentMissing,
+    /// The parent test is not accepted.
+    #[error("The parent test is not accepted.")]
+    ParentNotAccepted,
+    /// The order does not authorize reflex testing for the parent test.
+    #[error("The order does not authorize reflex testing for the parent test.")]
+    ReflexNotAuthorized,
+    /// The test is outside the parent test's authorized reflex scope.
+    #[error("This test is outside the reflex scope authorized for the parent test.")]
+    OutsideReflexScope,
+    /// The point-of-care result is not recorded on this order.
+    #[error("The point-of-care result is not recorded on this order.")]
+    PointOfCareResultMissing,
+}
+
 impl OrderError {
     /// Stable UI error classification.
     #[must_use]
@@ -52,7 +87,7 @@ impl OrderError {
             Self::RevisionConflict | Self::InvalidTransition | Self::ReplayConflict => {
                 ErrorCode::Conflict
             }
-            Self::GateBlocked | Self::LegacySequenceRoleMissing => ErrorCode::GateBlocked,
+            Self::GateBlocked(_) | Self::LegacySequenceRoleMissing => ErrorCode::GateBlocked,
             Self::Store(error) => error.code(),
             Self::Identity(error) => error.code(),
             Self::Catalog(error) => error.code(),
@@ -70,7 +105,7 @@ impl OrderError {
             | Self::InvalidBillingRecord
             | Self::RevisionConflict
             | Self::InvalidTransition
-            | Self::GateBlocked
+            | Self::GateBlocked(_)
             | Self::LegacySequenceRoleMissing
             | Self::ReplayConflict
             | Self::Store(_)

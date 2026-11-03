@@ -320,17 +320,56 @@ describe("OrderDetailPage (REQ-ORD-001, REQ-ORD-005)", { timeout: WALKTHROUGH_TI
     await pickRecord(user, /^Test/, "SYN-CNF");
     await chooseWithKeyboard(user, /Testing sequence role$/, "Confirmation");
     await user.type(within(dialog).getByRole("textbox", { name: /Reason/ }), "Clinic called");
+    // An add-on needs the evidence that authorizes it (ticket #4513).
+    await user.click(within(dialog).getByRole("button", { name: "Record request" }));
+    expect(await within(dialog).findByText("Enter authority reference.")).toBeTruthy();
+    expect(request).not.toHaveBeenCalled();
+    await user.type(
+      within(dialog).getByRole("textbox", { name: /Authority reference/ }),
+      "Call with Test, Doctor",
+    );
     await user.click(within(dialog).getByRole("button", { name: "Record request" }));
     await screen.findByText("Request recorded; it awaits a decision");
     expect(request).toHaveBeenCalledWith({
       input: expect.objectContaining({
         kind: "add_on",
+        authorityReference: "Call with Test, Doctor",
         parentItemId: null,
         triggerSource: null,
         triggerRef: null,
         pocResultId: null,
       }),
     });
+  });
+
+  it("says why an add-on without an authority reference cannot be accepted", async () => {
+    const { user } = renderPage({
+      ...ACCEPTED,
+      items: [
+        ...ACCEPTED.items,
+        {
+          itemId: "item-2",
+          kind: "add_on" as const,
+          state: "requested" as const,
+          orderableVersionId: CONFIRM.id,
+          orderableCode: CONFIRM.code,
+          orderableName: CONFIRM.name,
+          sequenceRole: "confirmation" as const,
+          parentItemId: null,
+          reflexAuthorization: "not_stated" as const,
+          reflexScopeOrderableIds: [],
+          authorityReference: null,
+          reason: "Clinic called",
+          revision: 1,
+          components: [],
+        },
+      ],
+    });
+    const menu = await openRowActions(user, "SYN-CNF Synthetic confirmation");
+    await user.click(within(menu).getByRole("menuitem", { name: "Accept request" }));
+    const decision = await screen.findByRole("alertdialog");
+    expect(within(decision).getByText("This add-on has no authority reference")).toBeTruthy();
+    expect(within(decision).getByText(/Decline it and record a new request/)).toBeTruthy();
   });
 
   it("offers accessioning on an accepted order only to people who accession", async () => {

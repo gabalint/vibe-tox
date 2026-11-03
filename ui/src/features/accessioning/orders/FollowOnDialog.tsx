@@ -89,7 +89,8 @@ export function FollowOnDialog({ order, references, onClose }: FollowOnDialogPro
       <TextInput
         name="authorityReference"
         label="Authority reference"
-        description="The document or call that authorizes the test."
+        description="The document or call that authorizes the test. Required for an add-on."
+        isRequired={kind === "add_on"}
       />
       <ReasonField />
     </FormDialog>

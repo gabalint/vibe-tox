@@ -41,7 +41,7 @@ pub use commands::{
     request_cancellation, request_follow_on, request_follow_on_from_result,
     resolve_clarification_hold,
 };
-pub use error::OrderError;
+pub use error::{OrderError, OrderGate};
 pub use inputs::{
     AcceptOrderInput, AmendOrderEvidenceInput, AuthorityEvidenceInput,
     CreateBillingReviewItemInput, DecideCancellationInput, DecideFollowOnInput, DiagnosisInput,

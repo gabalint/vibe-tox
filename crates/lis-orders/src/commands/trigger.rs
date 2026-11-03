@@ -6,7 +6,7 @@ use lis_core::Capability;
 use lis_store::CommandContext;
 use rusqlite::{OptionalExtension, params};
 
-use crate::error::{OrderError, invalid};
+use crate::error::{OrderError, OrderGate, invalid};
 use crate::inputs::{
     LaboratoryResultTriggerNotMetInput, RecordTriggerNotMetInput, RequestFollowOnInput,
 };
@@ -45,7 +45,7 @@ pub fn record_trigger_not_met_from_result(
     input: LaboratoryResultTriggerNotMetInput,
 ) -> Result<crate::OrderDetail, OrderError> {
     if parent_order(ctx, input.parent_item_id)? != input.order_id {
-        return Err(OrderError::GateBlocked);
+        return Err(OrderError::GateBlocked(OrderGate::ParentOnOtherOrder));
     }
     let assessment = RecordTriggerNotMetInput {
         parent_item_id: input.parent_item_id,
@@ -165,14 +165,18 @@ pub(super) fn ensure_reflex_scope(
         )
         .optional()?
         .is_some();
-    if parent_order != order_id
-        || state != ItemState::Accepted
-        || authority != ReflexAuthorization::Authorized
-        || !in_scope
-    {
-        return Err(OrderError::GateBlocked);
-    }
-    Ok(())
+    let gate = if parent_order != order_id {
+        OrderGate::ParentOnOtherOrder
+    } else if state != ItemState::Accepted {
+        OrderGate::ParentNotAccepted
+    } else if authority != ReflexAuthorization::Authorized {
+        OrderGate::ReflexNotAuthorized
+    } else if !in_scope {
+        OrderGate::OutsideReflexScope
+    } else {
+        return Ok(());
+    };
+    Err(OrderError::GateBlocked(gate))
 }
 
 pub(super) fn ensure_parent_order(
@@ -278,7 +282,7 @@ fn ensure_poc_reference(
     if exists {
         Ok(())
     } else {
-        Err(OrderError::GateBlocked)
+        Err(OrderError::GateBlocked(OrderGate::PointOfCareResultMissing))
     }
 }
 
@@ -309,7 +313,9 @@ pub(super) fn insert_activation(
     created_item_id: OrderItemId,
     boundary: TriggerBoundary,
 ) -> Result<(), OrderError> {
-    let parent_id = input.parent_item_id.ok_or(OrderError::GateBlocked)?;
+    let parent_id = input
+        .parent_item_id
+        .ok_or(OrderError::GateBlocked(OrderGate::ParentMissing))?;
     let (source, reference) = trigger_identity(input, boundary)?;
     ctx.tx().execute(
         "INSERT INTO ord_trigger_assessments (id, parent_item_id, orderable_id, outcome, \
