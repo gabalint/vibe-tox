@@ -64,6 +64,7 @@ const APP_COMMANDS: &[&str] = &[
     "list_audit_events",
     "verify_audit_chain",
     "list_listener_status",
+    "get_listener_restart",
     // Wave 3+: each area lists its commands here. Edit only your block.
     // identity: begin
     "search_subjects",
@@ -318,6 +319,7 @@ const APP_COMMANDS: &[&str] = &[
     "download_update",
     "approve_downloaded_update",
     "install_update",
+    "stop_listeners_for_update",
     "record_media_disposal",
     "list_media_disposals",
     "get_installation_key_state",

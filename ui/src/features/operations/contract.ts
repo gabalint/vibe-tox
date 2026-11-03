@@ -85,6 +85,7 @@ export const LIST_NIGHTLY_BUILDS = "list_nightly_builds";
 export const DOWNLOAD_UPDATE = "download_update";
 export const APPROVE_DOWNLOADED_UPDATE = "approve_downloaded_update";
 export const INSTALL_UPDATE = "install_update";
+export const STOP_LISTENERS_FOR_UPDATE = "stop_listeners_for_update";
 
 export const STARTUP_STATUS = "startup_status"; // shell-only: answered even when the engine failed to start
 

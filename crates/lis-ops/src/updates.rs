@@ -22,11 +22,16 @@ use crate::runtime_error::RuntimeError;
 
 mod backup;
 mod install;
+mod listeners;
 mod version;
 
 use backup::ensure_pre_update_backup;
 pub use backup::update_approval_eligible;
 pub use install::{InstallFailure, begin_update_install, record_update_install_failure};
+pub use listeners::{
+    ListenerRestart, RESTART_LISTENERS_AFTER_UPDATE, STOP_LISTENERS_FOR_UPDATE,
+    record_listeners_restarted, record_listeners_stopped,
+};
 use version::is_semver;
 pub use version::version_precedence;
 

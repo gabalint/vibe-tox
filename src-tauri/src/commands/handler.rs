@@ -77,6 +77,7 @@ pub(crate) fn handler<R: Runtime>() -> impl Fn(Invoke<R>) -> bool + Send + Sync 
         audit::list_audit_events,
         audit::verify_audit_chain,
         listeners::list_listener_status,
+        listeners::get_listener_restart,
         // Wave 3+: each area registers its adapters here. Edit only your block.
         // identity: begin
         identity::search_subjects,
@@ -331,6 +332,7 @@ pub(crate) fn handler<R: Runtime>() -> impl Fn(Invoke<R>) -> bool + Send + Sync 
         updates::download_update,
         updates::approve_downloaded_update,
         updates::install_update,
+        updates::stop_listeners_for_update,
         operations::record_media_disposal,
         operations::list_media_disposals,
         operations::get_installation_key_state,

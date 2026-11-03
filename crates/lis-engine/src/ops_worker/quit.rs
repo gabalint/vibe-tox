@@ -32,7 +32,23 @@ impl Engine {
     /// listeners, receipts being received, outbox items per topic, and the running job.
     /// PHI-free: instrument names, counts and job kinds.
     pub async fn quit_warnings(&self) -> QuitWarnings {
-        let statuses = self.listeners.status_snapshot();
+        self.pending_warnings(false).await
+    }
+
+    /// What must finish before an update installs: as [`quit_warnings`](Self::quit_warnings)
+    /// without watched folders, whose scan stops between files when the app closes and
+    /// whose files wait for the next start.
+    pub async fn update_warnings(&self) -> QuitWarnings {
+        self.pending_warnings(true).await
+    }
+
+    async fn pending_warnings(&self, connections_only: bool) -> QuitWarnings {
+        let running = self.listeners.running();
+        let statuses = self
+            .listeners
+            .status_snapshot()
+            .into_iter()
+            .filter(|status| !connections_only || running.contains(&status.instrument_id));
         // Without names the warning still lists each active listener.
         let names = self
             .db
@@ -46,7 +62,7 @@ impl Engine {
                 .map_or("An analyzer", |(_, name)| name.as_str())
         };
         let mut warnings = Vec::new();
-        for status in &statuses {
+        for status in statuses {
             match status.state {
                 ListenerState::Receiving => warnings.push(format!(
                     "{} is sending results now.",

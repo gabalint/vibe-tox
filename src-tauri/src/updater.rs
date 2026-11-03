@@ -299,7 +299,7 @@ pub(crate) async fn install<R: Runtime>(
             .ok_or_else(not_staged)?;
         (staged.update.clone(), staged.path.clone())
     };
-    let warnings = engine.quit_warnings().await;
+    let warnings = engine.update_warnings().await;
     if !warnings.is_empty() {
         return Err(refused(&format!(
             "Wait until these finish, then install: {}.",

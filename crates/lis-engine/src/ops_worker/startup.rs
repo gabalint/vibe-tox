@@ -141,11 +141,12 @@ pub(crate) async fn reconcile_published_sets(db: &Database, key: Option<DataKey>
     }
 }
 
-/// Records the app run and marks interrupted jobs (§6.4 step 8).
+/// Records the app run and marks interrupted jobs (§6.4 step 8); true when the app version
+/// differs from the previous run's.
 pub(crate) async fn start_run(
     db: &Database,
     webview: Option<String>,
-) -> Result<AppRunId, EngineError> {
+) -> Result<(AppRunId, bool), EngineError> {
     let start = RunStart {
         app_version: APP_VERSION.to_owned(),
         os_text: format!("{} {}", std::env::consts::OS, std::env::consts::ARCH),
@@ -162,5 +163,5 @@ pub(crate) async fn start_run(
         interrupted_jobs = interrupted,
         "app run started"
     );
-    Ok(started.run_id)
+    Ok((started.run_id, started.version_changed))
 }

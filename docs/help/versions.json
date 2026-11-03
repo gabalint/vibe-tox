@@ -2,14 +2,14 @@
   "id": "versions",
   "title": "Versions and updates",
   "summary": "Install a newer published update from the app, accept the detected running version, or record approval and backup evidence before installing an update.",
-  "reviewedOn": "2026-10-29",
+  "reviewedOn": "2026-11-03",
   "routes": ["/operations/versions/:tab?"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
         "Installed versions lists every version that has run, newest first, with its status; Running marks the current one. When the running version awaits acceptance, run the laboratory’s checks, choose Accept this version for clinical use in its row menu or details and enter a note with fresh identity confirmation. You do not type a version, select a package or choose a backup for this acceptance.",
-        "Available updates opens first. It starts with a status box: This app is up to date, An update is available or Updates could not be checked, with the installed version, when the app last checked and Refresh. Below it, Available versions has, while a nightly build runs, a Nightly / Release switch, then the newest version of the chosen channel, which includes every earlier one, with Update to version N at its bottom right when it is newer. A nightly build also shows when it was built, its commit and its first three changes (Show all N changes shows the rest); an official release shows its version, status and release date. When the installed version is the newest, it is marked Running and the status box says This app is up to date. Update now downloads and verifies the package, backs up this installation, records your approval and installs it; the app restarts into the new version, which then awaits acceptance.",
+        "Available updates opens first. It starts with a status box: This app is up to date, An update is available or Updates could not be checked, with the installed version, when the app last checked and Refresh. Below it, Available versions has, while a nightly build runs, a Nightly / Release switch, then the newest version of the chosen channel, which includes every earlier one, with Update to version N at its bottom right when it is newer. A nightly build also shows when it was built, its commit and its first three changes (Show all N changes shows the rest); an official release shows its version, status and release date. When the installed version is the newest, it is marked Running and the status box says This app is up to date. Update now downloads and verifies the package, backs up this installation, records your approval, stops the analyzer listeners and installs it; the app restarts into the new version, starts again every analyzer whose listening is enabled, and the new version then awaits acceptance. You do not disable or enable analyzers by hand: each keeps its enabled setting. After the restart, the sign-in screen and the analyzer badge in the top bar (press it) say how many analyzers listen again and names any that did not start, with the reason.",
         "Update approvals lists every approval. Approve a package from outside the app records the approval of a package installed by hand: review its release notes, copy the published version and risk description, and choose a recent verified manual or pre-update backup (Request pre-update backup is inside that dialog)."
       ]
     },
@@ -87,7 +87,7 @@
         {
           "name": "Update progress (Update to version N)",
           "meaning": "The steps the app is running for this update.",
-          "values": "Download the package and check its signature; Back up this installation and verify the copy; Record your approval of this package; Install and restart. Each shows Done or In progress.",
+          "values": "Download the package and check its signature; Back up this installation and verify the copy; Record your approval of this package; Stop analyzer listeners (when done, also how many listeners stopped); Install and restart. Each shows Done or In progress.",
           "rules": "Read-only. A failed step stops the update, shows the reason and leaves the dialog open to try again; steps already done stay done (a downloaded package and an approval are reused)."
         },
         {
@@ -208,9 +208,9 @@
         },
         {
           "name": "Update now",
-          "does": "Download and verify the package, take and verify a pre-update backup, record the approval of that package and install it.",
+          "does": "Download and verify the package, take and verify a pre-update backup, record the approval of that package, stop the analyzer listeners and install it.",
           "availableWhen": "Backup and restore authority and an available backup folder (the dialog offers Add backup folder when there is none); the Changes confirmation and fresh identity confirmation: password accounts enter their password; security-key accounts confirm with the selected key’s PIN or supported biometric verification.",
-          "result": "The app checks that no listener or other work is in progress, that the approval names exactly this package and that its backup is verified, audits the installation, then closes and starts the new version, which awaits acceptance. An earlier approval of the same package is reused without a second backup. A package already downloaded is checked again rather than downloaded twice. A failed step leaves the running version unchanged."
+          "result": "Before installing, the app waits up to one minute for any analyzer message being received to be received and acknowledged, then stops every analyzer listener without changing any analyzer’s enabled setting; the stop is recorded in the audit trail. It then checks that no other work is in progress (label print jobs, analyzer results to import, a running job), that the approval names exactly this package and that its backup is verified, audits the installation, then closes and starts the new version, which awaits acceptance. The new version starts every enabled listener again and records the restart in the audit trail; analyzers that were disabled stay disabled. Watched result folders are not stopped beforehand: their scan stops between files when the app closes, and files not yet read are read after the restart. If the installation does not happen, the listeners start again at once and that restart is audited too. An earlier approval of the same package is reused without a second backup. A package already downloaded is checked again rather than downloaded twice. A failed step leaves the running version unchanged."
         },
         {
           "name": "Add backup folder (Update to version N)",
@@ -353,8 +353,16 @@
           "recovery": "The package was not kept and nothing was installed. Do not install the package by other means; report the version and correlation ID to the project."
         },
         {
+          "problem": "An analyzer is still sending results. Try again when it finishes.",
+          "recovery": "An analyzer was still sending a message one minute after the update asked the listeners to stop. Nothing was stopped or installed. Wait until the analyzer finishes, then choose Update now again."
+        },
+        {
           "problem": "Wait until these finish, then install",
-          "recovery": "Listeners or other work are still in progress. Let them finish or stop them as the laboratory’s procedure allows, then choose the install action again."
+          "recovery": "Other work is still in progress, such as label print jobs, analyzer results waiting to be imported or a running backup. Nothing was installed, and the analyzer listeners have started again. Let the work finish, then choose Update now again."
+        },
+        {
+          "problem": "Some analyzers did not start listening after the update",
+          "recovery": "The sign-in screen and the analyzer badge in the top bar name each one with the reason, such as Could not open the connection. Check the port or cable and the analyzer’s connection in Laboratory setup › Instruments; the analyzer keeps its enabled setting."
         },
         {
           "problem": "The downloaded package differs from the approved one",

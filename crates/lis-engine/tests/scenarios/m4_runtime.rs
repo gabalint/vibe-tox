@@ -121,6 +121,7 @@ async fn update_call(engine: &Engine, name: &str) -> Option<Result<(), CommandEr
             )
             .await
             .map(drop),
+        "stop_listeners_for_update" => engine.stop_listeners_for_update().await.map(drop),
         "install_update" => engine
             .begin_update_install(
                 "9.9.9".to_owned(),
@@ -616,6 +617,88 @@ async fn quitting_with_an_active_listener_warns_and_records_the_override() {
     assert_eq!(stop_events.len(), 1, "recorded once");
     assert_eq!(stop_events[0].0, "user", "attributed to the signed-in user");
     assert!(stop_events[0].1.contains("quit_with_warnings"));
+}
+
+#[tokio::test]
+async fn an_update_stops_the_listeners_and_the_new_version_starts_them_again() {
+    let host = Host::new();
+    let engine = host.start(KeyProvider::Fixed(key(1))).await;
+    host.enrol_admin(&engine).await;
+    engine
+        .register_instrument(RegisterInstrument {
+            code: "SYN-ANALYZER".to_owned(),
+            name: "Synthetic analyzer".to_owned(),
+            connection: ConnectionSettings::AstmTcp {
+                bind_address: IpAddr::V4(Ipv4Addr::LOCALHOST),
+                port: local_port(),
+                allowed_peers: vec![IpAddr::V4(Ipv4Addr::LOCALHOST)],
+            },
+            enabled: true,
+        })
+        .await
+        .unwrap();
+    wait_for_listening(&engine).await;
+
+    let stopped = engine.stop_listeners_for_update().await.unwrap();
+    assert_eq!(stopped.stopped, 1);
+    assert!(
+        engine.update_warnings().await.is_empty(),
+        "a stopped listener does not hold the installation"
+    );
+    // An installation that did not happen starts the listeners again at once.
+    engine
+        .restart_listeners_after_failed_update()
+        .await
+        .unwrap();
+    wait_for_listening(&engine).await;
+    engine
+        .restart_listeners_after_failed_update()
+        .await
+        .unwrap();
+    assert!(engine.get_listener_restart().await.unwrap().is_none());
+    engine.stop_listeners_for_update().await.unwrap();
+    engine.shutdown().await;
+    drop(engine);
+
+    // The next start sees another version before it; its enabled setting did not change.
+    // App runs are append-only, so an open run of an older version is added last.
+    host.conn()
+        .execute(
+            "INSERT INTO ops_app_runs (id, started_at, last_seen_at, app_version, os_text, \
+             previous_unclean) SELECT 'ffffffff-ffff-7fff-bfff-ffffffffffff', max(started_at), \
+             max(started_at), '0.0.1', 'synthetic', 0 FROM ops_app_runs",
+            [],
+        )
+        .unwrap();
+    let engine = host.start(KeyProvider::Fixed(key(1))).await;
+    wait_for_listening(&engine).await;
+    let restart = engine.get_listener_restart().await.unwrap().unwrap();
+    assert_eq!(restart.listening, 1);
+    assert!(restart.failed.is_empty());
+    engine.shutdown().await;
+    let events: Vec<(String, String)> = host
+        .conn()
+        .prepare(
+            "SELECT action, details FROM audit_events WHERE action LIKE 'ops.%listeners%' \
+             ORDER BY seq",
+        )
+        .unwrap()
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap();
+    let actions: Vec<&str> = events.iter().map(|(action, _)| action.as_str()).collect();
+    assert_eq!(
+        actions,
+        [
+            "ops.stop_listeners_for_update",
+            "ops.restart_listeners_after_update",
+            "ops.stop_listeners_for_update",
+            "ops.restart_listeners_after_update",
+        ]
+    );
+    assert!(events[1].1.contains("install_not_completed"));
+    assert!(events[3].1.contains("new_version"));
 }
 
 #[tokio::test]

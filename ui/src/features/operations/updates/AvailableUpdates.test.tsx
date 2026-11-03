@@ -74,6 +74,8 @@ function renderTab(commands: Record<string, (args: unknown) => unknown> = {}, ca
     list_work_queues: () => [],
     check_release_update: () => feed([RELEASE]),
     list_nightly_builds: () => feed([NEWER, OLDER]),
+    stop_listeners_for_update: () => ({ stopped: 3 }),
+    list_listener_status: () => [],
     ...commands,
   });
   return renderRoutes(
@@ -124,11 +126,13 @@ describe("Available updates (ADR 0020, REQ-OPS-006)", () => {
     const download = vi.fn(() => downloaded);
     const backup = vi.fn(() => backupRun({ kind: "pre_update", state: "requested" }));
     const approve = vi.fn(() => APPROVED);
+    const stopListeners = vi.fn(() => ({ stopped: 3 }));
     const install = vi.fn(() => null);
     const { user, container } = renderTab({
       download_update: download,
       request_backup: backup,
       approve_downloaded_update: approve,
+      stop_listeners_for_update: stopListeners,
       install_update: install,
     });
     await showRelease(user);
@@ -147,6 +151,7 @@ describe("Available updates (ADR 0020, REQ-OPS-006)", () => {
     });
     expect(download).toHaveBeenCalledWith({ input: { channel: "release", version: "0.2.0" } });
     expect(backup).toHaveBeenCalledWith({ input: { kind: "pre_update" } });
+    expect(stopListeners).toHaveBeenCalledBefore(install);
     expect(approve).toHaveBeenCalledWith({
       input: expect.objectContaining({
         version: "0.2.0",
@@ -236,6 +241,25 @@ describe("Available updates (ADR 0020, REQ-OPS-006)", () => {
     expect(await within(dialog).findByText(/failed its signature check/)).toBeTruthy();
     expect(within(dialog).getByText("Not updated")).toBeTruthy();
     expect(within(dialog).getByRole("button", { name: "Update now" })).toBeTruthy();
+  });
+
+  it("does not install while an analyzer is still sending results", async () => {
+    const install = vi.fn(() => null);
+    const { user } = renderTab({
+      list_update_approvals: () => [APPROVED],
+      download_update: () => downloaded,
+      stop_listeners_for_update: () => {
+        throw engineError(
+          "conflict",
+          "An analyzer is still sending results. Try again when it finishes.",
+        );
+      },
+      install_update: install,
+    });
+    await showRelease(user);
+    const dialog = await confirmUpdate(user, /^Update to/);
+    expect(await within(dialog).findByText(/still sending results/)).toBeTruthy();
+    expect(install).not.toHaveBeenCalled();
   });
 
   it("asks for a backup folder before updating when the installation has none", async () => {

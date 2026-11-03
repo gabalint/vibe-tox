@@ -4,7 +4,9 @@
 //! address or a path.
 
 use lis_core::CommandError;
-use lis_engine::{Engine, RecordUpdateApprovalInput, UpdateApprovalView, UpdateRequest};
+use lis_engine::{
+    Engine, RecordUpdateApprovalInput, StoppedListenersView, UpdateApprovalView, UpdateRequest,
+};
 use serde::Deserialize;
 use tauri::{AppHandle, Runtime, State};
 use ts_rs::TS;
@@ -63,7 +65,17 @@ pub(crate) async fn approve_downloaded_update(
     engine.approve_downloaded_update(input, package).await
 }
 
-/// Installs the staged, approved package and restarts into it.
+/// Stops the analyzer listeners before the installation, once received messages are
+/// acknowledged.
+#[tauri::command]
+pub(crate) async fn stop_listeners_for_update(
+    engine: State<'_, Engine>,
+) -> Result<StoppedListenersView, CommandError> {
+    engine.stop_listeners_for_update().await
+}
+
+/// Installs the staged, approved package and restarts into it. When it does not install,
+/// the listeners stopped for it start again.
 #[tauri::command]
 pub(crate) async fn install_update<R: Runtime>(
     app: AppHandle<R>,
@@ -71,6 +83,14 @@ pub(crate) async fn install_update<R: Runtime>(
     updates: State<'_, Updates>,
     input: InstallUpdateInput,
 ) -> Result<(), CommandError> {
-    engine.preflight_update(UpdateRequest::Install).await?;
-    updater::install(&app, &engine, &updates, &input.version).await
+    let installed = match engine.preflight_update(UpdateRequest::Install).await {
+        Ok(()) => updater::install(&app, &engine, &updates, &input.version).await,
+        Err(error) => Err(error),
+    };
+    if installed.is_err()
+        && let Err(error) = engine.restart_listeners_after_failed_update().await
+    {
+        tracing::error!(code = ?error.code(), "listener restart after a failed update not recorded");
+    }
+    installed
 }

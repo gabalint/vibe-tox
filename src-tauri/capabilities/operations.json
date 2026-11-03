@@ -26,6 +26,7 @@
     "allow-download-update",
     "allow-approve-downloaded-update",
     "allow-install-update",
+    "allow-stop-listeners-for-update",
     "allow-record-media-disposal",
     "allow-list-media-disposals",
     "allow-get-installation-key-state",

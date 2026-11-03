@@ -59,6 +59,7 @@ export function renderApp(
   mockCommands({
     current_session: () => session,
     list_listener_status: () => [],
+    get_listener_restart: () => null,
     list_work_queues: () => [],
     get_host_health: () => hostHealth(),
     get_recovery_reconciliation: () => null,

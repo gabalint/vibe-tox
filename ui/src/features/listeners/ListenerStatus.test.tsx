@@ -42,6 +42,20 @@ describe("ListenerStatus (REQ-OPS-013)", () => {
     await expectNoA11yViolations(container);
   });
 
+  it("after an update, says how many analyzers listen again and why others did not", async () => {
+    mockCommands({
+      list_listener_status: () => [ANALYZER],
+      get_listener_restart: () => ({
+        listening: 4,
+        failed: [{ ...ANALYZER, instrumentName: "AU-SER", state: "error", detail: "open_failed" }],
+      }),
+    });
+    const { container } = renderWithProviders(<ListenerStatus />);
+    expect(await screen.findByText(/4 analyzers listening again/)).toBeTruthy();
+    expect(screen.getByText("AU-SER: Could not open the connection")).toBeTruthy();
+    await expectNoA11yViolations(container);
+  });
+
   it("says when a watched folder cannot be read or has files waiting (result files §6)", async () => {
     mockCommands({
       list_listener_status: () => [
