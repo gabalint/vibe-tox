@@ -1,8 +1,8 @@
 import type { AuConnectionSettings } from "@/generated/AuConnectionSettings";
 import type { InstrumentConnectionSettings } from "@/generated/InstrumentConnectionSettings";
 import { labelOf } from "@/lib/choices";
+import { DATA_BITS, PARITIES, STOP_BITS } from "@/lib/instrumentPages";
 import { AU_CLASSES, AU_RACK_DIGITS, AU_RESULT_DIGITS, auValues } from "./auValues";
-import { DATA_BITS, PARITIES, STOP_BITS } from "./connectionValues";
 
 interface Fact {
   label: string;

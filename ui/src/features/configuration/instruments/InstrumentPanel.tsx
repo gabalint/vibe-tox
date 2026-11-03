@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { Link } from "react-router";
 import { Alert } from "@/components/Alert";
 import { DetailPanel } from "@/components/DetailPanel";
 import { Facts } from "@/components/Facts";
@@ -9,7 +11,8 @@ import type { InstrumentChangeResult } from "@/generated/InstrumentChangeResult"
 import type { InstrumentConfiguration } from "@/generated/InstrumentConfiguration";
 import type { InstrumentReadinessView } from "@/generated/InstrumentReadinessView";
 import { labelOf } from "@/lib/choices";
-import { useCommandQuery } from "@/lib/commands";
+import { useCommandQuery, useHasCapability } from "@/lib/commands";
+import { benchInstrumentPath, benchStepState } from "@/lib/instrumentPages";
 import { instrumentStatus } from "@/lib/instrumentStatus";
 import type { OpenRecord } from "@/lib/openRecord";
 import { usePersonText } from "@/lib/person";
@@ -30,6 +33,8 @@ interface InstrumentPanelProps {
   actions: readonly ActionItem[];
   /** The outcome of the last change made to this analyzer here, if any. */
   lastChange: InstrumentChangeResult | null;
+  /** The analyzer was just registered: its confirmation offers the next steps in Bench setup. */
+  registered: boolean;
   record: OpenRecord;
 }
 
@@ -39,7 +44,13 @@ interface InstrumentPanelProps {
  * last changed it, so nobody opens the form just to read a value. The last change's outcome
  * comes first.
  */
-export function InstrumentPanel({ instrument, actions, lastChange, record }: InstrumentPanelProps) {
+export function InstrumentPanel({
+  instrument,
+  actions,
+  lastChange,
+  registered,
+  record,
+}: InstrumentPanelProps) {
   const { connection } = instrument;
   const pickup = pickupName(connection.kind);
   return (
@@ -57,6 +68,7 @@ export function InstrumentPanel({ instrument, actions, lastChange, record }: Ins
           title={`${lastChange.instrument.name} saved`}
         >
           {lastChange.message}
+          {registered && <NextSteps instrument={instrument} />}
         </Alert>
       )}
       <PanelGroup title="General">
@@ -69,7 +81,33 @@ export function InstrumentPanel({ instrument, actions, lastChange, record }: Ins
               label: pickup.charAt(0).toUpperCase() + pickup.slice(1),
               value: instrument.enabled ? "Enabled" : "Disabled",
             },
-            { label: "Service status", value: <ServiceStatus instrumentId={instrument.id} /> },
+            {
+              label: "Service status",
+              value: (
+                <Readiness instrumentId={instrument.id}>
+                  {(view) => {
+                    const { tone, label } = instrumentStatus(view?.status ?? null);
+                    return <StatusBadge tone={tone}>{label}</StatusBadge>;
+                  }}
+                </Readiness>
+              ),
+            },
+            {
+              label: "Result source",
+              value: (
+                <Readiness instrumentId={instrument.id}>
+                  {(view) =>
+                    view?.activeRegistration
+                      ? `Source approved: ${view.activeRegistration.sender} ${view.activeRegistration.version}`
+                      : "No approved source"
+                  }
+                </Readiness>
+              ),
+            },
+            {
+              label: "Bench setup",
+              value: <Link to={benchInstrumentPath(instrument.id)}>Readiness and sources</Link>,
+            },
           ]}
         />
       </PanelGroup>
@@ -133,12 +171,44 @@ function WatchedFolder({ instrument }: { instrument: InstrumentConfiguration }) 
   return <span className={styles.code}>{instrument.resultFolder}</span>;
 }
 
-/** Whether the instrument may be used (REQ-ANA-007), as recorded under Bench setup. */
-function ServiceStatus({ instrumentId }: { instrumentId: string }) {
+/**
+ * Something read from the instrument's readiness under Bench setup: whether it may be used
+ * (REQ-ANA-007) and its approved result source (REQ-ANA-003).
+ */
+function Readiness({
+  instrumentId,
+  children,
+}: {
+  instrumentId: string;
+  children: (view: InstrumentReadinessView | undefined) => ReactNode;
+}) {
   const readiness = useCommandQuery<InstrumentReadinessView[]>("list_instrument_readiness");
   if (readiness.isPending) return "Checking";
   if (readiness.isError) return "Status unavailable";
-  const view = readiness.data.find((candidate) => candidate.instrumentId === instrumentId);
-  const { tone, label } = instrumentStatus(view?.status ?? null);
-  return <StatusBadge tone={tone}>{label}</StatusBadge>;
+  return children(readiness.data.find((candidate) => candidate.instrumentId === instrumentId));
+}
+
+/**
+ * What a new analyzer needs before a run, each opening its action in Bench setup: quality staff
+ * set it in service, and its results need an approved source (a file template for result files).
+ */
+function NextSteps({ instrument }: { instrument: InstrumentConfiguration }) {
+  const canSetStatus = useHasCapability("manage_quality");
+  const path = benchInstrumentPath(instrument.id);
+  return (
+    <p>
+      Next:{" "}
+      {canSetStatus && (
+        <>
+          <Link to={path} state={benchStepState("set_instrument_status")}>
+            Set in service
+          </Link>
+          {" · "}
+        </>
+      )}
+      <Link to={path} state={benchStepState("register_source")}>
+        {instrument.connection.kind === "result_file" ? "New file template" : "Register source"}
+      </Link>
+    </p>
+  );
 }

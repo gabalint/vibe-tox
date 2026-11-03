@@ -3,12 +3,12 @@ import type { DataGridColumn } from "@/components/DataGrid";
 import type { InstrumentChangeResult } from "@/generated/InstrumentChangeResult";
 import type { InstrumentConfiguration } from "@/generated/InstrumentConfiguration";
 import { useCommandQuery } from "@/lib/commands";
+import { connectionText } from "@/lib/instrumentPages";
 import { useOpenRecord } from "@/lib/openRecord";
 import { openRecordPanel } from "@/lib/openRecordPanel";
 import { codedColumns } from "../catalogColumns";
 import { LIST_INSTRUMENTS } from "../contract";
 import { byId, Directory } from "../Directory";
-import { connectionText } from "./connectionValues";
 import { useInstrumentActions } from "./InstrumentActions";
 import { RegisterDialog } from "./InstrumentDialogs";
 import { InstrumentPanel, Listening } from "./InstrumentPanel";
@@ -37,7 +37,13 @@ export function InstrumentsPage() {
   const query = useCommandQuery<InstrumentConfiguration[]>(LIST_INSTRUMENTS);
   const record = useOpenRecord();
   const [lastChange, setLastChange] = useState<InstrumentChangeResult | null>(null);
-  const { actionsOf, rowActions, dialog } = useInstrumentActions(query.data ?? NONE, setLastChange);
+  // The last change was the analyzer's registration, so its confirmation offers the next steps.
+  const [registered, setRegistered] = useState(false);
+  const changed = (result: InstrumentChangeResult, isRegistration = false) => {
+    setLastChange(result);
+    setRegistered(isRegistration);
+  };
+  const { actionsOf, rowActions, dialog } = useInstrumentActions(query.data ?? NONE, changed);
   return (
     <>
       <Directory
@@ -59,6 +65,7 @@ export function InstrumentsPage() {
             instrument={open}
             actions={actionsOf(open)}
             lastChange={lastChange?.instrument.id === open.id ? lastChange : null}
+            registered={registered && lastChange?.instrument.id === open.id}
             record={record}
           />
         ))}
@@ -68,7 +75,7 @@ export function InstrumentsPage() {
           dialog: (onClose) => (
             <RegisterDialog
               onSaved={(result) => {
-                setLastChange(result);
+                changed(result, true);
                 record.open(result.instrument.id);
               }}
               onClose={onClose}

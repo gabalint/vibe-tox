@@ -105,6 +105,21 @@ fn a_stale_expected_version_is_a_conflict_and_writes_nothing() {
 }
 
 #[test]
+fn a_version_that_changes_nothing_is_refused_and_writes_nothing() {
+    let t = open();
+    set(&t, profile_input(None)).unwrap();
+    let before = counts(&t);
+    let mut same = profile_input(Some(1));
+    same.name = " Synthetic Toxicology Laboratory ".to_owned();
+    same.clia_id = "00d0000000".to_owned();
+    same.billing_npi = Some(" ".to_owned());
+    same.reason = Some("test".to_owned());
+    assert!(matches!(set(&t, same), Err(IdentityError::NothingChanged)));
+    assert_eq!(counts(&t), before);
+    assert_eq!(read(&t, current_laboratory_profile).unwrap().version, 1);
+}
+
+#[test]
 fn invalid_fields_are_refused_by_name() {
     let t = open();
     type Change = fn(&mut SetLaboratoryProfile);

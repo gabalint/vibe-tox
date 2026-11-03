@@ -1,7 +1,9 @@
 import { useContext } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
-import { FieldGrid } from "@/components/Form";
+import { TimePickerButton } from "@/components/FieldPicker";
+import { FieldAction, FieldGrid } from "@/components/Form";
 import { ChoiceInput, DATE_FORMAT, TextInput } from "@/components/FormFields";
 import { Section } from "@/components/Section";
 import { LabTimeZoneContext } from "@/lib/format";
@@ -27,7 +29,13 @@ export function CollectionFields({ includeCollector = true }: { includeCollector
           isRequired
         />
         {(timeKind === "datetime" || timeKind === "zoned" || timeKind === "date") && (
-          <TextInput name="collectedDate" label="Collection date" format={DATE_FORMAT} isRequired />
+          <TextInput
+            name="collectedDate"
+            label="Collection date"
+            format={DATE_FORMAT}
+            isRequired
+            isPastOnly
+          />
         )}
         {(timeKind === "datetime" || timeKind === "zoned") && (
           <>
@@ -36,6 +44,9 @@ export function CollectionFields({ includeCollector = true }: { includeCollector
               label="Collection time"
               format={TIME_FORMAT}
               isRequired
+              picker={(value, pick) => (
+                <TimePickerButton label="Choose the collection time" value={value} onPick={pick} />
+              )}
             />
             {timeKind === "datetime" && (
               <TextInput
@@ -55,13 +66,18 @@ export function CollectionFields({ includeCollector = true }: { includeCollector
                   isRequired
                 />
                 {labTimeZone && (
-                  <Button
-                    onPress={() =>
-                      setValue("timeZone", labTimeZone, { shouldDirty: true, shouldValidate: true })
-                    }
-                  >
-                    Use laboratory timezone ({labTimeZone})
-                  </Button>
+                  <FieldAction>
+                    <Button
+                      onPress={() =>
+                        setValue("timeZone", labTimeZone, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        })
+                      }
+                    >
+                      Use laboratory timezone ({labTimeZone})
+                    </Button>
+                  </FieldAction>
                 )}
               </>
             )}
@@ -75,6 +91,18 @@ export function CollectionFields({ includeCollector = true }: { includeCollector
           />
         )}
       </FieldGrid>
+      {timeKind === "unknown" && (
+        <Alert tone="warning" compact>
+          Without a collection date, billing for this order will be held ("Date of service
+          unknown"), and correcting it later requires a collection correction and quality review.
+          Choose Unknown only if no date was supplied.
+        </Alert>
+      )}
+      {timeKind === "date" && (
+        <Alert tone="info" compact>
+          The report will show "time not recorded".
+        </Alert>
+      )}
     </Section>
   );
 }

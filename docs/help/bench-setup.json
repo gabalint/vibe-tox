@@ -2,13 +2,13 @@
   "id": "bench-setup",
   "title": "Bench setup",
   "summary": "Review instrument readiness, result sources and material lots before analytical work.",
-  "reviewedOn": "2026-10-28",
+  "reviewedOn": "2026-11-03",
   "routes": ["/bench/setup/:tab?"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
-        "The Instruments tab shows service status and result-source registrations. Open an instrument to inspect its readiness and use the source actions offered for your role. For result-file instruments, the template actions lead to drafting or checking a file template.",
+        "The Instruments tab shows service status and result-source registrations. Open an instrument to inspect its readiness and use the source actions offered for your role. With configuration rights its panel also shows the connection in one line, with a Connection settings link to the same instrument under Laboratory setup › Instruments. For result-file instruments, the template actions lead to drafting or checking a file template.",
         "The Lots tab lists laboratory materials. Authorized quality staff can register a lot and use the available lot actions. Runs record the lots used rather than relying only on what is currently listed here."
       ]
     },
@@ -29,6 +29,7 @@
   "reviewSources": [
     "crates/lis-engine/src/commands/analytical/names.rs",
     "ui/src/lib/person.ts",
+    "ui/src/lib/instrumentPages.ts",
     "ui/src/features/analytics/bench/BenchSetupPage.tsx",
     "ui/src/features/analytics/bench/InstrumentsTab.tsx",
     "ui/src/features/analytics/bench/InstrumentPanel.tsx",
@@ -75,6 +76,12 @@
           "meaning": "Identifies the source currently used to interpret this instrument’s data.",
           "values": "Sender/software name and version, or None approved.",
           "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Instrument panel: Connection",
+          "meaning": "How the instrument's results reach the LIS, as saved under Laboratory setup › Instruments.",
+          "values": "One line, such as AU400 / AU640 · Serial COM10, 9600 baud, 8N1; TCP address:port, from the allowed addresses; Result files; Checking; Connection unavailable.",
+          "rules": "Read-only. Shown only with configuration-management authority, the right that opens Laboratory setup › Instruments."
         },
         {
           "name": "Set status: Status",
@@ -188,12 +195,12 @@
           "name": "Sample label",
           "meaning": "Identifies the control/calibrator label sent by the analyzer.",
           "values": "Exact label text.",
-          "rules": "Required for Control and Calibrator, despite the form not marking it required; 1–64 characters. Leave blank for Reagent and Internal standard."
+          "rules": "Shown and required (*) only for Control and Calibrator; trimmed 1–64 characters. Hidden for Reagent and Internal standard, which have no sample label."
         },
         {
           "name": "Expires on / Expires",
           "meaning": "Records the stated expiry date.",
-          "values": "Valid calendar date in YYYY-MM-DD format.",
+          "values": "Valid calendar date in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field.",
           "rules": "Required; expired lots cannot be used for new analytical work."
         },
         {
@@ -215,6 +222,18 @@
           "does": "Shows the record’s facts and actions.",
           "availableWhen": "A row is present.",
           "result": "Opens a panel with Previous, Next and Close."
+        },
+        {
+          "name": "Connection settings link",
+          "does": "Opens the same instrument under Laboratory setup › Instruments, where its connection is read and changed.",
+          "availableWhen": "An instrument panel is open, with configuration-management authority.",
+          "result": "Laboratory setup › Instruments opens with the instrument's panel."
+        },
+        {
+          "name": "Next step from a new analyzer",
+          "does": "Set in service or Register source in the confirmation of Register analyzer, under Laboratory setup › Instruments, opens the analyzer here and starts that action.",
+          "availableWhen": "The action's own authority: quality management for Set status, configuration management for Register source or New file template.",
+          "result": "The instrument's panel opens with the Set status or Register source dialog, or the file template page for a result-file instrument. Going back later does not start it again."
         },
         {
           "name": "Set status",

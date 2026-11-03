@@ -33,6 +33,7 @@ export function PartyFields({ prefix, label }: { prefix: string; label: string }
           name={`${prefix}.birthDate`}
           label={`${label} birth date`}
           format={DATE_FORMAT}
+          isPastOnly
         />
       </FieldGrid>
       <details>

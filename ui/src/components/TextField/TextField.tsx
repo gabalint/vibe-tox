@@ -1,4 +1,4 @@
-import type { Ref } from "react";
+import type { ReactNode, Ref } from "react";
 import { TextField as AriaTextField, Input } from "react-aria-components";
 import { FieldHelp } from "@/components/Form/FieldHelp";
 import { FieldLabel } from "@/components/Form/FieldLabel";
@@ -23,6 +23,8 @@ interface TextFieldProps {
   inputMode?: "text" | "numeric";
   autoFocus?: boolean;
   inputRef?: Ref<HTMLInputElement>;
+  /** A small button inside the field, at its end, such as a date picker. */
+  adornment?: ReactNode;
 }
 
 export function TextField({
@@ -34,8 +36,18 @@ export function TextField({
   autoCapitalize,
   autoCorrect,
   spellCheck,
+  adornment,
   ...rest
 }: TextFieldProps) {
+  const input = (
+    <Input
+      ref={inputRef}
+      className={formStyles.control}
+      autoCapitalize={autoCapitalize}
+      autoCorrect={autoCorrect}
+      spellCheck={spellCheck}
+    />
+  );
   return (
     <AriaTextField
       {...rest}
@@ -45,13 +57,14 @@ export function TextField({
       className={formStyles.field}
     >
       <FieldLabel isRequired={isRequired}>{label}</FieldLabel>
-      <Input
-        ref={inputRef}
-        className={formStyles.control}
-        autoCapitalize={autoCapitalize}
-        autoCorrect={autoCorrect}
-        spellCheck={spellCheck}
-      />
+      {adornment ? (
+        <div className={formStyles.adorned}>
+          {input}
+          {adornment}
+        </div>
+      ) : (
+        input
+      )}
       <FieldHelp description={description} errorMessage={errorMessage} />
     </AriaTextField>
   );

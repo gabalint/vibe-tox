@@ -148,11 +148,18 @@ describe("RunQcPage (REQ-ANA-004, REQ-ANA-005)", { timeout: WALKTHROUGH_TIMEOUT_
     expect(within(amphetamine).getByText("Accepted")).toBeTruthy();
     // One current observation; the replaced one is not cited.
     expect(within(amphetamine).getByRole("gridcell", { name: "1" })).toBeTruthy();
-    expect(within(rowOf("Whole run")).getByText("Not assessed")).toBeTruthy();
+    expect(within(amphetamine).getByText("Already accepted.")).toBeTruthy();
+    const batch = rowOf(`Preparation batch ${PREP_BATCH_ID}`);
+    expect(within(batch).getByText("Not assessed")).toBeTruthy();
+    expect(within(batch).getByText("Assessed on its own.")).toBeTruthy();
+    // The whole run is optional, in its own section above the analytes.
+    expect(within(grid).getAllByRole("row")).toHaveLength(3);
+    const run = screen.getByRole("region", { name: "Whole run" });
+    expect(within(run).getByText("Not assessed (optional)")).toBeTruthy();
+    expect(run.textContent).toContain("Accepting it doesn’t accept the analytes.");
     expect(
-      within(rowOf(`Preparation batch ${PREP_BATCH_ID}`)).getByText("Not assessed"),
+      screen.getByText("1 of 1 analyte accepted · Whole run not assessed (optional)"),
     ).toBeTruthy();
-    expect(within(grid).getAllByRole("row")).toHaveLength(4);
     await expectNoA11yViolations(container, { wholePage: true });
   });
 
@@ -197,10 +204,13 @@ describe("RunQcPage (REQ-ANA-004, REQ-ANA-005)", { timeout: WALKTHROUGH_TIMEOUT_
 
   it("opens a scope by click or Enter, steps to the next, and Escape closes it", async () => {
     const { user, router } = renderPage();
-    await openRow(user, "Whole run");
+    const run = await screen.findByRole("region", { name: "Whole run" });
+    await user.click(within(run).getByRole("button", { name: "History" }));
     expect(router.state.location.search).toBe("?open=run");
-    expect(within(panel("Whole run")).getByText("Not assessed yet.")).toBeTruthy();
-    await user.click(within(panel("Whole run")).getByRole("button", { name: "Next" }));
+    expect(within(panel("QC for the whole run")).getByText("Not assessed yet.")).toBeTruthy();
+    await openRow(user, "SYN-AMP");
+    expect(within(panel("QC for SYN-AMP")).getByText(/citing 1 observation/)).toBeTruthy();
+    await user.click(within(panel("QC for SYN-AMP")).getByRole("button", { name: "Next" }));
     const batch = `Preparation batch ${PREP_BATCH_ID}`;
     expect(await screen.findByRole("region", { name: batch })).toBeTruthy();
     await closePanelWithEscape(user, batch, batch);
@@ -443,7 +453,68 @@ describe("RunQcPage (REQ-ANA-004, REQ-ANA-005)", { timeout: WALKTHROUGH_TIMEOUT_
     expect(await screen.findByText("No deviations recorded")).toBeTruthy();
     // The whole run can still be assessed.
     await user.click(screen.getByRole("tab", { name: "Assessments" }));
-    expect(await screen.findByRole("gridcell", { name: "Whole run" })).toBeTruthy();
+    const run = await screen.findByRole("region", { name: "Whole run" });
+    expect(within(run).getByRole("button", { name: "Assess QC" })).toBeTruthy();
+  });
+
+  it("accepts several analytes at once, each recorded on its own, and says why others can't be", async () => {
+    const methId = "00000000-0000-7000-8000-000000000b02";
+    const phenId = "00000000-0000-7000-8000-000000000b03";
+    const oxyId = "00000000-0000-7000-8000-000000000b04";
+    const analyte = (analyteId: string, code: string, ids: string[]) => ({
+      analyteId,
+      code,
+      observations: ids.map((id) => observation(id, { analyteId, sourceTestCode: code })),
+      assessments: { current: null, history: [] },
+    });
+    const view: RunQcView = {
+      ...QC,
+      analytes: [
+        ...QC.analytes,
+        analyte(methId, "SYN-MET", ["observation-2"]),
+        analyte(phenId, "SYN-PHN", ["observation-3", "observation-4"]),
+        analyte(oxyId, "SYN-OXY", []),
+      ],
+    };
+    const assess = vi
+      .fn()
+      .mockResolvedValueOnce({ ...EARLIER, assessmentId: "assessment-2" })
+      .mockRejectedValueOnce(engineError("conflict", "Reload and try again."))
+      .mockResolvedValueOnce({ ...EARLIER, assessmentId: "assessment-3" });
+    const { user } = renderPage({ get_run_qc: () => view, assess_qc: assess });
+    expect(
+      await screen.findByText("1 of 4 analytes accepted · Whole run not assessed (optional)"),
+    ).toBeTruthy();
+    expect(within(rowOf("SYN-OXY")).getByText("No QC observations.")).toBeTruthy();
+    expect(within(rowOf("SYN-MET")).getByText("Available")).toBeTruthy();
+    await user.click(screen.getByRole("columnheader", { name: "Select all rows" }));
+    expect(screen.getByText("2 selected.")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Accept QC" }));
+    const dialog = await screen.findByRole("dialog", { name: "Accept QC for 2 analytes" });
+    expect(dialog.textContent).toContain("SYN-MET (1), SYN-PHN (2)");
+    await user.type(within(dialog).getByRole("textbox", { name: /Reason/ }), "Controls in range");
+    await user.click(within(dialog).getByRole("button", { name: "Accept QC" }));
+    expect(await within(dialog).findByText("Reload and try again.")).toBeTruthy();
+    expect(within(dialog).getByText("Not recorded for SYN-PHN")).toBeTruthy();
+    expect(dialog.textContent).toContain("Already recorded: SYN-MET.");
+    await user.click(within(dialog).getByRole("button", { name: "Accept the rest" }));
+    expect(await screen.findByText("QC accepted for 2 analytes")).toBeTruthy();
+    const accepted = (analyteId: string, evidenceObservationIds: string[]) => ({
+      input: {
+        scope: "run_analyte",
+        runId: RUN_ID,
+        analyteId,
+        outcome: "accepted",
+        evidenceObservationIds,
+        reason: "Controls in range",
+      },
+    });
+    expect(assess.mock.calls).toEqual([
+      [accepted(methId, ["observation-2"])],
+      [accepted(phenId, ["observation-3", "observation-4"])],
+      [accepted(phenId, ["observation-3", "observation-4"])],
+    ]);
+    expect(screen.getByText("None selected.")).toBeTruthy();
   });
 
   it("shows loading while the engine answers", async () => {
