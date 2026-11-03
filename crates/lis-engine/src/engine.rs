@@ -16,10 +16,11 @@ use tokio::sync::watch;
 use tokio::task::JoinHandle;
 
 use crate::commands::file_templates::LayoutSamples;
-use crate::commands::operations::{RestartedListeners, listeners_after_new_version};
+use crate::commands::operations::RestartedListeners;
 use crate::keep_awake::Inhibitor;
 use crate::keys::KeyProvider;
-use crate::ops_worker::{Loops, Operations, locked, startup};
+use crate::ops_worker::startup::{self, start_listeners};
+use crate::ops_worker::{Loops, Operations, locked};
 use crate::outbox_worker::{Dispatcher, TopicHandler};
 use crate::pipeline::Failure;
 use crate::result_folders::{FolderPoller, ResultFolders};
@@ -359,36 +360,6 @@ fn start_dispatcher(
     // results: end
     let dispatcher = Dispatcher::new(Arc::clone(db), handlers).spawn(stopped);
     (stop, dispatcher)
-}
-
-/// Recovers or marks interrupted the receipts a previous run left open, then
-/// starts every enabled analyzer listener (REQ-OPS-013, REQ-INT-009). Both
-/// block on the database, so they run off the async runtime. A listener that
-/// cannot open is reported in its status, not as a startup failure. After a
-/// version change, also returns which listeners opened again.
-async fn start_listeners(
-    db: &Arc<Database>,
-    version_changed: bool,
-) -> Result<(Arc<ListenerSupervisor>, Option<RestartedListeners>), EngineError> {
-    let listeners = Arc::new(ListenerSupervisor::new(Arc::clone(db)));
-    let (db_task, listeners_task) = (Arc::clone(db), Arc::clone(&listeners));
-    tokio::task::spawn_blocking(move || {
-        let (db, listeners) = (db_task, listeners_task);
-        let reconciled = lis_interfaces::reconcile_receipts(&db)?;
-        tracing::info!(
-            recovered = reconciled.recovered,
-            interrupted = reconciled.interrupted,
-            "receipt reconciliation finished"
-        );
-        if let Err(error) = listeners.start_all() {
-            tracing::warn!(%error, "some analyzer listeners did not start; see listener status");
-        }
-        Ok::<_, EngineError>(())
-    })
-    .await
-    .map_err(|_| EngineError::StartupTask)??;
-    let restarted = listeners_after_new_version(db, &listeners, version_changed).await;
-    Ok((listeners, restarted))
 }
 
 /// D15: the app starts only when the probe says the data folder is on a local volume; a

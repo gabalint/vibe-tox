@@ -1,18 +1,21 @@
 //! The operations steps of startup (M4 design brief §6.4 steps 2, 5 and 8): apply a
 //! confirmed restore before the database opens, record an applied restore after it opens,
-//! move unrecorded published backup sets aside, and record the app run with the jobs a
-//! stop interrupted.
+//! move unrecorded published backup sets aside, record the app run with the jobs a stop
+//! interrupted, and start the analyzer listeners (step 10).
 
 use std::path::Path;
+use std::sync::Arc;
 
 use lis_auth::DataKey;
 use lis_core::{Capability, CorrelationId, Principal, UtcTimestamp};
+use lis_interfaces::ListenerSupervisor;
 use lis_ops::backup::BackupError;
 use lis_ops::format::BackupKey;
 use lis_ops::restore::{ApplyOutcome, RestoreFloors};
 use lis_ops::runs::{AppRunId, RunStart};
 use lis_store::{Database, StoreError};
 
+use crate::commands::operations::{RestartedListeners, listeners_after_new_version};
 use crate::engine::{APP_VERSION, EngineError};
 
 /// The system principal of startup and shutdown steps.
@@ -164,4 +167,34 @@ pub(crate) async fn start_run(
         "app run started"
     );
     Ok((started.run_id, started.version_changed))
+}
+
+/// Recovers or marks interrupted the receipts a previous run left open, then
+/// starts every enabled analyzer listener (REQ-OPS-013, REQ-INT-009). Both
+/// block on the database, so they run off the async runtime. A listener that
+/// cannot open is reported in its status, not as a startup failure. After a
+/// version change, also returns which listeners opened again.
+pub(crate) async fn start_listeners(
+    db: &Arc<Database>,
+    version_changed: bool,
+) -> Result<(Arc<ListenerSupervisor>, Option<RestartedListeners>), EngineError> {
+    let listeners = Arc::new(ListenerSupervisor::new(Arc::clone(db)));
+    let (db_task, listeners_task) = (Arc::clone(db), Arc::clone(&listeners));
+    tokio::task::spawn_blocking(move || {
+        let (db, listeners) = (db_task, listeners_task);
+        let reconciled = lis_interfaces::reconcile_receipts(&db)?;
+        tracing::info!(
+            recovered = reconciled.recovered,
+            interrupted = reconciled.interrupted,
+            "receipt reconciliation finished"
+        );
+        if let Err(error) = listeners.start_all() {
+            tracing::warn!(%error, "some analyzer listeners did not start; see listener status");
+        }
+        Ok::<_, EngineError>(())
+    })
+    .await
+    .map_err(|_| EngineError::StartupTask)??;
+    let restarted = listeners_after_new_version(db, &listeners, version_changed).await;
+    Ok((listeners, restarted))
 }
