@@ -19,6 +19,7 @@ mod connections;
 mod delivery;
 mod error;
 pub mod hl7;
+pub mod hl7_order;
 mod intake_model;
 mod intake_settings;
 mod mapping_model;
