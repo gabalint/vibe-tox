@@ -321,5 +321,13 @@ mod inbox;
 pub(crate) use inbox::RemoteInbox;
 
 #[cfg(test)]
+#[path = "sftp_test_server.rs"]
+mod test_server;
+
+#[cfg(test)]
 #[path = "sftp_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "sftp_inbox_tests.rs"]
+mod inbox_tests;
