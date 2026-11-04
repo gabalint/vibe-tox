@@ -1,18 +1,28 @@
 # Interfaces
 
-Status: **implemented on synthetic data; second delivery step**. The Interfaces menu sends HL7 results, issued report PDFs and billing handoff files to outside systems through a folder (REQ-INT-001–004, REQ-RPT-003, REQ-RPT-011–013, REQ-BIL-002). The built-in help, Interfaces topic, describes every field and action; this guide covers setup, behavior and recovery. Analyzers are configured separately, under Laboratory setup › Instruments.
+Status: **implemented on synthetic data; third delivery step**. The Interfaces menu sends HL7 results, issued report PDFs and billing handoff files to outside systems through a folder or the partner's SFTP server (REQ-INT-001–004, REQ-RPT-003, REQ-RPT-011–013, REQ-BIL-002). The built-in help, Interfaces topic, describes every field and action; this guide covers setup, behavior and recovery. Analyzers are configured separately, under Laboratory setup › Instruments.
 
 ## What is available
 
 | Message type | Made when | Direction | Protocol | Default file name |
 | --- | --- | --- | --- | --- |
-| HL7 Results (ORU^R01, v2.5.1) | A report revision is released; a withdrawal message when the report is withdrawn | Out | Folder on this computer or on the lab network | `{accession}_r{revision}_{date}.hl7` |
-| Report PDF | A report revision is released; its withdrawal notice when the report is withdrawn | Out | Folder on this computer or on the lab network | `{accession}_r{revision}_{date}.pdf` |
-| Billing JSON (`bil-handoff-v2`) | A billing handoff is created | Out | Folder on this computer or on the lab network | `billing-{handoff}_{date}.json` |
+| HL7 Results (ORU^R01, v2.5.1) | A report revision is released; a withdrawal message when the report is withdrawn | Out | Folder, or the partner's SFTP server | `{accession}_r{revision}_{date}.hl7` |
+| Report PDF | A report revision is released; its withdrawal notice when the report is withdrawn | Out | Folder, or the partner's SFTP server | `{accession}_r{revision}_{date}.pdf` |
+| Billing JSON (`bil-handoff-v2`) | A billing handoff is created | Out | Folder, or the partner's SFTP server | `billing-{handoff}_{date}.json` |
 
 In a report's file name, `{accession}` is the report number (the accession number and the specimen type code, so two specimens of one accession never share a name) and `{revision}` the revision number; a withdrawal's revision reads `<n>-withdrawn`.
 
-HL7 orders, HL7 acknowledgements, SFTP, MLLP and per-partner interface contracts with acceptance tests are later steps. They are not available and no setting enables them.
+A folder is on this computer or on the lab network. HL7 orders (including over SFTP), HL7 acknowledgements, MLLP and per-partner interface contracts with acceptance tests are later steps. They are not available and no setting enables them.
+
+## SFTP
+
+The LIS connects out to the partner's SFTP server ([integrations](../architecture/integrations.md)); it never accepts connections. The client is russh with the ring backend, admitted in the [library policy](../governance/library-policy.md#sftp-client-admission--2026-11-04).
+
+- **Server identity.** The connection pins the server's key by its SHA-256 fingerprint, as OpenSSH prints it (`SHA256:` and 43 characters). The LIS refuses any other key, and Test connection shows the fingerprint the server presented. Get the fingerprint from the partner's IT through a channel the laboratory trusts. The server must offer an Ed25519 or ECDSA host key; RSA is not supported (the `rsa` crate is excluded, RUSTSEC-2023-0071).
+- **Sign-in.** SSH key (recommended): one Ed25519 key per installation, made on the first **Copy LIS public key**. Its private key is sealed with the installation key in the database and never leaves the engine; the partner's IT allows the public key (`ssh-ed25519 … vibetox-lis`) for the username. Password: sealed with the installation key, never returned to the screen, and kept on a change only while the server, port and username stay the same. Either needs the installation key on this computer; without it, attempts fail with `credential_unavailable`. A restore that brings the installation key brings both.
+- **Writing.** Each file is uploaded under a temporary `.tmp` name in the remote folder and renamed when complete. An SFTP rename never replaces a file: a name taken by other content gets `-1`, `-2`; a name already holding the same bytes is taken as the earlier write of the same message. Connecting and each step without an answer time out after 20 seconds, then the usual retries apply.
+- **Destination check.** It covers the server, port, username, remote folder and fingerprint together. Changing any of them needs a new check; changing the sign-in or the password does not.
+- **Problems** in Logs and on Overview: `server_unreachable` (no answer, refused, or an RSA-only server), `fingerprint_mismatch`, `sign_in_failed`, `credential_unavailable`, and the folder codes `folder_missing`, `access_denied`, `name_taken`, `write_failed`.
 
 ## HL7 Results messages
 
@@ -34,22 +44,24 @@ A withdrawal is sent as the withdrawn revision's results with OBX status `W` (po
 
 Everything needs Manage configuration.
 
-1. **Interfaces › Connections › Add connection.** Name the connection and its partner, choose the message (HL7 Results, Report PDF or Billing JSON), and **Choose folder…**: the folder comes from the system dialog and cannot be typed. **Test folder** writes and removes a probe file. For HL7 Results, the partner's name is sent as the receiving facility (MSH-6).
+1. **Interfaces › Connections › Add connection.** Name the connection and its partner and choose the message (HL7 Results, Report PDF or Billing JSON). For HL7 Results, the partner's name is sent as the receiving facility (MSH-6).
+   - **Folder:** **Choose folder…**: the folder comes from the system dialog and cannot be typed. **Test folder** writes and removes a probe file.
+   - **SFTP:** enter the server, port, username, server fingerprint and remote folder. With SSH key sign-in, **Copy LIS public key** and send it to the partner's IT; with password sign-in, type the password. **Test connection** connects, checks the fingerprint and sign-in, and writes and removes a probe file. Nothing is saved by either.
 2. Add **routing rules** when only some reports or handoffs belong to this partner. Choose the **schedule** and **file name** (the message type's required placeholders and extension). **Save as stopped**.
 3. On the connection's page, **Send test message** writes a synthetic file with no patient data: an ORU^R01 with processing ID `T` for HL7 Results, a one-page PDF for Report PDF, a JSON file for Billing JSON. Ask the partner to confirm it. For HL7 Results, add the partner's codes under **Code mappings** and have a second person approve them.
-4. A second person uses **Record destination check** and records how the folder was confirmed. The laboratory's separation-of-duties policy decides whether the person who chose the folder may record it ([ADR 0015](../architecture/decisions/0015-separation-of-duties-policy.md)). The partner must be covered by a business associate agreement; that is the laboratory's responsibility.
+4. A second person uses **Record destination check** and records how the folder or server was confirmed. The laboratory's separation-of-duties policy decides whether the person who chose the folder may record it ([ADR 0015](../architecture/decisions/0015-separation-of-duties-policy.md)). The partner must be covered by a business associate agreement; that is the laboratory's responsibility.
 5. **Start** the connection, with a reason.
 
-Choosing another folder later needs a new destination check before patient data goes there.
+Choosing another folder later, or another SFTP server, port, username, remote folder or fingerprint, needs a new destination check before patient data goes there.
 
 ## How messages travel
 
 - **Routing.** Releasing a report revision makes one message of each report type (HL7 Results, Report PDF), and creating a handoff one Billing JSON message, in the same transaction, when at least one connection of the type exists. An HL7 rule names its field by the HL7 field that carries it (ORC-21, OBR-16, PV1-3, OBR-4) but compares the LIS codes. It goes to every connection whose rules all match. A rule matches only if every value of its field meets it, so a handoff covering two clients never goes to one client's partner alone. A report's values are its order's client, practitioner and location and the tests on its specimen. With no rules, a connection receives every message of its type. Without any connection of the type no message is made, and files are exported by hand as before.
 - **Corrections and withdrawals (REQ-RPT-013).** A report's later revision, correction or supplement, goes first to every connection of the same type that had an earlier revision (HL7 with corrected status `C`), even when its rules no longer match, and is written before other waiting messages. An earlier revision not written yet is superseded: it is never written, and an unrouted one leaves Unrouted messages. A withdrawal notice or HL7 withdrawal goes to every connection an earlier revision was written to; with none, no message is made.
 - **Impact pause (L13).** A report revision waits, unwritten, while its impact review is open or a correction is due; Logs say so. Withdrawal notices never wait for it.
-- **Writing.** While the app is open, at the sign-in screen too, the LIS looks every 10 seconds for messages it may write. A message is written only while its connection is started, a destination check covers its current folder, its schedule allows it, and no recovery reconciliation after a restore is open. The file is the stored file, byte for byte: the issued report PDF is never regenerated. It is written under a temporary `.tmp` name, synced, and only then given its final name. An existing file is never replaced: a name taken by other content gets `-1`, `-2` before the extension.
+- **Writing.** While the app is open, at the sign-in screen too, the LIS looks every 10 seconds for messages it may write. A message is written only while its connection is started, a destination check covers its current folder or server, its schedule allows it, and no recovery reconciliation after a restore is open. The file is the stored file, byte for byte: the issued report PDF is never regenerated. It is written under a temporary `.tmp` name, synced (in a folder), and only then given its final name. An existing file is never replaced: a name taken by other content gets `-1`, `-2` before the extension.
 - **Retries.** A failed write is retried after 1, 2, 4 and 8 minutes. After the fifth failure the message waits for **Send again** in **Logs › Failed** and appears in the **Interface messages not written** work queue. Sending again uses the same stored file and never makes a new message or report.
-- **Evidence.** Logs show what the folder can prove: **Written**, **Failed** or **Not sent**. A folder never confirms that the other system used the file, so a written file shows **Outcome unknown**, never Delivered. The billing owner's acknowledgement or rejection is recorded on the handoff (REQ-BIL-002). A written report PDF is not a staff-attested delivery on the report's page, but a revision that goes to a connection leaves the **Reports without a destination** work queue. Each write attempt is an audit event on the security stream; routing, connection changes, destination checks, unrouted decisions and log exports are audited too.
+- **Evidence.** Logs show what the folder or server can prove: **Written** (**Uploaded** for SFTP), **Failed** or **Not sent**. A folder or SFTP server never confirms that the other system used the file, so a written file shows **Outcome unknown**, never Delivered. The billing owner's acknowledgement or rejection is recorded on the handoff (REQ-BIL-002). A written report PDF is not a staff-attested delivery on the report's page, but a revision that goes to a connection leaves the **Reports without a destination** work queue. Each write attempt is an audit event on the security stream; routing, connection changes, destination checks, unrouted decisions and log exports are audited too.
 
 ## Unrouted messages
 
@@ -68,7 +80,10 @@ A message that matched no connection waits in **Interfaces › Unrouted messages
 
 | Symptom | Action |
 | --- | --- |
-| Connection shows **Error** | Overview names the latest problem. Restore the folder or its permissions, use **Test connection**, then **Send again** on failed messages |
+| Connection shows **Error** | Overview names the latest problem. Restore the folder, the server or the permissions, use **Test connection**, then **Send again** on failed messages |
+| SFTP **fingerprint mismatch** | Do not copy the presented fingerprint. Confirm with the partner's IT through a trusted channel whether the server's key changed; if it did, Edit the fingerprint and record a new destination check |
+| SFTP **sign-in failed** | Check that the partner allowed the LIS public key for the username, or type the password again |
+| SFTP **credential unavailable** | Use Copy LIS public key once to make the LIS key, type the password again, or restore the installation key (System › Recovery kit shows whether it is usable) |
 | Messages stay **Not sent** | The row's details say why: connection stopped, destination check not recorded, waiting for the schedule, paused for the report's impact review, held for a code mapping, or written at the next pass |
 | An HL7 message is **held** | Map the rows marked Not mapped – held on the connection's Code mappings tab, with the result's unit as the UCUM unit, and have a second person approve them |
 | A report revision shows **Replaced by a newer revision** | Nothing to do: the newer revision went to the connection instead |
@@ -80,3 +95,4 @@ A message that matched no connection waits in **Interfaces › Unrouted messages
 - Connections are stopped, not deleted, so their history and messages remain.
 - Message content is not shown in Logs. Reports are opened from Reports, and the handoff file from Billing › Billing handoffs, by people with those rights, as audited reads.
 - The folder's network share, permissions and the partner's process for reading files are the laboratory's to qualify. Passing tests on synthetic data is not qualification.
+- The SFTP transport is tested against an in-process server on synthetic files, not against a partner's server. Each partner's server, network path and account are the laboratory's to qualify.

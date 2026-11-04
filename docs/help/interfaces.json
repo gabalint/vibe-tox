@@ -1,7 +1,7 @@
 {
   "id": "interfaces",
   "title": "Interfaces",
-  "summary": "Send HL7 results, report PDFs and billing handoff files to outside systems through a folder, map your codes to each partner's, follow every message in Logs, and decide on messages no connection matched.",
+  "summary": "Send HL7 results, report PDFs and billing handoff files to outside systems through a folder or the partner's SFTP server, map your codes to each partner's, follow every message in Logs, and decide on messages no connection matched.",
   "reviewedOn": "2026-11-04",
   "routes": [
     "/interfaces/connections",
@@ -13,17 +13,18 @@
     {
       "title": "How to use this area",
       "paragraphs": [
-        "A connection says which messages go to an outside system, where, and when. This release has three message types. HL7 Results: an HL7 v2.5.1 ORU^R01 result message with the partner's codes, made when a report revision is released. Report PDF: the issued report PDF, made at the same time. Billing JSON: the billing handoff file, made when a billing handoff is created. Files are written to a folder on this computer or on the lab network, which the partner's system reads. Analyzers are not set up here; they stay in Laboratory setup › Instruments.",
+        "A connection says which messages go to an outside system, where, and when. This release has three message types. HL7 Results: an HL7 v2.5.1 ORU^R01 result message with the partner's codes, made when a report revision is released. Report PDF: the issued report PDF, made at the same time. Billing JSON: the billing handoff file, made when a billing handoff is created. Files are written to a folder on this computer or on the lab network, which the partner's system reads, or uploaded to the partner's SFTP server over an encrypted connection the LIS opens; the LIS never accepts connections for them. Analyzers are not set up here; they stay in Laboratory setup › Instruments.",
         "An HL7 Results connection sends each test and analyte with the partner's code, from its Code mappings. A result whose test or analyte has no approved mapping, or whose unit is not the mapping's UCUM unit, is held: it is never sent with a guessed code or a converted unit. Mapping changes are drafts until a second person approves them as a new version, which applies to messages not written yet.",
         "When a report is released or a handoff is created, the LIS checks it against the routing rules of every connection of its type in the same step. It goes to each connection whose rules all match. If no connection matches, it waits in Unrouted messages. If the laboratory has no connection of the type at all, nothing is made, and files are exported by hand as before.",
         "A report's later revision, a correction or a supplement, goes first to every Report PDF connection that had an earlier revision, even if its rules no longer match, and is written before other waiting messages. An earlier revision not written yet is replaced and never written. When a report is withdrawn, its withdrawal notice goes to every connection an earlier revision was written to. A revision whose impact review is open waits until the review is done.",
-        "The LIS writes a connection's messages only while it is started and a destination check covers its current folder. It tries every 10 seconds, at the sign-in screen too, but not while the app is closed. Logs show every message with what the folder can prove: written, failed or not sent. A folder never confirms that the other system used the file, so a written file always shows Outcome unknown, never Delivered."
+        "The LIS writes a connection's messages only while it is started and a destination check covers its current folder or SFTP server. It tries every 10 seconds, at the sign-in screen too, but not while the app is closed. Logs show every message with what the folder or server can prove: written (uploaded, for SFTP), failed or not sent. A folder or SFTP server never confirms that the other system used the file, so a written file always shows Outcome unknown, never Delivered."
       ]
     },
     {
       "title": "Good practice",
       "paragraphs": [
-        "Save a new connection stopped, test the folder, send a test message, and have the partner confirm they received it. Then have a second person record the destination check, and start the connection.",
+        "Save a new connection stopped, test the folder or server, send a test message, and have the partner confirm they received it. Then have a second person record the destination check, and start the connection.",
+        "For SFTP, get the server's fingerprint from the partner's IT through a channel you trust, such as a call-back, and prefer SSH key sign-in: the LIS's public key can be shared freely, and no password needs to be kept.",
         "Keep rules specific. A billing file with patients of several clients goes only to a connection whose rules accept every one of those clients, so one client's billing company never receives another client's patients. A rule on Test likewise needs every test on the report or handoff to meet it.",
         "The partner receiving patient data must be covered by a business associate agreement. That is the laboratory's responsibility; the LIS shows it as a reminder when the destination check is recorded."
       ]
@@ -31,7 +32,7 @@
     {
       "title": "If you cannot continue",
       "paragraphs": [
-        "A connection in Error could not write its latest message. Its Overview names the problem. Fix the folder or its permissions, then use Send again on the failed message in Logs; it was retried automatically up to 5 times. A message that matched no connection waits in Unrouted messages until someone decides."
+        "A connection in Error could not write its latest message. Its Overview names the problem. Fix the folder, the server or the permissions, then use Send again on the failed message in Logs; it was retried automatically up to 5 times. A message that matched no connection waits in Unrouted messages until someone decides."
       ]
     }
   ],
@@ -46,7 +47,7 @@
           "name": "Active connections / With errors / Waiting for acknowledgement / Unrouted messages",
           "meaning": "Counts that need attention: started connections working normally, started connections whose latest attempt failed, messages sent that wait for the partner's acknowledgement, and messages waiting for a decision.",
           "values": "Whole numbers; … while loading. With errors shows in red, the other two in amber, when not zero.",
-          "rules": "Read-only. A folder never answers, so folder connections never wait for an acknowledgement and that count stays 0. Unrouted messages also shows beside the menu entry."
+          "rules": "Read-only. A folder or SFTP server never answers, so these connections never wait for an acknowledgement and that count stays 0. Unrouted messages also shows beside the menu entry."
         },
         {
           "name": "All / Orders in / Results out / Report PDFs / Billing",
@@ -56,8 +57,8 @@
         },
         {
           "name": "Name, Partner, Message, Dir., Protocol, Destination",
-          "meaning": "What the connection carries and where: its name, the client, clinic or billing company, the message type, the direction (Out: the LIS sends), the protocol and the folder.",
-          "values": "As saved on the connection.",
+          "meaning": "What the connection carries and where: its name, the client, clinic or billing company, the message type, the direction (Out: the LIS sends), the protocol and the destination.",
+          "values": "As saved on the connection. Protocol: Folder or SFTP. Destination: the folder, or for SFTP the server and remote folder, such as sftp.clinic-a.example:/inbound/results, with the port after the server when it is not 22.",
           "rules": "Read-only. Open the row to change it."
         },
         {
@@ -68,9 +69,9 @@
         },
         {
           "name": "Destination check",
-          "meaning": "Whether someone recorded how the current folder was confirmed as the partner's.",
+          "meaning": "Whether someone recorded how the current folder, or SFTP server, was confirmed as the partner's.",
           "values": "Verified; Not verified.",
-          "rules": "Patient data is never written to a folder that is not verified. Choosing another folder needs a new check."
+          "rules": "Patient data is never written to a destination that is not verified. Another folder, or for SFTP another server, port, username, remote folder or server fingerprint, needs a new check. Changing only the sign-in or the password does not."
         },
         {
           "name": "Last attempt, Waiting, Errors",
@@ -100,19 +101,19 @@
         }
       ],
       "restrictions": [
-        "This release sends HL7 results, report PDFs and Billing JSON files to a folder only. HL7 orders, SFTP and MLLP are not available, and HL7 acknowledgements are not received.",
+        "This release sends HL7 results, report PDFs and Billing JSON files to a folder or to the partner's SFTP server. HL7 orders and MLLP are not available, nothing is received over SFTP, and HL7 acknowledgements are not received.",
         "Connections are stopped, never deleted, so their history and messages stay."
       ],
       "workflow": [
         "Add the connection and Save as stopped.",
         "On its page, use Test connection, then Send test message, and ask the partner to confirm the test file.",
         "Have a second person use Record destination check.",
-        "Start the connection. New released reports or billing handoffs are then written to the folder."
+        "Start the connection. New released reports or billing handoffs are then written to the folder or server."
       ],
       "troubleshooting": [
         {
           "problem": "A connection shows Error",
-          "recovery": "Open it: Overview names the latest problem, such as Folder not found or This computer may not write there. Fix the folder, use Test connection, then send the failed messages again from Logs › Failed."
+          "recovery": "Open it: Overview names the latest problem, such as Folder not found, This computer may not write there, or for SFTP The server did not answer. Fix the folder or server, use Test connection, then send the failed messages again from Logs › Failed."
         },
         {
           "problem": "Waiting does not go down",
@@ -123,7 +124,7 @@
     {
       "title": "Add or change a connection",
       "routes": ["/interfaces/connections/:connectionId/:tab?"],
-      "purpose": "Set what a connection carries, its folder, its routing rules and when it writes; then manage, test and check it.",
+      "purpose": "Set what a connection carries, its folder or SFTP server, its routing rules and when it writes; then manage, test and check it.",
       "access": "Manage configuration. Recording the destination check follows the laboratory's separation-of-duties policy.",
       "fields": [
         {
@@ -152,15 +153,57 @@
         },
         {
           "name": "Protocol",
-          "meaning": "How files travel, chosen among cards.",
-          "values": "Folder: shared folder on the lab network. SFTP, MLLP – LIS connects and MLLP – LIS listens are shown but not available yet.",
-          "rules": "Folder is selected and is the only choice in this release."
+          "meaning": "How files travel, chosen among cards. Section 3 shows the folder or the SFTP server to match.",
+          "values": "Folder: shared folder on the lab network. SFTP: the partner's server, over the internet, encrypted; the LIS connects to it. MLLP – LIS connects and MLLP – LIS listens are shown but not available yet.",
+          "rules": "Folder is selected for a new connection. A saved connection may change protocol; its new destination then needs a new destination check."
         },
         {
           "name": "Output folder",
-          "meaning": "Where the LIS writes the files, for the partner's system to read.",
+          "meaning": "For the Folder protocol: where the LIS writes the files, for the partner's system to read.",
           "values": "A folder chosen with Choose folder…; it cannot be typed.",
           "rules": "Required. The LIS writes each file under a temporary .tmp name and renames it only when complete. It never replaces a file: a name already taken by other content gets -1, -2 and so on before the extension."
+        },
+        {
+          "name": "Server",
+          "meaning": "For SFTP: the partner's SFTP server.",
+          "values": "A server name or IP address only, such as sftp.clinic-a.example; no user, path or spaces.",
+          "rules": "Required; up to 253 characters."
+        },
+        {
+          "name": "Port",
+          "meaning": "For SFTP: the server's port.",
+          "values": "1 to 65535. Default 22.",
+          "rules": "Required. This computer must be allowed to connect out to it."
+        },
+        {
+          "name": "Username",
+          "meaning": "For SFTP: the account the partner's IT made for the laboratory, such as vibetox_lab.",
+          "values": "Free text.",
+          "rules": "Required; up to 64 characters."
+        },
+        {
+          "name": "Sign-in",
+          "meaning": "For SFTP: how the LIS proves who it is.",
+          "values": "SSH key (recommended; default): the LIS's own key, whose public key the partner's IT allows for the username (Copy LIS public key). Password: the account's password.",
+          "rules": "Required. One LIS key serves every SFTP connection of this installation."
+        },
+        {
+          "name": "Password",
+          "meaning": "For SFTP with Password sign-in: the account's password.",
+          "values": "Typed, masked.",
+          "rules": "Kept sealed with the installation key on this computer; never shown again or sent anywhere but this server. Required for a new connection, and again when the server, port or username changes. Otherwise leave it empty to keep the saved password."
+        },
+        {
+          "name": "Server fingerprint",
+          "meaning": "For SFTP: the fingerprint of the server's key, which proves it is the partner's server.",
+          "values": "SHA256: and 43 characters, as OpenSSH prints it, such as SHA256:8Zq3… from the partner's IT.",
+          "rules": "Required. The LIS refuses to connect when the server presents another key; Test connection then shows the fingerprint it presented. The server must offer an Ed25519 or ECDSA key; a server with only an RSA key cannot be used."
+        },
+        {
+          "name": "Remote folder",
+          "meaning": "For SFTP: the folder on the server the files go to.",
+          "values": "A path from the server's root, such as /inbound/results.",
+          "rules": "Required; starts with /; no .. part; up to 1024 characters; it must exist on the server. Files are uploaded under a temporary .tmp name and renamed when complete. An existing file is never replaced: a name taken by other content gets -1, -2 and so on before the extension."
         },
         {
           "name": "Routing rules",
@@ -194,14 +237,14 @@
         },
         {
           "name": "How it was confirmed",
-          "meaning": "How the current folder was confirmed as the partner's.",
+          "meaning": "How the current folder, or the SFTP server with its username, remote folder and fingerprint, was confirmed as the partner's.",
           "values": "Free text up to 500 characters, such as a call-back to the partner's IT.",
           "rules": "Required to record the destination check."
         },
         {
           "name": "Overview: Connection and Checks and contract",
-          "meaning": "Connection: partner, message, protocol, folder, send when and schedule, file name and rules. Checks and contract: who verified the destination, when and how; the last connection and its result; messages awaiting the partner's application acknowledgement; the last change with its reason.",
-          "values": "As recorded. Awaiting application ACK is 0 messages for a folder, which never answers. An HL7 Results connection also shows its Code mappings card below, read-only.",
+          "meaning": "Connection: partner, message, protocol and folder, send when and schedule, file name and rules. For SFTP, Protocol shows the server and port, then Remote folder, and Sign-in with the username and the server fingerprint shortened, such as SSH key as vibetox_lab · fingerprint SHA256:8Zq3...f1Kx. Checks and contract: who verified the destination, when and how; the last connection and its result; messages awaiting the partner's application acknowledgement; the last change with its reason.",
+          "values": "As recorded. Awaiting application ACK is 0 messages for a folder or SFTP server, which never answer. An HL7 Results connection also shows its Code mappings card below, read-only.",
           "rules": "Read-only. Interface contracts and acceptance tests are not part of this release."
         },
         {
@@ -233,14 +276,20 @@
         {
           "name": "Choose folder…",
           "does": "Opens the system folder dialog.",
-          "availableWhen": "In the Add or Edit dialog.",
+          "availableWhen": "In the Add or Edit dialog, for the Folder protocol.",
           "result": "The folder shows in Output folder. Cancelling the dialog changes nothing."
         },
         {
           "name": "Test folder / Test connection",
-          "does": "Creates, writes and removes a small probe file in the folder.",
-          "availableWhen": "A chosen folder, or a saved connection.",
-          "result": "Says whether the LIS can write there; no message is made and nothing is logged."
+          "does": "Creates, writes and removes a small probe file in the folder. For SFTP, Test connection connects to the server, checks its fingerprint and the sign-in, then writes and removes the probe file in the remote folder. In the dialog it tests the server as entered, with the typed password or, when changing a connection, its saved one for the same server and username.",
+          "availableWhen": "A chosen folder, SFTP server fields filled in, or a saved connection.",
+          "result": "Says whether the LIS can write there, such as ✓ Connected, fingerprint matches, test file written and removed; or the problem, with the fingerprint the server presented when it is not the one entered. Nothing is saved, no message is made and nothing is logged."
+        },
+        {
+          "name": "Copy LIS public key",
+          "does": "Copies the LIS's public SSH key, such as ssh-ed25519 AAAA… vibetox-lis, to the clipboard. The first use makes this installation's key; its private key stays sealed on this computer and is never shown.",
+          "availableWhen": "SFTP with SSH key sign-in. Making the key needs the installation key to be available.",
+          "result": "Send the key to the partner's IT to allow for the username. If the clipboard cannot be used, the key is shown to copy by hand. Making the key is recorded in the audit trail; the same key is returned every time."
         },
         {
           "name": "+ Add rule / × (Remove rule)",
@@ -256,15 +305,15 @@
         },
         {
           "name": "Record destination check",
-          "does": "Records how the current folder was confirmed.",
-          "availableWhen": "No check covers the current folder. The person who chose the folder may record it only if the laboratory's separation-of-duties policy allows and they confirm it.",
+          "does": "Records how the current folder or SFTP server was confirmed. For SFTP the dialog names the server and remote folder, the username and the full fingerprint.",
+          "availableWhen": "No check covers the current destination. The person who chose it may record it only if the laboratory's separation-of-duties policy allows and they confirm it.",
           "result": "Destination check shows Verified; waiting messages are written if the connection is started."
         },
         {
           "name": "Edit",
           "does": "Opens the dialog with the current settings.",
           "availableWhen": "Always; a reason is required.",
-          "result": "A new folder makes the check Not verified until it is recorded again. Changed rules apply to new messages and to Retry routing."
+          "result": "A new folder, or for SFTP a new server, port, username, remote folder or fingerprint, makes the check Not verified until it is recorded again. Changed rules apply to new messages and to Retry routing."
         },
         {
           "name": "Stop / Start",
@@ -274,7 +323,7 @@
         },
         {
           "name": "Send test message",
-          "does": "Writes a synthetic file with no patient data to the folder now: vibetox-test-<date>-<time>.hl7, an ORU^R01 with processing ID T and a synthetic patient, for HL7 Results; a one-page PDF for Report PDF; a .json file for Billing JSON.",
+          "does": "Writes a synthetic file with no patient data to the folder or SFTP server now: vibetox-test-<date>-<time>.hl7, an ORU^R01 with processing ID T and a synthetic patient, for HL7 Results; a one-page PDF for Report PDF; a .json file for Billing JSON.",
           "availableWhen": "A saved connection, stopped or not verified too.",
           "result": "The file name, or the problem, shows; the test appears in Logs as Test message. A failed test is not retried."
         },
@@ -295,10 +344,11 @@
         "The message type cannot change after saving.",
         "A routing rule compares codes exactly; it does not search names.",
         "Interface contracts and acceptance tests are not part of this release.",
-        "HL7 messages carry no abnormal flags and no interpretation: values are sent as stored, a censored value as a comparator and number (SN), never as an exact number."
+        "HL7 messages carry no abnormal flags and no interpretation: values are sent as stored, a censored value as a comparator and number (SN), never as an exact number.",
+        "SFTP: the LIS only connects out to the partner's server; it sends files and reads nothing back. Its own key is an Ed25519 key; a server offering only an RSA key cannot be used."
       ],
       "workflow": [
-        "Fill in General, choose the folder and test it.",
+        "Fill in General, choose the folder and test it; or for SFTP fill in the server, port, username and the fingerprint from the partner's IT, use Copy LIS public key for the partner's IT to allow, and Test connection.",
         "Add rules if only some reports or handoffs belong to this partner.",
         "Choose the schedule and file name, and save stopped.",
         "Send a test message, have a second person record the destination check, then Start.",
@@ -323,7 +373,23 @@
         },
         {
           "problem": "Test connection says Folder not found or This computer may not write there",
-          "recovery": "Check that the folder or network share is reachable from this computer and that the app's user may create and delete files there."
+          "recovery": "Check that the folder or network share is reachable from this computer and that the app's user may create and delete files there. For SFTP, check the remote folder exists and the account may create, rename and delete files in it."
+        },
+        {
+          "problem": "Test connection says the server's fingerprint is SHA256:…, not the one entered",
+          "recovery": "Do not copy the presented fingerprint: it may be another server. Ask the partner's IT, through a channel you trust, whether the server's key changed. If they confirm it, Edit the connection with the new fingerprint; a new destination check is then needed."
+        },
+        {
+          "problem": "Test connection says the server refused the username, key or password",
+          "recovery": "For SSH key sign-in, check that the partner's IT allowed the LIS public key (Copy LIS public key) for this username. For Password sign-in, type the password again."
+        },
+        {
+          "problem": "Test connection says the server did not answer",
+          "recovery": "Check the server name and port, and that this computer's network allows connecting out to that port. A server offering only an RSA key also ends this way."
+        },
+        {
+          "problem": "Test connection says no usable sign-in on this computer",
+          "recovery": "For SSH key sign-in, use Copy LIS public key once to make the LIS's key. For Password sign-in, type the password again. If it persists, the installation key may be unavailable on this computer; System › Recovery kit shows whether it is usable."
         }
       ]
     },
@@ -354,7 +420,7 @@
         {
           "name": "Outcome (All outcomes)",
           "meaning": "Narrow by what the transport can prove.",
-          "values": "All outcomes (default); Written; Failed; Not sent (not written yet, unrouted messages included).",
+          "values": "All outcomes (default); Written (uploaded to an SFTP server included); Failed; Not sent (not written yet, unrouted messages included).",
           "rules": "Combines with the tab; the tabs count what the other filters leave."
         },
         {
@@ -366,8 +432,8 @@
         {
           "name": "All / Failed / Rejected / Awaiting ACK / Outcome unknown / Duplicates",
           "meaning": "Which rows the tab shows, with their number.",
-          "values": "Failed: a write failed and is retried or given up. Rejected: the other system refused it. Awaiting ACK: sent and waiting for the other system's answer. Outcome unknown: written to a folder, which never confirms. Duplicates: received again.",
-          "rules": "A folder never answers and nothing is received in this release, so Rejected, Awaiting ACK and Duplicates stay at 0. The tab is part of the address."
+          "values": "Failed: a write failed and is retried or given up. Rejected: the other system refused it. Awaiting ACK: sent and waiting for the other system's answer. Outcome unknown: written to a folder or uploaded to an SFTP server, which never confirm. Duplicates: received again.",
+          "rules": "A folder or SFTP server never answers and nothing is received in this release, so Rejected, Awaiting ACK and Duplicates stay at 0. The tab is part of the address."
         },
         {
           "name": "Time, Dir., Connection, Message, Record",
@@ -377,20 +443,20 @@
         },
         {
           "name": "Transport",
-          "meaning": "Did it leave: what the folder can prove.",
-          "values": "Written; Failed; Not sent (not written yet, or replaced by a newer revision and never written).",
+          "meaning": "Did it leave: what the folder or SFTP server can prove.",
+          "values": "Written (to a folder); Uploaded (to an SFTP server); Failed; Not sent (not written yet, or replaced by a newer revision and never written).",
           "rules": "Never Delivered."
         },
         {
           "name": "Application",
           "meaning": "Did the other system accept it.",
-          "values": "Outcome unknown for a written file: a folder never confirms; — otherwise.",
+          "values": "Outcome unknown for a written or uploaded file: a folder or SFTP server never confirms; — otherwise.",
           "rules": "The billing company's acknowledgement or rejection is recorded on the billing handoff page, by people with Billing. A written report PDF does not count as a staff-attested delivery on the report's page."
         },
         {
           "name": "Details",
           "meaning": "Why the row stands where it does.",
-          "values": "Written as <folder and file>; <problem>; attempt N of 5 at <time>; <problem>; not written after 5 attempts; Connection stopped; Destination check not recorded; Waiting for the connection's schedule; Written at the next pass; Paused while the report's impact review is open; Held: a test or analyte has no approved code mapping; Replaced by a newer revision; never written; No connection rule matched; or the decision on an unrouted message. A report's later revision or withdrawal notice sent to a connection that had the report starts with Replaces r<n>, sent first or Withdrawal notice, sent first.",
+          "values": "Written as <folder and file> (for SFTP, the remote folder and file); <problem>; attempt N of 5 at <time>; <problem>; not written after 5 attempts; Connection stopped; Destination check not recorded; Waiting for the connection's schedule; Written at the next pass; Paused while the report's impact review is open; Held: a test or analyte has no approved code mapping; Replaced by a newer revision; never written; No connection rule matched; or the decision on an unrouted message. A report's later revision or withdrawal notice sent to a connection that had the report starts with Replaces r<n>, sent first or Withdrawal notice, sent first.",
           "rules": "Read-only."
         }
       ],
@@ -531,6 +597,7 @@
     "ui/src/features/interfaces/connections/ProtocolCards.tsx",
     "ui/src/features/interfaces/connections/connectionForm.ts",
     "ui/src/features/interfaces/connections/FolderFields.tsx",
+    "ui/src/features/interfaces/connections/SftpFields.tsx",
     "ui/src/features/interfaces/connections/RuleFields.tsx",
     "ui/src/features/interfaces/connections/ConnectionPage.tsx",
     "ui/src/features/interfaces/connections/ConnectionActions.tsx",
@@ -566,6 +633,10 @@
     "crates/lis-engine/src/partner_delivery.rs",
     "crates/lis-engine/src/partner_delivery/folder_write.rs",
     "crates/lis-engine/src/commands/partner/folder_choices.rs",
-    "crates/lis-engine/src/commands/partner/messages.rs"
+    "crates/lis-engine/src/commands/partner/messages.rs",
+    "crates/lis-interfaces/src/partner/sftp_settings.rs",
+    "crates/lis-interfaces/src/partner/sftp_identity.rs",
+    "crates/lis-engine/src/partner_delivery/sftp.rs",
+    "crates/lis-engine/src/commands/partner/sftp.rs"
   ]
 }

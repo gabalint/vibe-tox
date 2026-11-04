@@ -134,56 +134,45 @@ pub(crate) fn insert_connection(
     conn: &Connection,
     row: &ConnectionRow,
 ) -> Result<(), PartnerError> {
-    let (schedule, minutes, time) = schedule_columns(&row.settings.schedule);
-    let (host, port, username, auth, fingerprint) = sftp_columns(&row.settings);
-    conn.execute(
+    write_connection(
+        conn,
         &format!(
             "INSERT INTO ifc_partner_connections ({COLUMNS}) VALUES (?1, ?2, ?3, ?4, ?5, ?6, \
              ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21)"
         ),
+        row,
+    )
+}
+
+/// Every column but the ID; the message type cannot change, the protocol can.
+pub(crate) fn update_connection(
+    conn: &Connection,
+    row: &ConnectionRow,
+) -> Result<(), PartnerError> {
+    write_connection(
+        conn,
+        "UPDATE ifc_partner_connections SET name = ?2, partner = ?3, message_type = ?4, \
+         protocol = ?5, folder = ?6, folder_set_by = ?7, rules = ?8, schedule = ?9, \
+         schedule_minutes = ?10, schedule_time = ?11, file_name_pattern = ?12, active = ?13, \
+         revision = ?14, sftp_host = ?15, sftp_port = ?16, sftp_username = ?17, \
+         sftp_auth = ?18, sftp_fingerprint = ?19, sftp_password = ?20, destination = ?21 \
+         WHERE id = ?1",
+        row,
+    )
+}
+
+/// Runs `sql` with the row's values as `?1`–`?21`, in [`COLUMNS`] order.
+fn write_connection(conn: &Connection, sql: &str, row: &ConnectionRow) -> Result<(), PartnerError> {
+    let (schedule, minutes, time) = schedule_columns(&row.settings.schedule);
+    let (host, port, username, auth, fingerprint) = sftp_columns(&row.settings);
+    conn.execute(
+        sql,
         params![
             row.id,
             row.settings.name,
             row.settings.partner,
             row.settings.message_type,
             row.settings.protocol,
-            row.folder,
-            row.folder_set_by,
-            serde_json::to_string(&row.settings.rules)?,
-            schedule,
-            minutes,
-            time,
-            row.settings.file_name_pattern,
-            row.active,
-            row.revision,
-            host,
-            port,
-            username,
-            auth,
-            fingerprint,
-            row.sealed_password,
-            row.destination
-        ],
-    )?;
-    Ok(())
-}
-
-pub(crate) fn update_connection(
-    conn: &Connection,
-    row: &ConnectionRow,
-) -> Result<(), PartnerError> {
-    let (schedule, minutes, time) = schedule_columns(&row.settings.schedule);
-    let (host, port, username, auth, fingerprint) = sftp_columns(&row.settings);
-    conn.execute(
-        "UPDATE ifc_partner_connections SET name = ?2, partner = ?3, folder = ?4, \
-         folder_set_by = ?5, rules = ?6, schedule = ?7, schedule_minutes = ?8, \
-         schedule_time = ?9, file_name_pattern = ?10, active = ?11, revision = ?12, \
-         sftp_host = ?13, sftp_port = ?14, sftp_username = ?15, sftp_auth = ?16, \
-         sftp_fingerprint = ?17, sftp_password = ?18, destination = ?19 WHERE id = ?1",
-        params![
-            row.id,
-            row.settings.name,
-            row.settings.partner,
             row.folder,
             row.folder_set_by,
             serde_json::to_string(&row.settings.rules)?,

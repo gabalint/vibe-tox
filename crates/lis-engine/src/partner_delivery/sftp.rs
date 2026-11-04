@@ -280,3 +280,7 @@ fn problem(error: &SftpError) -> SftpProblem {
         _ => WriteProblem::WriteFailed,
     })
 }
+
+#[cfg(test)]
+#[path = "sftp_tests.rs"]
+mod tests;

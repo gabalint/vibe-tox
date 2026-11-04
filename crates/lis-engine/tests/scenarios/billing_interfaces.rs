@@ -174,11 +174,11 @@ fn settings(name: &str, rules: Vec<RoutingRule>) -> PartnerConnectionSettings {
     }
 }
 
-/// A synthetic server on the reserved `.invalid` domain, which no lookup resolves.
+/// A synthetic server on a local port nothing listens on, so a test never leaves the computer.
 fn sftp_server() -> SftpSettings {
     SftpSettings {
-        host: "sftp.clinic-a.invalid".to_owned(),
-        port: 22,
+        host: "127.0.0.1".to_owned(),
+        port: lis_store::testing::local_port(),
         username: "vibetox_lab".to_owned(),
         auth: SftpAuth::Key,
         fingerprint: format!("SHA256:{}", "A".repeat(43)),
