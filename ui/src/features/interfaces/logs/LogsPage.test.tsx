@@ -66,6 +66,8 @@ describe("Logs (ticket #4555; REQ-INT-002, REQ-RPT-011)", () => {
       transport: "received" as const,
       outcomeUnknown: false,
       writtenPath: "/srv/clinic-a/processed/2026/11/clinicA_000124.hl7",
+      // It waited for its patient's registration first.
+      errorCode: "patient_unknown",
       received: "order_created" as const,
     };
     const rejected = {
@@ -84,7 +86,7 @@ describe("Logs (ticket #4555; REQ-INT-002, REQ-RPT-011)", () => {
     expect(screen.getByRole("gridcell", { name: "Rejected – unknown test" })).toBeTruthy();
     expect(
       screen.getByRole("gridcell", {
-        name: "Moved to /srv/clinic-a/processed/2026/11/clinicA_000124.hl7",
+        name: "Waited until the patient was registered · Moved to /srv/clinic-a/processed/2026/11/clinicA_000124.hl7",
       }),
     ).toBeTruthy();
     expect(screen.getByRole("tab", { name: /Rejected \(1\)/ })).toBeTruthy();

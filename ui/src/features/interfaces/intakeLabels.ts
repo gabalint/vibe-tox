@@ -46,9 +46,14 @@ export function receivedOutcome(state: ReceivedState, reason: string | null) {
     : outcome;
 }
 
-/** Where the file went and, when it waits, is held or was refused, why. */
+/** Where the file went and, when it waits, is held or was refused, why. An order made
+ * after its patient was registered keeps only that it waited. */
 export function receivedDetail(row: PartnerMessageRow): string {
-  const reason = row.errorCode === null ? null : (INTAKE_REASONS[row.errorCode] ?? row.errorCode);
+  const why = row.errorCode === null ? null : (INTAKE_REASONS[row.errorCode] ?? row.errorCode);
+  const reason =
+    row.received === "order_created" && why !== null
+      ? "Waited until the patient was registered"
+      : why;
   const moved = row.writtenPath === null ? null : `Moved to ${row.writtenPath}`;
   return [reason, moved].filter(Boolean).join(" · ");
 }
