@@ -1,6 +1,7 @@
 // Synthetic Interfaces records for the feature's tests.
 import type { PartnerConnection } from "@/generated/PartnerConnection";
 import type { PartnerConnectionDetail } from "@/generated/PartnerConnectionDetail";
+import type { PartnerMappings } from "@/generated/PartnerMappings";
 import type { PartnerMessageRow } from "@/generated/PartnerMessageRow";
 import type { SessionInfo } from "@/generated/SessionInfo";
 import type { UnroutedMessage } from "@/generated/UnroutedMessage";
@@ -47,6 +48,50 @@ export const CONNECTION: PartnerConnection = {
   ],
 };
 
+/** An HL7 Results connection, started and checked. */
+export const HL7: PartnerConnection = {
+  ...CONNECTION,
+  settings: {
+    ...CONNECTION.settings,
+    name: "HL7 Results - Clinic A",
+    partner: "CLINIC-A",
+    messageType: "hl7_oru",
+    rules: [{ field: "client", condition: "equals", value: "CLINIC-A" }],
+    fileNamePattern: "{accession}_r{revision}_{date}.hl7",
+  },
+};
+
+const AMPHETAMINE = "01a1a000-0000-7000-8000-000000000051";
+export const PHENTERMINE = "01a1a000-0000-7000-8000-000000000052";
+
+/** One approved analyte mapping and one analyte a waiting message is held for. */
+export const MAPPINGS: PartnerMappings = {
+  connectionId: CONNECTION_ID,
+  version: 2,
+  approved: { by: ME, at: "2026-11-03T11:00:00.000000000Z" },
+  rows: [
+    {
+      kind: "analyte",
+      lisId: AMPHETAMINE,
+      lisCode: "SYN-AMP",
+      lisName: "Amphetamine",
+      approved: { partnerCode: "CA-AMP", ucumUnit: "ng/mL" },
+      draft: null,
+      held: false,
+    },
+    {
+      kind: "analyte",
+      lisId: PHENTERMINE,
+      lisCode: "SYN-PHEN",
+      lisName: "Phentermine",
+      approved: null,
+      draft: null,
+      held: true,
+    },
+  ],
+  allowedActions: ["draft_partner_mapping"],
+};
+
 export const DETAIL: PartnerConnectionDetail = {
   connection: CONNECTION,
   history: [
@@ -68,6 +113,7 @@ export const WRITTEN: PartnerMessageRow = {
   source: "billing_handoff",
   sourceId: "01a1a000-0000-7000-8000-000000000012",
   sourceNumber: 12,
+  sourceLabel: null,
   connection: { id: CONNECTION_ID, name: "Billing - RCM" },
   reason: "routed",
   transport: "written",
@@ -75,6 +121,7 @@ export const WRITTEN: PartnerMessageRow = {
   waiting: null,
   attempts: 0,
   givenUp: false,
+  superseded: false,
   nextAttemptAt: null,
   errorCode: null,
   writtenPath: "/srv/billing/out/billing-12_20261103.json",
@@ -97,6 +144,21 @@ export const FAILED: PartnerMessageRow = {
   allowedActions: ["resend_partner_delivery"],
 };
 
+/** A corrected report revision sent first to a connection that had revision 1. */
+export const CORRECTION: PartnerMessageRow = {
+  ...WRITTEN,
+  messageId: "01a1a000-0000-7000-8000-000000000040",
+  deliveryId: "01a1a000-0000-7000-8000-000000000041",
+  messageType: "report_pdf",
+  source: "report_revision",
+  sourceId: "01a1a000-0000-7000-8000-000000000042",
+  sourceNumber: 2,
+  sourceLabel: "A26000005-U",
+  connection: { id: CONNECTION_ID, name: "Report PDFs - all clients" },
+  reason: "follow_up",
+  writtenPath: "/srv/reports/out/A26000005-U_r2_20261103.pdf",
+};
+
 export const UNROUTED: UnroutedMessage = {
   messageId: "01a1a000-0000-7000-8000-000000000030",
   createdAt: "2026-11-03T09:00:00.000000000Z",
@@ -104,6 +166,7 @@ export const UNROUTED: UnroutedMessage = {
   source: "billing_handoff",
   sourceId: "01a1a000-0000-7000-8000-000000000031",
   sourceNumber: 14,
+  sourceLabel: null,
   facts: {
     clients: [{ value: "TEST-CLIENT-2", label: "TEST CLIENT 2" }],
     practitioners: [{ value: "1234567893", label: "Test, Doctor" }],

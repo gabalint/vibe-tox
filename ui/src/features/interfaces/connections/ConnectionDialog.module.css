@@ -72,6 +72,15 @@
   max-width: 28rem;
 }
 
+/* Routing rules: their labels are hidden, so the first row keeps the room a label would take
+   under the section title, as in the other sections. */
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+}
+
 /* Routing rules: field, condition, value and remove on one line; labels are for screen readers. */
 .rule {
   display: grid;

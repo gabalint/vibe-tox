@@ -11,8 +11,10 @@
 mod connections;
 mod folder_choices;
 mod folders;
+mod mappings;
 mod messages;
 mod routing;
+mod test_files;
 
 use lis_core::Capability;
 use lis_interfaces::partner::PartnerError;
@@ -23,7 +25,10 @@ pub use self::connections::{
 pub(crate) use self::folder_choices::FolderChoices;
 pub use self::folders::{ChosenPartnerFolder, FolderTestResult, TestPartnerFolderInput};
 pub use self::messages::ExportedMessageLog;
-pub(crate) use self::routing::{HandoffError, route_billing_handoff};
+pub(crate) use self::routing::{
+    HandoffError, ReportRoutingError, route_billing_handoff, route_report_revision,
+    route_report_withdrawal,
+};
 use crate::pipeline::domain_error;
 use crate::registry::{Access, CommandSpec, spec};
 
@@ -88,6 +93,20 @@ pub(crate) const RESOLVE_UNROUTED_MESSAGE: CommandSpec = spec(
 pub(crate) const RESEND_PARTNER_DELIVERY: CommandSpec = spec(
     "resend_partner_delivery",
     "interfaces.resend_delivery",
+    MANAGE,
+);
+pub(crate) const LIST_PARTNER_MAPPINGS: CommandSpec =
+    spec("list_partner_mappings", "interfaces.list_mappings", MANAGE);
+pub(crate) const DRAFT_PARTNER_MAPPING: CommandSpec =
+    spec("draft_partner_mapping", "interfaces.draft_mapping", MANAGE);
+pub(crate) const DISCARD_PARTNER_MAPPING_DRAFT: CommandSpec = spec(
+    "discard_partner_mapping_draft",
+    "interfaces.discard_mapping_draft",
+    MANAGE,
+);
+pub(crate) const APPROVE_PARTNER_MAPPINGS: CommandSpec = spec(
+    "approve_partner_mappings",
+    "interfaces.approve_mappings",
     MANAGE,
 );
 

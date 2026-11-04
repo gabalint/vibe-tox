@@ -3,12 +3,16 @@
 //! From engine start, whoever is signed in (also nobody), every [`PASS_INTERVAL`] it takes
 //! the deliveries `lis_interfaces` says may be written now (connection started, a
 //! destination check covering its current folder, retry time come), keeps those whose
-//! schedule allows the first attempt, and writes each message's stored file into the
-//! connection's folder ([`folder_write`]). Every attempt is recorded as the delivery worker,
-//! with `export` only. Nothing is written while a recovery reconciliation is open. Logs
-//! carry delivery IDs and codes, never file names, folders or content.
+//! schedule allows the first attempt, and writes each message's stored file, or the HL7
+//! message made for it ([`hl7_payload`]), into the connection's folder ([`folder_write`]).
+//! Every attempt is recorded as the delivery worker,
+//! with `export` only. Nothing is written while a recovery reconciliation is open, and a
+//! report revision's PDF waits while its impact review is open (L13). Logs carry delivery
+//! IDs and codes, never file names, folders or content.
 
 mod folder_write;
+pub(crate) mod hl7_message;
+pub(crate) mod hl7_payload;
 
 use std::path::Path;
 use std::sync::Arc;
@@ -18,10 +22,14 @@ use std::time::Duration;
 use jiff::Timestamp;
 use jiff::tz::TimeZone;
 use lis_core::{Capability, Clock, CorrelationId, Principal, UtcTimestamp};
-use lis_interfaces::partner::{AttemptOutcome, DueDelivery, PartnerError};
+use lis_interfaces::partner::{
+    AttemptOutcome, DueDelivery, MessageSource, PartnerError, PartnerMessageType,
+};
+use lis_reporting::ReportRevisionId;
 use lis_store::{ArtifactDigest, Database};
 
 pub(crate) use self::folder_write::{WriteProblem, probe, write_file};
+use self::hl7_payload::Payload;
 use crate::engine::Engine;
 use crate::poller::{Poller, Scan, scan_off_runtime};
 
@@ -90,27 +98,52 @@ impl PartnerDeliveries {
                     now,
                     zone.as_ref(),
                 );
-            if scheduled {
+            if scheduled && !self.paused(&delivery) {
                 self.deliver(&delivery, zone.as_ref());
             }
         }
         Ok(())
     }
 
-    /// Writes one delivery and records the attempt.
+    /// L13: a report revision's PDF waits, unrecorded, while its impact review is open or
+    /// a correction is due; every pass asks again.
+    fn paused(&self, delivery: &DueDelivery) -> bool {
+        if delivery.source != MessageSource::ReportRevision {
+            return false;
+        }
+        let Some(revision_id) = delivery
+            .source_id
+            .as_deref()
+            .and_then(|id| id.parse::<ReportRevisionId>().ok())
+        else {
+            return true;
+        };
+        let delivery_id = delivery.delivery_id;
+        self.db
+            .read_blocking(move |conn| lis_reporting::revision_delivery_paused(conn, revision_id))
+            .unwrap_or_else(|error| {
+                tracing::warn!(%delivery_id, error_code = error.code().as_str(), "report pause not read; delivery waits");
+                true
+            })
+    }
+
+    /// Writes one delivery and records the attempt. An HL7 delivery held for a missing
+    /// mapping is left as it is.
     fn deliver(&self, delivery: &DueDelivery, zone: Option<&TimeZone>) {
-        let outcome = match self.stored_bytes(&delivery.artifact_sha256) {
+        let bytes = match delivery.message_type {
+            PartnerMessageType::Hl7Oru => match hl7_payload::payload(&self.db, delivery) {
+                Payload::Ready(bytes) => Some(bytes),
+                Payload::Lost => None,
+                Payload::Held => return,
+            },
+            PartnerMessageType::BillingJson | PartnerMessageType::ReportPdf => {
+                stored(&self.db, &delivery.artifact_sha256)
+            }
+        };
+        let outcome = match bytes {
             Some(bytes) => {
                 let (date, time) = stamp(delivery.created_at, zone);
-                let number = delivery
-                    .source_number
-                    .map_or_else(|| delivery.delivery_id.to_string(), |n| n.to_string());
-                let name = lis_interfaces::partner::file_name(
-                    &delivery.file_name_pattern,
-                    &number,
-                    &date,
-                    &time,
-                );
+                let name = delivery.file_name(&date, &time);
                 written(write_file(Path::new(&delivery.folder), &name, &bytes))
             }
             None => AttemptOutcome::Failed {
@@ -139,12 +172,12 @@ impl PartnerDeliveries {
             }
         }
     }
+}
 
-    /// The message's stored bytes, verified against their digest.
-    fn stored_bytes(&self, digest: &str) -> Option<Vec<u8>> {
-        let digest: ArtifactDigest = digest.parse().ok()?;
-        self.db.artifacts().read(&digest).ok()
-    }
+/// A stored file's bytes, verified against their digest.
+fn stored(db: &Database, digest: &str) -> Option<Vec<u8>> {
+    let digest: ArtifactDigest = digest.parse().ok()?;
+    db.artifacts().read(&digest).ok()
 }
 
 /// The attempt outcome of a write.

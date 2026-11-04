@@ -3,4 +3,4 @@
 /**
  * Where a delivery stands.
  */
-export type DeliveryState = "waiting" | "written" | "failed";
+export type DeliveryState = "waiting" | "written" | "failed" | "superseded";

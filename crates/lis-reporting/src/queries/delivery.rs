@@ -61,26 +61,16 @@ impl DeliveryContext {
         Ok(client_id)
     }
 
-    /// L13: whether delivery of `revision`'s report PDF is paused; it is
-    /// while its stored content fails its digest and impact is unknown.
+    /// [`paused`], once per revision.
     fn paused(
         &mut self,
         conn: &Connection,
         revision: &RevisionRow,
     ) -> Result<bool, ReportingError> {
-        if !DELIVERY_PAUSED_WHILE_IMPACT_OPEN
-            || revision.availability != RevisionAvailability::Current
-        {
-            return Ok(false);
-        }
         if let Some(paused) = self.paused.get(&revision.id) {
             return Ok(*paused);
         }
-        let paused = match impact::impact(conn, revision) {
-            Ok(impact) => impact.pauses_delivery(),
-            Err(ReportingError::ContentMismatch(_)) => true,
-            Err(error) => return Err(error),
-        };
+        let paused = paused(conn, revision)?;
         self.paused.insert(revision.id, paused);
         Ok(paused)
     }
@@ -117,6 +107,21 @@ pub(crate) fn order_client(
     let accession = lis_specimens::specimen_accession(conn, report.specimen_id)?;
     let accession = lis_specimens::get_accession(conn, accession)?;
     Ok(lis_orders::get_order(conn, accession.order_id)?.client_id)
+}
+
+/// L13: whether delivery of `revision`'s report PDF is paused: while it is
+/// current with open impact or a correction due, or while its stored content
+/// fails its digest and its impact is unknown.
+pub(crate) fn paused(conn: &Connection, revision: &RevisionRow) -> Result<bool, ReportingError> {
+    if !DELIVERY_PAUSED_WHILE_IMPACT_OPEN || revision.availability != RevisionAvailability::Current
+    {
+        return Ok(false);
+    }
+    match impact::impact(conn, revision) {
+        Ok(impact) => Ok(impact.pauses_delivery()),
+        Err(ReportingError::ContentMismatch(_)) => Ok(true),
+        Err(error) => Err(error),
+    }
 }
 
 /// The status of an obligation; the first match wins (brief §2.1).

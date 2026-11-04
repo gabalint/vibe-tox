@@ -5,7 +5,7 @@ import { openRowActions } from "@/lib/test/grid";
 import { mockCommands } from "@/lib/test/ipc";
 import { mockGridLayout } from "@/lib/test/layout";
 import { renderRoutes } from "@/lib/test/router";
-import { ADMIN, CONNECTION, FAILED, WRITTEN } from "../testData";
+import { ADMIN, CONNECTION, CORRECTION, FAILED, WRITTEN } from "../testData";
 import { LogsPage } from "./LogsPage";
 
 const ROUTES = [{ path: "/interfaces/logs/:tab?", element: <LogsPage /> }];
@@ -43,6 +43,17 @@ describe("Logs (ticket #4555; REQ-INT-002, REQ-RPT-011)", () => {
     const [args] = list.mock.calls.at(-1) as unknown as [{ input: { view: string } }];
     expect(args.input.view).toBe("all");
     await expectNoA11yViolations(container, { wholePage: true });
+  });
+
+  it("names a report revision and says a correction went first (REQ-RPT-013)", async () => {
+    renderPage(() => ({ rows: [CORRECTION], more: false }));
+    expect(await screen.findByRole("gridcell", { name: "A26000005-U r2" })).toBeTruthy();
+    expect(screen.getByRole("gridcell", { name: "Report PDF" })).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", {
+        name: "Replaces r1, sent first · Written as /srv/reports/out/A26000005-U_r2_20261103.pdf",
+      }),
+    ).toBeTruthy();
   });
 
   it("sends a failed message again from its row", async () => {

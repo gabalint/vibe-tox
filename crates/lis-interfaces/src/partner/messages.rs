@@ -55,6 +55,11 @@ pub struct ResendPartnerDelivery {
 /// place in Unrouted messages. Without any connection of the type nothing is
 /// kept, so a laboratory that exports by hand gets no unrouted messages. The
 /// caller has already authorized creating the source.
+///
+/// A report's later revision goes first to every connection that had an earlier
+/// one, whatever its rules (REQ-RPT-013), and earlier revisions not written yet
+/// are superseded. A withdrawal notice goes only to connections an earlier
+/// revision was written to; with none, nothing is kept.
 pub fn route_partner_message(
     ctx: &mut CommandContext<'_>,
     message: NewPartnerMessage,
@@ -63,33 +68,47 @@ pub fn route_partner_message(
     if candidates.is_empty() {
         return Ok(Routed::NoConnection);
     }
+    let withdrawal = message.source == MessageSource::ReportWithdrawal;
+    let earlier = match &message.report {
+        Some(report) => repo::report_recipients(ctx.tx(), message.message_type, &report.report_id)?,
+        None => Vec::new(),
+    };
+    let follow_ups: Vec<PartnerConnectionId> = earlier
+        .iter()
+        .filter(|(_, written)| *written || !withdrawal)
+        .map(|(connection, _)| *connection)
+        .collect();
+    if withdrawal && follow_ups.is_empty() {
+        return Ok(Routed::NoConnection);
+    }
     let matched: Vec<PartnerConnectionId> = candidates
         .iter()
-        .filter(|connection| rules_match(&connection.settings.rules, &message.facts))
+        .filter(|connection| {
+            !withdrawal
+                && !follow_ups.contains(&connection.id)
+                && rules_match(&connection.settings.rules, &message.facts)
+        })
         .map(|connection| connection.id)
         .collect();
-    let row = MessageRow {
-        id: PartnerMessageId::generate(),
-        message_type: message.message_type,
-        source: MessageSource::BillingHandoff,
-        source_id: Some(message.source_id),
-        source_number: Some(message.source_number),
-        artifact_sha256: message.artifact_sha256,
-        facts: message.facts,
-        checked_against: i64::try_from(candidates.len())
-            .map_err(|_| PartnerError::Inconsistent("connection count"))?,
-        unrouted: matched.is_empty(),
-        created_at: ctx.now(),
+    let superseded = match &message.report {
+        Some(report) => {
+            repo::supersede_unwritten(ctx.tx(), message.message_type, &report.report_id)?
+        }
+        None => 0,
     };
+    let row = new_row(
+        ctx,
+        message,
+        candidates.len(),
+        follow_ups.is_empty() && matched.is_empty(),
+    )?;
     repo::insert_message(ctx.tx(), &row)?;
-    for connection in &matched {
-        repo::insert_delivery(
-            ctx.tx(),
-            row.id,
-            *connection,
-            DeliveryReason::Routed,
-            ctx.now(),
-        )?;
+    let deliveries = follow_ups
+        .iter()
+        .map(|id| (*id, DeliveryReason::FollowUp))
+        .chain(matched.iter().map(|id| (*id, DeliveryReason::Routed)));
+    for (connection, reason) in deliveries {
+        repo::insert_delivery(ctx.tx(), row.id, connection, reason, ctx.now())?;
     }
     ctx.audit(
         AuditEvent::new(
@@ -100,11 +119,40 @@ pub fn route_partner_message(
         .record("partner_message", row.id)
         .detail("source", AuditDetail::code(row.source.as_str()))
         .detail("deliveries", AuditDetail::count(matched.len()))
+        .detail("follow_ups", AuditDetail::count(follow_ups.len()))
+        .detail("superseded", AuditDetail::count(superseded))
         .detail("unrouted", AuditDetail::boolean(row.unrouted)),
     )?;
     Ok(Routed::Kept {
         message_id: row.id,
-        deliveries: matched.len(),
+        deliveries: follow_ups.len() + matched.len(),
+    })
+}
+
+fn new_row(
+    ctx: &CommandContext<'_>,
+    message: NewPartnerMessage,
+    checked_against: usize,
+    unrouted: bool,
+) -> Result<MessageRow, PartnerError> {
+    let (source_group, source_label) = message
+        .report
+        .map(|report| (report.report_id, report.report_number))
+        .unzip();
+    Ok(MessageRow {
+        id: PartnerMessageId::generate(),
+        message_type: message.message_type,
+        source: message.source,
+        source_id: Some(message.source_id),
+        source_number: Some(message.source_number),
+        source_group,
+        source_label,
+        artifact_sha256: message.artifact_sha256,
+        facts: message.facts,
+        checked_against: i64::try_from(checked_against)
+            .map_err(|_| PartnerError::Inconsistent("connection count"))?,
+        unrouted,
+        created_at: ctx.now(),
     })
 }
 
@@ -118,7 +166,10 @@ pub fn resolve_unrouted_message(
     ctx.require(Capability::ManageConfiguration)?;
     let message =
         repo::load_message(ctx.tx(), input.message_id)?.ok_or(PartnerError::NotFound("message"))?;
-    if !message.unrouted || repo::resolution(ctx.tx(), message.id)?.is_some() {
+    if !message.unrouted
+        || repo::resolution(ctx.tx(), message.id)?.is_some()
+        || repo::replaced(ctx.tx(), message.id)?
+    {
         return Err(PartnerError::WrongState(
             "This message is no longer waiting in Unrouted messages.",
         ));

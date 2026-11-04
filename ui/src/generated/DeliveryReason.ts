@@ -3,4 +3,4 @@
 /**
  * Why a delivery exists.
  */
-export type DeliveryReason = "routed" | "sent_once" | "test";
+export type DeliveryReason = "routed" | "follow_up" | "sent_once" | "test";

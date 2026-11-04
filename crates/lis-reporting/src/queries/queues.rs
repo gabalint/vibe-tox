@@ -263,8 +263,8 @@ fn rejected(conn: &Connection, specimen_id: SpecimenId) -> Result<bool, Reportin
         .any(|s| s.specimen_id == specimen_id && s.acceptance == SpecimenAcceptance::Rejected))
 }
 
-/// Reports whose current revision has no delivery obligation (the
-/// "no destination" delivery queue).
+/// Reports whose current revision has no delivery obligation and goes to no
+/// interface connection (the "no destination" delivery queue).
 pub fn revisions_without_destination(
     conn: &Connection,
     limit: u32,
@@ -274,6 +274,8 @@ pub fn revisions_without_destination(
             "SELECT v.revision_id FROM rpt_v_revisions v WHERE v.availability = 'current' \
              AND NOT EXISTS (SELECT 1 FROM rpt_delivery_obligations o \
                              WHERE o.revision_id = v.revision_id) \
+             AND NOT EXISTS (SELECT 1 FROM ifc_v_partner_report_revisions p \
+                             WHERE p.revision_id = v.revision_id) \
              ORDER BY v.released_at, v.revision_id LIMIT ?1",
         )?
         .query_map(params![limit], |row| row.get(0))?

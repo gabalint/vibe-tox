@@ -60,7 +60,7 @@ pub use derivations::{
 };
 pub use error::BillingError;
 pub use handoff_list::{BillingHandoffSummary, ListBillingHandoffs, list_billing_handoffs};
-pub use handoff_parties::{HandoffParties, Party, handoff_parties};
+pub use handoff_parties::handoff_parties;
 pub use handoff_view::{
     HandoffItemView, HandoffOutcomeView, HandoffView, audit_record_label, get_billing_handoff,
 };

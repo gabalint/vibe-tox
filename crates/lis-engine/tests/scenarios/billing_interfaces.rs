@@ -13,6 +13,7 @@ use lis_engine::{
     UpdatePartnerConnectionInput,
 };
 use lis_interfaces::partner::{
+    ApprovePartnerMappings, DiscardPartnerMappingDraft, DraftPartnerMapping, MappingKind,
     MessageView, PartnerConnectionId, PartnerConnectionSettings, PartnerDeliveryId,
     PartnerMessageId, PartnerMessageRow, PartnerMessageType, PartnerProtocol, RoutingRule,
     RuleCondition, RuleField, Schedule, TransportOutcome, UnroutedDecision, WaitReason,
@@ -103,6 +104,47 @@ async fn state_call(
                 })
                 .await
         }
+        _ => return mapping_call(engine, name, connection_id).await,
+    })
+}
+
+async fn mapping_call(
+    engine: &Engine,
+    name: &str,
+    connection_id: PartnerConnectionId,
+) -> Option<Result<(), CommandError>> {
+    let lis_id = lis_core::Id::generate();
+    Some(match name {
+        "list_partner_mappings" => engine
+            .list_partner_mappings(PartnerConnectionInput { connection_id })
+            .await
+            .map(drop),
+        "draft_partner_mapping" => engine
+            .draft_partner_mapping(DraftPartnerMapping {
+                connection_id,
+                kind: MappingKind::Analyte,
+                lis_id,
+                mapping: None,
+            })
+            .await
+            .map(drop),
+        "discard_partner_mapping_draft" => engine
+            .discard_partner_mapping_draft(DiscardPartnerMappingDraft {
+                connection_id,
+                kind: MappingKind::Analyte,
+                lis_id,
+            })
+            .await
+            .map(drop),
+        "approve_partner_mappings" => engine
+            .approve_partner_mappings(ApprovePartnerMappings {
+                connection_id,
+                expected_revision: 1,
+                reason: "Synthetic authorization test".to_owned(),
+                self_approval: false,
+            })
+            .await
+            .map(drop),
         _ => return None,
     })
 }

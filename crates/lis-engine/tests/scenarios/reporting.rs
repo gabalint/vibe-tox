@@ -7,6 +7,8 @@
 
 mod condition_review;
 mod layouts;
+mod partner_hl7;
+mod partner_pdfs;
 
 use std::path::PathBuf;
 

@@ -24,8 +24,8 @@ import { CONNECTION_COLUMNS } from "./connectionColumns";
 const TYPE_TABS: readonly { id: string; label: string; types: readonly PartnerMessageType[] }[] = [
   { id: "all", label: "All", types: [] },
   { id: "orders", label: "Orders in", types: [] },
-  { id: "results", label: "Results out", types: [] },
-  { id: "pdfs", label: "Report PDFs", types: [] },
+  { id: "results", label: "Results out", types: ["hl7_oru"] },
+  { id: "pdfs", label: "Report PDFs", types: ["report_pdf"] },
   { id: "billing", label: "Billing", types: ["billing_json"] },
 ];
 
@@ -95,8 +95,8 @@ export function ConnectionsPage() {
             when: () => rows.length === 0,
             title: "No connections",
             description:
-              selected?.id === "all" || selected?.id === "billing"
-                ? "Add a connection to write billing handoff files to a folder another system reads."
+              selected?.id !== "orders"
+                ? "Add a connection to write HL7 results, report PDFs or billing handoff files to a folder another system reads."
                 : "No connection of this kind yet.",
           }}
         >

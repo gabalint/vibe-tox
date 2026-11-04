@@ -257,7 +257,8 @@ pub use commands::partner::{
     PartnerConnectionInput, TestPartnerFolderInput, UpdatePartnerConnectionInput,
 };
 pub use lis_interfaces::partner::{
-    ListPartnerMessages, PartnerConnection, PartnerConnectionDetail, PartnerMessagePage,
+    ApprovePartnerMappings, DiscardPartnerMappingDraft, DraftPartnerMapping, ListPartnerMessages,
+    PartnerConnection, PartnerConnectionDetail, PartnerMappings, PartnerMessagePage,
     RecordPartnerDestinationCheck, ResendPartnerDelivery, ResolveUnroutedMessage,
     SetPartnerConnectionActive, UnroutedMessage,
 };

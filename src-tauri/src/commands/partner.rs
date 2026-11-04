@@ -4,11 +4,12 @@
 
 use lis_core::CommandError;
 use lis_engine::{
-    ChosenPartnerFolder, CreatePartnerConnectionInput, DialogCommand, Engine, ExportedMessageLog,
-    FolderTestResult, ListPartnerMessages, PartnerConnection, PartnerConnectionDetail,
-    PartnerConnectionInput, PartnerMessagePage, RecordPartnerDestinationCheck,
-    ResendPartnerDelivery, ResolveUnroutedMessage, SetPartnerConnectionActive,
-    TestPartnerFolderInput, UnroutedMessage, UpdatePartnerConnectionInput,
+    ApprovePartnerMappings, ChosenPartnerFolder, CreatePartnerConnectionInput, DialogCommand,
+    DiscardPartnerMappingDraft, DraftPartnerMapping, Engine, ExportedMessageLog, FolderTestResult,
+    ListPartnerMessages, PartnerConnection, PartnerConnectionDetail, PartnerConnectionInput,
+    PartnerMappings, PartnerMessagePage, RecordPartnerDestinationCheck, ResendPartnerDelivery,
+    ResolveUnroutedMessage, SetPartnerConnectionActive, TestPartnerFolderInput, UnroutedMessage,
+    UpdatePartnerConnectionInput,
 };
 use tauri::{AppHandle, Manager, Runtime, State};
 use tauri_plugin_dialog::DialogExt;
@@ -137,4 +138,36 @@ pub(crate) async fn resend_partner_delivery(
     input: ResendPartnerDelivery,
 ) -> Result<(), CommandError> {
     engine.resend_partner_delivery(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn list_partner_mappings(
+    engine: State<'_, Engine>,
+    input: PartnerConnectionInput,
+) -> Result<PartnerMappings, CommandError> {
+    engine.list_partner_mappings(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn draft_partner_mapping(
+    engine: State<'_, Engine>,
+    input: DraftPartnerMapping,
+) -> Result<PartnerMappings, CommandError> {
+    engine.draft_partner_mapping(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn discard_partner_mapping_draft(
+    engine: State<'_, Engine>,
+    input: DiscardPartnerMappingDraft,
+) -> Result<PartnerMappings, CommandError> {
+    engine.discard_partner_mapping_draft(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn approve_partner_mappings(
+    engine: State<'_, Engine>,
+    input: ApprovePartnerMappings,
+) -> Result<PartnerMappings, CommandError> {
+    engine.approve_partner_mappings(input).await
 }

@@ -24,8 +24,21 @@ export const EXPORT_MESSAGES = "export_partner_messages" satisfies CommandName;
 export const LIST_UNROUTED = "list_unrouted_partner_messages" satisfies CommandName;
 export const RESOLVE_UNROUTED = "resolve_unrouted_message" satisfies CommandName;
 export const RESEND_DELIVERY = "resend_partner_delivery" satisfies CommandName;
+/** `list_partner_mappings({input:{connectionId}}) → PartnerMappings` (HL7 connections). */
+export const LIST_MAPPINGS = "list_partner_mappings" satisfies CommandName;
+/** Each `→ PartnerMappings`, the list after the change. */
+export const DRAFT_MAPPING = "draft_partner_mapping" satisfies CommandName;
+export const DISCARD_MAPPING_DRAFT = "discard_partner_mapping_draft" satisfies CommandName;
+export const APPROVE_MAPPINGS = "approve_partner_mappings" satisfies CommandName;
 
 const WORK_QUEUES = "list_work_queues" satisfies CommandName;
+
+/** What a code mapping change makes stale: approval changes the connection's history. */
+export const MAPPING_QUERIES: readonly CommandName[] = [
+  LIST_MAPPINGS,
+  GET_CONNECTION,
+  LIST_MESSAGES,
+];
 
 /** What a connection change makes stale. */
 export const CONNECTION_QUERIES: readonly CommandName[] = [

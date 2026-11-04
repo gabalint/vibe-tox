@@ -3,4 +3,4 @@
 /**
  * One entry in a connection's history.
  */
-export type ConnectionChange = "created" | "updated" | "started" | "stopped" | "verified";
+export type ConnectionChange = "created" | "updated" | "started" | "stopped" | "verified" | "mappings_approved";

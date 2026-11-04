@@ -10,6 +10,6 @@ export type ListPartnerMessages = {
  */
 since?: string, connectionId?: string, view: MessageView, 
 /**
- * A handoff number, or part of a file name.
+ * A handoff number, a report or accession number, or part of a file name.
  */
 search?: string, };

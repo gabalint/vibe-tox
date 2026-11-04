@@ -6,6 +6,7 @@ import type { PartnerConnectionDetail } from "@/generated/PartnerConnectionDetai
 import { useCommandQuery } from "@/lib/commands";
 import { useRouteTabs } from "@/lib/routeTabs";
 import { GET_CONNECTION } from "../contract";
+import { connectionDescription } from "../labels";
 import { ConnectionMessages } from "../logs/MessagesSection";
 import { CONNECTIONS_PATH, connectionPath } from "../paths";
 import { ConnectionActions } from "./ConnectionActions";
@@ -51,7 +52,7 @@ export function ConnectionPage() {
         }
         description={
           connection &&
-          `Writes the billing handoff file to ${connection.settings.partner}'s folder when a handoff is created.`
+          connectionDescription(connection.settings.messageType, connection.settings.partner)
         }
       />
       <QueryContent query={detail} what="connection">
@@ -66,7 +67,7 @@ export function ConnectionPage() {
                 />
               )}
               {tab === "rules" && <ConnectionRules connection={loaded.connection} />}
-              {tab === "mappings" && <CodeMappings />}
+              {tab === "mappings" && <CodeMappings connection={loaded.connection} />}
               {tab === "logs" && <ConnectionMessages connectionId={loaded.connection.id} />}
               {tab === "history" && <ConnectionHistory history={loaded.history} />}
             </Tabs>

@@ -74,7 +74,8 @@ export function MessagesGrid({ query, rows }: MessagesGridProps) {
         empty={{
           when: () => rows.length === 0,
           title: "No messages",
-          description: "Messages appear here when a billing handoff is created for a connection.",
+          description:
+            "Messages appear here when a report is released or a billing handoff is created for a connection.",
         }}
       >
         {() => (

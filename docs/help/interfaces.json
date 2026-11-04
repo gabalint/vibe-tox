@@ -1,8 +1,8 @@
 {
   "id": "interfaces",
   "title": "Interfaces",
-  "summary": "Send billing handoff files to outside systems through a folder, follow every message in Logs, and decide on messages no connection matched.",
-  "reviewedOn": "2026-11-03",
+  "summary": "Send HL7 results, report PDFs and billing handoff files to outside systems through a folder, map your codes to each partner's, follow every message in Logs, and decide on messages no connection matched.",
+  "reviewedOn": "2026-11-04",
   "routes": [
     "/interfaces/connections",
     "/interfaces/connections/:connectionId/:tab?",
@@ -13,8 +13,10 @@
     {
       "title": "How to use this area",
       "paragraphs": [
-        "A connection says which messages go to an outside system, where, and when. This release has one message type, Billing JSON: the billing handoff file, made when a billing handoff is created. It is written to a folder on this computer or on the lab network, which the billing company's system reads. Analyzers are not set up here; they stay in Laboratory setup › Instruments.",
-        "When a handoff is created, the LIS checks it against every Billing JSON connection's routing rules in the same step. It goes to each connection whose rules all match. If no connection matches, it waits in Unrouted messages. If the laboratory has no Billing JSON connection at all, nothing is made, and handoff files are exported by hand from the handoff page as before.",
+        "A connection says which messages go to an outside system, where, and when. This release has three message types. HL7 Results: an HL7 v2.5.1 ORU^R01 result message with the partner's codes, made when a report revision is released. Report PDF: the issued report PDF, made at the same time. Billing JSON: the billing handoff file, made when a billing handoff is created. Files are written to a folder on this computer or on the lab network, which the partner's system reads. Analyzers are not set up here; they stay in Laboratory setup › Instruments.",
+        "An HL7 Results connection sends each test and analyte with the partner's code, from its Code mappings. A result whose test or analyte has no approved mapping, or whose unit is not the mapping's UCUM unit, is held: it is never sent with a guessed code or a converted unit. Mapping changes are drafts until a second person approves them as a new version, which applies to messages not written yet.",
+        "When a report is released or a handoff is created, the LIS checks it against the routing rules of every connection of its type in the same step. It goes to each connection whose rules all match. If no connection matches, it waits in Unrouted messages. If the laboratory has no connection of the type at all, nothing is made, and files are exported by hand as before.",
+        "A report's later revision, a correction or a supplement, goes first to every Report PDF connection that had an earlier revision, even if its rules no longer match, and is written before other waiting messages. An earlier revision not written yet is replaced and never written. When a report is withdrawn, its withdrawal notice goes to every connection an earlier revision was written to. A revision whose impact review is open waits until the review is done.",
         "The LIS writes a connection's messages only while it is started and a destination check covers its current folder. It tries every 10 seconds, at the sign-in screen too, but not while the app is closed. Logs show every message with what the folder can prove: written, failed or not sent. A folder never confirms that the other system used the file, so a written file always shows Outcome unknown, never Delivered."
       ]
     },
@@ -22,7 +24,7 @@
       "title": "Good practice",
       "paragraphs": [
         "Save a new connection stopped, test the folder, send a test message, and have the partner confirm they received it. Then have a second person record the destination check, and start the connection.",
-        "Keep rules specific. A billing file with patients of several clients goes only to a connection whose rules accept every one of those clients, so one client's billing company never receives another client's patients.",
+        "Keep rules specific. A billing file with patients of several clients goes only to a connection whose rules accept every one of those clients, so one client's billing company never receives another client's patients. A rule on Test likewise needs every test on the report or handoff to meet it.",
         "The partner receiving patient data must be covered by a business associate agreement. That is the laboratory's responsibility; the LIS shows it as a reminder when the destination check is recorded."
       ]
     },
@@ -49,12 +51,12 @@
         {
           "name": "All / Orders in / Results out / Report PDFs / Billing",
           "meaning": "Which kind of exchange the list shows, with its number of connections.",
-          "values": "All; Orders in; Results out; Report PDFs; Billing (Billing JSON connections).",
-          "rules": "Orders in, Results out and Report PDFs stay empty in this release. The tab stays in the address (?type=)."
+          "values": "All; Orders in; Results out (HL7 Results connections); Report PDFs (Report PDF connections); Billing (Billing JSON connections).",
+          "rules": "Orders in stays empty in this release. The tab stays in the address (?type=)."
         },
         {
           "name": "Name, Partner, Message, Dir., Protocol, Destination",
-          "meaning": "What the connection carries and where: its name, the client or billing company, the message type, the direction (Out: the LIS sends), the protocol and the folder.",
+          "meaning": "What the connection carries and where: its name, the client, clinic or billing company, the message type, the direction (Out: the LIS sends), the protocol and the folder.",
           "values": "As saved on the connection.",
           "rules": "Read-only. Open the row to change it."
         },
@@ -98,14 +100,14 @@
         }
       ],
       "restrictions": [
-        "This release sends Billing JSON files to a folder only. Report PDFs, HL7 results and orders, SFTP and MLLP are not available.",
+        "This release sends HL7 results, report PDFs and Billing JSON files to a folder only. HL7 orders, SFTP and MLLP are not available, and HL7 acknowledgements are not received.",
         "Connections are stopped, never deleted, so their history and messages stay."
       ],
       "workflow": [
         "Add the connection and Save as stopped.",
         "On its page, use Test connection, then Send test message, and ask the partner to confirm the test file.",
         "Have a second person use Record destination check.",
-        "Start the connection. New billing handoffs are then written to the folder."
+        "Start the connection. New released reports or billing handoffs are then written to the folder."
       ],
       "troubleshooting": [
         {
@@ -114,7 +116,7 @@
         },
         {
           "problem": "Waiting does not go down",
-          "recovery": "Check that the connection is started, that its destination check is Verified, and its schedule. Logs show the reason on each waiting message. Nothing is written while a recovery reconciliation after a restore is open."
+          "recovery": "Check that the connection is started, that its destination check is Verified, and its schedule. Logs show the reason on each waiting message; a report revision also waits while its impact review is open. Nothing is written while a recovery reconciliation after a restore is open."
         }
       ]
     },
@@ -132,14 +134,14 @@
         },
         {
           "name": "Partner (client)",
-          "meaning": "The client or billing company that receives the files.",
-          "values": "Free text, such as the billing company's name.",
+          "meaning": "The client, clinic or billing company that receives the files.",
+          "values": "Free text, such as the clinic's or billing company's name.",
           "rules": "Required; up to 80 characters."
         },
         {
           "name": "Message",
           "meaning": "What the connection carries, which also fixes the direction and when a message is made.",
-          "values": "Billing JSON: the billing handoff file (format bil-handoff-v2), sent out when a billing handoff is created.",
+          "values": "HL7 Results (ORU^R01, v2.5.1): the released results with the partner's codes, sent out when a report revision is released. Report PDF: the issued report PDF, exactly as released, sent out at the same time. Billing JSON: the billing handoff file (format bil-handoff-v2), sent out when a billing handoff is created. HL7 Orders is not available yet.",
           "rules": "Required; nothing is preselected. It cannot change after saving; add another connection instead."
         },
         {
@@ -158,19 +160,19 @@
           "name": "Output folder",
           "meaning": "Where the LIS writes the files, for the partner's system to read.",
           "values": "A folder chosen with Choose folder…; it cannot be typed.",
-          "rules": "Required. The LIS writes each file under a temporary .tmp name and renames it only when complete. It never replaces a file: a name already taken by other content gets -1, -2 and so on before .json."
+          "rules": "Required. The LIS writes each file under a temporary .tmp name and renames it only when complete. It never replaces a file: a name already taken by other content gets -1, -2 and so on before the extension."
         },
         {
           "name": "Routing rules",
           "meaning": "Which messages go to this connection. A rule is a field, a condition and a value.",
-          "values": "Field: Client (client code), Practitioner (NPI), Location (client location code), Test (orderable code). Condition: equals; is one of (codes separated by commas, up to 50); starts with.",
-          "rules": "Up to 20 rules; values up to 200 characters; codes are compared exactly. All rules must match, and a rule matches only when every value of its field in the message meets it; a message with no value for the field does not match. With no rules, every message of the type goes to the connection. A message goes to every connection whose rules match."
+          "values": "Field: Client (client code), Practitioner (NPI), Location (client location code), Test (orderable code). An HL7 Results connection names them by the HL7 fields that carry them: ORC-21 Ordering facility, OBR-16 Ordering provider (NPI), PV1-3 Location, OBR-4 Test (LIS code); the values are still the LIS codes. For a report, these are the order's client, practitioner and location and the tests on the report's specimen. Condition: equals; is one of (codes separated by commas, up to 50); starts with.",
+          "rules": "Up to 20 rules; values up to 200 characters; codes are compared exactly. All rules must match, and a rule matches only when every value of its field in the message meets it; a message with no value for the field does not match. With no rules, every message of the type goes to the connection. A message goes to every connection whose rules match. A report's later revision or withdrawal notice goes to the connections that had the report whatever their rules."
         },
         {
           "name": "Send when",
           "meaning": "What makes a message.",
-          "values": "Billing handoff created.",
-          "rules": "The only choice for Billing JSON; the message type fixes it."
+          "values": "Results released (HL7 Results: when the report revision with them is released); Report released (Report PDF); Billing handoff created (Billing JSON).",
+          "rules": "The message type fixes it, so the list offers only its one choice. For HL7 Results and Report PDF, a note says that corrections and withdrawals go first, to every connection that received the earlier revision; HL7 sends them with the corrected status."
         },
         {
           "name": "Schedule, Minutes, Time",
@@ -181,8 +183,8 @@
         {
           "name": "File name",
           "meaning": "The name pattern of each file.",
-          "values": "Letters, digits, '.', '_', '-' and the placeholders {handoff} (the handoff number), {date} (YYYYMMDD) and {time} (HHMMSS), in the laboratory's time zone, from when the message was queued for this connection. Default: billing-{handoff}_{date}.json.",
-          "rules": "Required; up to 120 characters; must contain {handoff} and end in .json; may not start with a dot."
+          "values": "Letters, digits, '.', '_', '-' and the placeholders of the message type. HL7 Results and Report PDF: {accession} (the report number: the accession number and the specimen type code) and {revision} (the revision number; a withdrawal reads <n>-withdrawn). Billing JSON: {handoff} (the handoff number). All: {date} (YYYYMMDD) and {time} (HHMMSS), in the laboratory's time zone, from when the message was queued for this connection. Default: {accession}_r{revision}_{date}.hl7, {accession}_r{revision}_{date}.pdf or billing-{handoff}_{date}.json, filled in when the message is chosen.",
+          "rules": "Required; up to 120 characters; may not start with a dot. HL7 Results: must contain {accession} and {revision} and end in .hl7. Report PDF: the same, ending in .pdf. Billing JSON: must contain {handoff} and end in .json."
         },
         {
           "name": "Reason",
@@ -199,14 +201,32 @@
         {
           "name": "Overview: Connection and Checks and contract",
           "meaning": "Connection: partner, message, protocol, folder, send when and schedule, file name and rules. Checks and contract: who verified the destination, when and how; the last connection and its result; messages awaiting the partner's application acknowledgement; the last change with its reason.",
-          "values": "As recorded. Awaiting application ACK is 0 messages for a folder, which never answers.",
+          "values": "As recorded. Awaiting application ACK is 0 messages for a folder, which never answers. An HL7 Results connection also shows its Code mappings card below, read-only.",
           "rules": "Read-only. Interface contracts and acceptance tests are not part of this release."
         },
         {
           "name": "Rules, Code mappings, Logs, History",
           "meaning": "The routing rules; code mappings to a partner's codes; this connection's messages; every change with who, when, the settings changed and the reason or method.",
-          "values": "As recorded, newest first. Code mappings is empty for Billing JSON, whose file carries the LIS's own codes.",
-          "rules": "Read-only. History is never edited."
+          "values": "As recorded, newest first. Code mappings is empty for Report PDF and Billing JSON, whose files carry the LIS's own codes. History also lists each approved code mapping version, with its reason.",
+          "rules": "Read-only, except Code mappings of an HL7 Results connection. History is never edited."
+        },
+        {
+          "name": "Code mappings: LIS test / analyte, Partner code, LOINC, Unit (UCUM), Status",
+          "meaning": "For an HL7 Results connection, the partner's code for each LIS test (sent in OBR-4) and analyte (sent in OBX-3), with its LOINC code and the UCUM unit of its results.",
+          "values": "LOINC shows from catalog when the mapping leaves it empty: the analyte's LOINC code in the catalog is sent, if it has one. Status: Approved v<n>; Draft – awaiting approval; Draft: remove – awaiting approval; Not mapped – held (a waiting message needs it).",
+          "rules": "A row with a draft shows the draft's values. A result is held while its test or analyte has no approved mapping, or while its quantity's unit is not the mapping's unit; nothing is converted."
+        },
+        {
+          "name": "Add mapping: Maps, LIS test or LIS analyte, Partner code, LOINC, Unit (UCUM)",
+          "meaning": "One mapping change, saved as a draft.",
+          "values": "Maps: Test (OBR-4) or Analyte (OBX-3). LIS test or analyte: chosen from the catalog by name or code. Partner code: up to 50 characters. LOINC: such as 12345-6, or empty to use the catalog's. Unit (UCUM): analytes only, up to 30 characters without spaces, such as ng/mL.",
+          "rules": "Partner code is required. For an existing row, the test or analyte cannot change."
+        },
+        {
+          "name": "Approve mappings: Reason",
+          "meaning": "Why the drafts are approved, such as codes confirmed with the partner's IT.",
+          "values": "Free text up to 500 characters.",
+          "rules": "Required; recorded in History and the audit trail."
         }
       ],
       "actions": [
@@ -254,26 +274,44 @@
         },
         {
           "name": "Send test message",
-          "does": "Writes a synthetic file, vibetox-test-<date>-<time>.json, with no patient data, to the folder now.",
+          "does": "Writes a synthetic file with no patient data to the folder now: vibetox-test-<date>-<time>.hl7, an ORU^R01 with processing ID T and a synthetic patient, for HL7 Results; a one-page PDF for Report PDF; a .json file for Billing JSON.",
           "availableWhen": "A saved connection, stopped or not verified too.",
           "result": "The file name, or the problem, shows; the test appears in Logs as Test message. A failed test is not retried."
+        },
+        {
+          "name": "Add mapping / Change / Remove / Discard draft",
+          "does": "On Code mappings: proposes a mapping, changes one (a click on the row too), proposes removing an approved one, or drops a draft.",
+          "availableWhen": "An HL7 Results connection; Remove only for an approved mapping without a draft; Discard draft only for a draft.",
+          "result": "The row shows the draft until it is approved. Nothing is sent differently before approval."
+        },
+        {
+          "name": "Approve mappings",
+          "does": "Makes every draft part of the next version, with a reason.",
+          "availableWhen": "At least one draft waits. A second person approves; the person who drafted a change may approve it only if the laboratory's separation-of-duties policy allows and they confirm it.",
+          "result": "Status shows Approved v<n>; held messages are written at the next pass if their mappings are now complete. Messages already written never change."
         }
       ],
       "restrictions": [
         "The message type cannot change after saving.",
         "A routing rule compares codes exactly; it does not search names.",
-        "Code mappings, interface contracts and acceptance tests are not part of this release."
+        "Interface contracts and acceptance tests are not part of this release.",
+        "HL7 messages carry no abnormal flags and no interpretation: values are sent as stored, a censored value as a comparator and number (SN), never as an exact number."
       ],
       "workflow": [
         "Fill in General, choose the folder and test it.",
-        "Add rules if only some handoffs belong to this partner.",
+        "Add rules if only some reports or handoffs belong to this partner.",
         "Choose the schedule and file name, and save stopped.",
-        "Send a test message, have a second person record the destination check, then Start."
+        "Send a test message, have a second person record the destination check, then Start.",
+        "For HL7 Results, add the partner's code for each test and analyte under Code mappings and have a second person approve them; held messages are then written."
       ],
       "troubleshooting": [
         {
           "problem": "Choose the folder again",
           "recovery": "The chosen folder is kept only for your session and the last 8 choices. Use Choose folder… again and save."
+        },
+        {
+          "problem": "An HL7 message stays Not sent with Held: a test or analyte has no approved code mapping",
+          "recovery": "Open the connection's Code mappings: rows marked Not mapped – held need a mapping. Add it, check the UCUM unit matches the result's unit, and have a second person use Approve mappings."
         },
         {
           "problem": "Record destination check is refused for you",
@@ -322,7 +360,7 @@
         {
           "name": "Search",
           "meaning": "Narrow the rows.",
-          "values": "A handoff number (digits only, exact), or part of a file name or folder.",
+          "values": "A handoff number (digits only, exact), or part of a report or accession number, file name or folder.",
           "rules": "Optional; kept in the address."
         },
         {
@@ -333,26 +371,26 @@
         },
         {
           "name": "Time, Dir., Connection, Message, Record",
-          "meaning": "When the row last changed (written, tried or made), the direction, the connection (None matched for an unrouted message), the message type and the billing handoff or Test message.",
+          "meaning": "When the row last changed (written, tried or made), the direction, the connection (None matched for an unrouted message), the message type and the record: the report number and revision (such as A26000005-U r2), the report's withdrawal notice, the billing handoff, or Test message.",
           "values": "As recorded.",
           "rules": "Read-only."
         },
         {
           "name": "Transport",
           "meaning": "Did it leave: what the folder can prove.",
-          "values": "Written; Failed; Not sent.",
+          "values": "Written; Failed; Not sent (not written yet, or replaced by a newer revision and never written).",
           "rules": "Never Delivered."
         },
         {
           "name": "Application",
           "meaning": "Did the other system accept it.",
           "values": "Outcome unknown for a written file: a folder never confirms; — otherwise.",
-          "rules": "The billing company's acknowledgement or rejection is recorded on the billing handoff page, by people with Billing."
+          "rules": "The billing company's acknowledgement or rejection is recorded on the billing handoff page, by people with Billing. A written report PDF does not count as a staff-attested delivery on the report's page."
         },
         {
           "name": "Details",
           "meaning": "Why the row stands where it does.",
-          "values": "Written as <folder and file>; <problem>; attempt N of 5 at <time>; <problem>; not written after 5 attempts; Connection stopped; Destination check not recorded; Waiting for the connection's schedule; Written at the next pass; No connection rule matched; or the decision on an unrouted message.",
+          "values": "Written as <folder and file>; <problem>; attempt N of 5 at <time>; <problem>; not written after 5 attempts; Connection stopped; Destination check not recorded; Waiting for the connection's schedule; Written at the next pass; Paused while the report's impact review is open; Held: a test or analyte has no approved code mapping; Replaced by a newer revision; never written; No connection rule matched; or the decision on an unrouted message. A report's later revision or withdrawal notice sent to a connection that had the report starts with Replaces r<n>, sent first or Withdrawal notice, sent first.",
           "rules": "Read-only."
         }
       ],
@@ -361,7 +399,7 @@
           "name": "Send again",
           "does": "Puts a message whose attempts all failed back in the queue with 5 new attempts.",
           "availableWhen": "From the row's ⋯ menu, on a failed message that is not a test message.",
-          "result": "It is written at the next pass if the connection is started and verified. The same file is sent; no new message or report is made."
+          "result": "It is written at the next pass if the connection is started and verified. The same file is sent; no new message or report is made. A report revision replaced by a newer one is never sent again."
         },
         {
           "name": "Export CSV",
@@ -378,7 +416,7 @@
       ],
       "restrictions": [
         "Failed writes are retried automatically after 1, 2, 4 and 8 minutes; after the fifth failure the message waits for Send again and appears in the Interface messages not written work queue.",
-        "Message content is not shown here. The billing handoff file is opened from Billing › Billing handoffs, by people with Billing; opening it is audited."
+        "Message content is not shown here. A report is opened from Reports, and the billing handoff file from Billing › Billing handoffs, by people with those rights; opening them is audited."
       ],
       "workflow": [
         "Check the Failed tab daily.",
@@ -408,13 +446,13 @@
       "fields": [
         {
           "name": "Waiting since, Message, Record, Client, Practitioner, Reason, Next action",
-          "meaning": "When the message was made and how long it has waited, its type, the billing handoff, the clients and practitioners in it, why it is here and what to do.",
+          "meaning": "When the message was made and how long it has waited, its type, the report revision or billing handoff, the clients and practitioners in it, why it is here and what to do.",
           "values": "As recorded, such as 2026-11-03 10:40 (3 h); Reason is No rule matched; Next action is Send to a connection.",
-          "rules": "Oldest first. A row shows its details below the table; the oldest is shown until you choose another. The count also shows beside the menu entry and in the Unrouted interface messages work queue."
+          "rules": "Oldest first. A row shows its details below the table; the oldest is shown until you choose another. The count also shows beside the menu entry and in the Unrouted interface messages work queue. A report revision leaves the list when a newer revision or the withdrawal of the same report is released; the newer one is routed on its own."
         },
         {
           "name": "Created, Checked against, Client, Closest rule",
-          "meaning": "The chosen message's details: when it was made, how many connections of its type its rules were checked against, its clients, and the rule of the closest connection it does not meet.",
+          "meaning": "The chosen message's details: when it was made (at release, or at handoff creation), how many connections of its type its rules were checked against, its clients, and the rule of the closest connection it does not meet.",
           "values": "As recorded; Closest rule as field, condition and value (did not match), or None when no connection has rules.",
           "rules": "Read-only. The closest rule is computed from the rules as they are now."
         },
@@ -480,7 +518,7 @@
         },
         {
           "problem": "This message is no longer waiting",
-          "recovery": "Someone already decided. Refresh the list; Logs show the decision."
+          "recovery": "Someone already decided, or a newer revision of the report replaced it. Refresh the list; Logs show the decision or the replacement."
         }
       ]
     }
@@ -512,6 +550,19 @@
     "crates/lis-interfaces/src/partner/messages.rs",
     "crates/lis-interfaces/src/partner/delivery.rs",
     "crates/lis-interfaces/src/partner/message_queries.rs",
+    "crates/lis-interfaces/src/partner/message_repo.rs",
+    "crates/lis-interfaces/src/partner/unrouted_queries.rs",
+    "crates/lis-engine/src/commands/partner/routing.rs",
+    "crates/lis-engine/src/commands/partner/folders.rs",
+    "crates/lis-reporting/src/queries/outbound.rs",
+    "crates/lis-interfaces/src/partner/hl7.rs",
+    "crates/lis-interfaces/src/partner/mappings.rs",
+    "crates/lis-engine/src/partner_delivery/hl7_message.rs",
+    "crates/lis-engine/src/partner_delivery/hl7_payload.rs",
+    "crates/lis-engine/src/commands/partner/mappings.rs",
+    "ui/src/features/interfaces/connections/mappings/CodeMappingsSection.tsx",
+    "ui/src/features/interfaces/connections/mappings/MappingDialog.tsx",
+    "ui/src/features/interfaces/connections/mappings/ApproveMappingsDialog.tsx",
     "crates/lis-engine/src/partner_delivery.rs",
     "crates/lis-engine/src/partner_delivery/folder_write.rs",
     "crates/lis-engine/src/commands/partner/folder_choices.rs",
