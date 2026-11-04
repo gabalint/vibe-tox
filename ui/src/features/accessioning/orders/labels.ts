@@ -12,9 +12,16 @@ import type { SequenceRole } from "@/generated/SequenceRole";
 import type { SourceKind } from "@/generated/SourceKind";
 import type { Choice } from "@/lib/choices";
 
+/** How a person entering an order received it. */
 export const SOURCE_KINDS: readonly Choice<SourceKind>[] = [
   { id: "paper_requisition", label: "Paper requisition" },
   { id: "fax", label: "Fax" },
+];
+
+/** Every source an order shows, with orders an HL7 Orders connection received. */
+export const RECEIVED_VIA: readonly Choice<SourceKind>[] = [
+  ...SOURCE_KINDS,
+  { id: "hl7_interface", label: "HL7 interface (EMR)" },
 ];
 
 export const BILLING_RESPONSIBILITIES: readonly Choice<BillingResponsibility>[] = [

@@ -15,4 +15,9 @@ loinc?: string,
 /**
  * The UCUM unit of an analyte's results. A quantity in another unit is held.
  */
-ucumUnit?: string, };
+ucumUnit?: string, 
+/**
+ * For an HL7 Orders connection: the sequence role the partner's contract gives its
+ * order code, `first_line` or `confirmation`; it is never inferred.
+ */
+sequenceRole?: string, };

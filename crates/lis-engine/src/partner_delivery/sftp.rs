@@ -316,6 +316,10 @@ fn problem(error: &SftpError) -> SftpProblem {
     })
 }
 
+#[path = "sftp_inbox.rs"]
+mod inbox;
+pub(crate) use inbox::RemoteInbox;
+
 #[cfg(test)]
 #[path = "sftp_tests.rs"]
 mod tests;

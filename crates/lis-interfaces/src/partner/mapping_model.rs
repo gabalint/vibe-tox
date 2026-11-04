@@ -40,6 +40,11 @@ pub struct MappingValues {
     #[serde(default)]
     #[ts(optional)]
     pub ucum_unit: Option<String>,
+    /// For an HL7 Orders connection: the sequence role the partner's contract gives its
+    /// order code, `first_line` or `confirmation`; it is never inferred.
+    #[serde(default)]
+    #[ts(optional)]
+    pub sequence_role: Option<String>,
 }
 
 /// Input of `draft_partner_mapping`: a change the next approval applies.

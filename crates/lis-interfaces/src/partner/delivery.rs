@@ -42,7 +42,7 @@ pub struct Destination {
 }
 
 impl Destination {
-    fn of(connection: &ConnectionRow) -> Self {
+    pub(crate) fn of(connection: &ConnectionRow) -> Self {
         Self {
             folder: connection.folder.clone(),
             sftp: connection.settings.sftp.clone(),

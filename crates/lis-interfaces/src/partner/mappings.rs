@@ -35,9 +35,10 @@ pub fn draft_partner_mapping(
     let actor = person(ctx)?;
     let input = draft.input;
     let connection = hl7_connection(ctx.tx(), input.connection_id)?;
+    let orders = connection.settings.message_type.incoming();
     let values = input
         .mapping
-        .map(|values| valid_values(input.kind, values))
+        .map(|values| valid_values(input.kind, values, orders))
         .transpose()?;
     if values.is_none()
         && approved_mappings(ctx.tx(), connection.id)?
@@ -279,8 +280,12 @@ fn hl7_only(connection: &ConnectionRow) -> Result<(), PartnerError> {
 }
 
 /// The partner's code is required; a LOINC code looks like `12345-6`; a unit belongs to
-/// an analyte only.
-fn valid_values(kind: MappingKind, values: MappingValues) -> Result<MappingValues, PartnerError> {
+/// an analyte only; for incoming `orders`, a test's sequence role is required.
+fn valid_values(
+    kind: MappingKind,
+    values: MappingValues,
+    orders: bool,
+) -> Result<MappingValues, PartnerError> {
     let partner_code = required_text("mapping.partnerCode", &values.partner_code, CODE_MAX)
         .map_err(PartnerError::Invalid)?;
     let loinc = optional(values.loinc);
@@ -314,7 +319,38 @@ fn valid_values(kind: MappingKind, values: MappingValues) -> Result<MappingValue
         partner_code,
         loinc,
         ucum_unit,
+        sequence_role: valid_role(kind, values.sequence_role, orders)?,
     })
+}
+
+/// An incoming order code maps to a LIS test with the sequence role the partner's contract
+/// gives it; nothing else has a role.
+fn valid_role(
+    kind: MappingKind,
+    role: Option<String>,
+    orders: bool,
+) -> Result<Option<String>, PartnerError> {
+    let role = optional(role);
+    match (orders, kind, role.as_deref()) {
+        (false, _, None) | (true, MappingKind::Test, Some("first_line" | "confirmation")) => {
+            Ok(role)
+        }
+        (false, _, Some(_)) => Err(invalid(
+            "mapping.sequenceRole",
+            "not_for_results",
+            "Only an incoming order code has a sequence role.",
+        )),
+        (true, MappingKind::Analyte, _) => Err(invalid(
+            "mapping.kind",
+            "tests_only",
+            "Incoming orders map the partner's order codes to LIS tests only.",
+        )),
+        (true, MappingKind::Test, _) => Err(invalid(
+            "mapping.sequenceRole",
+            "required",
+            "Choose the test's sequence role: first line or confirmation.",
+        )),
+    }
 }
 
 fn optional(text: Option<String>) -> Option<String> {
@@ -341,17 +377,36 @@ mod tests {
             partner_code: code.to_owned(),
             loinc: loinc.map(str::to_owned),
             ucum_unit: unit.map(str::to_owned),
+            sequence_role: None,
         };
-        let valid = valid_values(
+        let results = |kind, values| valid_values(kind, values, false);
+        let valid = results(
             MappingKind::Analyte,
             values(" CA-AMP ", Some(" "), Some("ng/mL")),
         )
         .unwrap();
         assert_eq!(valid, values("CA-AMP", None, Some("ng/mL")));
-        assert!(valid_values(MappingKind::Analyte, values("", None, None)).is_err());
-        assert!(valid_values(MappingKind::Analyte, values("X", Some("1234"), None)).is_err());
-        assert!(valid_values(MappingKind::Test, values("X", None, Some("ng/mL"))).is_err());
-        assert!(valid_values(MappingKind::Analyte, values("X", None, Some("ng mL"))).is_err());
-        assert!(valid_values(MappingKind::Test, values("X", Some("12345-6"), None)).is_ok());
+        assert!(results(MappingKind::Analyte, values("", None, None)).is_err());
+        assert!(results(MappingKind::Analyte, values("X", Some("1234"), None)).is_err());
+        assert!(results(MappingKind::Test, values("X", None, Some("ng/mL"))).is_err());
+        assert!(results(MappingKind::Analyte, values("X", None, Some("ng mL"))).is_err());
+        assert!(results(MappingKind::Test, values("X", Some("12345-6"), None)).is_ok());
+    }
+
+    #[test]
+    fn an_incoming_order_code_maps_a_test_with_its_role() {
+        let code = |role: Option<&str>| MappingValues {
+            partner_code: "SYN-OPI".to_owned(),
+            loinc: None,
+            ucum_unit: None,
+            sequence_role: role.map(str::to_owned),
+        };
+        let orders = |kind, values| valid_values(kind, values, true);
+        assert!(orders(MappingKind::Test, code(Some("first_line"))).is_ok());
+        assert!(orders(MappingKind::Test, code(Some("confirmation"))).is_ok());
+        assert!(orders(MappingKind::Test, code(None)).is_err());
+        assert!(orders(MappingKind::Test, code(Some("screen"))).is_err());
+        assert!(orders(MappingKind::Analyte, code(Some("first_line"))).is_err());
+        assert!(valid_values(MappingKind::Test, code(Some("first_line")), false).is_err());
     }
 }

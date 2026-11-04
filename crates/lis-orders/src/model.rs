@@ -36,7 +36,7 @@ id_type!(/// A laboratory result revision used only as verified trigger provenan
 text_enum!(/// Lifecycle state of an order.
     OrderStatus { Received = "received", Accepted = "accepted", Rejected = "rejected", });
 text_enum!(/// How the order reached the LIS in M2a.
-    SourceKind { PaperRequisition = "paper_requisition", Fax = "fax", });
+    SourceKind { PaperRequisition = "paper_requisition", Fax = "fax", Hl7Interface = "hl7_interface", });
 text_enum!(/// Who is expected to pay, exactly as supplied.
     BillingResponsibility { ThirdParty = "third_party", PatientSelfPay = "patient_self_pay", Client = "client", NotSupplied = "not_supplied", });
 text_enum!(/// Kind of an order item.

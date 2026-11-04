@@ -22,6 +22,7 @@ pub mod hl7;
 pub mod hl7_order;
 mod intake_model;
 mod intake_settings;
+mod intake_sources;
 mod mapping_model;
 mod mapping_repo;
 mod mappings;
@@ -31,6 +32,7 @@ mod messages;
 mod model;
 mod queries;
 mod queue;
+mod received;
 mod repo;
 mod rules;
 mod settings;
@@ -52,6 +54,7 @@ pub use delivery::{
     record_delivery_payload, record_partner_test_message,
 };
 pub use error::PartnerError;
+pub use intake_sources::{IntakeSource, intake_sources};
 pub use mapping_model::{
     ApprovePartnerMappings, ApprovedMappings, CodeMapping, DiscardPartnerMappingDraft,
     DraftPartnerMapping, LisRecordId, MappingDraft, MappingKind, MappingRow, MappingValues,
@@ -79,6 +82,11 @@ pub use model::{
 };
 pub use queries::{carries, get_partner_connection, list_partner_connections};
 pub use queue::{FailedItem, UnroutedItem, failed_queue, unrouted_queue};
+pub use received::{
+    EarlierRead, NewReceived, PartnerReceivedId, ReceivedOutcome, ReceivedState, WaitingMessage,
+    control_id_seen, earlier_read, record_moved, record_received, resolve_waiting,
+    waiting_messages,
+};
 pub use rules::{rules_match, schedule_due};
 pub use sftp_identity::{create_sftp_identity, sealed_sftp_key, sftp_public_key};
 pub use sftp_settings::valid_sftp_server;

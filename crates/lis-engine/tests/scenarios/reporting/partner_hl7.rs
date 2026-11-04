@@ -66,6 +66,7 @@ async fn draft_held(hl7: &Pdfs) {
                     partner_code: format!("CA-{}", row.lis_code),
                     loinc: None,
                     ucum_unit: (row.kind == MappingKind::Analyte).then(|| "ng/mL".to_owned()),
+                    sequence_role: None,
                 }),
             })
             .await

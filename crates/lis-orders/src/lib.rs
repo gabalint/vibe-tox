@@ -99,6 +99,11 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "billing_context",
         sql: include_str!("../migrations/0005_billing_context.sql"),
     },
+    Migration {
+        version: 6,
+        name: "hl7_interface_source",
+        sql: include_str!("../migrations/0006_hl7_interface_source.sql"),
+    },
 ];
 
 /// This module's schema; the engine applies it in crate-map order.

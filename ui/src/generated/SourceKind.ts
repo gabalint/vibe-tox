@@ -3,4 +3,4 @@
 /**
  * How the order reached the LIS in M2a.
  */
-export type SourceKind = "paper_requisition" | "fax";
+export type SourceKind = "paper_requisition" | "fax" | "hl7_interface";
