@@ -63,7 +63,8 @@ export function messageColumns(
           "—"
         );
       },
-      width: 160,
+      // Fits the longest outcome, Rejected – unknown test.
+      width: 200,
     },
     {
       id: "details",
