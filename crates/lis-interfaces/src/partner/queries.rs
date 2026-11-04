@@ -11,6 +11,7 @@ use super::connection_views::{
 };
 use super::error::PartnerError;
 use super::model::{PartnerConnectionId, PartnerMessageType};
+use super::received_queries::intake_counts;
 use super::repo::{self, ConnectionRow};
 use crate::model::ChangeStamp;
 
@@ -78,6 +79,35 @@ fn changed_fields(before: &Value, after: &Value) -> Vec<String> {
         .collect()
 }
 
+/// An outgoing connection's last write attempt, its messages not written yet and its
+/// failing ones; synthetic tests are not counted.
+fn delivery_counts(
+    conn: &Connection,
+    connection_id: PartnerConnectionId,
+) -> Result<(Option<LastAttempt>, u32, u32), PartnerError> {
+    let last_attempt = conn
+        .prepare_cached(
+            "SELECT last_attempt_at, last_error_code FROM ifc_partner_deliveries \
+             WHERE connection_id = ?1 AND last_attempt_at IS NOT NULL \
+             ORDER BY last_attempt_at DESC LIMIT 1",
+        )?
+        .query_row([connection_id], |found| {
+            Ok(LastAttempt {
+                at: found.get(0)?,
+                error_code: found.get(1)?,
+            })
+        })
+        .optional()?;
+    let (waiting, failing): (u32, u32) = conn
+        .prepare_cached(
+            "SELECT COALESCE(SUM(state = 'waiting'), 0), \
+             COALESCE(SUM(state = 'failed' OR (state = 'waiting' AND attempts > 0)), 0) \
+             FROM ifc_partner_deliveries WHERE connection_id = ?1 AND reason <> 'test'",
+        )?
+        .query_row([connection_id], |found| Ok((found.get(0)?, found.get(1)?)))?;
+    Ok((last_attempt, waiting, failing))
+}
+
 fn connection_view(
     conn: &Connection,
     row: ConnectionRow,
@@ -92,26 +122,11 @@ fn connection_view(
             },
             self_approval: check.self_approval,
         });
-    let last_attempt = conn
-        .prepare_cached(
-            "SELECT last_attempt_at, last_error_code FROM ifc_partner_deliveries \
-             WHERE connection_id = ?1 AND last_attempt_at IS NOT NULL \
-             ORDER BY last_attempt_at DESC LIMIT 1",
-        )?
-        .query_row([row.id], |found| {
-            Ok(LastAttempt {
-                at: found.get(0)?,
-                error_code: found.get(1)?,
-            })
-        })
-        .optional()?;
-    let (waiting, failing): (u32, u32) = conn
-        .prepare_cached(
-            "SELECT COALESCE(SUM(state = 'waiting'), 0), \
-             COALESCE(SUM(state = 'failed' OR (state = 'waiting' AND attempts > 0)), 0) \
-             FROM ifc_partner_deliveries WHERE connection_id = ?1 AND reason <> 'test'",
-        )?
-        .query_row([row.id], |found| Ok((found.get(0)?, found.get(1)?)))?;
+    let (last_attempt, waiting, failing) = if row.settings.message_type.incoming() {
+        intake_counts(conn, row.id)?
+    } else {
+        delivery_counts(conn, row.id)?
+    };
     let status = if !row.active {
         ConnectionStatus::Stopped
     } else if last_attempt

@@ -16,6 +16,7 @@ import type { RuleField } from "@/generated/RuleField";
 import type { Schedule } from "@/generated/Schedule";
 import type { UnroutedResolution } from "@/generated/UnroutedResolution";
 import type { WaitReason } from "@/generated/WaitReason";
+import { INTAKE_REASONS, receivedDetail, receivedOutcome } from "./intakeLabels";
 
 export interface Labelled {
   label: string;
@@ -200,7 +201,8 @@ const PROBLEMS: Record<string, string> = {
     "No usable sign-in on this computer: copy the LIS public key first, or enter the password again",
 };
 
-export const problemText = (code: string) => PROBLEMS[code] ?? code.replaceAll("_", " ");
+export const problemText = (code: string) =>
+  PROBLEMS[code] ?? INTAKE_REASONS[code] ?? code.replaceAll("_", " ");
 
 /** The line after Test connection, as in mockup 6. */
 export function sftpTestText({ problem, presentedFingerprint }: FolderTestResult): string {
@@ -239,12 +241,16 @@ export function transportOf(row: PartnerMessageRow): Labelled {
       return { label: "Failed", tone: "danger" };
     case "not_sent":
       return { label: "Not sent", tone: row.unrouted ? "warning" : "hold" };
+    case "received":
+      return { label: "Received", tone: "neutral" };
   }
 }
 
-/** Did the partner accept it: a folder never says. */
-export const applicationOf = (row: PartnerMessageRow): Labelled | null =>
-  row.outcomeUnknown ? { label: "Outcome unknown", tone: "warning" } : null;
+/** Did the partner accept it (a folder never says), or what a received message became. */
+export function applicationOf(row: PartnerMessageRow): Labelled | null {
+  if (row.received !== null) return receivedOutcome(row.received, row.errorCode);
+  return row.outcomeUnknown ? { label: "Outcome unknown", tone: "warning" } : null;
+}
 
 /** A message's routing values by their display labels, such as client names. */
 export const valuesText = (values: readonly { label: string }[]) =>
@@ -265,6 +271,8 @@ export function recordText(row: {
       return `${row.sourceLabel} withdrawal notice`;
     case "test":
       return "Test message";
+    case "order":
+      return row.sourceLabel ?? "Order message";
   }
 }
 
@@ -296,5 +304,6 @@ function stateText(row: PartnerMessageRow, formatTime: (at: string) => string): 
 
 /** One line on why the row stands where it does. */
 export function detailText(row: PartnerMessageRow, formatTime: (at: string) => string): string {
+  if (row.received !== null) return receivedDetail(row);
   return [followUpText(row), stateText(row, formatTime)].filter(Boolean).join(" · ");
 }

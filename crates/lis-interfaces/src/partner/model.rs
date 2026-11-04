@@ -159,6 +159,8 @@ text_enum! {
         ReportWithdrawal = "report_withdrawal",
         /// A synthetic test message, with no patient data.
         Test = "test",
+        /// An order message received from a clinic's EMR.
+        Order = "order",
     }
 }
 

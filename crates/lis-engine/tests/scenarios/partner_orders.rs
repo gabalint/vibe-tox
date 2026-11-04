@@ -13,9 +13,9 @@ use lis_engine::{
 };
 use lis_identity::{DemographicsInput, IdentifierInput, RegisterSubject};
 use lis_interfaces::partner::{
-    ApprovePartnerMappings, DraftPartnerMapping, IntakeSettings, MappingKind, MappingValues,
-    PartnerConnectionSettings, PartnerMessageType, PartnerProtocol, RecordPartnerDestinationCheck,
-    Schedule, UnknownPatient,
+    ApprovePartnerMappings, DraftPartnerMapping, IntakeSettings, ListPartnerMessages, MappingKind,
+    MappingValues, MessageView, PartnerConnectionSettings, PartnerMessageType, PartnerProtocol,
+    ReceivedState, RecordPartnerDestinationCheck, Schedule, TransportOutcome, UnknownPatient,
 };
 use tempfile::TempDir;
 
@@ -221,6 +221,7 @@ async fn an_emr_order_waits_for_its_patient_then_arrives_as_received() {
     assert!(input.join("clinic_0002.hl7.tmp").exists());
     assert!(!input.join("clinic_0001.hl7").exists());
     assert_eq!(moved(orders.processed.path()).len(), 1);
+    logs_show_it_waiting(&orders).await;
 
     // An exact replay has no effect, and moves to Processed too.
     fs::write(input.join("clinic_0001_again.hl7"), oml(SENDER, "MSG-1")).unwrap();
@@ -255,6 +256,35 @@ async fn an_emr_order_waits_for_its_patient_then_arrives_as_received() {
     assert_eq!(order.source_kind, SourceKind::Hl7Interface);
     assert_eq!(order.placer_order_id.as_deref(), Some("ORD-0001"));
     assert_eq!(order.items.len(), 1);
+}
+
+/// Logs list the message as received, waiting for its patient, with where the file moved;
+/// the connection counts it as waiting.
+async fn logs_show_it_waiting(orders: &Orders) {
+    orders.bench.sign_in(Staff::Desk(Role::Admin)).await;
+    let engine = orders.bench.lab().engine();
+    let page = engine
+        .list_partner_messages(ListPartnerMessages {
+            since: None,
+            connection_id: Some(orders.connection.connection.id),
+            view: MessageView::All,
+            search: None,
+        })
+        .await
+        .unwrap();
+    let [row] = page.rows.as_slice() else {
+        panic!("one row expected");
+    };
+    assert_eq!(row.transport, TransportOutcome::Received);
+    assert_eq!(row.received, Some(ReceivedState::WaitingPatient));
+    assert_eq!(row.source_label.as_deref(), Some("ORD-0001"));
+    assert!(
+        row.written_path
+            .as_deref()
+            .is_some_and(|path| path.ends_with("clinic_0001.hl7"))
+    );
+    let listed = engine.list_partner_connections().await.unwrap();
+    assert_eq!(listed[0].waiting, 1);
 }
 
 async fn register_patient(orders: &Orders) {

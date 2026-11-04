@@ -3,6 +3,7 @@ import type { ConnectionRef } from "./ConnectionRef";
 import type { DeliveryReason } from "./DeliveryReason";
 import type { MessageSource } from "./MessageSource";
 import type { PartnerMessageType } from "./PartnerMessageType";
+import type { ReceivedState } from "./ReceivedState";
 import type { TransportOutcome } from "./TransportOutcome";
 import type { UnroutedResolution } from "./UnroutedResolution";
 import type { WaitReason } from "./WaitReason";
@@ -43,4 +44,8 @@ resolution: UnroutedResolution | null,
 /**
  * `resend_partner_delivery` once every attempt failed.
  */
-allowedActions: Array<string>, };
+allowedActions: Array<string>, 
+/**
+ * For an incoming message: what it became. `None` for an outgoing one.
+ */
+received: ReceivedState | null, };

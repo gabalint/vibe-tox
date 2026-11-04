@@ -144,6 +144,7 @@ export const WRITTEN: PartnerMessageRow = {
   unrouted: false,
   resolution: null,
   allowedActions: [],
+  received: null,
 };
 
 export const FAILED: PartnerMessageRow = {

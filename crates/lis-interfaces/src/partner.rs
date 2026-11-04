@@ -33,6 +33,7 @@ mod model;
 mod queries;
 mod queue;
 mod received;
+mod received_queries;
 mod repo;
 mod rules;
 mod settings;

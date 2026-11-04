@@ -1,5 +1,5 @@
 //! The message log (REQ-INT-002, REQ-RPT-003, REQ-RPT-011). A row says what the
-//! channel can prove: written to a folder or not, never "delivered".
+//! channel can prove: written to a folder or not, received or not, never "delivered".
 
 use lis_core::{UtcTimestamp, text_enum};
 use rusqlite::{Connection, params};
@@ -12,6 +12,8 @@ use super::model::{
     DeliveryReason, DeliveryState, MessageSource, PartnerConnectionId, PartnerDeliveryId,
     PartnerMessageId, PartnerMessageType, PartnerProtocol, UnroutedResolution,
 };
+use super::received::ReceivedState;
+use super::received_queries::received_rows;
 
 /// Rows the log returns at most, newest first.
 const LOG_LIMIT: usize = 500;
@@ -43,6 +45,8 @@ text_enum! {
         Failed = "failed",
         /// Not written yet, or never: a newer revision replaced it.
         NotSent = "not_sent",
+        /// An incoming message was read and stored.
+        Received = "received",
     }
 }
 
@@ -134,6 +138,8 @@ pub struct PartnerMessageRow {
     pub resolution: Option<UnroutedResolution>,
     /// `resend_partner_delivery` once every attempt failed.
     pub allowed_actions: Vec<String>,
+    /// For an incoming message: what it became. `None` for an outgoing one.
+    pub received: Option<ReceivedState>,
 }
 
 /// The newest rows, and whether older ones were left out.
@@ -154,6 +160,12 @@ pub fn list_partner_messages(
     if input.connection_id.is_none() {
         rows.extend(unrouted_rows(conn, input.since)?);
     }
+    rows.extend(received_rows(
+        conn,
+        input.since,
+        input.connection_id,
+        SCAN_LIMIT,
+    )?);
     let search = input.search.as_deref().map(str::trim).unwrap_or_default();
     rows.retain(|row| in_view(row, input.view) && found(row, search));
     rows.sort_by_key(|row| std::cmp::Reverse(row.at));
@@ -261,6 +273,7 @@ fn delivery_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<PartnerMessageRow> 
         } else {
             Vec::new()
         },
+        received: None,
     })
 }
 
@@ -320,6 +333,7 @@ fn unrouted_rows(
             unrouted: true,
             resolution: row.get(6)?,
             allowed_actions: Vec::new(),
+            received: None,
         })
     })?
     .collect::<rusqlite::Result<_>>()

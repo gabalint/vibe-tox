@@ -145,7 +145,7 @@ export function ConnectionOverview({ connection, lastReason }: OverviewProps) {
           ],
         ]}
       />
-      {type === "hl7_oru" && (
+      {(type === "hl7_oru" || type === "hl7_orders") && (
         <div className={styles.wide}>
           <CodeMappingsSection connection={connection} readOnly />
         </div>
@@ -190,7 +190,7 @@ export function ConnectionRules({ connection }: { connection: PartnerConnection 
  * Billing JSON files carry the LIS's own codes, so they have no mapping to a partner's codes.
  */
 export function CodeMappings({ connection }: { connection: PartnerConnection }) {
-  if (connection.settings.messageType === "hl7_oru") {
+  if (["hl7_oru", "hl7_orders"].includes(connection.settings.messageType)) {
     return <CodeMappingsSection connection={connection} />;
   }
   return (

@@ -56,6 +56,40 @@ describe("Logs (ticket #4555; REQ-INT-002, REQ-RPT-011)", () => {
     ).toBeTruthy();
   });
 
+  it("shows a received order coming in, what it became and where the file moved", async () => {
+    const received = {
+      ...WRITTEN,
+      messageType: "hl7_orders" as const,
+      source: "order" as const,
+      sourceNumber: null,
+      sourceLabel: "ORD-000124",
+      transport: "received" as const,
+      outcomeUnknown: false,
+      writtenPath: "/srv/clinic-a/processed/2026/11/clinicA_000124.hl7",
+      received: "order_created" as const,
+    };
+    const rejected = {
+      ...received,
+      messageId: "01a1a000-0000-7000-8000-000000000020",
+      sourceLabel: "ORD-000125",
+      errorCode: "unknown_test",
+      writtenPath: "/srv/clinic-a/failed/2026/11/clinicA_000125.hl7",
+      received: "rejected" as const,
+    };
+    renderPage(() => ({ rows: [received, rejected], more: false }));
+    expect(await screen.findByRole("gridcell", { name: "ORD-000124" })).toBeTruthy();
+    expect(screen.getAllByRole("gridcell", { name: "In" })).toHaveLength(2);
+    expect(screen.getAllByRole("gridcell", { name: "Received" })).toHaveLength(2);
+    expect(screen.getByRole("gridcell", { name: "Order created" })).toBeTruthy();
+    expect(screen.getByRole("gridcell", { name: "Rejected – unknown test" })).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", {
+        name: "Moved to /srv/clinic-a/processed/2026/11/clinicA_000124.hl7",
+      }),
+    ).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /Rejected \(1\)/ })).toBeTruthy();
+  });
+
   it("sends a failed message again from its row", async () => {
     const resend = vi.fn(() => null);
     const { user } = renderPage(() => ({ rows: [FAILED], more: false }), {

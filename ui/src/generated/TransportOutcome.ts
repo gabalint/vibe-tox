@@ -3,4 +3,4 @@
 /**
  * Did the message leave: what the transport can prove.
  */
-export type TransportOutcome = "written" | "failed" | "not_sent";
+export type TransportOutcome = "written" | "failed" | "not_sent" | "received";

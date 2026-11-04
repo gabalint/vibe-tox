@@ -3,4 +3,4 @@
 /**
  * What a message was made from.
  */
-export type MessageSource = "billing_handoff" | "report_revision" | "report_withdrawal" | "test";
+export type MessageSource = "billing_handoff" | "report_revision" | "report_withdrawal" | "test" | "order";
