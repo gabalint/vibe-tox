@@ -141,6 +141,12 @@ export const detailScreens: readonly { path: string; page: PageLoader; tabbed?: 
     page: () => import("@/features/billing/handoffs/HandoffPage").then((m) => m.HandoffPage),
   },
   {
+    path: "/interfaces/connections/:connectionId",
+    page: () =>
+      import("@/features/interfaces/connections/ConnectionPage").then((m) => m.ConnectionPage),
+    tabbed: true,
+  },
+  {
     path: "/operations/health/history",
     page: () =>
       import("@/features/operations/health/HealthHistoryPage").then((m) => m.HealthHistoryPage),

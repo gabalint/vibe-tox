@@ -510,13 +510,13 @@ fn the_poller_scans_at_start_and_stops() {
         .build()
         .unwrap();
     runtime.block_on(async {
-        let poller = FolderPoller::start(Arc::clone(&folders), Duration::from_millis(10));
+        let poller = Poller::start(folders.clone(), Duration::from_millis(10));
         let deadline = std::time::Instant::now() + Duration::from_secs(5);
         while poll.listeners.status_snapshot().is_empty() {
             assert!(std::time::Instant::now() < deadline, "no scan at start");
             tokio::time::sleep(Duration::from_millis(5)).await;
         }
-        poller.stop(&folders).await;
+        poller.stop().await;
     });
     assert_eq!(poll.status().state, ListenerState::Listening);
 }

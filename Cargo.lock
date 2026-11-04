@@ -3707,6 +3707,7 @@ name = "lis-engine"
 version = "0.1.1"
 dependencies = [
  "hex",
+ "jiff",
  "keepawake",
  "keyring",
  "lis-analytical",
@@ -3764,9 +3765,11 @@ name = "lis-interfaces"
 version = "0.1.1"
 dependencies = [
  "hex",
+ "jiff",
  "lis-astm",
  "lis-au",
  "lis-audit",
+ "lis-auth",
  "lis-core",
  "lis-store",
  "rusqlite",

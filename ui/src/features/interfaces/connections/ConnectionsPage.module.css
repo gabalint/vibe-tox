@@ -1,0 +1,39 @@
+/* The four counts above the tabs, one box each, as in the Interfaces mockup. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: var(--space-3);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.tileLabel {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-md);
+}
+
+.tileValue {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+}
+
+.tileValue[data-tone="danger"] {
+  color: var(--tone-danger-text);
+}
+
+.tileValue[data-tone="warning"] {
+  color: var(--tone-warning-text);
+}
+
+/* Add connection at the far end of the toolbar. */
+.end {
+  margin-inline-start: auto;
+}

@@ -59,4 +59,8 @@ Billing work is grouped by patient and collection-derived date of service, inclu
 
 A handed-off item leaves Billing work once the partner's acknowledgement is recorded. **Billing › Billing handoffs** lists every handoff, newest first, and finds one by its number, the start of an accession number or the start of a `YYYY-MM-DD` date of service. Open it to export the stored file again or review each item's outcome history.
 
+## Send handoff files automatically
+
+When the laboratory has a **Billing JSON** connection (**Interfaces › Connections**, Manage configuration), creating a handoff also routes its stored file to every connection whose rules match, in the same transaction. The LIS writes the file to that connection's folder once the connection is started and a second person has recorded its destination check. Without any Billing JSON connection nothing changes: export the file by hand as above. **Interfaces › Logs** shows each file as written, failed or not sent; a written file's use is never confirmed by the folder (Outcome unknown). The billing owner's acknowledgement or rejection is still recorded on the handoff. A handoff that matches no connection waits in **Interfaces › Unrouted messages** for a decision. The [interfaces guide](interfaces.md) describes setup, routing rules and recovery.
+
 The external assembly steps above describe requirements for a laboratory-owned process, not an approved SOP supplied by this project. Managed source custody (DM-07) and patient/proxy request handling (RPT-07) remain separate scope decisions in the [scope decisions](../quality/scope-decisions.md). They are not closed by this guide.

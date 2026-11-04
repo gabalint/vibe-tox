@@ -34,4 +34,6 @@ export type WorkItemKind =
   | "health_check"
   | "app_run"
   | "recovery_reconciliation"
-  | "app_version";
+  | "app_version"
+  | "unrouted_message"
+  | "failed_delivery";

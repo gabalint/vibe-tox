@@ -1,0 +1,90 @@
+/* The Add connection dialog, as in the Interfaces mockup: each numbered section in its own box. */
+.box {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.box + .box {
+  margin-top: var(--space-3);
+}
+
+.box legend {
+  font-size: var(--font-size-md);
+}
+
+/* General: name, partner, message and direction on one row where they fit. */
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+
+/* Protocol: one card per choice. */
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* The four cards share one line; they wrap only on a narrow window. */
+.card {
+  display: flex;
+  flex: 1 1 13rem;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.card[data-selected] {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+  background: var(--color-accent-subtle);
+}
+
+.card[data-disabled] {
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.card[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.cardTitle {
+  font-weight: var(--font-weight-semibold);
+}
+
+.cardHint,
+.hint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Folder: the field at half width; its buttons and test result follow on one row. */
+.half {
+  max-width: 28rem;
+}
+
+/* Routing rules: field, condition, value and remove on one line; labels are for screen readers. */
+.rule {
+  display: grid;
+  grid-template-columns: minmax(10rem, 12rem) minmax(7rem, 9rem) minmax(10rem, 1fr) auto;
+  gap: var(--space-2);
+  align-items: start;
+}
+
+.rule label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

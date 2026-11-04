@@ -1,0 +1,31 @@
+/* The chosen message's details below the table, as in the Unrouted messages mockup. */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(26rem, 100%), 1fr));
+  gap: var(--space-2) var(--space-8);
+  margin: 0;
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.fact dt {
+  color: var(--color-text-muted);
+}
+
+.fact dd {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.target {
+  flex: 0 1 16rem;
+}
+
+.hint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}

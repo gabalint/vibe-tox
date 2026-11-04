@@ -95,6 +95,10 @@ const TARGETS: Readonly<Record<WorkItemKind, (item: ItemRef) => ItemTarget>> = {
   app_run: panel("/operations/health/history"),
   recovery_reconciliation: (item) => ({ recordId: item.itemId, path: "/operations/recovery" }),
   app_version: panel("/operations/versions/installed"),
+  // Interfaces (REQ-RPT-003): an unrouted message in its panel; a message not written, in
+  // the log's Failed tab, where it is sent again.
+  unrouted_message: panel("/interfaces/unrouted"),
+  failed_delivery: (item) => ({ recordId: item.itemId, path: "/interfaces/logs/failed" }),
 };
 
 function billingWork(item: ItemRef): ItemTarget {

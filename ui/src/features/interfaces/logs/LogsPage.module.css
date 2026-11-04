@@ -1,0 +1,30 @@
+/* The filter row of the Logs mockup: boxed choices and search, Export CSV at the far end. */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.filters > * {
+  flex: 0 1 11rem;
+}
+
+.filters > :last-child {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+}
+
+/* The search's "Find" label is for screen readers too, so it lines up with the choices. */
+.search label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.search {
+  flex-basis: 16rem;
+}

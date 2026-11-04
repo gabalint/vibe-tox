@@ -96,6 +96,7 @@ and [receive-specimens.json](../help/receive-specimens.json).
 | [Updates](updates.md) | Recording approval, making a pre-update backup and accepting the running version |
 | [Exit export](exit-export.md) | Producing and independently checking a complete portable copy |
 | [Billing evidence and handoff](billing-evidence-and-handoff.md) | Draft manual procedure for billing evidence, corrections, rejected handoffs and payer record requests (REQ-BIL-006) |
+| [Interfaces](interfaces.md) | Connections that write billing handoff files to a partner's folder, the destination check, the message log and unrouted messages |
 
 The defaults and unresolved laboratory choices used throughout these guides come from the
 [laboratory policy inputs](../quality/laboratory-policy-inputs.md#operations) and the canonical

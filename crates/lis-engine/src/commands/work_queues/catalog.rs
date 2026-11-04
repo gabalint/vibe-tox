@@ -152,6 +152,18 @@ pub(super) const QUEUES: &[QueueDefinition] = &[
         "Investigate"
     ),
     queue!(
+        "unrouted_messages",
+        "Unrouted interface messages",
+        ManageConfiguration,
+        "Send, route or dismiss"
+    ),
+    queue!(
+        "interface_failures",
+        "Interface messages not written",
+        ManageConfiguration,
+        "Fix the connection and send again"
+    ),
+    queue!(
         "ops_alerts",
         "Health checks needing attention",
         ManageConfiguration,
@@ -253,6 +265,8 @@ pub(super) fn state_label(code: &str) -> String {
         "approved" => "Approved",
         "outstanding" => "Awaiting the billing owner's outcome",
         "dead" => "Stopped after retries",
+        "unrouted" => "No connection rule matched",
+        "not_written" => "Not written after every attempt",
         "warning" => "Warning",
         "alert" => "Alert",
         "unacknowledged" => "Not acknowledged",

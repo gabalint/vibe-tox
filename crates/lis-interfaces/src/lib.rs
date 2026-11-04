@@ -31,6 +31,7 @@ mod error;
 mod instrument_commands;
 mod listener;
 mod model;
+pub mod partner;
 mod peer_rejections;
 mod queries;
 mod receipt_writer;
@@ -103,6 +104,11 @@ pub const MIGRATIONS: &[Migration] = &[
         version: 5,
         name: "instrument_changes",
         sql: include_str!("../migrations/0005_instrument_changes.sql"),
+    },
+    Migration {
+        version: 6,
+        name: "partner_connections",
+        sql: include_str!("../migrations/0006_partner_connections.sql"),
     },
 ];
 

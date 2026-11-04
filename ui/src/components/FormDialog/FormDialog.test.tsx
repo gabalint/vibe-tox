@@ -14,13 +14,16 @@ interface HarnessProps {
   onClose: () => void;
   error?: CommandError | null;
   isPending?: boolean;
+  footnote?: string;
 }
 
-function Harness({ onSave, onClose, error = null, isPending = false }: HarnessProps) {
+function Harness({ onSave, onClose, error = null, isPending = false, footnote }: HarnessProps) {
   const form = useForm({ defaultValues: { reason: "" } });
   return (
     <FormDialog
       title="Discard batch"
+      description="Removes the batch from the bench."
+      footnote={footnote}
       submitLabel="Discard batch"
       form={form}
       onSubmit={form.handleSubmit(({ reason }) => onSave(reason))}
@@ -46,6 +49,17 @@ describe("FormDialog", () => {
     await user.type(screen.getByRole("textbox", { name: /Reason/ }), "Expired reagent{Enter}");
     expect(onSave).toHaveBeenCalledWith("Expired reagent");
     expect(screen.getByRole("button", { name: "Reload batch" })).toBeTruthy();
+  });
+
+  it("puts a footnote first and the submit button last", () => {
+    renderWithProviders(
+      <Harness onSave={vi.fn()} onClose={vi.fn()} footnote="Nothing is discarded yet." />,
+    );
+    const dialog = screen.getByRole("dialog", { name: "Discard batch" });
+    expect(screen.getByText("Removes the batch from the bench.")).toBeTruthy();
+    expect(screen.getByText("Nothing is discarded yet.")).toBeTruthy();
+    const buttons = Array.from(dialog.querySelectorAll("button")).map((b) => b.textContent);
+    expect(buttons.slice(-3)).toEqual(["Cancel", "Reload batch", "Discard batch"]);
   });
 
   it("shows the engine's refusal and closes on Cancel", async () => {

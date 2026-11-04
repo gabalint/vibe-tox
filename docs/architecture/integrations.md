@@ -300,6 +300,7 @@ Evidence levels, weakest to strongest (proposal): *queued*; *handed off* (to a p
 | Channel | Path | Labels the record may show | Highest level reachable | Does not prove |
 | --- | --- | --- | --- | --- |
 | Manual print, PDF, lab's own fax or email | Local | "Printed by [user]", "PDF exported by [user]", "Faxed by staff (attested)", "Handed to courier" | Handed off (attested) | Receipt by anyone |
+| Partner folder connection (implemented for Billing JSON) | Local or lab-network folder | "Written", "Failed", "Not sent", application "Outcome unknown" | Handed off (file complete in the folder) | That the partner's system read or accepted the file |
 | Lab-run HL7 listener or engine | Local | "Partner commit ACK", "Accepted by recipient system", "Rejected by recipient system" | Accepted by recipient system | Chart filing or clinician review |
 | Client portal | Optional external service | "Available in portal", "Viewed by [clinic user]", "Downloaded by [clinic user]", "Acknowledged by [clinician]" | Recipient access; recipient acknowledgement only if the clinician acknowledges | Reading or understanding; a shared login weakens it |
 | HL7 via cloud endpoint | Optional external service | "Stored by hosted endpoint", "Accepted by recipient system", "Rejected by recipient system" | Accepted by recipient system | That an immediate "AA" came from a validating system; clinician review |
@@ -308,7 +309,7 @@ Evidence levels, weakest to strongest (proposal): *queued*; *handed off* (to a p
 | Direct (HISP) | Optional external service | "Receiving HISP processed", "HISP dispatched notification received" | Custody at receiving system | Clinician access; behavior is HISP-dependent |
 | Email or SMS notice | Optional external service | "Notice accepted by mail server", "Notice accepted by carrier" | Notice only; carries no PHI and no report | That the report was retrieved |
 
-Destination verification (REQ-RPT-012): a new fax number or Direct address is verified by a lab administrator before the first PHI delivery, and every change is audited. Before every dispatch the system rechecks the destination's current authority and report restrictions.
+Destination verification (REQ-RPT-012): a new fax number, Direct address or partner folder is verified by a lab administrator before the first PHI delivery, and every change is audited. A partner folder connection is written only while a destination check covers its current folder; a new folder needs a new check ([interfaces](../operations/interfaces.md)). Before every dispatch the system rechecks the destination's current authority and report restrictions.
 
 Under CLIA the portal, relay and each interface are part of the lab's delivery chain. Besides per-destination evidence, the lab runs a periodic check that received content matches what was sent ([§15.4](../research/regulatory-landscape.md#154-clia-with-one-pc-as-the-laboratorys-record-system), REG-047).
 

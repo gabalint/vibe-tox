@@ -83,7 +83,7 @@ async fn released_groups() -> Desk {
     desk
 }
 
-async fn release_groups(desk: &Desk, indices: [usize; 2]) {
+pub(super) async fn release_groups(desk: &Desk, indices: [usize; 2]) {
     let engine = desk.as_staff(Staff::Releaser).await;
     // One session and fixed clock: both final releases have exactly the same time.
     for index in indices {

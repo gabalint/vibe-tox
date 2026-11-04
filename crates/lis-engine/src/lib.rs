@@ -249,6 +249,19 @@ pub use lis_ops::anchors::{
     AnchorExportView, AnchorStatusView, AnchorVerification, ExportReport as AnchorExportReport,
 };
 // anchors: end
+// partner: begin
+mod partner_delivery;
+mod poller;
+pub use commands::partner::{
+    ChosenPartnerFolder, CreatePartnerConnectionInput, ExportedMessageLog, FolderTestResult,
+    PartnerConnectionInput, TestPartnerFolderInput, UpdatePartnerConnectionInput,
+};
+pub use lis_interfaces::partner::{
+    ListPartnerMessages, PartnerConnection, PartnerConnectionDetail, PartnerMessagePage,
+    RecordPartnerDestinationCheck, ResendPartnerDelivery, ResolveUnroutedMessage,
+    SetPartnerConnectionActive, UnroutedMessage,
+};
+// partner: end
 // result_files: begin
 mod result_folders;
 pub use commands::result_files::{
