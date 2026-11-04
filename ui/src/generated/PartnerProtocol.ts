@@ -3,4 +3,4 @@
 /**
  * How messages travel.
  */
-export type PartnerProtocol = "folder";
+export type PartnerProtocol = "folder" | "sftp";

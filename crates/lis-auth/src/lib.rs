@@ -129,7 +129,7 @@ pub use challenge::{
     CHALLENGE_TTL, Challenge, ChallengeId, ChallengeSlot, ChallengeStep, LiveChallenge,
     PasswordAccepted, PendingSecret, SignInStep,
 };
-pub use cipher::{DataKey, has_sealed_secrets, key_opens_sealed_secrets};
+pub use cipher::{DataKey, has_sealed_secrets, key_opens_sealed_secrets, open_secret, seal_secret};
 pub use credentials::{
     AuthenticationMethod, AuthenticationStatus, SecurityKeyCredentialView, SecurityKeyId,
     authentication_method, get_authentication_status, list_key_sign_in_choices, list_security_keys,

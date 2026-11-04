@@ -14,6 +14,7 @@ mod folders;
 mod mappings;
 mod messages;
 mod routing;
+mod sftp;
 mod test_files;
 
 use lis_core::Capability;
@@ -29,6 +30,7 @@ pub(crate) use self::routing::{
     HandoffError, ReportRoutingError, route_billing_handoff, route_report_revision,
     route_report_withdrawal,
 };
+pub use self::sftp::TestPartnerSftpInput;
 use crate::pipeline::domain_error;
 use crate::registry::{Access, CommandSpec, spec};
 
@@ -48,6 +50,10 @@ pub(crate) const CHOOSE_PARTNER_FOLDER: CommandSpec =
     spec("choose_partner_folder", "interfaces.choose_folder", MANAGE);
 pub(crate) const TEST_PARTNER_FOLDER: CommandSpec =
     spec("test_partner_folder", "interfaces.test_folder", MANAGE);
+pub(crate) const TEST_PARTNER_SFTP: CommandSpec =
+    spec("test_partner_sftp", "interfaces.test_sftp", MANAGE);
+pub(crate) const GET_LIS_SFTP_KEY: CommandSpec =
+    spec("get_lis_sftp_key", "interfaces.get_sftp_key", MANAGE);
 pub(crate) const CREATE_PARTNER_CONNECTION: CommandSpec = spec(
     "create_partner_connection",
     "interfaces.create_connection",

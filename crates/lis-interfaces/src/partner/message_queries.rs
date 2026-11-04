@@ -196,7 +196,7 @@ fn delivery_rows(
          m.message_type, m.source_kind, m.source_id, m.source_number, c.id, c.name, d.reason, \
          d.state, d.attempts, d.next_attempt_at, d.last_error_code, d.written_path, c.active, \
          EXISTS (SELECT 1 FROM ifc_partner_verifications v \
-                 WHERE v.connection_id = c.id AND v.folder = c.folder), c.schedule, \
+                 WHERE v.connection_id = c.id AND v.folder = c.destination), c.schedule, \
          m.source_label \
          FROM ifc_partner_deliveries d \
          JOIN ifc_partner_messages m ON m.id = d.message_id \

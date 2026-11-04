@@ -130,7 +130,7 @@ fn place(
     Err(WriteProblem::NameTaken)
 }
 
-fn random_suffix() -> String {
+pub(super) fn random_suffix() -> String {
     let id: Id<()> = Id::generate();
     id.to_string().replace('-', "")[20..].to_owned()
 }

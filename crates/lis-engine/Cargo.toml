@@ -28,7 +28,10 @@ lis-billing = { workspace = true }
 lis-ops = { workspace = true }
 lis-report = { workspace = true }
 lis-store = { workspace = true }
+rand = { workspace = true }
 rusqlite = { workspace = true }
+russh = { workspace = true }
+russh-sftp = { workspace = true }
 secrecy = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -38,6 +41,7 @@ thiserror = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 ts-rs = { workspace = true }
+zeroize = { workspace = true }
 
 [dev-dependencies]
 webauthn-authenticator-rs = { workspace = true, features = ["softpasskey"] }

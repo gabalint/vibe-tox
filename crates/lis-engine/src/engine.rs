@@ -163,13 +163,6 @@ impl Engine {
         let policy = db.read(lis_auth::current_security_policy).await?;
         let (listeners, listeners_after_update) = start_listeners(&db, version_changed).await?;
         let (result_folders, folder_poller) = ResultFolders::start(&db, &config.clock, &listeners);
-        let partner_poller = crate::partner_delivery::start(&db, &config.clock);
-        let dispatcher = start_dispatcher(
-            &db,
-            config.outbox_handlers,
-            config.printer_destinations,
-            crate::demo::label_marking(config.installation_kind),
-        );
         tracing::info!(
             %workstation_id,
             abandoned_sessions = abandoned,
@@ -185,6 +178,14 @@ impl Engine {
             config.webview.clone(),
             key,
         ));
+        // The partner poller opens SFTP sign-ins with the installation key the operations hold.
+        let partner_poller = crate::partner_delivery::start(&ops);
+        let dispatcher = start_dispatcher(
+            &db,
+            config.outbox_handlers,
+            config.printer_destinations,
+            crate::demo::label_marking(config.installation_kind),
+        );
         Ok(Self {
             db,
             clock: config.clock,

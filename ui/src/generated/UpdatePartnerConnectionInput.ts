@@ -8,4 +8,8 @@ export type UpdatePartnerConnectionInput = { connectionId: string, expectedRevis
 /**
  * A newly chosen folder; absent keeps the current one.
  */
-folderChoice?: string, reason: string, };
+folderChoice?: string, 
+/**
+ * A new SFTP password; absent keeps the current one for the same server and user.
+ */
+password?: string, reason: string, };

@@ -10,13 +10,14 @@ use lis_engine::{
     CreatePartnerConnectionInput, ListPartnerMessages, PartnerConnectionDetail,
     PartnerConnectionInput, RecordPartnerDestinationCheck, ResendPartnerDelivery,
     ResolveUnroutedMessage, SetPartnerConnectionActive, TestPartnerFolderInput,
-    UpdatePartnerConnectionInput,
+    TestPartnerSftpInput, UpdatePartnerConnectionInput,
 };
 use lis_interfaces::partner::{
     ApprovePartnerMappings, DiscardPartnerMappingDraft, DraftPartnerMapping, MappingKind,
     MessageView, PartnerConnectionId, PartnerConnectionSettings, PartnerDeliveryId,
     PartnerMessageId, PartnerMessageRow, PartnerMessageType, PartnerProtocol, RoutingRule,
-    RuleCondition, RuleField, Schedule, TransportOutcome, UnroutedDecision, WaitReason,
+    RuleCondition, RuleField, Schedule, SftpAuth, SftpSettings, TransportOutcome, UnroutedDecision,
+    WaitReason,
 };
 use tempfile::TempDir;
 
@@ -41,10 +42,20 @@ pub(super) async fn partner_call(engine: &Engine, name: &str) -> Option<Result<(
             })
             .await
             .map(drop),
+        "test_partner_sftp" => engine
+            .test_partner_sftp(TestPartnerSftpInput {
+                server: sftp_server(),
+                password: None,
+                connection_id: None,
+            })
+            .await
+            .map(drop),
+        "get_lis_sftp_key" => engine.get_lis_sftp_key().await.map(drop),
         "create_partner_connection" => engine
             .create_partner_connection(CreatePartnerConnectionInput {
                 settings: settings("Synthetic", Vec::new()),
-                folder_choice: lis_core::Id::generate(),
+                folder_choice: Some(lis_core::Id::generate()),
+                password: None,
                 active: true,
             })
             .await
@@ -55,6 +66,7 @@ pub(super) async fn partner_call(engine: &Engine, name: &str) -> Option<Result<(
                 expected_revision: 1,
                 settings: settings("Synthetic", Vec::new()),
                 folder_choice: None,
+                password: None,
                 reason: "Synthetic authorization test".to_owned(),
             })
             .await
@@ -158,6 +170,19 @@ fn settings(name: &str, rules: Vec<RoutingRule>) -> PartnerConnectionSettings {
         rules,
         schedule: Schedule::Immediately,
         file_name_pattern: PATTERN.to_owned(),
+        sftp: None,
+    }
+}
+
+/// A synthetic server on the reserved `.invalid` domain, which no lookup resolves.
+fn sftp_server() -> SftpSettings {
+    SftpSettings {
+        host: "sftp.clinic-a.invalid".to_owned(),
+        port: 22,
+        username: "vibetox_lab".to_owned(),
+        auth: SftpAuth::Key,
+        fingerprint: format!("SHA256:{}", "A".repeat(43)),
+        remote_folder: "/inbound/results".to_owned(),
     }
 }
 
@@ -281,7 +306,8 @@ impl Partners {
         engine
             .create_partner_connection(CreatePartnerConnectionInput {
                 settings: settings("Billing - Synthetic", rules),
-                folder_choice: chosen.folder_choice,
+                folder_choice: Some(chosen.folder_choice),
+                password: None,
                 active: true,
             })
             .await
@@ -427,6 +453,7 @@ async fn only_another_client(partners: &Partners, connection_id: PartnerConnecti
             expected_revision: current.connection.revision,
             settings: settings("Billing - Synthetic", client_is("SYN-OTHER")),
             folder_choice: None,
+            password: None,
             reason: "Synthetic: only another client".to_owned(),
         })
         .await

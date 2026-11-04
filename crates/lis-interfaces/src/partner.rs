@@ -13,6 +13,7 @@
 //! its folder and its schedule allows, and records each attempt here. Analyzers
 //! are configured separately, as instruments.
 
+mod connection_views;
 mod connections;
 mod delivery;
 mod error;
@@ -29,16 +30,22 @@ mod queue;
 mod repo;
 mod rules;
 mod settings;
+mod sftp_identity;
+mod sftp_settings;
 mod unrouted_queries;
 
+pub use connection_views::{
+    ConnectionChangeView, ConnectionStatus, LastAttempt, PartnerConnection,
+    PartnerConnectionDetail, PartnerVerification,
+};
 pub use connections::{
     create_partner_connection, record_partner_destination_check, set_partner_connection_active,
     update_partner_connection,
 };
 pub use delivery::{
-    AttemptOutcome, ConnectionTarget, DueDelivery, MAX_ATTEMPTS, due_partner_deliveries,
-    partner_connection_folder, record_delivery_attempt, record_delivery_payload,
-    record_partner_test_message,
+    AttemptOutcome, ConnectionTarget, Destination, DueDelivery, MAX_ATTEMPTS,
+    due_partner_deliveries, partner_connection_folder, record_delivery_attempt,
+    record_delivery_payload, record_partner_test_message,
 };
 pub use error::PartnerError;
 pub use mapping_model::{
@@ -59,15 +66,16 @@ pub use messages::{
     resolve_unrouted_message, route_partner_message,
 };
 pub use model::{
-    ConnectionChange, ConnectionChangeView, ConnectionStatus, CreatePartnerConnection,
-    DeliveryReason, DeliveryState, LastAttempt, MessageSource, NewPartnerMessage,
-    PartnerConnection, PartnerConnectionDetail, PartnerConnectionId, PartnerConnectionSettings,
-    PartnerDeliveryId, PartnerMessageId, PartnerMessageType, PartnerProtocol, PartnerVerification,
-    RecordPartnerDestinationCheck, ReportRef, Routed, RoutingFacts, RoutingRule, RoutingValue,
-    RuleCondition, RuleField, Schedule, SetPartnerConnectionActive, UnroutedResolution,
+    ConnectionChange, CreatePartnerConnection, DeliveryReason, DeliveryState, MessageSource,
+    NewPartnerMessage, PartnerConnectionId, PartnerConnectionSettings, PartnerDeliveryId,
+    PartnerMessageId, PartnerMessageType, PartnerProtocol, RecordPartnerDestinationCheck,
+    ReportRef, Routed, RoutingFacts, RoutingRule, RoutingValue, RuleCondition, RuleField, Schedule,
+    SetPartnerConnectionActive, SftpAuth, SftpSettings, UnroutedResolution,
     UpdatePartnerConnection,
 };
 pub use queries::{carries, get_partner_connection, list_partner_connections};
 pub use queue::{FailedItem, UnroutedItem, failed_queue, unrouted_queue};
 pub use rules::{rules_match, schedule_due};
+pub use sftp_identity::{create_sftp_identity, sealed_sftp_key, sftp_public_key};
+pub use sftp_settings::valid_sftp_server;
 pub use unrouted_queries::{ClosestRule, UnroutedMessage, list_unrouted_partner_messages};

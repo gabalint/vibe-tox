@@ -1,12 +1,12 @@
-//! Choosing a connection's folder, testing it, and writing a synthetic test message there.
-//! File work never runs in a transaction.
+//! Choosing a connection's folder, testing it or its SFTP server, and writing a synthetic
+//! test message there. File and network work never runs in a transaction.
 
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use lis_core::{CommandError, ErrorCode};
-use lis_interfaces::partner::{AttemptOutcome, ConnectionTarget, PartnerConnectionId};
+use lis_interfaces::partner::{AttemptOutcome, ConnectionTarget, Destination, PartnerConnectionId};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -16,7 +16,8 @@ use super::test_files::test_file;
 use super::{CHOOSE_PARTNER_FOLDER, SEND_PARTNER_TEST_MESSAGE, TEST_PARTNER_FOLDER};
 use crate::commands::sign_in::session_of;
 use crate::engine::Engine;
-use crate::partner_delivery::{lab_zone, probe, stamp, write_file, written};
+use crate::partner_delivery::sftp::SftpProblem;
+use crate::partner_delivery::{lab_zone, probe_destination, send, stamp};
 use crate::pipeline::{Call, Failure};
 
 /// A folder chosen in the native dialog.
@@ -44,7 +45,7 @@ pub struct TestPartnerFolderInput {
     pub connection_id: Option<PartnerConnectionId>,
 }
 
-/// What a folder test or a test message found.
+/// What a folder or server test, or a test message, found.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
@@ -53,6 +54,23 @@ pub struct FolderTestResult {
     pub problem: Option<String>,
     /// The test message's file, when one was written.
     pub file_name: Option<String>,
+    /// The fingerprint an SFTP server presented instead of the one entered.
+    pub presented_fingerprint: Option<String>,
+}
+
+impl FolderTestResult {
+    /// The result of a test that writes and removes a probe file.
+    pub(super) fn probed(tested: Result<(), SftpProblem>) -> Self {
+        let problem = tested.err();
+        Self {
+            problem: problem.as_ref().map(|problem| problem.code().to_owned()),
+            file_name: None,
+            presented_fingerprint: match problem {
+                Some(SftpProblem::FingerprintMismatch { presented }) => Some(presented),
+                _ => None,
+            },
+        }
+    }
 }
 
 impl Engine {
@@ -78,33 +96,41 @@ impl Engine {
     }
 
     /// `test_partner_folder`: whether the LIS can create, write and remove a file in the
-    /// folder. Writes no message and changes nothing.
+    /// folder, or in a connection's folder or SFTP server. Writes no message and changes
+    /// nothing.
     pub async fn test_partner_folder(
         &self,
         input: TestPartnerFolderInput,
     ) -> Result<FolderTestResult, CommandError> {
         self.run(&TEST_PARTNER_FOLDER, |call| async move {
             self.authorize(&call).await?;
-            let folder = match (input.folder_choice, input.connection_id) {
-                (Some(choice), None) => self.chosen_folder(&call, Some(choice))?,
-                (None, Some(id)) => Some(self.connection_folder(&call, id).await?.folder),
+            let destination = match (input.folder_choice, input.connection_id) {
+                (Some(choice), None) => {
+                    self.chosen_folder(&call, Some(choice))?
+                        .map(|folder| Destination {
+                            folder,
+                            sftp: None,
+                            sealed_password: None,
+                        })
+                }
+                (None, Some(id)) => Some(self.connection_folder(&call, id).await?.destination),
                 (Some(_), Some(_)) | (None, None) => None,
             };
-            let folder = folder.ok_or_else(|| {
+            let destination = destination.ok_or_else(|| {
                 Failure::refused(ErrorCode::Validation, "Choose a folder or a connection.")
             })?;
-            let tested = blocking(move || probe(Path::new(&folder))).await?;
-            Ok(FolderTestResult {
-                problem: tested.err().map(|problem| problem.code().to_owned()),
-                file_name: None,
-            })
+            let key = self.data_key().await.ok();
+            let db = Arc::clone(&self.db);
+            let tested =
+                blocking(move || probe_destination(&db, key.as_ref(), &destination)).await?;
+            Ok(FolderTestResult::probed(tested))
         })
         .await
     }
 
     /// `send_partner_test_message`: writes a synthetic file, with no patient data, to the
-    /// connection's folder now, stopped or unchecked, and records it in the log, so the
-    /// partner can confirm receipt before the destination check.
+    /// connection's folder or SFTP server now, stopped or unchecked, and records it in the
+    /// log, so the partner can confirm receipt before the destination check.
     pub async fn send_partner_test_message(
         &self,
         input: PartnerConnectionInput,
@@ -122,7 +148,7 @@ impl Engine {
             })
             .await?;
             let (bytes, extension) = test_file(id, &target, laboratory.as_ref(), now);
-            let folder = target.folder;
+            let destination = target.destination;
             let db = Arc::clone(&self.db);
             let stored = blocking(move || db.artifacts().put(&bytes).map(|stored| (stored, bytes)))
                 .await??;
@@ -132,8 +158,10 @@ impl Engine {
             let zone = blocking(move || lab_zone(&db)).await?;
             let (date, time) = stamp(now, zone.as_ref());
             let name = format!("vibetox-test-{date}-{time}.{extension}");
+            let key = self.data_key().await.ok();
+            let db = Arc::clone(&self.db);
             let outcome =
-                written(blocking(move || write_file(Path::new(&folder), &name, &bytes)).await?);
+                blocking(move || send(&db, key.as_ref(), &destination, &name, &bytes)).await?;
             let result = FolderTestResult {
                 problem: match &outcome {
                     AttemptOutcome::Written { .. } => None,
@@ -143,6 +171,7 @@ impl Engine {
                     AttemptOutcome::Written { path } => file_name(path),
                     AttemptOutcome::Failed { .. } => None,
                 },
+                presented_fingerprint: None,
             };
             let digest = stored.digest.to_string();
             self.write(&call, move |ctx| {
@@ -154,7 +183,7 @@ impl Engine {
         .await
     }
 
-    async fn connection_folder(
+    pub(super) async fn connection_folder(
         &self,
         call: &Call,
         id: PartnerConnectionId,
@@ -186,7 +215,7 @@ fn existing_folder(chosen: &Path) -> Result<String, Failure> {
         .map_err(|_| refused("Choose a folder whose path has only standard characters."))
 }
 
-async fn blocking<T: Send + 'static>(
+pub(super) async fn blocking<T: Send + 'static>(
     work: impl FnOnce() -> T + Send + 'static,
 ) -> Result<T, Failure> {
     tokio::task::spawn_blocking(work)

@@ -3,6 +3,7 @@ import type { PartnerMessageType } from "./PartnerMessageType";
 import type { PartnerProtocol } from "./PartnerProtocol";
 import type { RoutingRule } from "./RoutingRule";
 import type { Schedule } from "./Schedule";
+import type { SftpSettings } from "./SftpSettings";
 
 /**
  * What a person sets on a connection. The folder is chosen in a system
@@ -16,4 +17,8 @@ partner: string, messageType: PartnerMessageType, protocol: PartnerProtocol, rul
 /**
  * For example `billing-{handoff}_{date}.json`.
  */
-fileNamePattern: string, };
+fileNamePattern: string, 
+/**
+ * The server, for the SFTP protocol; `None` for a folder.
+ */
+sftp: SftpSettings | null, };

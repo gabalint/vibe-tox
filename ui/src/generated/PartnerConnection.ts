@@ -8,9 +8,18 @@ import type { PartnerVerification } from "./PartnerVerification";
 /**
  * A connection as configured, with its check and how it is working.
  */
-export type PartnerConnection = { id: string, settings: PartnerConnectionSettings, folder: string, active: boolean, revision: number, status: ConnectionStatus, 
+export type PartnerConnection = { id: string, settings: PartnerConnectionSettings, 
 /**
- * `None` until a check covers the current folder.
+ * The local folder, or the remote folder on the SFTP server.
+ */
+folder: string, 
+/**
+ * For SFTP password sign-in: whether a password is kept. The password itself never
+ * leaves the engine.
+ */
+hasPassword: boolean, active: boolean, revision: number, status: ConnectionStatus, 
+/**
+ * `None` until a check covers the current destination.
  */
 verification: PartnerVerification | null, lastAttempt: LastAttempt | null, 
 /**

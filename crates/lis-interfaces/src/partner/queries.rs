@@ -5,11 +5,12 @@ use std::collections::BTreeSet;
 use rusqlite::{Connection, OptionalExtension};
 use serde_json::Value;
 
-use super::error::PartnerError;
-use super::model::{
+use super::connection_views::{
     ConnectionChangeView, ConnectionStatus, LastAttempt, PartnerConnection,
-    PartnerConnectionDetail, PartnerConnectionId, PartnerMessageType, PartnerVerification,
+    PartnerConnectionDetail, PartnerVerification,
 };
+use super::error::PartnerError;
+use super::model::{PartnerConnectionId, PartnerMessageType};
 use super::repo::{self, ConnectionRow};
 use crate::model::ChangeStamp;
 
@@ -82,7 +83,7 @@ fn connection_view(
     row: ConnectionRow,
 ) -> Result<PartnerConnection, PartnerError> {
     let verification =
-        repo::verification(conn, row.id, &row.folder)?.map(|check| PartnerVerification {
+        repo::verification(conn, row.id, &row.destination)?.map(|check| PartnerVerification {
             method: check.method,
             verified: ChangeStamp {
                 by: check.verified_by,
@@ -135,6 +136,7 @@ fn connection_view(
         id: row.id,
         settings: row.settings,
         folder: row.folder,
+        has_password: row.sealed_password.is_some(),
         active: row.active,
         revision: row.revision,
         status,

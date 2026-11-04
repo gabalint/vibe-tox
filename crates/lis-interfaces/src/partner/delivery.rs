@@ -19,9 +19,9 @@ use super::error::PartnerError;
 use super::message_repo::{self as repo, MessageRow};
 use super::model::{
     DeliveryReason, DeliveryState, MessageSource, PartnerConnectionId, PartnerDeliveryId,
-    PartnerMessageId, PartnerMessageType, RoutingFacts, Schedule,
+    PartnerMessageId, PartnerMessageType, RoutingFacts, Schedule, SftpSettings,
 };
-use super::repo::load_connection;
+use super::repo::{ConnectionRow, load_connection};
 use super::settings::{FileNameParts, file_name};
 
 /// Attempts before a delivery fails for good.
@@ -29,13 +29,33 @@ pub const MAX_ATTEMPTS: i64 = 5;
 /// Deliveries the poller takes per pass.
 const BATCH: u32 = 50;
 
+/// Where a connection writes: its local folder, or its SFTP server and remote folder with
+/// the sealed password for password sign-in.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Destination {
+    /// The local folder, or the remote folder.
+    pub folder: String,
+    pub sftp: Option<SftpSettings>,
+    pub sealed_password: Option<Vec<u8>>,
+}
+
+impl Destination {
+    fn of(connection: &ConnectionRow) -> Self {
+        Self {
+            folder: connection.folder.clone(),
+            sftp: connection.settings.sftp.clone(),
+            sealed_password: connection.sealed_password.clone(),
+        }
+    }
+}
+
 /// A delivery the poller may write now, subject to its schedule.
 #[derive(Debug, Clone)]
 pub struct DueDelivery {
     pub delivery_id: PartnerDeliveryId,
     pub message_id: PartnerMessageId,
     pub connection_id: PartnerConnectionId,
-    pub folder: String,
+    pub destination: Destination,
     pub file_name_pattern: String,
     pub schedule: Schedule,
     /// Failed attempts so far; the schedule applies only to the first.
@@ -111,7 +131,7 @@ pub fn due_partner_deliveries(
              WHERE d.state = 'waiting' AND d.reason <> 'test' AND c.active = 1 \
              AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= ?1) \
              AND EXISTS (SELECT 1 FROM ifc_partner_verifications v \
-                         WHERE v.connection_id = c.id AND v.folder = c.folder) \
+                         WHERE v.connection_id = c.id AND v.folder = c.destination) \
              ORDER BY d.reason = 'follow_up' DESC, d.created_at LIMIT ?2",
         )?
         .query_map(params![now, BATCH], |row| {
@@ -119,7 +139,11 @@ pub fn due_partner_deliveries(
                 delivery_id: row.get(0)?,
                 message_id: row.get(1)?,
                 connection_id: row.get(2)?,
-                folder: String::new(),
+                destination: Destination {
+                    folder: String::new(),
+                    sftp: None,
+                    sealed_password: None,
+                },
                 file_name_pattern: String::new(),
                 schedule: Schedule::Immediately,
                 attempts: row.get(3)?,
@@ -140,7 +164,7 @@ pub fn due_partner_deliveries(
             let connection = load_connection(conn, due.connection_id)?
                 .ok_or(PartnerError::NotFound("connection"))?;
             Ok(DueDelivery {
-                folder: connection.folder,
+                destination: Destination::of(&connection),
                 file_name_pattern: connection.settings.file_name_pattern,
                 schedule: connection.settings.schedule,
                 partner: connection.settings.partner,
@@ -289,12 +313,12 @@ pub fn record_partner_test_message(
 /// Where and what a connection writes, for a test the engine runs on it.
 #[derive(Debug, Clone)]
 pub struct ConnectionTarget {
-    pub folder: String,
+    pub destination: Destination,
     pub message_type: PartnerMessageType,
     pub partner: String,
 }
 
-/// A connection's current folder, message type and partner.
+/// A connection's current destination, message type and partner.
 pub fn partner_connection_folder(
     conn: &Connection,
     connection_id: PartnerConnectionId,
@@ -302,7 +326,7 @@ pub fn partner_connection_folder(
     let connection =
         load_connection(conn, connection_id)?.ok_or(PartnerError::NotFound("connection"))?;
     Ok(ConnectionTarget {
-        folder: connection.folder,
+        destination: Destination::of(&connection),
         message_type: connection.settings.message_type,
         partner: connection.settings.partner,
     })
