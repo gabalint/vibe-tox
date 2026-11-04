@@ -12,6 +12,7 @@ import {
   type CSSProperties,
   type ReactNode,
   type RefObject,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -183,7 +184,7 @@ function useGridModel<Row extends RowData>(
   const selection = listed.selection;
   const select = useGridSelection(selection, rowIds);
   const menu = useRowMenu(rowActions, sortedRows);
-  const virtualizer = useRowVirtualizer(sortedRows.length, scrollRef);
+  const virtualizer = useRowVirtualizer(rowIds, scrollRef);
   const shape = useGridShape(columns, selection !== undefined, rowActions !== undefined);
   const cells = useGridCells({
     size: { rowCount: sortedRows.length, colCount: shape.colCount },
@@ -287,11 +288,16 @@ function initialSorting<Row extends RowData>(columns: readonly DataGridColumn<Ro
   return column ? [{ id: column.id, desc: column.defaultSort === "desc" }] : [];
 }
 
-function useRowVirtualizer(count: number, scrollRef: RefObject<HTMLDivElement | null>) {
+function useRowVirtualizer(rowIds: readonly string[], scrollRef: RefObject<HTMLDivElement | null>) {
+  const count = rowIds.length;
+  // A measured height belongs to its row, not its position: rows added above, or a new
+  // sort, would otherwise draw a wrapped row with another row's height.
+  const getItemKey = useCallback((index: number) => rowIds[index] ?? index, [rowIds]);
   return useVirtualizer({
     count,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => ROW_HEIGHT,
+    getItemKey,
     overscan: count <= VIRTUALIZE_ABOVE ? VIRTUALIZE_ABOVE : OVERSCAN,
     // The body starts below the sticky header row, which also covers the top of the view.
     scrollMargin: ROW_HEIGHT,
