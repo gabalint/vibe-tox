@@ -1,14 +1,16 @@
 import { Radio, RadioGroup } from "react-aria-components";
+import { Controller, useFormContext } from "react-hook-form";
 import styles from "./ConnectionDialog.module.css";
+import type { ConnectionValues } from "./connectionForm";
 
-/** The protocols of the Interfaces mockup; only Folder is available in this release. */
+/** The protocols of the Interfaces mockup; Folder and SFTP are available in this release. */
 const PROTOCOLS = [
   { id: "folder", label: "Folder", hint: "Shared folder on the lab network", available: true },
   {
     id: "sftp",
     label: "SFTP",
     hint: "Partner's server, over the internet, encrypted",
-    available: false,
+    available: true,
   },
   {
     id: "mllp_connects",
@@ -25,37 +27,45 @@ const PROTOCOLS = [
 ] as const;
 
 /**
- * Section 2, the protocol, as one choice among cards. Folder is the only protocol this release
- * writes with; the others are shown, not offered, and the line below says why.
+ * Section 2, the protocol, as one choice among cards. Folder and SFTP write; MLLP is shown, not
+ * offered, and the line below says why.
  */
 export function ProtocolCards() {
+  const { control } = useFormContext<ConnectionValues>();
   return (
     <>
-      <RadioGroup
-        aria-label="Protocol"
-        orientation="horizontal"
-        value="folder"
-        className={styles.cards}
-      >
-        {PROTOCOLS.map((protocol) => (
-          <Radio
-            key={protocol.id}
-            value={protocol.id}
-            isDisabled={!protocol.available}
-            className={styles.card}
+      <Controller
+        control={control}
+        name="protocol"
+        render={({ field }) => (
+          <RadioGroup
+            aria-label="Protocol"
+            orientation="horizontal"
+            value={field.value}
+            onChange={(value) => field.onChange(value)}
+            className={styles.cards}
           >
-            {({ isSelected }) => (
-              <>
-                <span className={styles.cardTitle}>
-                  <span aria-hidden="true">{isSelected ? "◉" : "○"}</span> {protocol.label}
-                </span>
-                <span className={styles.cardHint}>{protocol.hint}</span>
-              </>
-            )}
-          </Radio>
-        ))}
-      </RadioGroup>
-      <p className={styles.hint}>SFTP and MLLP are not available yet.</p>
+            {PROTOCOLS.map((protocol) => (
+              <Radio
+                key={protocol.id}
+                value={protocol.id}
+                isDisabled={!protocol.available}
+                className={styles.card}
+              >
+                {({ isSelected }) => (
+                  <>
+                    <span className={styles.cardTitle}>
+                      <span aria-hidden="true">{isSelected ? "◉" : "○"}</span> {protocol.label}
+                    </span>
+                    <span className={styles.cardHint}>{protocol.hint}</span>
+                  </>
+                )}
+              </Radio>
+            ))}
+          </RadioGroup>
+        )}
+      />
+      <p className={styles.hint}>MLLP is not available yet.</p>
     </>
   );
 }

@@ -11,6 +11,7 @@ import {
   ruleText,
   SEND_WHEN,
   scheduleText,
+  shortFingerprint,
 } from "../labels";
 import styles from "./ConnectionPage.module.css";
 import { CodeMappingsSection } from "./mappings/CodeMappingsSection";
@@ -29,6 +30,34 @@ function Card({ title, items }: { title: string; items: [string, ReactNode][] })
       </dl>
     </Section>
   );
+}
+
+/**
+ * Where it writes, as in the mockup: the protocol and folder, or for SFTP the protocol with
+ * the server, the remote folder and the sign-in with the server's fingerprint.
+ */
+function destinationItems({ folder, settings }: PartnerConnection): [string, ReactNode][] {
+  const { sftp } = settings;
+  const code = (key: string, text: string) => (
+    <span key={key} className={styles.code}>
+      {text}
+    </span>
+  );
+  if (sftp === null) {
+    return [
+      ["Protocol", PROTOCOLS[settings.protocol]],
+      ["Folder", code("folder", folder)],
+    ];
+  }
+  const signIn = sftp.auth === "key" ? "SSH key" : "Password";
+  return [
+    ["Protocol", `SFTP – ${sftp.host}:${sftp.port}`],
+    ["Remote folder", code("remote-folder", sftp.remoteFolder)],
+    [
+      "Sign-in",
+      `${signIn} as ${sftp.username} · fingerprint ${shortFingerprint(sftp.fingerprint)}`,
+    ],
+  ];
 }
 
 const rulesText = (connection: PartnerConnection) =>
@@ -61,13 +90,7 @@ export function ConnectionOverview({ connection, lastReason }: OverviewProps) {
         items={[
           ["Partner", settings.partner],
           ["Message", messageText(type)],
-          ["Protocol", PROTOCOLS[settings.protocol]],
-          [
-            "Folder",
-            <span key="folder" className={styles.code}>
-              {connection.folder}
-            </span>,
-          ],
+          ...destinationItems(connection),
           ["Send when", `${SEND_WHEN[type]} · ${scheduleText(settings.schedule).toLowerCase()}`],
           [
             "File name",
@@ -93,7 +116,7 @@ export function ConnectionOverview({ connection, lastReason }: OverviewProps) {
               ? `${formatTime(lastAttempt.at)} · ${lastAttempt.errorCode === null ? "OK" : problemText(lastAttempt.errorCode)}`
               : "None yet",
           ],
-          // A folder never answers, so nothing written to one waits for an acknowledgement.
+          // A folder or SFTP server never answers, so nothing written there waits for an ACK.
           ["Awaiting application ACK", "0 messages"],
           [
             "Last change",

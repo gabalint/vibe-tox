@@ -10,7 +10,7 @@ use super::error::PartnerError;
 use super::message_repo::NOT_REPLACED;
 use super::model::{
     DeliveryReason, DeliveryState, MessageSource, PartnerConnectionId, PartnerDeliveryId,
-    PartnerMessageId, PartnerMessageType, UnroutedResolution,
+    PartnerMessageId, PartnerMessageType, PartnerProtocol, UnroutedResolution,
 };
 
 /// Rows the log returns at most, newest first.
@@ -93,6 +93,8 @@ pub struct ListPartnerMessages {
 pub struct ConnectionRef {
     pub id: PartnerConnectionId,
     pub name: String,
+    /// A file on an SFTP server shows as uploaded, in a folder as written.
+    pub protocol: PartnerProtocol,
 }
 
 /// One message to one connection, or one unrouted message.
@@ -197,7 +199,7 @@ fn delivery_rows(
          d.state, d.attempts, d.next_attempt_at, d.last_error_code, d.written_path, c.active, \
          EXISTS (SELECT 1 FROM ifc_partner_verifications v \
                  WHERE v.connection_id = c.id AND v.folder = c.destination), c.schedule, \
-         m.source_label \
+         m.source_label, c.protocol \
          FROM ifc_partner_deliveries d \
          JOIN ifc_partner_messages m ON m.id = d.message_id \
          JOIN ifc_partner_connections c ON c.id = d.connection_id \
@@ -240,6 +242,7 @@ fn delivery_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<PartnerMessageRow> 
         connection: Some(ConnectionRef {
             id: row.get(7)?,
             name: row.get(8)?,
+            protocol: row.get(19)?,
         }),
         reason: Some(reason),
         transport: transport(state, attempts),
