@@ -78,10 +78,7 @@ impl Scan for PartnerDeliveries {
 impl PartnerDeliveries {
     fn pass(&self) -> Result<(), PartnerError> {
         let db = &self.ops.db;
-        if db
-            .read_blocking(|conn| lis_ops::recovery::outbound_gate(conn).map(|gate| gate.is_some()))
-            .unwrap_or(true)
-        {
+        if held_by_recovery(db) {
             return Ok(());
         }
         let now = self.ops.clock.now();
@@ -246,6 +243,12 @@ pub(crate) fn written(result: Result<std::path::PathBuf, WriteProblem>) -> Attem
             error_code: problem.code(),
         },
     }
+}
+
+/// Whether a restore's outbound gate holds partner traffic; held when it cannot be read.
+pub(crate) fn held_by_recovery(db: &Database) -> bool {
+    db.read_blocking(|conn| lis_ops::recovery::outbound_gate(conn).map(|gate| gate.is_some()))
+        .unwrap_or(true)
 }
 
 /// The laboratory's time zone, for daily schedules and file names; `None` without one.

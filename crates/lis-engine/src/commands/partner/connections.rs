@@ -16,7 +16,6 @@ use super::{
     RECORD_PARTNER_DESTINATION_CHECK, SET_PARTNER_CONNECTION_ACTIVE, UPDATE_PARTNER_CONNECTION,
 };
 use crate::commands::people::{display_names, name_of};
-use crate::commands::sign_in::session_of;
 use crate::engine::Engine;
 use crate::pipeline::{Call, Failure};
 
@@ -82,6 +81,28 @@ pub struct UpdatePartnerConnectionInput {
     pub reason: String,
 }
 
+impl CreatePartnerConnectionInput {
+    /// The input, Processed and Failed folder handles.
+    fn folder_choices(&self) -> [Option<FolderChoiceId>; 3] {
+        [
+            self.folder_choice,
+            self.processed_folder_choice,
+            self.failed_folder_choice,
+        ]
+    }
+}
+
+impl UpdatePartnerConnectionInput {
+    /// The input, Processed and Failed folder handles.
+    fn folder_choices(&self) -> [Option<FolderChoiceId>; 3] {
+        [
+            self.folder_choice,
+            self.processed_folder_choice,
+            self.failed_folder_choice,
+        ]
+    }
+}
+
 impl Engine {
     /// `list_partner_connections`: every connection by name, with how it is working.
     pub async fn list_partner_connections(&self) -> Result<Vec<PartnerConnection>, CommandError> {
@@ -110,23 +131,19 @@ impl Engine {
         input: CreatePartnerConnectionInput,
     ) -> Result<PartnerConnectionDetail, CommandError> {
         self.run(&CREATE_PARTNER_CONNECTION, |call| async move {
-            self.authorize(&call).await?;
-            self.ordering_client(&call, &input.settings).await?;
-            let folder = self.chosen_folder(&call, input.folder_choice)?;
-            let moved_to = self.chosen_moved_to(
-                &call,
-                input.processed_folder_choice,
-                input.failed_folder_choice,
-            )?;
-            let sealed_password = self.sealed_password(input.password.as_ref()).await?;
+            let folders = input.folder_choices();
+            let password = input.password.as_ref();
+            let chosen = self
+                .chosen(&call, &input.settings, folders, password)
+                .await?;
             self.write(&call, move |ctx| {
                 let id = lis_interfaces::partner::create_partner_connection(
                     ctx,
                     CreatePartnerConnection {
                         settings: input.settings,
-                        folder: folder.unwrap_or_default(),
-                        moved_to,
-                        sealed_password,
+                        folder: chosen.folder.unwrap_or_default(),
+                        moved_to: chosen.moved_to,
+                        sealed_password: chosen.sealed_password,
                         active: input.active,
                     },
                 )?;
@@ -143,15 +160,11 @@ impl Engine {
         input: UpdatePartnerConnectionInput,
     ) -> Result<PartnerConnectionDetail, CommandError> {
         self.run(&UPDATE_PARTNER_CONNECTION, |call| async move {
-            self.authorize(&call).await?;
-            self.ordering_client(&call, &input.settings).await?;
-            let folder = self.chosen_folder(&call, input.folder_choice)?;
-            let moved_to = self.chosen_moved_to(
-                &call,
-                input.processed_folder_choice,
-                input.failed_folder_choice,
-            )?;
-            let sealed_password = self.sealed_password(input.password.as_ref()).await?;
+            let folders = input.folder_choices();
+            let password = input.password.as_ref();
+            let chosen = self
+                .chosen(&call, &input.settings, folders, password)
+                .await?;
             self.write(&call, move |ctx| {
                 let id = lis_interfaces::partner::update_partner_connection(
                     ctx,
@@ -159,9 +172,9 @@ impl Engine {
                         connection_id: input.connection_id,
                         expected_revision: input.expected_revision,
                         settings: input.settings,
-                        folder,
-                        moved_to,
-                        sealed_password,
+                        folder: chosen.folder,
+                        moved_to: chosen.moved_to,
+                        sealed_password: chosen.sealed_password,
                         reason: input.reason,
                     },
                 )?;
@@ -202,6 +215,24 @@ impl Engine {
         .await
     }
 
+    /// Authorizes a create or update, checks an incoming connection's client, and resolves
+    /// the chosen input, Processed and Failed folders and the password.
+    async fn chosen(
+        &self,
+        call: &Call,
+        settings: &PartnerConnectionSettings,
+        [folder, processed, failed]: [Option<FolderChoiceId>; 3],
+        password: Option<&SecretString>,
+    ) -> Result<Chosen, Failure> {
+        self.authorize(call).await?;
+        self.ordering_client(call, settings).await?;
+        Ok(Chosen {
+            folder: self.chosen_folder(call, folder)?,
+            moved_to: self.chosen_moved_to(call, processed, failed)?,
+            sealed_password: self.sealed_password(password).await?,
+        })
+    }
+
     /// An SFTP password sealed with the installation key; `None` without one.
     async fn sealed_password(
         &self,
@@ -219,44 +250,6 @@ impl Engine {
         )
         .map(Some)
         .map_err(Failure::from)
-    }
-
-    /// The folder behind `handle`, chosen in this session; `None` without a handle.
-    pub(super) fn chosen_folder(
-        &self,
-        call: &Call,
-        handle: Option<FolderChoiceId>,
-    ) -> Result<Option<String>, Failure> {
-        self.chosen_folder_as(call, handle, "folderChoice")
-    }
-
-    /// The Processed and Failed folders chosen in this session, each `None` without a handle.
-    pub(super) fn chosen_moved_to(
-        &self,
-        call: &Call,
-        processed: Option<FolderChoiceId>,
-        failed: Option<FolderChoiceId>,
-    ) -> Result<MovedToChoice, Failure> {
-        Ok(MovedToChoice {
-            processed: self.chosen_folder_as(call, processed, "processedFolderChoice")?,
-            failed: self.chosen_folder_as(call, failed, "failedFolderChoice")?,
-        })
-    }
-
-    fn chosen_folder_as(
-        &self,
-        call: &Call,
-        handle: Option<FolderChoiceId>,
-        field: &str,
-    ) -> Result<Option<String>, Failure> {
-        let Some(handle) = handle else {
-            return Ok(None);
-        };
-        let (_, session) = session_of(&call.principal)?;
-        self.folder_choices
-            .get(session, handle)
-            .map(Some)
-            .ok_or_else(|| refused(field, "expired", "Choose the folder again."))
     }
 
     /// An incoming connection's partner is the client its orders are for: one of the
@@ -283,8 +276,15 @@ impl Engine {
     }
 }
 
+/// What a create or update keeps besides its settings, resolved before the write.
+struct Chosen {
+    folder: Option<String>,
+    moved_to: MovedToChoice,
+    sealed_password: Option<Vec<u8>>,
+}
+
 /// A refusal of one form field.
-fn refused(field: &str, code: &str, message: &str) -> Failure {
+pub(super) fn refused(field: &str, code: &str, message: &str) -> Failure {
     Failure::Refused {
         code: ErrorCode::Validation,
         message: message.to_owned(),

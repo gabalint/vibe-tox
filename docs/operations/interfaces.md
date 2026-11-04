@@ -1,6 +1,6 @@
 # Interfaces
 
-Status: **implemented on synthetic data; third delivery step**. The Interfaces menu sends HL7 results, issued report PDFs and billing handoff files to outside systems through a folder or the partner's SFTP server (REQ-INT-001–004, REQ-RPT-003, REQ-RPT-011–013, REQ-BIL-002). The built-in help, Interfaces topic, describes every field and action; this guide covers setup, behavior and recovery. Analyzers are configured separately, under Laboratory setup › Instruments.
+Status: **implemented on synthetic data; third delivery step**. The Interfaces menu receives HL7 orders from a clinic's EMR and sends HL7 results, issued report PDFs and billing handoff files to outside systems, through a folder or the partner's SFTP server (REQ-INT-001–004, REQ-ORD-001, REQ-RPT-003, REQ-RPT-011–013, REQ-BIL-002). The built-in help, Interfaces topic, describes every field and action; this guide covers setup, behavior and recovery. Analyzers are configured separately, under Laboratory setup › Instruments.
 
 ## What is available
 
@@ -12,7 +12,21 @@ Status: **implemented on synthetic data; third delivery step**. The Interfaces m
 
 In a report's file name, `{accession}` is the report number (the accession number and the specimen type code, so two specimens of one accession never share a name) and `{revision}` the revision number; a withdrawal's revision reads `<n>-withdrawn`.
 
-A folder is on this computer or on the lab network. HL7 orders (including over SFTP), HL7 acknowledgements, MLLP and per-partner interface contracts with acceptance tests are later steps. They are not available and no setting enables them.
+| HL7 Orders (OML^O21, or ORM^O01, v2.5.1) | The clinic's EMR writes a file | In | Folder, or the clinic's SFTP server | — (read, not named) |
+
+A folder is on this computer or on the lab network. HL7 acknowledgement files back to the clinic, MLLP and per-partner interface contracts with acceptance tests are later steps. They are not available and no setting enables them.
+
+## HL7 Orders (incoming)
+
+An HL7 Orders connection reads the order messages a clinic's EMR leaves in an input folder, local or on the clinic's SFTP server, every *Check every* seconds (10–3600) while the app is open, at the sign-in screen too. Its partner is one of the laboratory's clients: every order it receives is for that client. It reads only once started with a destination check that covers its input folder or server, and never while a recovery reconciliation is open.
+
+- **Reading.** Only complete files are read: `*.hl7` (any case), not hidden, never `*.tmp`; at most 20 per reading. The bytes are stored first; then one transaction records what the message became, with the order it made; then the file moves to Processed or Failed › year › month (such as `Processed/2026/11/clinicA_000124.hl7`), never replacing a file. A file read again after a crash before its move is only moved.
+- **Reader.** The LIS's own narrow reader ([ADR 0007](../architecture/decisions/0007-integration-edge-and-interface-engines.md) §7) reads MSH, PID, PV1, ORC, OBR and DG1, as supplied. Only new orders (ORC-1 `NW`) are read. The placer group number (ORC-4) names the requisition, else the first ORC-2. It claims no profile conformance.
+- **Accepting.** A message whose MSH-4 is not the connection's *Accept messages from* is refused. The ordering provider must be a registered, active practitioner by NPI (ORC-12, else OBR-16); PV1-3, if given, a location of the client; each OBR-4 an order code with an approved code mapping, which gives the LIS test and its sequence role (first line or confirmation) as the partner's contract defines it (REQ-INT-004). A diagnosis (DG1-3) is kept as supplied and refused without its coding system.
+- **Patient.** The patient is found only by a PID-3 identifier, by assigning authority (else the sending facility) and type; the LIS never creates a patient from a message. With no match the message waits (or is refused, per *Unknown patient*) and becomes an order at the first reading after the patient is registered with that identifier. Two matching patients, or a registered patient whose family name or birth date differs, hold it for review.
+- **Order.** The order is registered in Received status with source `HL7 interface (EMR)`, the placer number and authority, the stored message as its source document, and evidence as supplied: no signature evidence (the laboratory's order policy decides at acceptance, REQ-ORD-005), billing responsibility not supplied, no medications. The laboratory accepts or rejects it in Orders as any order.
+- **Replays (REQ-INT-003).** An exact replay (the same bytes) is a duplicate with no effect. The same MSH-10 with other content is held for review. A placer number that already has an order is refused.
+- **Logs.** Each message shows Dir. In, transport Received, and what it became: Order created, Waiting for patient, Held for review, Duplicate – ignored or Rejected with its reason, and where its file moved. The LIS writes no acknowledgement file back; the clinic learns the outcome by the laboratory's agreed route.
 
 ## SFTP
 

@@ -180,7 +180,7 @@
         {
           "name": "Requisition: Received / Client / Client location / Ordering practitioner / Clinic order number / Received as / Billing responsibility / Facility setting / Template use",
           "meaning": "The request facts saved from the ordering source.",
-          "values": "Read-only values corresponding to New order, with Not recorded where absent.",
+          "values": "Read-only values corresponding to New order, with Not recorded where absent. Received as also shows HL7 interface (EMR) for an order an Interfaces HL7 Orders connection received; its document is the stored original message, and its clinic order number the message's placer number.",
           "rules": "Template use explicitly shows whether it was confirmed for this patient. Received is the saved request time, not specimen collection time."
         },
         {

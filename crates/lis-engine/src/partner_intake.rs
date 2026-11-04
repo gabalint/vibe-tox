@@ -31,7 +31,7 @@ use self::inbox::Inbox;
 pub(crate) use self::inbox::candidate;
 use crate::engine::Engine;
 use crate::ops_worker::{Operations, locked};
-use crate::partner_delivery::{lab_zone, stamp};
+use crate::partner_delivery::{held_by_recovery, lab_zone, stamp};
 use crate::poller::{Poller, Scan, scan_off_runtime};
 
 /// How often connections are looked at; each is read at its own `check every`.
@@ -95,10 +95,7 @@ impl PartnerIntake {
 
     fn pass(&self) -> Result<(), IntakeError> {
         let db = &self.ops.db;
-        if db
-            .read_blocking(|conn| lis_ops::recovery::outbound_gate(conn).map(|gate| gate.is_some()))
-            .unwrap_or(true)
-        {
+        if held_by_recovery(db) {
             return Ok(());
         }
         let now = self.ops.clock.now();

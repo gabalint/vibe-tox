@@ -1,7 +1,7 @@
 {
   "id": "interfaces",
   "title": "Interfaces",
-  "summary": "Send HL7 results, report PDFs and billing handoff files to outside systems through a folder or the partner's SFTP server, map your codes to each partner's, follow every message in Logs, and decide on messages no connection matched.",
+  "summary": "Receive HL7 orders from a clinic's EMR and send HL7 results, report PDFs and billing handoff files to outside systems, through a folder or the partner's SFTP server; map codes between the LIS and each partner, follow every message in Logs, and decide on messages no connection matched.",
   "reviewedOn": "2026-11-04",
   "routes": [
     "/interfaces/connections",
@@ -13,7 +13,8 @@
     {
       "title": "How to use this area",
       "paragraphs": [
-        "A connection says which messages go to an outside system, where, and when. This release has three message types. HL7 Results: an HL7 v2.5.1 ORU^R01 result message with the partner's codes, made when a report revision is released. Report PDF: the issued report PDF, made at the same time. Billing JSON: the billing handoff file, made when a billing handoff is created. Files are written to a folder on this computer or on the lab network, which the partner's system reads, or uploaded to the partner's SFTP server over an encrypted connection the LIS opens; the LIS never accepts connections for them. Analyzers are not set up here; they stay in Laboratory setup › Instruments.",
+        "HL7 Orders connections bring orders in: the LIS reads OML^O21 (or ORM^O01) files a clinic's EMR leaves in a folder or on the clinic's SFTP server. Each message becomes an order in Received status, which the laboratory accepts or rejects in Orders as any other order; until its patient is registered with the identifier it carries, it waits. A message from another sending facility, with an unknown test code or that cannot be read is refused, and its file moves to Failed. Every read file moves to Processed or Failed, by year and month.",
+        "A connection says which messages go to an outside system, where, and when. Four message types go out or come in. HL7 Results: an HL7 v2.5.1 ORU^R01 result message with the partner's codes, made when a report revision is released. Report PDF: the issued report PDF, made at the same time. Billing JSON: the billing handoff file, made when a billing handoff is created. Files are written to a folder on this computer or on the lab network, which the partner's system reads, or uploaded to the partner's SFTP server over an encrypted connection the LIS opens; the LIS never accepts connections for them. Analyzers are not set up here; they stay in Laboratory setup › Instruments.",
         "An HL7 Results connection sends each test and analyte with the partner's code, from its Code mappings. A result whose test or analyte has no approved mapping, or whose unit is not the mapping's UCUM unit, is held: it is never sent with a guessed code or a converted unit. Mapping changes are drafts until a second person approves them as a new version, which applies to messages not written yet.",
         "When a report is released or a handoff is created, the LIS checks it against the routing rules of every connection of its type in the same step. It goes to each connection whose rules all match. If no connection matches, it waits in Unrouted messages. If the laboratory has no connection of the type at all, nothing is made, and files are exported by hand as before.",
         "A report's later revision, a correction or a supplement, goes first to every Report PDF connection that had an earlier revision, even if its rules no longer match, and is written before other waiting messages. An earlier revision not written yet is replaced and never written. When a report is withdrawn, its withdrawal notice goes to every connection an earlier revision was written to. A revision whose impact review is open waits until the review is done.",
@@ -25,6 +26,7 @@
       "paragraphs": [
         "Save a new connection stopped, test the folder or server, send a test message, and have the partner confirm they received it. Then have a second person record the destination check, and start the connection.",
         "For SFTP, get the server's fingerprint from the partner's IT through a channel you trust, such as a call-back, and prefer SSH key sign-in: the LIS's public key can be shared freely, and no password needs to be kept.",
+        "For HL7 Orders, agree with the clinic which identifier PID-3 carries (with its assigning authority and type) and register patients with it; map every order code the clinic sends, with the test's sequence role from the contract, before starting the connection.",
         "Keep rules specific. A billing file with patients of several clients goes only to a connection whose rules accept every one of those clients, so one client's billing company never receives another client's patients. A rule on Test likewise needs every test on the report or handoff to meet it.",
         "The partner receiving patient data must be covered by a business associate agreement. That is the laboratory's responsibility; the LIS shows it as a reminder when the destination check is recorded."
       ]
@@ -135,21 +137,57 @@
         },
         {
           "name": "Partner (client)",
-          "meaning": "The client, clinic or billing company that receives the files.",
-          "values": "Free text, such as the clinic's or billing company's name.",
-          "rules": "Required; up to 80 characters."
+          "meaning": "The client, clinic or billing company that receives the files; for HL7 Orders, the laboratory's client the orders are for.",
+          "values": "Free text, such as the clinic's or billing company's name. For HL7 Orders, one of the laboratory's active clients, chosen from the list (code – name).",
+          "rules": "Required; up to 80 characters. Every order an HL7 Orders connection receives is for this client."
         },
         {
           "name": "Message",
           "meaning": "What the connection carries, which also fixes the direction and when a message is made.",
-          "values": "HL7 Results (ORU^R01, v2.5.1): the released results with the partner's codes, sent out when a report revision is released. Report PDF: the issued report PDF, exactly as released, sent out at the same time. Billing JSON: the billing handoff file (format bil-handoff-v2), sent out when a billing handoff is created. HL7 Orders is not available yet.",
-          "rules": "Required; nothing is preselected. It cannot change after saving; add another connection instead."
+          "values": "HL7 Orders (OML^O21 / ORM, v2.5.1): order messages a clinic's EMR writes, read in. HL7 Results (ORU^R01, v2.5.1): the released results with the partner's codes, sent out when a report revision is released. Report PDF: the issued report PDF, exactly as released, sent out at the same time. Billing JSON: the billing handoff file (format bil-handoff-v2), sent out when a billing handoff is created.",
+          "rules": "Required; nothing is preselected. It cannot change after saving; add another connection instead. An HL7 Orders connection has no routing rules, schedule or file name; section 4 is What to accept."
         },
         {
           "name": "Direction",
           "meaning": "Whether the LIS sends or receives on this connection.",
-          "values": "Out – LIS sends.",
+          "values": "In – LIS receives (HL7 Orders); Out – LIS sends (the other types).",
           "rules": "Read-only; the message type fixes it."
+        },
+        {
+          "name": "Input folder, Processed folder, Failed folder",
+          "meaning": "For HL7 Orders over a folder: where the LIS reads new files, and where each read file then moves: Processed, or Failed when it was refused.",
+          "values": "Folders chosen with Choose folder…; they cannot be typed.",
+          "rules": "Required. Only complete files are read: names ending in .hl7 (any case), not hidden and not .tmp; at most 20 per reading. A read file moves into a year and month subfolder, such as Processed › 2026 › 11; a name already there gets -1, -2 and so on, so nothing is replaced. Logs show the full path."
+        },
+        {
+          "name": "Check every",
+          "meaning": "For HL7 Orders: how often the input folder is read.",
+          "values": "Seconds, 10 to 3600. Default 30.",
+          "rules": "Required. It is read while the app is open, at the sign-in screen too."
+        },
+        {
+          "name": "Remote input folder, Remote processed folder, Remote failed folder",
+          "meaning": "For HL7 Orders over SFTP: the folders on the clinic's server the LIS reads from and moves files to.",
+          "values": "Paths from the server's root, such as /outbound/orders, /outbound/processed, /outbound/failed.",
+          "rules": "Required; each starts with /, has no .. part and is up to 1024 characters. Year and month subfolders are made as needed."
+        },
+        {
+          "name": "Accept messages from",
+          "meaning": "For HL7 Orders: the sending facility (MSH-4) the clinic's messages carry.",
+          "values": "Text as the clinic's EMR sends it, such as CLINIC-A.",
+          "rules": "Required; up to 180 characters; compared exactly. A message from another sending facility is refused and its file moves to Failed. It also scopes a patient identifier without an assigning authority."
+        },
+        {
+          "name": "Unknown patient",
+          "meaning": "For HL7 Orders: what happens when no registered patient has an identifier the message carries (PID-3, by assigning authority and type).",
+          "values": "Hold until the patient is registered (default): the message waits and becomes an order at the first reading after the patient is registered with the identifier. Move to Failed and log: it is refused.",
+          "rules": "The LIS never creates a patient from a message. A patient found whose family name or birth date differs from the message is held for review; identifiers that belong to two patients too."
+        },
+        {
+          "name": "Unknown test code",
+          "meaning": "For HL7 Orders: what happens to an order code (OBR-4) with no approved code mapping.",
+          "values": "Move to Failed and log.",
+          "rules": "Fixed. A code is never guessed."
         },
         {
           "name": "Protocol",
@@ -243,8 +281,8 @@
         },
         {
           "name": "Overview: Connection and Checks and contract",
-          "meaning": "Connection: partner, message, protocol and folder, send when and schedule, file name and rules. For SFTP, Protocol shows the server and port, then Remote folder, and Sign-in with the username and the server fingerprint shortened, such as SSH key as vibetox_lab · fingerprint SHA256:8Zq3...f1Kx. Checks and contract: who verified the destination, when and how; the last connection and its result; messages awaiting the partner's application acknowledgement; the last change with its reason.",
-          "values": "As recorded. Awaiting application ACK is 0 messages for a folder or SFTP server, which never answer. An HL7 Results connection also shows its Code mappings card below, read-only.",
+          "meaning": "Connection: partner, message, protocol and folder, send when and schedule, file name and rules. For SFTP, Protocol shows the server and port, then Remote folder, and Sign-in with the username and the server fingerprint shortened, such as SSH key as vibetox_lab · fingerprint SHA256:8Zq3...f1Kx. An HL7 Orders connection shows its input folder, Processed and Failed folders, Check every, Accept messages from and Unknown patient instead of send when, file name and rules; the page's description reads such as Reads HL7 order messages from CLINIC-A's folder every 30 seconds. Checks and contract: who verified the destination, when and how; the last connection and its result (for HL7 Orders, the last message read and its refusal reason, if any); messages awaiting the partner's application acknowledgement; the last change with its reason.",
+          "values": "As recorded. Awaiting application ACK is 0 messages for a folder or SFTP server, which never answer. HL7 Results and HL7 Orders connections also show their Code mappings card below, read-only. On the Rules tab, an HL7 Orders connection shows What to accept.",
           "rules": "Read-only. Interface contracts and acceptance tests are not part of this release."
         },
         {
@@ -252,6 +290,12 @@
           "meaning": "The routing rules; code mappings to a partner's codes; this connection's messages; every change with who, when, the settings changed and the reason or method.",
           "values": "As recorded, newest first. Code mappings is empty for Report PDF and Billing JSON, whose files carry the LIS's own codes. History also lists each approved code mapping version, with its reason.",
           "rules": "Read-only, except Code mappings of an HL7 Results connection. History is never edited."
+        },
+        {
+          "name": "Code mappings of an HL7 Orders connection: LIS test, Partner code, Sequence role, Status",
+          "meaning": "Each order code the clinic's EMR sends (OBR-4) with the LIS test it asks for and that test's sequence role.",
+          "values": "Sequence role: First line or Confirmation, as the partner's contract defines the code. Status as for results.",
+          "rules": "Add mapping asks for Partner code, LIS test and Sequence role, all required; a second person approves. An order whose code has no approved mapping is refused; the role is never inferred."
         },
         {
           "name": "Code mappings: LIS test / analyte, Partner code, LOINC, Unit (UCUM), Status",
@@ -280,9 +324,9 @@
           "result": "The folder shows in Output folder. Cancelling the dialog changes nothing."
         },
         {
-          "name": "Test folder / Test connection",
-          "does": "Creates, writes and removes a small probe file in the folder. For SFTP, Test connection connects to the server, checks its fingerprint and the sign-in, then writes and removes the probe file in the remote folder. In the dialog it tests the server as entered, with the typed password or, when changing a connection, its saved one for the same server and username.",
-          "availableWhen": "A chosen folder, SFTP server fields filled in, or a saved connection.",
+          "name": "Test folder / Test folders / Test connection",
+          "does": "Creates, writes and removes a small probe file in the folder. For SFTP, Test connection connects to the server, checks its fingerprint and the sign-in, then writes and removes the probe file in the remote folder. In the dialog it tests the server as entered, with the typed password or, when changing a connection, its saved one for the same server and username. For HL7 Orders, Test folders (or Test connection over SFTP) only lists the input folder, never touching the clinic's files, and writes and removes the probe file in Processed and Failed.",
+          "availableWhen": "A chosen folder (for HL7 Orders, all three), SFTP server fields filled in, or a saved connection.",
           "result": "Says whether the LIS can write there, such as ✓ Connected, fingerprint matches, test file written and removed; or the problem, with the fingerprint the server presented when it is not the one entered. Nothing is saved, no message is made and nothing is logged."
         },
         {
@@ -324,7 +368,7 @@
         {
           "name": "Send test message",
           "does": "Writes a synthetic file with no patient data to the folder or SFTP server now: vibetox-test-<date>-<time>.hl7, an ORU^R01 with processing ID T and a synthetic patient, for HL7 Results; a one-page PDF for Report PDF; a .json file for Billing JSON.",
-          "availableWhen": "A saved connection, stopped or not verified too.",
+          "availableWhen": "A saved connection that sends, stopped or not verified too; an HL7 Orders connection has none, as the LIS sends it nothing.",
           "result": "The file name, or the problem, shows; the test appears in Logs as Test message. A failed test is not retried."
         },
         {
@@ -345,16 +389,30 @@
         "A routing rule compares codes exactly; it does not search names.",
         "Interface contracts and acceptance tests are not part of this release.",
         "HL7 messages carry no abnormal flags and no interpretation: values are sent as stored, a censored value as a comparator and number (SN), never as an exact number.",
-        "SFTP: the LIS only connects out to the partner's server; it sends files and reads nothing back. Its own key is an Ed25519 key; a server offering only an RSA key cannot be used."
+        "SFTP: the LIS only connects out to the partner's server; it never accepts connections. Its own key is an Ed25519 key; a server offering only an RSA key cannot be used.",
+        "HL7 Orders: only new orders (ORC-1 NW) are read; changes and cancellations are refused. The LIS sends no acknowledgement file back; the outcome shows in Logs. An order arrives without signature evidence, billing responsibility or medications, as an HL7 order carries none; diagnoses (DG1) are kept as supplied."
       ],
       "workflow": [
         "Fill in General, choose the folder and test it; or for SFTP fill in the server, port, username and the fingerprint from the partner's IT, use Copy LIS public key for the partner's IT to allow, and Test connection.",
         "Add rules if only some reports or handoffs belong to this partner.",
         "Choose the schedule and file name, and save stopped.",
         "Send a test message, have a second person record the destination check, then Start.",
-        "For HL7 Results, add the partner's code for each test and analyte under Code mappings and have a second person approve them; held messages are then written."
+        "For HL7 Results, add the partner's code for each test and analyte under Code mappings and have a second person approve them; held messages are then written.",
+        "For HL7 Orders: choose the client, the input, Processed and Failed folders (or the server's), Check every and What to accept; Test folders; map every order code with its sequence role and have a second person approve; record the destination check; Start. Received orders then appear in Orders as Received."
       ],
       "troubleshooting": [
+        {
+          "problem": "An incoming order shows Waiting for patient in Logs",
+          "recovery": "Register the patient (or add the identifier to the registered patient) with the assigning authority and type the message carries in PID-3; the next reading makes the order."
+        },
+        {
+          "problem": "An incoming order shows Held for review",
+          "recovery": "The same message ID came with other content, or the registered patient's name or birth date differs from the message. Check with the clinic; enter the order by hand if it is right. Nothing was ordered."
+        },
+        {
+          "problem": "An incoming order shows Rejected",
+          "recovery": "Details give the reason, such as an unknown test code or ordering provider NPI, or another sending facility. Fix the mapping, the provider or the connection's settings and ask the clinic to send the order again; the file stays in Failed."
+        },
         {
           "problem": "Choose the folder again",
           "recovery": "The chosen folder is kept only for your session and the last 8 choices. Use Choose folder… again and save."
@@ -415,12 +473,12 @@
           "name": "Direction (In and out)",
           "meaning": "Messages received, sent, or both.",
           "values": "In and out (default); Out; In.",
-          "rules": "Every message of this release is sent out, so In shows none."
+          "rules": "In shows the order messages HL7 Orders connections received; Out everything sent."
         },
         {
           "name": "Outcome (All outcomes)",
           "meaning": "Narrow by what the transport can prove.",
-          "values": "All outcomes (default); Written (uploaded to an SFTP server included); Failed; Not sent (not written yet, unrouted messages included).",
+          "values": "All outcomes (default); Written (uploaded to an SFTP server included); Failed; Not sent (not written yet, unrouted messages included); Received (incoming order messages).",
           "rules": "Combines with the tab; the tabs count what the other filters leave."
         },
         {
@@ -432,31 +490,31 @@
         {
           "name": "All / Failed / Rejected / Awaiting ACK / Outcome unknown / Duplicates",
           "meaning": "Which rows the tab shows, with their number.",
-          "values": "Failed: a write failed and is retried or given up. Rejected: the other system refused it. Awaiting ACK: sent and waiting for the other system's answer. Outcome unknown: written to a folder or uploaded to an SFTP server, which never confirm. Duplicates: received again.",
-          "rules": "A folder or SFTP server never answers and nothing is received in this release, so Rejected, Awaiting ACK and Duplicates stay at 0. The tab is part of the address."
+          "values": "Failed: a write failed and is retried or given up. Rejected: an incoming order the LIS refused, its file in Failed. Awaiting ACK: sent and waiting for the other system's answer. Outcome unknown: written to a folder or uploaded to an SFTP server, which never confirm. Duplicates: an incoming order read again with the same content, which had no effect.",
+          "rules": "A folder or SFTP server never answers, so Awaiting ACK stays at 0. The tab is part of the address."
         },
         {
           "name": "Time, Dir., Connection, Message, Record",
-          "meaning": "When the row last changed (written, tried or made), the direction, the connection (None matched for an unrouted message), the message type and the record: the report number and revision (such as A26000005-U r2), the report's withdrawal notice, the billing handoff, or Test message.",
+          "meaning": "When the row last changed (written, tried, made or received), the direction (In for a received order), the connection (None matched for an unrouted message), the message type and the record: the report number and revision (such as A26000005-U r2), the report's withdrawal notice, the billing handoff, Test message, or for a received order its placer order number (the file name when it could not be read).",
           "values": "As recorded.",
           "rules": "Read-only."
         },
         {
           "name": "Transport",
           "meaning": "Did it leave: what the folder or SFTP server can prove.",
-          "values": "Written (to a folder); Uploaded (to an SFTP server); Failed; Not sent (not written yet, or replaced by a newer revision and never written).",
+          "values": "Written (to a folder); Uploaded (to an SFTP server); Failed; Not sent (not written yet, or replaced by a newer revision and never written); Received (an incoming order message read and stored).",
           "rules": "Never Delivered."
         },
         {
           "name": "Application",
           "meaning": "Did the other system accept it.",
-          "values": "Outcome unknown for a written or uploaded file: a folder or SFTP server never confirms; — otherwise.",
+          "values": "Outcome unknown for a written or uploaded file: a folder or SFTP server never confirms. For an incoming order: Order created (in Received status, for the laboratory to accept); Waiting for patient; Held for review; Duplicate – ignored; Rejected, or Rejected – unknown test. — otherwise.",
           "rules": "The billing company's acknowledgement or rejection is recorded on the billing handoff page, by people with Billing. A written report PDF does not count as a staff-attested delivery on the report's page."
         },
         {
           "name": "Details",
           "meaning": "Why the row stands where it does.",
-          "values": "Written as <folder and file> (for SFTP, the remote folder and file); <problem>; attempt N of 5 at <time>; <problem>; not written after 5 attempts; Connection stopped; Destination check not recorded; Waiting for the connection's schedule; Written at the next pass; Paused while the report's impact review is open; Held: a test or analyte has no approved code mapping; Replaced by a newer revision; never written; No connection rule matched; or the decision on an unrouted message. A report's later revision or withdrawal notice sent to a connection that had the report starts with Replaces r<n>, sent first or Withdrawal notice, sent first.",
+          "values": "Written as <folder and file> (for SFTP, the remote folder and file); <problem>; attempt N of 5 at <time>; <problem>; not written after 5 attempts; Connection stopped; Destination check not recorded; Waiting for the connection's schedule; Written at the next pass; Paused while the report's impact review is open; Held: a test or analyte has no approved code mapping; Replaced by a newer revision; never written; No connection rule matched; or the decision on an unrouted message. A report's later revision or withdrawal notice sent to a connection that had the report starts with Replaces r<n>, sent first or Withdrawal notice, sent first. A received order shows why it waits, is held or was refused, and Moved to <Processed or Failed folder › year › month › file>.",
           "rules": "Read-only."
         }
       ],
@@ -637,6 +695,17 @@
     "crates/lis-interfaces/src/partner/sftp_settings.rs",
     "crates/lis-interfaces/src/partner/sftp_identity.rs",
     "crates/lis-engine/src/partner_delivery/sftp.rs",
-    "crates/lis-engine/src/commands/partner/sftp.rs"
+    "crates/lis-engine/src/commands/partner/sftp.rs",
+    "ui/src/features/interfaces/connections/IntakeSections.tsx",
+    "ui/src/features/interfaces/connections/intakeForm.ts",
+    "ui/src/features/interfaces/intakeLabels.ts",
+    "crates/lis-interfaces/src/partner/hl7_order.rs",
+    "crates/lis-interfaces/src/partner/intake_settings.rs",
+    "crates/lis-interfaces/src/partner/received.rs",
+    "crates/lis-interfaces/src/partner/received_queries.rs",
+    "crates/lis-engine/src/partner_intake.rs",
+    "crates/lis-engine/src/partner_intake/decide.rs",
+    "crates/lis-engine/src/partner_intake/inbox.rs",
+    "crates/lis-engine/src/partner_intake/order_input.rs"
   ]
 }
