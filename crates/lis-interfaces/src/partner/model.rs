@@ -31,6 +31,11 @@ text_enum! {
     PartnerMessageType {
         /// The billing handoff file, sent when a handoff is created.
         BillingJson = "billing_json",
+        /// The issued report PDF, sent when a report revision is released.
+        ReportPdf = "report_pdf",
+        /// An HL7 v2.5.1 ORU^R01 result message with the partner's codes, sent when a
+        /// report revision is released.
+        Hl7Oru = "hl7_oru",
     }
 }
 
@@ -81,6 +86,8 @@ text_enum! {
         Written = "written",
         /// Every attempt failed; it waits for someone to send it again.
         Failed = "failed",
+        /// A newer revision or a withdrawal replaced it before it was written; never written.
+        Superseded = "superseded",
     }
 }
 
@@ -90,6 +97,9 @@ text_enum! {
     DeliveryReason {
         /// The connection's rules matched.
         Routed = "routed",
+        /// The connection had an earlier revision of the report, so it gets this one first,
+        /// whatever its rules (REQ-RPT-013).
+        FollowUp = "follow_up",
         /// Sent once to the connection from Unrouted messages.
         SentOnce = "sent_once",
         /// A synthetic test message.
@@ -103,6 +113,10 @@ text_enum! {
     MessageSource {
         /// A billing handoff.
         BillingHandoff = "billing_handoff",
+        /// A released report revision.
+        ReportRevision = "report_revision",
+        /// A report's withdrawal notice.
+        ReportWithdrawal = "report_withdrawal",
         /// A synthetic test message, with no patient data.
         Test = "test",
     }
@@ -137,6 +151,8 @@ text_enum! {
         Stopped = "stopped",
         /// Its destination check was recorded.
         Verified = "verified",
+        /// A new version of its code mappings was approved.
+        MappingsApproved = "mappings_approved",
     }
 }
 
@@ -336,17 +352,30 @@ pub struct RoutingFacts {
 #[derive(Debug, Clone)]
 pub struct NewPartnerMessage {
     pub message_type: PartnerMessageType,
-    /// The source record (a billing handoff).
+    pub source: MessageSource,
+    /// The source record: a billing handoff, a report revision, or the withdrawn report.
     pub source_id: String,
+    /// The handoff number, or the report's revision number.
     pub source_number: i64,
+    /// For a report's revision or withdrawal, the report it belongs to.
+    pub report: Option<ReportRef>,
     pub artifact_sha256: String,
     pub facts: RoutingFacts,
+}
+
+/// A report whose revisions and withdrawal are messages. No patient data.
+#[derive(Debug, Clone)]
+pub struct ReportRef {
+    pub report_id: String,
+    /// The report number: the accession number and the specimen type code.
+    pub report_number: String,
 }
 
 /// What routing did with a new message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Routed {
-    /// No connection carries the message type, so no message was kept.
+    /// No message was kept: no connection carries the message type or, for a
+    /// withdrawal notice, none had the report.
     NoConnection,
     /// Kept, with a delivery to each of `deliveries` connections; zero means
     /// it waits in Unrouted messages.

@@ -5,7 +5,9 @@ use std::path::Path;
 use lis_core::required_text;
 
 use super::error::{PartnerError, invalid};
-use super::model::{PartnerConnectionSettings, RoutingRule, RuleCondition, Schedule};
+use super::model::{
+    PartnerConnectionSettings, PartnerMessageType, RoutingRule, RuleCondition, Schedule,
+};
 use crate::validation::valid_text;
 
 const NAME_MAX: usize = 80;
@@ -14,8 +16,34 @@ const RULE_VALUE_MAX: usize = 200;
 const ONE_OF_MAX: usize = 50;
 const PATTERN_MAX: usize = 120;
 const FOLDER_MAX: usize = 4096;
-/// Placeholders a billing file name may use.
-const PLACEHOLDERS: [&str; 3] = ["{handoff}", "{date}", "{time}"];
+
+/// What a file name pattern of one message type holds: placeholders it must use,
+/// so each file has its own name, ones it may use, and its extension.
+struct PatternRules {
+    required: &'static [&'static str],
+    optional: &'static [&'static str],
+    extension: &'static str,
+}
+
+const fn pattern_rules(message_type: PartnerMessageType) -> PatternRules {
+    match message_type {
+        PartnerMessageType::BillingJson => PatternRules {
+            required: &["{handoff}"],
+            optional: &["{date}", "{time}"],
+            extension: ".json",
+        },
+        PartnerMessageType::ReportPdf => PatternRules {
+            required: &["{accession}", "{revision}"],
+            optional: &["{date}", "{time}"],
+            extension: ".pdf",
+        },
+        PartnerMessageType::Hl7Oru => PatternRules {
+            required: &["{accession}", "{revision}"],
+            optional: &["{date}", "{time}"],
+            extension: ".hl7",
+        },
+    }
+}
 
 /// The settings with their text trimmed, or the first field at fault.
 pub(crate) fn valid_settings(
@@ -28,7 +56,7 @@ pub(crate) fn valid_settings(
     let rules = valid_rules(settings.rules)?;
     valid_schedule(&settings.schedule)?;
     let file_name_pattern = settings.file_name_pattern.trim().to_owned();
-    valid_pattern(&file_name_pattern)?;
+    valid_pattern(&file_name_pattern, &pattern_rules(settings.message_type))?;
     Ok(PartnerConnectionSettings {
         name,
         partner,
@@ -110,53 +138,98 @@ pub(crate) fn clock_time(time: &str) -> Option<(i8, i8)> {
     ((0..24).contains(&hours) && (0..60).contains(&minutes)).then_some((hours, minutes))
 }
 
-/// A file name pattern makes a plain file name ending in `.json`, unique per
-/// handoff: letters, digits, `.`, `_`, `-` and the placeholders.
-fn valid_pattern(pattern: &str) -> Result<(), PartnerError> {
-    let refused = |message| invalid("settings.fileNamePattern", "invalid_pattern", message);
+/// A file name pattern makes a plain file name with the type's extension, unique
+/// per message: letters, digits, `.`, `_`, `-` and the type's placeholders.
+fn valid_pattern(pattern: &str, rules: &PatternRules) -> Result<(), PartnerError> {
+    let refused = |message: &str| invalid("settings.fileNamePattern", "invalid_pattern", message);
     if pattern.is_empty() || pattern.len() > PATTERN_MAX {
         return Err(refused(
             "Enter a file name pattern of up to 120 characters.",
         ));
     }
-    if !pattern.contains("{handoff}") {
-        return Err(refused("Include {handoff}, so each file has its own name."));
-    }
-    if !pattern.ends_with(".json") || pattern.starts_with('.') {
-        return Err(refused(
-            "End the name with .json; do not start it with a dot.",
-        ));
-    }
-    let plain = PLACEHOLDERS
+    if !rules
+        .required
         .iter()
+        .all(|placeholder| pattern.contains(placeholder))
+    {
+        return Err(refused(&format!(
+            "Include {}, so each file has its own name.",
+            rules.required.join(" and ")
+        )));
+    }
+    if !pattern.ends_with(rules.extension) || pattern.starts_with('.') {
+        return Err(refused(&format!(
+            "End the name with {}; do not start it with a dot.",
+            rules.extension
+        )));
+    }
+    let plain = rules
+        .required
+        .iter()
+        .chain(rules.optional)
         .fold(pattern.to_owned(), |text, placeholder| {
             text.replace(placeholder, "")
         });
-    if !plain
-        .bytes()
-        .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-'))
-    {
-        return Err(refused(
-            "Use letters, digits, '.', '_', '-' and {handoff}, {date} or {time} only.",
-        ));
+    if !plain.bytes().all(plain_byte) {
+        let placeholders: Vec<&str> = rules
+            .required
+            .iter()
+            .chain(rules.optional)
+            .copied()
+            .collect();
+        return Err(refused(&format!(
+            "Use letters, digits, '.', '_', '-' and {} only.",
+            placeholders.join(", ")
+        )));
     }
     Ok(())
 }
 
-/// The file name `pattern` makes for handoff `number`, with `date`
-/// (`YYYYMMDD`) and `time` (`HHMMSS`).
+fn plain_byte(byte: u8) -> bool {
+    byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-')
+}
+
+/// The values a file name pattern's placeholders take.
+pub(crate) struct FileNameParts<'a> {
+    /// `{handoff}` or `{accession}`: the handoff number, or the report number.
+    pub(crate) record: &'a str,
+    /// `{revision}`: the report's revision number.
+    pub(crate) revision: &'a str,
+    /// `{date}`: `YYYYMMDD`.
+    pub(crate) date: &'a str,
+    /// `{time}`: `HHMMSS`.
+    pub(crate) time: &'a str,
+}
+
+/// The file name `pattern` makes with `parts`. A character a file name may not hold
+/// becomes `_`, so a value never leaves the folder.
 #[must_use]
-pub fn file_name(pattern: &str, number: &str, date: &str, time: &str) -> String {
+pub(crate) fn file_name(pattern: &str, parts: &FileNameParts<'_>) -> String {
+    let plain = |value: &str| -> String {
+        value
+            .bytes()
+            .map(|byte| {
+                if plain_byte(byte) {
+                    char::from(byte)
+                } else {
+                    '_'
+                }
+            })
+            .collect()
+    };
+    let record = plain(parts.record);
     pattern
-        .replace("{handoff}", number)
-        .replace("{date}", date)
-        .replace("{time}", time)
+        .replace("{handoff}", &record)
+        .replace("{accession}", &record)
+        .replace("{revision}", &plain(parts.revision))
+        .replace("{date}", &plain(parts.date))
+        .replace("{time}", &plain(parts.time))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::partner::model::{PartnerMessageType, PartnerProtocol, RuleField};
+    use crate::partner::model::{PartnerProtocol, RuleField};
 
     fn settings() -> PartnerConnectionSettings {
         PartnerConnectionSettings {
@@ -237,15 +310,48 @@ mod tests {
     }
 
     #[test]
+    fn report_patterns_need_the_report_and_its_revision() {
+        let report = |pattern: &str| {
+            valid_settings(PartnerConnectionSettings {
+                message_type: PartnerMessageType::ReportPdf,
+                file_name_pattern: pattern.to_owned(),
+                ..settings()
+            })
+        };
+        assert!(report("{accession}_r{revision}_{date}.pdf").is_ok());
+        for pattern in [
+            "{accession}_{date}.pdf",
+            "{accession}_r{revision}.json",
+            "{handoff}_r{revision}.pdf",
+        ] {
+            assert_eq!(
+                field_of(report(pattern).unwrap_err()),
+                "settings.fileNamePattern",
+                "{pattern}"
+            );
+        }
+    }
+
+    #[test]
     fn file_names_fill_every_placeholder() {
+        let parts = FileNameParts {
+            record: "12",
+            revision: "",
+            date: "20261103",
+            time: "101500",
+        };
         assert_eq!(
-            file_name(
-                "billing-{handoff}_{date}{time}.json",
-                "12",
-                "20261103",
-                "101500"
-            ),
+            file_name("billing-{handoff}_{date}{time}.json", &parts),
             "billing-12_20261103101500.json"
+        );
+        let parts = FileNameParts {
+            record: "A26000005-U/1",
+            revision: "2-withdrawn",
+            ..parts
+        };
+        assert_eq!(
+            file_name("{accession}_r{revision}_{date}.pdf", &parts),
+            "A26000005-U_1_r2-withdrawn_20261103.pdf"
         );
     }
 }

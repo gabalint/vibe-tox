@@ -62,6 +62,20 @@ describe("Connections (ticket #4555; REQ-RPT-012)", () => {
     expect(actions).toEqual(["Cancel", "Save as stopped", "Save"]);
   });
 
+  it("fills Send when and the file name from the chosen message", async () => {
+    const { user } = renderPage({}, "/interfaces/connections");
+    await user.click(await screen.findByRole("button", { name: "Add connection" }));
+    const dialog = await screen.findByRole("dialog", { name: "Add connection" });
+    await user.click(within(dialog).getByRole("button", { name: /Message/ }));
+    await user.click(await screen.findByRole("option", { name: "Report PDF" }));
+    const fileName = within(dialog).getByRole("textbox", { name: "File name" });
+    await waitFor(() =>
+      expect((fileName as HTMLInputElement).value).toBe("{accession}_r{revision}_{date}.pdf"),
+    );
+    expect(within(dialog).getByRole("button", { name: /Report released/ })).toBeTruthy();
+    expect(within(dialog).getByText(/Corrections and withdrawals go first/)).toBeTruthy();
+  });
+
   it("explains an empty list", async () => {
     renderPage({ list_partner_connections: () => [] }, "/interfaces/connections");
     expect(await screen.findByText("No connections")).toBeTruthy();
@@ -125,6 +139,24 @@ describe("Connections (ticket #4555; REQ-RPT-012)", () => {
     ]) {
       expect(screen.getByRole("button", { name })).toBeTruthy();
     }
+  });
+
+  it("describes a Report PDF connection by what it writes and when", async () => {
+    const pdfs = {
+      ...CONNECTION,
+      settings: { ...CONNECTION.settings, partner: "CLINIC-A", messageType: "report_pdf" as const },
+    };
+    renderPage(
+      { get_partner_connection: () => ({ ...DETAIL, connection: pdfs }) },
+      `/interfaces/connections/${CONNECTION_ID}`,
+    );
+    expect(
+      await screen.findByText(
+        "Writes the issued report PDF to CLINIC-A's folder when a report revision is released.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText("Report PDF (the issued PDF, as released)")).toBeTruthy();
+    expect(screen.getByText("Report released · immediately")).toBeTruthy();
   });
 
   it("starts a stopped connection with a reason", async () => {

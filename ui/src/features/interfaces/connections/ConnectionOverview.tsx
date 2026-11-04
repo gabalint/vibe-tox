@@ -4,7 +4,8 @@ import type { PartnerConnection } from "@/generated/PartnerConnection";
 import { useFormatTime } from "@/lib/format";
 import { usePersonText } from "@/lib/person";
 import {
-  MESSAGE_TYPES,
+  messageText,
+  noRulesText,
   PROTOCOLS,
   problemText,
   ruleText,
@@ -12,6 +13,7 @@ import {
   scheduleText,
 } from "../labels";
 import styles from "./ConnectionPage.module.css";
+import { CodeMappingsSection } from "./mappings/CodeMappingsSection";
 
 /** A titled card of label–value pairs. */
 function Card({ title, items }: { title: string; items: [string, ReactNode][] }) {
@@ -32,7 +34,9 @@ function Card({ title, items }: { title: string; items: [string, ReactNode][] })
 const rulesText = (connection: PartnerConnection) =>
   connection.settings.rules.length === 0
     ? "None: every message of this type"
-    : connection.settings.rules.map(ruleText).join("; ");
+    : connection.settings.rules
+        .map((rule) => ruleText(rule, connection.settings.messageType))
+        .join("; ");
 
 interface OverviewProps {
   connection: PartnerConnection;
@@ -56,7 +60,7 @@ export function ConnectionOverview({ connection, lastReason }: OverviewProps) {
         title="Connection"
         items={[
           ["Partner", settings.partner],
-          ["Message", `${MESSAGE_TYPES[type]} (bil-handoff-v2)`],
+          ["Message", messageText(type)],
           ["Protocol", PROTOCOLS[settings.protocol]],
           [
             "Folder",
@@ -97,6 +101,11 @@ export function ConnectionOverview({ connection, lastReason }: OverviewProps) {
           ],
         ]}
       />
+      {type === "hl7_oru" && (
+        <div className={styles.wide}>
+          <CodeMappingsSection connection={connection} readOnly />
+        </div>
+      )}
     </div>
   );
 }
@@ -109,23 +118,29 @@ export function ConnectionRules({ connection }: { connection: PartnerConnection 
       title="Routing rules"
       items={
         rules.length === 0
-          ? [["Rules", "None: every billing handoff goes to this connection"]]
-          : rules.map((rule, index) => [`Rule ${index + 1}`, ruleText(rule)])
+          ? [["Rules", noRulesText(connection.settings.messageType)]]
+          : rules.map((rule, index) => [
+              `Rule ${index + 1}`,
+              ruleText(rule, connection.settings.messageType),
+            ])
       }
     />
   );
 }
 
 /**
- * Code mappings, as in the mockup. A Billing JSON file carries the LIS's own codes, so it has
- * no mapping to a partner's codes; mappings come with HL7 result connections.
+ * Code mappings, as in the mockup: an HL7 connection's, with their actions. Report PDF and
+ * Billing JSON files carry the LIS's own codes, so they have no mapping to a partner's codes.
  */
-export function CodeMappings() {
+export function CodeMappings({ connection }: { connection: PartnerConnection }) {
+  if (connection.settings.messageType === "hl7_oru") {
+    return <CodeMappingsSection connection={connection} />;
+  }
   return (
     <Section title="Code mappings">
       <p className={styles.hint}>
-        No code mappings. A Billing JSON file carries the LIS's own codes; mappings to a partner's
-        test codes, LOINC and UCUM units apply to HL7 result connections.
+        No code mappings. Report PDF and Billing JSON files carry the LIS's own codes; mappings to a
+        partner's test codes, LOINC and UCUM units apply to HL7 result connections.
       </p>
     </Section>
   );

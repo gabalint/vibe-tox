@@ -22,11 +22,10 @@ pub(super) fn interface_items(
         "unrouted_messages" => lis_interfaces::partner::unrouted_queue(conn, limit)?
             .into_iter()
             .map(|row| {
-                let title = handoff_title(row.source_number);
                 item(
                     "unrouted_message",
                     row.message_id.to_string(),
-                    title,
+                    row.record,
                     "unrouted",
                     row.since,
                 )
@@ -35,11 +34,7 @@ pub(super) fn interface_items(
         "interface_failures" => lis_interfaces::partner::failed_queue(conn, limit)?
             .into_iter()
             .map(|row| {
-                let title = format!(
-                    "{} to {}",
-                    handoff_title(row.source_number),
-                    row.connection_name
-                );
+                let title = format!("{} to {}", row.record, row.connection_name);
                 item(
                     "failed_delivery",
                     row.delivery_id.to_string(),
@@ -51,11 +46,4 @@ pub(super) fn interface_items(
             .collect(),
         _ => Vec::new(),
     })
-}
-
-fn handoff_title(number: Option<i64>) -> String {
-    number.map_or_else(
-        || "Test message".to_owned(),
-        |number| format!("Billing handoff {number}"),
-    )
 }

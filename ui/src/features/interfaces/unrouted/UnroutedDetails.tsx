@@ -13,7 +13,7 @@ import { useCommandMutation } from "@/lib/commands";
 import { useFormatTime } from "@/lib/format";
 import row from "../actionRow.module.css";
 import { MESSAGE_QUERIES, RESOLVE_UNROUTED } from "../contract";
-import { MESSAGE_TYPES, recordText, ruleText, valuesText } from "../labels";
+import { MESSAGE_TYPES, recordText, ruleFields, ruleText, valuesText } from "../labels";
 import { CONNECTIONS_PATH, connectionPath } from "../paths";
 import { AnotherWayDialog } from "./AnotherWayDialog";
 import styles from "./UnroutedPage.module.css";
@@ -58,13 +58,19 @@ export function UnroutedDetails({ message }: { message: UnroutedMessage }) {
   return (
     <Section title={`${recordText(message)} – ${type} message`}>
       <dl className={styles.facts}>
-        {fact("Created", `${formatTime(message.createdAt)}, at handoff creation`)}
+        {fact(
+          "Created",
+          `${formatTime(message.createdAt)}, ${message.source === "billing_handoff" ? "at handoff creation" : "at release"}`,
+        )}
         {fact(
           "Checked against",
           `${message.checkedAgainst} ${type} connection${message.checkedAgainst === 1 ? "" : "s"}`,
         )}
-        {fact("Client", valuesText(facts.clients))}
-        {fact("Closest rule", closest ? `${ruleText(closest.rule)} (did not match)` : "None")}
+        {fact(ruleFields(message.messageType).client, valuesText(facts.clients))}
+        {fact(
+          "Closest rule",
+          closest ? `${ruleText(closest.rule, message.messageType)} (did not match)` : "None",
+        )}
       </dl>
       {allowed && (
         <div className={row.row}>

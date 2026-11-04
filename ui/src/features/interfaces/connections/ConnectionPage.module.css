@@ -8,6 +8,11 @@
   align-items: start;
 }
 
+/* A card across the whole width, under the two cards. */
+.wide {
+  grid-column: 1 / -1;
+}
+
 .facts {
   display: grid;
   grid-template-columns: 10rem minmax(0, 1fr);

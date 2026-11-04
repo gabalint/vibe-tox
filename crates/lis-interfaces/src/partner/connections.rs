@@ -152,7 +152,7 @@ pub fn record_partner_destination_check(
     }
     let self_approval = current.folder_set_by == actor;
     if self_approval {
-        authorize_self(ctx, input.self_approval)?;
+        authorize_self(ctx, Duty::DestinationVerification, input.self_approval)?;
     }
     repo::insert_verification(
         ctx.tx(),
@@ -182,7 +182,7 @@ pub fn record_partner_destination_check(
 }
 
 /// The signed-in person's ID; listeners and workers cannot configure.
-fn person(ctx: &CommandContext<'_>) -> Result<String, PartnerError> {
+pub(super) fn person(ctx: &CommandContext<'_>) -> Result<String, PartnerError> {
     match ctx.principal().actor() {
         actor @ Actor::User { .. } => Ok(actor.id_text()),
         Actor::Instrument { .. } | Actor::System { .. } => {
@@ -191,12 +191,12 @@ fn person(ctx: &CommandContext<'_>) -> Result<String, PartnerError> {
     }
 }
 
-fn reason(text: &str) -> Result<String, PartnerError> {
+pub(super) fn reason(text: &str) -> Result<String, PartnerError> {
     required_text("reason", text, REASON_MAX).map_err(PartnerError::Invalid)
 }
 
 /// The connection at the revision shown.
-fn current(
+pub(super) fn current(
     ctx: &CommandContext<'_>,
     id: PartnerConnectionId,
     expected_revision: i64,
@@ -224,7 +224,7 @@ fn unique_name(
     Ok(())
 }
 
-fn record(
+pub(super) fn record(
     ctx: &CommandContext<'_>,
     row: &ConnectionRow,
     change: ConnectionChange,
@@ -244,7 +244,7 @@ fn record(
     )
 }
 
-fn event(action: &'static str, row: &ConnectionRow) -> AuditEvent {
+pub(super) fn event(action: &'static str, row: &ConnectionRow) -> AuditEvent {
     AuditEvent::new(Stream::Security, action, Outcome::Succeeded)
         .record(RECORD_TYPE, row.id)
         .detail(
@@ -257,9 +257,13 @@ fn event(action: &'static str, row: &ConnectionRow) -> AuditEvent {
         )
 }
 
-fn authorize_self(ctx: &CommandContext<'_>, confirmed: bool) -> Result<(), PartnerError> {
+pub(super) fn authorize_self(
+    ctx: &CommandContext<'_>,
+    duty: Duty,
+    confirmed: bool,
+) -> Result<(), PartnerError> {
     let policy = lis_auth::current_separation_policy(ctx.tx())?;
-    match policy.authorize_self(Duty::DestinationVerification, confirmed) {
+    match policy.authorize_self(duty, confirmed) {
         Ok(()) => Ok(()),
         Err(refused @ SelfApprovalRefused::NotAllowed(_)) => {
             Err(PartnerError::GateBlocked(vec![GateReason {

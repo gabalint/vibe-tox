@@ -8,7 +8,11 @@ import type { RoutingFacts } from "./RoutingFacts";
 /**
  * A message waiting in Unrouted messages.
  */
-export type UnroutedMessage = { messageId: string, createdAt: string, messageType: PartnerMessageType, source: MessageSource, sourceId: string | null, sourceNumber: number | null, facts: RoutingFacts, 
+export type UnroutedMessage = { messageId: string, createdAt: string, messageType: PartnerMessageType, source: MessageSource, sourceId: string | null, sourceNumber: number | null, 
+/**
+ * The report number, for a report's revision.
+ */
+sourceLabel: string | null, facts: RoutingFacts, 
 /**
  * Connections of the type its rules were checked against when it was made.
  */

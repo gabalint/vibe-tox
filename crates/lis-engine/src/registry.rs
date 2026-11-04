@@ -164,6 +164,10 @@ pub const COMMANDS: &[CommandSpec] = &[
     crate::commands::partner::LIST_UNROUTED_PARTNER_MESSAGES,
     crate::commands::partner::RESOLVE_UNROUTED_MESSAGE,
     crate::commands::partner::RESEND_PARTNER_DELIVERY,
+    crate::commands::partner::LIST_PARTNER_MAPPINGS,
+    crate::commands::partner::DRAFT_PARTNER_MAPPING,
+    crate::commands::partner::DISCARD_PARTNER_MAPPING_DRAFT,
+    crate::commands::partner::APPROVE_PARTNER_MAPPINGS,
     // interfaces: end
     // orders: begin
     crate::commands::orders::REGISTER_ORDER,

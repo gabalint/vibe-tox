@@ -2,6 +2,7 @@
 // every value again; field errors under `settings.` land on the matching form field.
 import type { PartnerConnection } from "@/generated/PartnerConnection";
 import type { PartnerConnectionSettings } from "@/generated/PartnerConnectionSettings";
+import type { PartnerMessageType } from "@/generated/PartnerMessageType";
 import type { RuleCondition } from "@/generated/RuleCondition";
 import type { RuleField } from "@/generated/RuleField";
 import type { Schedule } from "@/generated/Schedule";
@@ -31,8 +32,6 @@ export interface ConnectionValues {
   reason: string;
 }
 
-const DEFAULT_PATTERN = "billing-{handoff}_{date}.json";
-
 /** Engine paths `settings.x` are form fields `x`; the folder handle shows on the folder. */
 export const FIELD_PATHS: FieldPaths = { settings: "", folderChoice: "folder" };
 
@@ -44,7 +43,8 @@ export function toValues(connection: PartnerConnection | null): ConnectionValues
     partner: settings?.partner ?? "",
     messageType: settings?.messageType ?? "",
     direction: "Out – LIS sends",
-    sendWhen: "billing_json",
+    // The message type fixes what makes a message; its option shares the type's key.
+    sendWhen: settings?.messageType ?? "",
     folder: connection?.folder ?? "",
     folderChoice: "",
     rules: settings?.rules.map((rule) => ({ ...rule })) ?? [],
@@ -53,7 +53,7 @@ export function toValues(connection: PartnerConnection | null): ConnectionValues
       minutes: schedule?.kind === "every_minutes" ? String(schedule.minutes) : "",
       time: schedule?.kind === "daily_at" ? schedule.time : "",
     },
-    fileNamePattern: settings?.fileNamePattern ?? DEFAULT_PATTERN,
+    fileNamePattern: settings?.fileNamePattern ?? "",
     reason: "",
   };
 }
@@ -73,7 +73,7 @@ export function toSettings(values: ConnectionValues): PartnerConnectionSettings 
   return {
     name: values.name.trim(),
     partner: values.partner.trim(),
-    messageType: "billing_json",
+    messageType: values.messageType as PartnerMessageType,
     protocol: "folder",
     rules: values.rules.flatMap(({ field, condition, value }) =>
       field === "" || condition === "" ? [] : [{ field, condition, value: value.trim() }],

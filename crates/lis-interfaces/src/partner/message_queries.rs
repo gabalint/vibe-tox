@@ -1,6 +1,5 @@
-//! The message log and Unrouted messages (REQ-INT-002, REQ-RPT-003,
-//! REQ-RPT-011). A row says what the channel can prove: written to a folder
-//! or not, never "delivered".
+//! The message log (REQ-INT-002, REQ-RPT-003, REQ-RPT-011). A row says what the
+//! channel can prove: written to a folder or not, never "delivered".
 
 use lis_core::{UtcTimestamp, text_enum};
 use rusqlite::{Connection, params};
@@ -8,19 +7,16 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use super::error::PartnerError;
-use super::message_repo::{MessageRow, open_unrouted};
+use super::message_repo::NOT_REPLACED;
 use super::model::{
     DeliveryReason, DeliveryState, MessageSource, PartnerConnectionId, PartnerDeliveryId,
-    PartnerMessageId, PartnerMessageType, RoutingFacts, RoutingRule, UnroutedResolution,
+    PartnerMessageId, PartnerMessageType, UnroutedResolution,
 };
-use super::repo::connections;
-use super::rules::unmet;
 
 /// Rows the log returns at most, newest first.
 const LOG_LIMIT: usize = 500;
 /// Rows read before the view and search narrow them.
 const SCAN_LIMIT: u32 = 2000;
-const UNROUTED_LIMIT: u32 = 500;
 
 text_enum! {
     /// Which log rows to show.
@@ -45,7 +41,7 @@ text_enum! {
         Written = "written",
         /// An attempt failed; it is retried or waits to be sent again.
         Failed = "failed",
-        /// Not written yet.
+        /// Not written yet, or never: a newer revision replaced it.
         NotSent = "not_sent",
     }
 }
@@ -62,6 +58,12 @@ text_enum! {
         Scheduled = "scheduled",
         /// It is written at the next pass.
         Queued = "queued",
+        /// The report revision's impact review is open (L13). The engine, which
+        /// knows reports, sets it.
+        ImpactReview = "impact_review",
+        /// A test or analyte of the HL7 message has no approved code mapping, so it
+        /// is held, never sent with a guessed code (REQ-INT-004). Set by the engine.
+        NotMapped = "not_mapped",
     }
 }
 
@@ -78,7 +80,7 @@ pub struct ListPartnerMessages {
     #[ts(optional)]
     pub connection_id: Option<PartnerConnectionId>,
     pub view: MessageView,
-    /// A handoff number, or part of a file name.
+    /// A handoff number, a report or accession number, or part of a file name.
     #[serde(default)]
     #[ts(optional)]
     pub search: Option<String>,
@@ -107,6 +109,8 @@ pub struct PartnerMessageRow {
     pub source_id: Option<String>,
     #[ts(type = "number | null")]
     pub source_number: Option<i64>,
+    /// The report number, for a report's revision or withdrawal.
+    pub source_label: Option<String>,
     pub connection: Option<ConnectionRef>,
     pub reason: Option<DeliveryReason>,
     pub transport: TransportOutcome,
@@ -116,6 +120,9 @@ pub struct PartnerMessageRow {
     /// Failed attempts since it was made or sent again.
     pub attempts: u32,
     pub given_up: bool,
+    /// A newer revision or a withdrawal of the report replaced it before it was
+    /// written; it is never written.
+    pub superseded: bool,
     pub next_attempt_at: Option<UtcTimestamp>,
     pub error_code: Option<String>,
     pub written_path: Option<String>,
@@ -162,19 +169,22 @@ fn in_view(row: &PartnerMessageRow, view: MessageView) -> bool {
     }
 }
 
+/// Digits find a handoff number; other text is found in the report number or
+/// the written file's path.
 fn found(row: &PartnerMessageRow, search: &str) -> bool {
     if search.is_empty() {
         return true;
     }
-    if search.bytes().all(|byte| byte.is_ascii_digit()) {
+    if search.bytes().all(|byte| byte.is_ascii_digit()) && row.source_label.is_none() {
         return row
             .source_number
             .is_some_and(|number| number.to_string() == search);
     }
     let search = search.to_lowercase();
-    row.written_path
-        .as_deref()
-        .is_some_and(|path| path.to_lowercase().contains(&search))
+    [row.source_label.as_deref(), row.written_path.as_deref()]
+        .into_iter()
+        .flatten()
+        .any(|text| text.to_lowercase().contains(&search))
 }
 
 fn delivery_rows(
@@ -186,7 +196,8 @@ fn delivery_rows(
          m.message_type, m.source_kind, m.source_id, m.source_number, c.id, c.name, d.reason, \
          d.state, d.attempts, d.next_attempt_at, d.last_error_code, d.written_path, c.active, \
          EXISTS (SELECT 1 FROM ifc_partner_verifications v \
-                 WHERE v.connection_id = c.id AND v.folder = c.folder), c.schedule \
+                 WHERE v.connection_id = c.id AND v.folder = c.folder), c.schedule, \
+         m.source_label \
          FROM ifc_partner_deliveries d \
          JOIN ifc_partner_messages m ON m.id = d.message_id \
          JOIN ifc_partner_connections c ON c.id = d.connection_id \
@@ -196,54 +207,58 @@ fn delivery_rows(
     )?
     .query_map(
         params![input.since, input.connection_id, SCAN_LIMIT],
-        |row| {
-            let state: DeliveryState = row.get(10)?;
-            let attempts: u32 = row.get(11)?;
-            let reason: DeliveryReason = row.get(9)?;
-            // A synthetic test is never queued, so it is never sent again.
-            let resendable = state == DeliveryState::Failed && reason != DeliveryReason::Test;
-            let waiting = if state == DeliveryState::Waiting && attempts == 0 {
-                Some(wait_reason(
-                    row.get(15)?,
-                    row.get(16)?,
-                    &row.get::<_, String>(17)?,
-                ))
-            } else {
-                None
-            };
-            Ok(PartnerMessageRow {
-                delivery_id: Some(row.get(0)?),
-                message_id: row.get(1)?,
-                at: row.get(2)?,
-                message_type: row.get(3)?,
-                source: row.get(4)?,
-                source_id: row.get(5)?,
-                source_number: row.get(6)?,
-                connection: Some(ConnectionRef {
-                    id: row.get(7)?,
-                    name: row.get(8)?,
-                }),
-                reason: Some(reason),
-                transport: transport(state, attempts),
-                outcome_unknown: state == DeliveryState::Written,
-                waiting,
-                attempts,
-                given_up: state == DeliveryState::Failed,
-                next_attempt_at: row.get(12)?,
-                error_code: row.get(13)?,
-                written_path: row.get(14)?,
-                unrouted: false,
-                resolution: None,
-                allowed_actions: if resendable {
-                    vec!["resend_partner_delivery".to_owned()]
-                } else {
-                    Vec::new()
-                },
-            })
-        },
+        delivery_row,
     )?
     .collect::<rusqlite::Result<_>>()
     .map_err(Into::into)
+}
+
+fn delivery_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<PartnerMessageRow> {
+    let state: DeliveryState = row.get(10)?;
+    let attempts: u32 = row.get(11)?;
+    let reason: DeliveryReason = row.get(9)?;
+    // A synthetic test is never queued, so it is never sent again.
+    let resendable = state == DeliveryState::Failed && reason != DeliveryReason::Test;
+    let waiting = if state == DeliveryState::Waiting && attempts == 0 {
+        Some(wait_reason(
+            row.get(15)?,
+            row.get(16)?,
+            &row.get::<_, String>(17)?,
+        ))
+    } else {
+        None
+    };
+    Ok(PartnerMessageRow {
+        delivery_id: Some(row.get(0)?),
+        message_id: row.get(1)?,
+        at: row.get(2)?,
+        message_type: row.get(3)?,
+        source: row.get(4)?,
+        source_id: row.get(5)?,
+        source_number: row.get(6)?,
+        source_label: row.get(18)?,
+        connection: Some(ConnectionRef {
+            id: row.get(7)?,
+            name: row.get(8)?,
+        }),
+        reason: Some(reason),
+        transport: transport(state, attempts),
+        outcome_unknown: state == DeliveryState::Written,
+        waiting,
+        attempts,
+        given_up: state == DeliveryState::Failed,
+        superseded: state == DeliveryState::Superseded,
+        next_attempt_at: row.get(12)?,
+        error_code: row.get(13)?,
+        written_path: row.get(14)?,
+        unrouted: false,
+        resolution: None,
+        allowed_actions: if resendable {
+            vec!["resend_partner_delivery".to_owned()]
+        } else {
+            Vec::new()
+        },
+    })
 }
 
 fn wait_reason(active: bool, verified: bool, schedule: &str) -> WaitReason {
@@ -263,7 +278,7 @@ fn transport(state: DeliveryState, attempts: u32) -> TransportOutcome {
         DeliveryState::Written => TransportOutcome::Written,
         DeliveryState::Failed => TransportOutcome::Failed,
         DeliveryState::Waiting if attempts > 0 => TransportOutcome::Failed,
-        DeliveryState::Waiting => TransportOutcome::NotSent,
+        DeliveryState::Waiting | DeliveryState::Superseded => TransportOutcome::NotSent,
     }
 }
 
@@ -271,13 +286,13 @@ fn unrouted_rows(
     conn: &Connection,
     since: Option<UtcTimestamp>,
 ) -> Result<Vec<PartnerMessageRow>, PartnerError> {
-    conn.prepare_cached(
+    conn.prepare_cached(&format!(
         "SELECT m.id, m.created_at, m.message_type, m.source_kind, m.source_id, m.source_number, \
-         r.resolution FROM ifc_partner_messages m \
+         r.resolution, m.source_label, NOT {NOT_REPLACED} FROM ifc_partner_messages m \
          LEFT JOIN ifc_partner_unrouted_resolutions r ON r.message_id = m.id \
          WHERE m.unrouted = 1 AND (?1 IS NULL OR m.created_at >= ?1) \
-         ORDER BY m.created_at DESC LIMIT ?2",
-    )?
+         ORDER BY m.created_at DESC LIMIT ?2"
+    ))?
     .query_map(params![since, SCAN_LIMIT], |row| {
         Ok(PartnerMessageRow {
             message_id: row.get(0)?,
@@ -287,6 +302,7 @@ fn unrouted_rows(
             source: row.get(3)?,
             source_id: row.get(4)?,
             source_number: row.get(5)?,
+            source_label: row.get(7)?,
             connection: None,
             reason: None,
             transport: TransportOutcome::NotSent,
@@ -294,6 +310,7 @@ fn unrouted_rows(
             waiting: None,
             attempts: 0,
             given_up: false,
+            superseded: row.get(8)?,
             next_attempt_at: None,
             error_code: None,
             written_path: None,
@@ -304,85 +321,4 @@ fn unrouted_rows(
     })?
     .collect::<rusqlite::Result<_>>()
     .map_err(Into::into)
-}
-
-/// The rule that kept a message from its closest connection.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
-pub struct ClosestRule {
-    pub connection: ConnectionRef,
-    pub rule: RoutingRule,
-}
-
-/// A message waiting in Unrouted messages.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
-pub struct UnroutedMessage {
-    pub message_id: PartnerMessageId,
-    pub created_at: UtcTimestamp,
-    pub message_type: PartnerMessageType,
-    pub source: MessageSource,
-    pub source_id: Option<String>,
-    #[ts(type = "number | null")]
-    pub source_number: Option<i64>,
-    pub facts: RoutingFacts,
-    /// Connections of the type its rules were checked against when it was made.
-    #[ts(type = "number")]
-    pub checked_against: i64,
-    /// The connection now missing the fewest rules, and its first unmet rule.
-    pub closest: Option<ClosestRule>,
-    /// Connections that carry its type now, for Send once.
-    pub connections: Vec<ConnectionRef>,
-    /// `resolve_unrouted_message` while it waits.
-    pub allowed_actions: Vec<String>,
-}
-
-/// Messages waiting for a decision, oldest first.
-pub fn list_unrouted_partner_messages(
-    conn: &Connection,
-) -> Result<Vec<UnroutedMessage>, PartnerError> {
-    open_unrouted(conn, UNROUTED_LIMIT)?
-        .into_iter()
-        .map(|message| unrouted_view(conn, message))
-        .collect()
-}
-
-fn unrouted_view(conn: &Connection, message: MessageRow) -> Result<UnroutedMessage, PartnerError> {
-    let candidates = connections(conn, Some(message.message_type))?;
-    let closest = candidates
-        .iter()
-        .filter_map(|connection| {
-            let mut missing = unmet(&connection.settings.rules, &message.facts);
-            let first = missing.next()?.clone();
-            Some((missing.count(), connection, first))
-        })
-        .min_by_key(|(more, _, _)| *more)
-        .map(|(_, connection, rule)| ClosestRule {
-            connection: ConnectionRef {
-                id: connection.id,
-                name: connection.settings.name.clone(),
-            },
-            rule,
-        });
-    Ok(UnroutedMessage {
-        message_id: message.id,
-        created_at: message.created_at,
-        message_type: message.message_type,
-        source: message.source,
-        source_id: message.source_id,
-        source_number: message.source_number,
-        facts: message.facts,
-        checked_against: message.checked_against,
-        closest,
-        connections: candidates
-            .into_iter()
-            .map(|connection| ConnectionRef {
-                id: connection.id,
-                name: connection.settings.name,
-            })
-            .collect(),
-        allowed_actions: vec!["resolve_unrouted_message".to_owned()],
-    })
 }

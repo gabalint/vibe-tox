@@ -84,12 +84,12 @@
           "name": "Queue: reporting and delivery",
           "meaning": "Groups release, report quality and delivery work.",
           "values": "Reports ready for release; Report release blocked; Partial reports outstanding; Report impact review; Report corrections due; Report delivery work; Reports without a destination; Delivery destinations to verify or replace; Report preservation incidents.",
-          "rules": "Read-only list filtered by release, quality, delivery or configuration authority."
+          "rules": "Read-only list filtered by release, quality, delivery or configuration authority. Reports without a destination leaves out a revision that goes to an Interfaces connection."
         },
         {
           "name": "Queue: billing and operations",
           "meaning": "Groups administrative follow-up.",
-          "values": "Billing work; Outbox dead letters; Health checks needing attention; Listening gaps to acknowledge; Recovery reconciliation after a restore; Version awaiting acceptance.",
+          "values": "Billing work; Outbox dead letters; Unrouted interface messages; Interface messages not written; Health checks needing attention; Listening gaps to acknowledge; Recovery reconciliation after a restore; Version awaiting acceptance.",
           "rules": "Read-only list filtered by billing, configuration, analysis, quality or configuration-approval authority."
         },
         {

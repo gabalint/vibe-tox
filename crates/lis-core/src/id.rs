@@ -83,6 +83,15 @@ impl<K> Id<K> {
         }
     }
 
+    /// The same identifier under marker `L`, for a column that holds IDs of several kinds.
+    #[must_use]
+    pub const fn cast<L>(self) -> Id<L> {
+        Id {
+            uuid: self.uuid,
+            kind: PhantomData,
+        }
+    }
+
     /// Accepts only the canonical lowercase hyphenated form, so stored and
     /// compared text always matches.
     fn parse(text: &str) -> Result<Self, ParseError> {

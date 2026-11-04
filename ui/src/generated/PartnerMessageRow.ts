@@ -14,7 +14,11 @@ export type PartnerMessageRow = { messageId: string, deliveryId: string | null,
 /**
  * When it was written, last tried, or made.
  */
-at: string, messageType: PartnerMessageType, source: MessageSource, sourceId: string | null, sourceNumber: number | null, connection: ConnectionRef | null, reason: DeliveryReason | null, transport: TransportOutcome, 
+at: string, messageType: PartnerMessageType, source: MessageSource, sourceId: string | null, sourceNumber: number | null, 
+/**
+ * The report number, for a report's revision or withdrawal.
+ */
+sourceLabel: string | null, connection: ConnectionRef | null, reason: DeliveryReason | null, transport: TransportOutcome, 
 /**
  * True when written: a folder never confirms that the partner used it.
  */
@@ -22,7 +26,12 @@ outcomeUnknown: boolean, waiting: WaitReason | null,
 /**
  * Failed attempts since it was made or sent again.
  */
-attempts: number, givenUp: boolean, nextAttemptAt: string | null, errorCode: string | null, writtenPath: string | null, 
+attempts: number, givenUp: boolean, 
+/**
+ * A newer revision or a withdrawal of the report replaced it before it was
+ * written; it is never written.
+ */
+superseded: boolean, nextAttemptAt: string | null, errorCode: string | null, writtenPath: string | null, 
 /**
  * The message matched no connection.
  */
