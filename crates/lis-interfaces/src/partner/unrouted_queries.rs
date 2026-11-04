@@ -77,6 +77,7 @@ fn unrouted_view(conn: &Connection, message: MessageRow) -> Result<UnroutedMessa
             connection: ConnectionRef {
                 id: connection.id,
                 name: connection.settings.name.clone(),
+                protocol: connection.settings.protocol,
             },
             rule,
         });
@@ -96,6 +97,7 @@ fn unrouted_view(conn: &Connection, message: MessageRow) -> Result<UnroutedMessa
             .map(|connection| ConnectionRef {
                 id: connection.id,
                 name: connection.settings.name,
+                protocol: connection.settings.protocol,
             })
             .collect(),
         allowed_actions: vec!["resolve_unrouted_message".to_owned()],

@@ -5,7 +5,7 @@ import { openRow } from "@/lib/test/grid";
 import { engineError, mockCommands } from "@/lib/test/ipc";
 import { mockGridLayout } from "@/lib/test/layout";
 import { renderRoutes } from "@/lib/test/router";
-import { ADMIN, CONNECTION, CONNECTION_ID, DETAIL, UNROUTED } from "../testData";
+import { ADMIN, CONNECTION, CONNECTION_ID, DETAIL, SFTP, UNROUTED } from "../testData";
 import { ConnectionPage } from "./ConnectionPage";
 import { ConnectionsPage } from "./ConnectionsPage";
 
@@ -53,7 +53,14 @@ describe("Connections (ticket #4555; REQ-RPT-012)", () => {
     expect(direction.hasAttribute("disabled")).toBe(true);
     const folder = within(dialog).getByRole("radio", { name: /Folder/ });
     expect((folder as HTMLInputElement).checked).toBe(true);
-    expect(within(dialog).getByRole("radio", { name: /SFTP/ }).hasAttribute("disabled")).toBe(true);
+    expect(within(dialog).getByRole("radio", { name: /SFTP/ }).hasAttribute("disabled")).toBe(
+      false,
+    );
+    expect(
+      within(dialog)
+        .getByRole("radio", { name: /MLLP – LIS connects/ })
+        .hasAttribute("disabled"),
+    ).toBe(true);
     expect(within(dialog).getByText(/can't send patient data/)).toBeTruthy();
     const actions = within(dialog)
       .getAllByRole("button")
@@ -74,6 +81,57 @@ describe("Connections (ticket #4555; REQ-RPT-012)", () => {
     );
     expect(within(dialog).getByRole("button", { name: /Report released/ })).toBeTruthy();
     expect(within(dialog).getByText(/Corrections and withdrawals go first/)).toBeTruthy();
+  });
+
+  it("offers the SFTP server fields of mockup 6 and tests the server as entered", async () => {
+    const tested = vi.fn(() => ({ problem: null, fileName: null, presentedFingerprint: null }));
+    const { user } = renderPage({ test_partner_sftp: tested }, "/interfaces/connections");
+    await user.click(await screen.findByRole("button", { name: "Add connection" }));
+    const dialog = await screen.findByRole("dialog", { name: "Add connection" });
+    await user.click(within(dialog).getByRole("radio", { name: /SFTP/ }));
+    expect(within(dialog).getByText("3. SFTP server")).toBeTruthy();
+    const port = within(dialog).getByRole("textbox", { name: "Port" }) as HTMLInputElement;
+    expect(port.value).toBe("22");
+    expect(within(dialog).getByRole("button", { name: /SSH key \(recommended\)/ })).toBeTruthy();
+    expect(within(dialog).getByRole("button", { name: "Copy LIS public key" })).toBeTruthy();
+    await user.type(within(dialog).getByRole("textbox", { name: "Server" }), SFTP.host);
+    await user.type(within(dialog).getByRole("textbox", { name: "Username" }), SFTP.username);
+    await user.type(
+      within(dialog).getByRole("textbox", { name: "Server fingerprint" }),
+      SFTP.fingerprint,
+    );
+    await user.type(
+      within(dialog).getByRole("textbox", { name: "Remote folder" }),
+      SFTP.remoteFolder,
+    );
+    await user.click(within(dialog).getByRole("button", { name: "Test connection" }));
+    await waitFor(() => expect(tested).toHaveBeenCalledWith({ input: { server: SFTP } }));
+    expect(
+      await within(dialog).findByText(
+        "✓ Connected, fingerprint matches, test file written and removed.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("shows an SFTP connection's server, remote folder and sign-in as the mockup", async () => {
+    const uploads = {
+      ...CONNECTION,
+      settings: { ...CONNECTION.settings, protocol: "sftp" as const, sftp: SFTP },
+    };
+    renderPage(
+      { get_partner_connection: () => ({ ...DETAIL, connection: uploads }) },
+      `/interfaces/connections/${CONNECTION_ID}`,
+    );
+    expect(
+      await screen.findByText(
+        "Uploads the billing handoff file to Synthetic billing company's SFTP server when a billing handoff is created.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText("SFTP – sftp.clinic-a.example:22")).toBeTruthy();
+    expect(screen.getByText("/inbound/results")).toBeTruthy();
+    expect(
+      screen.getByText("SSH key as vibetox_lab · fingerprint SHA256:8Zq3...f1Kx"),
+    ).toBeTruthy();
   });
 
   it("explains an empty list", async () => {

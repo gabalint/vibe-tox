@@ -8,6 +8,7 @@ use super::error::{PartnerError, invalid};
 use super::model::{
     PartnerConnectionSettings, PartnerMessageType, RoutingRule, RuleCondition, Schedule,
 };
+use super::sftp_settings::valid_sftp;
 use crate::validation::valid_text;
 
 const NAME_MAX: usize = 80;
@@ -57,11 +58,13 @@ pub(crate) fn valid_settings(
     valid_schedule(&settings.schedule)?;
     let file_name_pattern = settings.file_name_pattern.trim().to_owned();
     valid_pattern(&file_name_pattern, &pattern_rules(settings.message_type))?;
+    let sftp = valid_sftp(settings.protocol, settings.sftp)?;
     Ok(PartnerConnectionSettings {
         name,
         partner,
         rules,
         file_name_pattern,
+        sftp,
         ..settings
     })
 }
@@ -246,6 +249,7 @@ mod tests {
                 time: "18:30".to_owned(),
             },
             file_name_pattern: "billing-{handoff}_{date}.json".to_owned(),
+            sftp: None,
         }
     }
 

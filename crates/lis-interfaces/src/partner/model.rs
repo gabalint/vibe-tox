@@ -1,10 +1,8 @@
 //! Connection settings, messages and their read models.
 
-use lis_core::{Id, UtcTimestamp, text_enum};
+use lis_core::{Id, text_enum};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
-
-use crate::model::ChangeStamp;
 
 /// Marker for one connection to an outside system.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -45,7 +43,36 @@ text_enum! {
     PartnerProtocol {
         /// A folder on this computer or on the lab network.
         Folder = "folder",
+        /// The partner's SFTP server, over the internet, encrypted.
+        Sftp = "sftp",
     }
+}
+
+text_enum! {
+    /// How the LIS signs in to an SFTP server.
+    #[ts(export)]
+    SftpAuth {
+        /// The LIS's own SSH key, whose public key the partner's IT installs.
+        Key = "key",
+        /// A password, kept sealed with the installation key.
+        Password = "password",
+    }
+}
+
+/// Where an SFTP connection writes. The server's key must match `fingerprint`, or the LIS
+/// does not connect.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[ts(export)]
+pub struct SftpSettings {
+    pub host: String,
+    pub port: u16,
+    pub username: String,
+    pub auth: SftpAuth,
+    /// `SHA256:` and the base64 digest of the server's key, from the partner's IT.
+    pub fingerprint: String,
+    /// The folder on the server the files go to, such as `/inbound/results`.
+    pub remote_folder: String,
 }
 
 text_enum! {
@@ -196,14 +223,19 @@ pub struct PartnerConnectionSettings {
     pub schedule: Schedule,
     /// For example `billing-{handoff}_{date}.json`.
     pub file_name_pattern: String,
+    /// The server, for the SFTP protocol; `None` for a folder.
+    #[serde(default)]
+    pub sftp: Option<SftpSettings>,
 }
 
 /// Input of [`create_partner_connection`](crate::create_partner_connection).
 #[derive(Debug, Clone)]
 pub struct CreatePartnerConnection {
     pub settings: PartnerConnectionSettings,
-    /// The canonical folder the engine checked.
+    /// The canonical folder the engine checked; empty for SFTP, whose folder is remote.
     pub folder: String,
+    /// The SFTP password, sealed by the engine with the installation key.
+    pub sealed_password: Option<Vec<u8>>,
     /// False for "Save as stopped".
     pub active: bool,
 }
@@ -216,6 +248,8 @@ pub struct UpdatePartnerConnection {
     pub settings: PartnerConnectionSettings,
     /// A newly chosen canonical folder; `None` keeps the current one.
     pub folder: Option<String>,
+    /// A new sealed SFTP password; `None` keeps the current one.
+    pub sealed_password: Option<Vec<u8>>,
     pub reason: String,
 }
 
@@ -245,87 +279,6 @@ pub struct RecordPartnerDestinationCheck {
     /// The person who chose the folder confirms checking it themselves.
     #[serde(default)]
     pub self_approval: bool,
-}
-
-/// The current destination check of a connection.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
-pub struct PartnerVerification {
-    pub method: String,
-    pub verified: ChangeStamp,
-    pub self_approval: bool,
-}
-
-/// Whether a connection works now.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, TS)]
-#[serde(rename_all = "snake_case")]
-#[ts(export)]
-pub enum ConnectionStatus {
-    /// Started, and its latest attempt worked or none was made.
-    Active,
-    /// Stopped by a person.
-    Stopped,
-    /// Started, but its latest attempt failed.
-    Error,
-}
-
-/// The latest attempt to write on a connection.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
-pub struct LastAttempt {
-    pub at: UtcTimestamp,
-    /// `None` when it worked.
-    pub error_code: Option<String>,
-}
-
-/// A connection as configured, with its check and how it is working.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
-pub struct PartnerConnection {
-    pub id: PartnerConnectionId,
-    pub settings: PartnerConnectionSettings,
-    pub folder: String,
-    pub active: bool,
-    #[ts(type = "number")]
-    pub revision: i64,
-    pub status: ConnectionStatus,
-    /// `None` until a check covers the current folder.
-    pub verification: Option<PartnerVerification>,
-    pub last_attempt: Option<LastAttempt>,
-    /// Messages not written yet.
-    pub waiting: u32,
-    /// Messages whose attempts failed, retrying or given up.
-    pub failing: u32,
-    pub last_change: ChangeStamp,
-    /// Commands that apply to the connection as it is now.
-    pub allowed_actions: Vec<String>,
-}
-
-/// One entry of a connection's history.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
-pub struct ConnectionChangeView {
-    #[ts(type = "number")]
-    pub revision: i64,
-    pub change: ConnectionChange,
-    pub changed: ChangeStamp,
-    pub reason: Option<String>,
-    /// The settings that differ from the revision before, by name
-    /// (`name`, `folder`, `rules`, …).
-    pub fields: Vec<String>,
-}
-
-/// A connection with its history, newest first.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export)]
-pub struct PartnerConnectionDetail {
-    pub connection: PartnerConnection,
-    pub history: Vec<ConnectionChangeView>,
 }
 
 /// One LIS value a rule can match, with its display label.

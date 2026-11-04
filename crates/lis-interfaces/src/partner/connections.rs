@@ -9,11 +9,13 @@ use lis_store::CommandContext;
 
 use super::error::{PartnerError, invalid};
 use super::model::{
-    ConnectionChange, CreatePartnerConnection, PartnerConnectionId, RecordPartnerDestinationCheck,
-    SetPartnerConnectionActive, UpdatePartnerConnection,
+    ConnectionChange, CreatePartnerConnection, PartnerConnectionId, PartnerConnectionSettings,
+    RecordPartnerDestinationCheck, SetPartnerConnectionActive, SftpAuth, SftpSettings,
+    UpdatePartnerConnection,
 };
 use super::repo::{self, ChangeRow, ConnectionRow, VerificationRow};
 use super::settings::{valid_folder, valid_settings};
+use super::sftp_settings::destination_of;
 
 const REASON_MAX: usize = 500;
 const RECORD_TYPE: &str = "partner_connection";
@@ -27,13 +29,22 @@ pub fn create_partner_connection(
     ctx.require(Capability::ManageConfiguration)?;
     let actor = person(ctx)?;
     let settings = valid_settings(input.settings)?;
-    valid_folder(&input.folder)?;
+    let folder = match &settings.sftp {
+        Some(sftp) => sftp.remote_folder.clone(),
+        None => {
+            valid_folder(&input.folder)?;
+            input.folder
+        }
+    };
     unique_name(ctx, &settings.name, None)?;
+    let sealed_password = password_for(&settings, input.sealed_password, None)?;
     let row = ConnectionRow {
         id: PartnerConnectionId::generate(),
+        destination: destination_of(&settings, &folder),
         settings,
-        folder: input.folder,
+        folder,
         folder_set_by: actor,
+        sealed_password,
         active: input.active,
         revision: 1,
     };
@@ -47,8 +58,9 @@ pub fn create_partner_connection(
     Ok(row.id)
 }
 
-/// Changes a connection's settings, and its folder when one was chosen. A new
-/// folder needs its own destination check before patient data goes there.
+/// Changes a connection's settings, its folder when one was chosen, and its SFTP password
+/// when one was given. A new destination (folder, or server, user, port, remote folder or
+/// fingerprint) needs its own destination check before patient data goes there.
 pub fn update_partner_connection(
     ctx: &mut CommandContext<'_>,
     input: UpdatePartnerConnection,
@@ -66,18 +78,36 @@ pub fn update_partner_connection(
         ));
     }
     unique_name(ctx, &settings.name, Some(current.id))?;
-    let (folder, folder_set_by) = match input.folder {
-        Some(folder) if folder != current.folder => {
+    let folder = match (&settings.sftp, input.folder) {
+        (Some(sftp), _) => sftp.remote_folder.clone(),
+        (None, Some(folder)) => {
             valid_folder(&folder)?;
-            (folder, actor)
+            folder
         }
-        Some(_) | None => (current.folder.clone(), current.folder_set_by.clone()),
+        (None, None) if current.settings.sftp.is_none() => current.folder.clone(),
+        (None, None) => return Err(invalid("folder", "required", "Choose the folder.")),
     };
-    let folder_changed = folder != current.folder;
+    // A kept password is never sent to another server or account: those need it again.
+    let account = |sftp: &Option<SftpSettings>| {
+        sftp.as_ref()
+            .map(|sftp| (sftp.host.clone(), sftp.port, sftp.username.clone()))
+    };
+    let previous = (account(&settings.sftp) == account(&current.settings.sftp))
+        .then(|| current.sealed_password.clone())
+        .flatten();
+    let sealed_password = password_for(&settings, input.sealed_password, previous)?;
+    let destination = destination_of(&settings, &folder);
+    let destination_changed = destination != current.destination;
     let row = ConnectionRow {
         settings,
         folder,
-        folder_set_by,
+        folder_set_by: if destination_changed {
+            actor
+        } else {
+            current.folder_set_by.clone()
+        },
+        sealed_password,
+        destination,
         revision: current.revision + 1,
         ..current
     };
@@ -87,10 +117,29 @@ pub fn update_partner_connection(
         event("interfaces.update_connection", &row)
             .old_revision(current.revision)
             .new_revision(row.revision)
-            .detail("folder_changed", AuditDetail::boolean(folder_changed))
+            .detail("folder_changed", AuditDetail::boolean(destination_changed))
             .reason(reason),
     )?;
     Ok(row.id)
+}
+
+/// The sealed password to keep: only for SFTP password sign-in, the new one or else the
+/// one already kept. The engine sealed it; the password itself never reaches this module.
+fn password_for(
+    settings: &PartnerConnectionSettings,
+    new: Option<Vec<u8>>,
+    kept: Option<Vec<u8>>,
+) -> Result<Option<Vec<u8>>, PartnerError> {
+    match settings.sftp.as_ref().map(|sftp| sftp.auth) {
+        Some(SftpAuth::Password) => new.or(kept).map(Some).ok_or_else(|| {
+            invalid(
+                "settings.sftp.password",
+                "required",
+                "Enter the password for this server.",
+            )
+        }),
+        Some(SftpAuth::Key) | None => Ok(None),
+    }
 }
 
 /// Starts or stops a connection. A stopped connection writes nothing; its
@@ -132,7 +181,7 @@ pub fn set_partner_connection_active(
     Ok(row.id)
 }
 
-/// Records how the current folder was confirmed as the partner's
+/// Records how the current destination was confirmed as the partner's
 /// (REQ-RPT-012). A second person checks it, or the person who chose it where
 /// the laboratory's separation-of-duties policy allows and they confirm it
 /// (ADR 0015); the event is then marked as a self-approval.
@@ -145,7 +194,7 @@ pub fn record_partner_destination_check(
     let method =
         required_text("method", &input.method, REASON_MAX).map_err(PartnerError::Invalid)?;
     let current = current(ctx, input.connection_id, input.expected_revision)?;
-    if repo::verification(ctx.tx(), current.id, &current.folder)?.is_some() {
+    if repo::verification(ctx.tx(), current.id, &current.destination)?.is_some() {
         return Err(PartnerError::WrongState(
             "The destination check for this folder is already recorded.",
         ));
@@ -157,7 +206,7 @@ pub fn record_partner_destination_check(
     repo::insert_verification(
         ctx.tx(),
         current.id,
-        &current.folder,
+        &current.destination,
         &VerificationRow {
             method: method.clone(),
             verified_by: actor,

@@ -154,6 +154,8 @@ pub const COMMANDS: &[CommandSpec] = &[
     crate::commands::partner::GET_PARTNER_CONNECTION,
     crate::commands::partner::CHOOSE_PARTNER_FOLDER,
     crate::commands::partner::TEST_PARTNER_FOLDER,
+    crate::commands::partner::TEST_PARTNER_SFTP,
+    crate::commands::partner::GET_LIS_SFTP_KEY,
     crate::commands::partner::CREATE_PARTNER_CONNECTION,
     crate::commands::partner::UPDATE_PARTNER_CONNECTION,
     crate::commands::partner::SET_PARTNER_CONNECTION_ACTIVE,

@@ -4,10 +4,21 @@ import type { PartnerConnectionDetail } from "@/generated/PartnerConnectionDetai
 import type { PartnerMappings } from "@/generated/PartnerMappings";
 import type { PartnerMessageRow } from "@/generated/PartnerMessageRow";
 import type { SessionInfo } from "@/generated/SessionInfo";
+import type { SftpSettings } from "@/generated/SftpSettings";
 import type { UnroutedMessage } from "@/generated/UnroutedMessage";
 
 export const CONNECTION_ID = "01a1a000-0000-7000-8000-000000000001";
 const ME = "01a1a000-0000-7000-8000-0000000000aa";
+
+/** A synthetic partner server, as mockup 6 fills it. */
+export const SFTP: SftpSettings = {
+  host: "sftp.clinic-a.example",
+  port: 22,
+  username: "vibetox_lab",
+  auth: "key",
+  fingerprint: `SHA256:8Zq3${"A".repeat(35)}f1Kx`,
+  remoteFolder: "/inbound/results",
+};
 
 export const ADMIN: SessionInfo = {
   userId: ME,
@@ -29,8 +40,10 @@ export const CONNECTION: PartnerConnection = {
     rules: [{ field: "client", condition: "equals", value: "CLINIC-A" }],
     schedule: { kind: "immediately" },
     fileNamePattern: "billing-{handoff}_{date}.json",
+    sftp: null,
   },
   folder: "/srv/billing/out",
+  hasPassword: false,
   active: false,
   revision: 1,
   status: "stopped",
@@ -114,7 +127,7 @@ export const WRITTEN: PartnerMessageRow = {
   sourceId: "01a1a000-0000-7000-8000-000000000012",
   sourceNumber: 12,
   sourceLabel: null,
-  connection: { id: CONNECTION_ID, name: "Billing - RCM" },
+  connection: { id: CONNECTION_ID, name: "Billing - RCM", protocol: "folder" },
   reason: "routed",
   transport: "written",
   outcomeUnknown: true,
@@ -154,7 +167,7 @@ export const CORRECTION: PartnerMessageRow = {
   sourceId: "01a1a000-0000-7000-8000-000000000042",
   sourceNumber: 2,
   sourceLabel: "A26000005-U",
-  connection: { id: CONNECTION_ID, name: "Report PDFs - all clients" },
+  connection: { id: CONNECTION_ID, name: "Report PDFs - all clients", protocol: "folder" },
   reason: "follow_up",
   writtenPath: "/srv/reports/out/A26000005-U_r2_20261103.pdf",
 };
@@ -175,9 +188,9 @@ export const UNROUTED: UnroutedMessage = {
   },
   checkedAgainst: 1,
   closest: {
-    connection: { id: CONNECTION_ID, name: "Billing - RCM" },
+    connection: { id: CONNECTION_ID, name: "Billing - RCM", protocol: "folder" },
     rule: { field: "client", condition: "equals", value: "CLINIC-A" },
   },
-  connections: [{ id: CONNECTION_ID, name: "Billing - RCM" }],
+  connections: [{ id: CONNECTION_ID, name: "Billing - RCM", protocol: "folder" }],
   allowedActions: ["resolve_unrouted_message"],
 };

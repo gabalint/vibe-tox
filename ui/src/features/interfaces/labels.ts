@@ -3,9 +3,13 @@
 import type { Tone } from "@/components/tones";
 import type { ConnectionChange } from "@/generated/ConnectionChange";
 import type { ConnectionStatus } from "@/generated/ConnectionStatus";
+import type { FolderTestResult } from "@/generated/FolderTestResult";
 import type { MessageSource } from "@/generated/MessageSource";
+import type { PartnerConnection } from "@/generated/PartnerConnection";
+import type { PartnerConnectionSettings } from "@/generated/PartnerConnectionSettings";
 import type { PartnerMessageRow } from "@/generated/PartnerMessageRow";
 import type { PartnerMessageType } from "@/generated/PartnerMessageType";
+import type { PartnerProtocol } from "@/generated/PartnerProtocol";
 import type { RoutingRule } from "@/generated/RoutingRule";
 import type { RuleCondition } from "@/generated/RuleCondition";
 import type { RuleField } from "@/generated/RuleField";
@@ -57,8 +61,14 @@ const WRITES: Record<PartnerMessageType, { file: string; message: string; when: 
 };
 
 /** The connection page's one-line description, as in the mockup. */
-export const connectionDescription = (type: PartnerMessageType, partner: string) =>
-  `Writes ${WRITES[type].file} to ${partner}'s folder when ${WRITES[type].when}.`;
+export const connectionDescription = ({
+  messageType,
+  partner,
+  protocol,
+}: PartnerConnectionSettings) =>
+  protocol === "sftp"
+    ? `Uploads ${WRITES[messageType].file} to ${partner}'s SFTP server when ${WRITES[messageType].when}.`
+    : `Writes ${WRITES[messageType].file} to ${partner}'s folder when ${WRITES[messageType].when}.`;
 
 /** The message with its format, such as "Billing JSON (bil-handoff-v2)". */
 export const messageText = (type: PartnerMessageType) => WRITES[type].message;
@@ -83,7 +93,19 @@ export const FILE_NAMES: Record<PartnerMessageType, { pattern: string; hint: str
   },
 };
 
-export const PROTOCOLS = { folder: "Folder" } as const;
+export const PROTOCOLS: Record<PartnerProtocol, string> = { folder: "Folder", sftp: "SFTP" };
+
+/** Where a connection writes, as the Connections table shows it: a folder, or `host:folder`. */
+export function destinationText({ folder, settings }: PartnerConnection): string {
+  const sftp = settings.sftp;
+  if (sftp === null) return folder;
+  const port = sftp.port === 22 ? "" : `:${sftp.port}`;
+  return `${sftp.host}${port}:${sftp.remoteFolder}`;
+}
+
+/** A fingerprint shortened as in the mockup, such as `SHA256:8Zq3...f1Kx`. */
+export const shortFingerprint = (fingerprint: string) =>
+  `${fingerprint.slice(0, 11)}...${fingerprint.slice(-4)}`;
 
 export const STATUS: Record<ConnectionStatus, Labelled> = {
   active: { label: "Active", tone: "success" },
@@ -147,9 +169,23 @@ const PROBLEMS: Record<string, string> = {
   name_taken: "No free file name",
   write_failed: "The file could not be written",
   file_unavailable: "The stored message file is missing",
+  server_unreachable: "The server did not answer; check the server, port and network",
+  fingerprint_mismatch: "The server's fingerprint is not the one entered",
+  sign_in_failed: "The server refused the username, key or password",
+  credential_unavailable:
+    "No usable sign-in on this computer: copy the LIS public key first, or enter the password again",
 };
 
 export const problemText = (code: string) => PROBLEMS[code] ?? code.replaceAll("_", " ");
+
+/** The line after Test connection, as in mockup 6. */
+export function sftpTestText({ problem, presentedFingerprint }: FolderTestResult): string {
+  if (problem === null) return "✓ Connected, fingerprint matches, test file written and removed.";
+  if (presentedFingerprint !== null) {
+    return `✗ The server's fingerprint is ${presentedFingerprint}, not the one entered. Check it with the partner's IT.`;
+  }
+  return `✗ Not usable: ${problemText(problem)}.`;
+}
 
 const WAITING: Record<WaitReason, string> = {
   stopped: "Connection stopped",
@@ -167,11 +203,14 @@ const RESOLUTIONS: Record<UnroutedResolution, string> = {
   dismissed: "Dismissed",
 };
 
-/** Did it leave: what the folder can prove. */
+/** Did it leave: what the folder or SFTP server can prove. */
 export function transportOf(row: PartnerMessageRow): Labelled {
   switch (row.transport) {
     case "written":
-      return { label: "Written", tone: "neutral" };
+      return {
+        label: row.connection?.protocol === "sftp" ? "Uploaded" : "Written",
+        tone: "neutral",
+      };
     case "failed":
       return { label: "Failed", tone: "danger" };
     case "not_sent":

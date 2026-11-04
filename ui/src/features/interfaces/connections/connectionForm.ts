@@ -3,9 +3,12 @@
 import type { PartnerConnection } from "@/generated/PartnerConnection";
 import type { PartnerConnectionSettings } from "@/generated/PartnerConnectionSettings";
 import type { PartnerMessageType } from "@/generated/PartnerMessageType";
+import type { PartnerProtocol } from "@/generated/PartnerProtocol";
 import type { RuleCondition } from "@/generated/RuleCondition";
 import type { RuleField } from "@/generated/RuleField";
 import type { Schedule } from "@/generated/Schedule";
+import type { SftpAuth } from "@/generated/SftpAuth";
+import type { SftpSettings } from "@/generated/SftpSettings";
 import type { FieldPaths } from "@/lib/errors";
 
 interface RuleValues {
@@ -14,18 +17,31 @@ interface RuleValues {
   value: string;
 }
 
+/** The SFTP server as entered; `password` is sent apart from the settings and never shown. */
+export interface SftpValues {
+  host: string;
+  port: string;
+  username: string;
+  auth: SftpAuth;
+  fingerprint: string;
+  remoteFolder: string;
+  password: string;
+}
+
 export interface ConnectionValues {
   name: string;
   partner: string;
   messageType: string;
   /** Shown only: the message type fixes it. */
   direction: string;
+  protocol: PartnerProtocol;
   /** Shown only: the message type fixes what makes a message. */
   sendWhen: string;
   /** The chosen folder, shown; the engine keeps it behind `folderChoice`. */
   folder: string;
   /** The handle of a newly chosen folder; empty keeps the current one. */
   folderChoice: string;
+  sftp: SftpValues;
   rules: RuleValues[];
   schedule: { kind: string; minutes: string; time: string };
   fileNamePattern: string;
@@ -35,18 +51,33 @@ export interface ConnectionValues {
 /** Engine paths `settings.x` are form fields `x`; the folder handle shows on the folder. */
 export const FIELD_PATHS: FieldPaths = { settings: "", folderChoice: "folder" };
 
+function toSftpValues(sftp: SftpSettings | null | undefined): SftpValues {
+  return {
+    host: sftp?.host ?? "",
+    port: String(sftp?.port ?? 22),
+    username: sftp?.username ?? "",
+    auth: sftp?.auth ?? "key",
+    fingerprint: sftp?.fingerprint ?? "",
+    remoteFolder: sftp?.remoteFolder ?? "",
+    password: "",
+  };
+}
+
 export function toValues(connection: PartnerConnection | null): ConnectionValues {
   const settings = connection?.settings;
   const schedule = settings?.schedule;
+  const protocol = settings?.protocol ?? "folder";
   return {
     name: settings?.name ?? "",
     partner: settings?.partner ?? "",
     messageType: settings?.messageType ?? "",
     direction: "Out – LIS sends",
+    protocol,
     // The message type fixes what makes a message; its option shares the type's key.
     sendWhen: settings?.messageType ?? "",
-    folder: connection?.folder ?? "",
+    folder: protocol === "folder" ? (connection?.folder ?? "") : "",
     folderChoice: "",
+    sftp: toSftpValues(settings?.sftp),
     rules: settings?.rules.map((rule) => ({ ...rule })) ?? [],
     schedule: {
       kind: schedule?.kind ?? "immediately",
@@ -69,16 +100,27 @@ function toSchedule(values: ConnectionValues["schedule"]): Schedule {
   }
 }
 
+/** The server settings as entered; the engine trims and checks them. */
+export function toSftp({ password: _, ...values }: SftpValues): SftpSettings {
+  return { ...values, port: Number(values.port) };
+}
+
+/** The password to send: typed, for password sign-in; otherwise none (a saved one is kept). */
+export function typedPassword(values: SftpValues): string | undefined {
+  return values.auth === "password" && values.password !== "" ? values.password : undefined;
+}
+
 export function toSettings(values: ConnectionValues): PartnerConnectionSettings {
   return {
     name: values.name.trim(),
     partner: values.partner.trim(),
     messageType: values.messageType as PartnerMessageType,
-    protocol: "folder",
+    protocol: values.protocol,
     rules: values.rules.flatMap(({ field, condition, value }) =>
       field === "" || condition === "" ? [] : [{ field, condition, value: value.trim() }],
     ),
     schedule: toSchedule(values.schedule),
     fileNamePattern: values.fileNamePattern.trim(),
+    sftp: values.protocol === "sftp" ? toSftp(values.sftp) : null,
   };
 }

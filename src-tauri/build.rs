@@ -133,6 +133,8 @@ const APP_COMMANDS: &[&str] = &[
     "get_partner_connection",
     "choose_partner_folder",
     "test_partner_folder",
+    "test_partner_sftp",
+    "get_lis_sftp_key",
     "create_partner_connection",
     "update_partner_connection",
     "set_partner_connection_active",

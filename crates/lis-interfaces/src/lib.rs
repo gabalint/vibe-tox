@@ -120,6 +120,11 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "hl7_results",
         sql: include_str!("../migrations/0008_hl7_results.sql"),
     },
+    Migration {
+        version: 9,
+        name: "sftp_connections",
+        sql: include_str!("../migrations/0009_sftp_connections.sql"),
+    },
 ];
 
 /// Schema descriptor for tables owned by this crate.

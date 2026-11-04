@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/Button";
 import { FormDialog } from "@/components/FormDialog";
 import { ReasonField } from "@/components/ReasonField";
@@ -11,10 +11,17 @@ import type { UpdatePartnerConnectionInput } from "@/generated/UpdatePartnerConn
 import { useCommandMutation } from "@/lib/commands";
 import { CONNECTION_QUERIES, CREATE_CONNECTION, UPDATE_CONNECTION } from "../contract";
 import { Box, GeneralSection, WhenSection } from "./ConnectionSections";
-import { type ConnectionValues, FIELD_PATHS, toSettings, toValues } from "./connectionForm";
+import {
+  type ConnectionValues,
+  FIELD_PATHS,
+  toSettings,
+  toValues,
+  typedPassword,
+} from "./connectionForm";
 import { FolderFields } from "./FolderFields";
 import { ProtocolCards } from "./ProtocolCards";
 import { RuleFields } from "./RuleFields";
+import { SftpFields } from "./SftpFields";
 
 interface ConnectionDialogProps {
   /** The connection to change, or `null` to add one. */
@@ -25,10 +32,10 @@ interface ConnectionDialogProps {
 
 /**
  * Adds or changes a connection (REQ-INT-001, REQ-RPT-012), laid out as the Interfaces mockup:
- * numbered boxes for general, protocol, folder, routing rules and when to send, and the note
- * beside Cancel, Save as stopped and Save. A new connection is saved started, or stopped with
- * Save as stopped; either way it writes no patient data until its destination check is
- * recorded. A change needs a reason; a new folder needs a new destination check.
+ * numbered boxes for general, protocol, folder or SFTP server, routing rules and when to send,
+ * and the note beside Cancel, Save as stopped and Save. A new connection is saved started, or
+ * stopped with Save as stopped; either way it writes no patient data until its destination
+ * check is recorded. A change needs a reason; a new folder or server needs a new check.
  */
 export function ConnectionDialog({ connection, onClose, onSaved }: ConnectionDialogProps) {
   const toast = useToast();
@@ -48,8 +55,17 @@ export function ConnectionDialog({ connection, onClose, onSaved }: ConnectionDia
     onSaved?.(detail);
     onClose();
   };
+  const protocol = useWatch({ control: form.control, name: "protocol" });
   const submit = form.handleSubmit((values) => {
     const settings = toSettings(values);
+    const password = values.protocol === "sftp" ? typedPassword(values.sftp) : undefined;
+    // A folder comes only from the dialog's handle; an SFTP connection has none.
+    const destination = {
+      ...(values.protocol === "folder" && values.folderChoice
+        ? { folderChoice: values.folderChoice }
+        : {}),
+      ...(password ? { password } : {}),
+    };
     if (connection) {
       update.mutate(
         {
@@ -57,15 +73,17 @@ export function ConnectionDialog({ connection, onClose, onSaved }: ConnectionDia
             connectionId: connection.id,
             expectedRevision: connection.revision,
             settings,
-            ...(values.folderChoice ? { folderChoice: values.folderChoice } : {}),
+            ...destination,
             reason: values.reason.trim(),
           },
         },
         { onSuccess: saved },
       );
     } else {
-      const input = { settings, folderChoice: values.folderChoice, active: active.current };
-      create.mutate({ input }, { onSuccess: saved });
+      create.mutate(
+        { input: { settings, ...destination, active: active.current } },
+        { onSuccess: saved },
+      );
     }
   });
   const saveStopped = () => {
@@ -99,9 +117,15 @@ export function ConnectionDialog({ connection, onClose, onSaved }: ConnectionDia
       <Box title="2. Protocol">
         <ProtocolCards />
       </Box>
-      <Box title="3. Folder">
-        <FolderFields connectionId={connection?.id ?? null} />
-      </Box>
+      {protocol === "sftp" ? (
+        <Box title="3. SFTP server">
+          <SftpFields connection={connection} />
+        </Box>
+      ) : (
+        <Box title="3. Folder">
+          <FolderFields connectionId={connection?.id ?? null} />
+        </Box>
+      )}
       <Box title="4. Routing rules – which messages go here">
         <RuleFields />
       </Box>

@@ -36,6 +36,7 @@ fn settings(rules: Vec<RoutingRule>) -> PartnerConnectionSettings {
         rules,
         schedule: Schedule::Immediately,
         file_name_pattern: PATTERN.to_owned(),
+        sftp: None,
     }
 }
 
@@ -65,7 +66,8 @@ impl Pdfs {
         let created = engine
             .create_partner_connection(CreatePartnerConnectionInput {
                 settings,
-                folder_choice: chosen.folder_choice,
+                folder_choice: Some(chosen.folder_choice),
+                password: None,
                 active: true,
             })
             .await
@@ -214,6 +216,7 @@ async fn only_another_client(pdfs: &Pdfs) {
                 value: "SYN-OTHER".to_owned(),
             }]),
             folder_choice: None,
+            password: None,
             reason: "Synthetic: only another client".to_owned(),
         })
         .await

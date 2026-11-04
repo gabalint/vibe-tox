@@ -944,10 +944,11 @@ fn migration_keeps_the_receipt_guards() {
     for object in &before {
         assert!(after.contains(object), "{object} lost");
     }
-    // Partner connection tables come with their own migration and guards.
+    // Partner connection tables and the LIS's SFTP key come with their own migrations and
+    // guards.
     let new: Vec<_> = after
         .iter()
-        .filter(|o| !before.contains(o) && !o.contains("ifc_partner"))
+        .filter(|o| !before.contains(o) && !o.contains("ifc_partner") && !o.contains("ifc_sftp"))
         .collect();
     assert_eq!(
         new,

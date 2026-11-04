@@ -2,10 +2,12 @@
 
 use lis_core::UtcTimestamp;
 use rusqlite::{Connection, OptionalExtension, Row, params};
+use sha2::{Digest, Sha256};
 
 use super::error::PartnerError;
 use super::model::{
     ConnectionChange, PartnerConnectionId, PartnerConnectionSettings, PartnerMessageType, Schedule,
+    SftpAuth, SftpSettings,
 };
 
 /// A connection as stored.
@@ -13,8 +15,15 @@ use super::model::{
 pub(crate) struct ConnectionRow {
     pub(crate) id: PartnerConnectionId,
     pub(crate) settings: PartnerConnectionSettings,
+    /// The local folder, or the remote folder (also in `settings.sftp`).
     pub(crate) folder: String,
+    /// Who chose the current destination.
     pub(crate) folder_set_by: String,
+    /// The SFTP password, sealed with the installation key.
+    pub(crate) sealed_password: Option<Vec<u8>>,
+    /// What a destination check covers: the folder, or the server, user, port, remote
+    /// folder and fingerprint ([`destination_of`](super::settings::destination_of)).
+    pub(crate) destination: String,
     pub(crate) active: bool,
     pub(crate) revision: i64,
 }
@@ -38,7 +47,8 @@ pub(crate) struct VerificationRow {
 }
 
 const COLUMNS: &str = "id, name, partner, message_type, protocol, folder, folder_set_by, rules, \
-     schedule, schedule_minutes, schedule_time, file_name_pattern, active, revision";
+     schedule, schedule_minutes, schedule_time, file_name_pattern, active, revision, sftp_host, \
+     sftp_port, sftp_username, sftp_auth, sftp_fingerprint, sftp_password, destination";
 
 fn connection_row(row: &Row<'_>) -> rusqlite::Result<(ConnectionRow, String)> {
     let schedule = match row.get::<_, String>(8)?.as_str() {
@@ -49,6 +59,18 @@ fn connection_row(row: &Row<'_>) -> rusqlite::Result<(ConnectionRow, String)> {
         _ => Schedule::Immediately,
     };
     let rules: String = row.get(7)?;
+    let folder: String = row.get(5)?;
+    let sftp = match row.get::<_, Option<String>>(14)? {
+        Some(host) => Some(SftpSettings {
+            host,
+            port: row.get(15)?,
+            username: row.get(16)?,
+            auth: row.get(17)?,
+            fingerprint: row.get(18)?,
+            remote_folder: folder.clone(),
+        }),
+        None => None,
+    };
     Ok((
         ConnectionRow {
             id: row.get(0)?,
@@ -60,14 +82,39 @@ fn connection_row(row: &Row<'_>) -> rusqlite::Result<(ConnectionRow, String)> {
                 rules: Vec::new(),
                 schedule,
                 file_name_pattern: row.get(11)?,
+                sftp,
             },
-            folder: row.get(5)?,
+            folder,
             folder_set_by: row.get(6)?,
+            sealed_password: row.get(19)?,
+            destination: row.get(20)?,
             active: row.get(12)?,
             revision: row.get(13)?,
         },
         rules,
     ))
+}
+
+/// The SFTP columns, all `None` for a folder.
+type SftpColumns<'a> = (
+    Option<&'a str>,
+    Option<u16>,
+    Option<&'a str>,
+    Option<SftpAuth>,
+    Option<&'a str>,
+);
+
+fn sftp_columns(settings: &PartnerConnectionSettings) -> SftpColumns<'_> {
+    match &settings.sftp {
+        Some(sftp) => (
+            Some(&sftp.host),
+            Some(sftp.port),
+            Some(&sftp.username),
+            Some(sftp.auth),
+            Some(&sftp.fingerprint),
+        ),
+        None => (None, None, None, None, None),
+    }
 }
 
 fn with_rules((mut row, rules): (ConnectionRow, String)) -> Result<ConnectionRow, PartnerError> {
@@ -87,12 +134,39 @@ pub(crate) fn insert_connection(
     conn: &Connection,
     row: &ConnectionRow,
 ) -> Result<(), PartnerError> {
-    let (schedule, minutes, time) = schedule_columns(&row.settings.schedule);
-    conn.execute(
+    write_connection(
+        conn,
         &format!(
-            "INSERT INTO ifc_partner_connections ({COLUMNS}) \
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)"
+            "INSERT INTO ifc_partner_connections ({COLUMNS}) VALUES (?1, ?2, ?3, ?4, ?5, ?6, \
+             ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21)"
         ),
+        row,
+    )
+}
+
+/// Every column but the ID; the message type cannot change, the protocol can.
+pub(crate) fn update_connection(
+    conn: &Connection,
+    row: &ConnectionRow,
+) -> Result<(), PartnerError> {
+    write_connection(
+        conn,
+        "UPDATE ifc_partner_connections SET name = ?2, partner = ?3, message_type = ?4, \
+         protocol = ?5, folder = ?6, folder_set_by = ?7, rules = ?8, schedule = ?9, \
+         schedule_minutes = ?10, schedule_time = ?11, file_name_pattern = ?12, active = ?13, \
+         revision = ?14, sftp_host = ?15, sftp_port = ?16, sftp_username = ?17, \
+         sftp_auth = ?18, sftp_fingerprint = ?19, sftp_password = ?20, destination = ?21 \
+         WHERE id = ?1",
+        row,
+    )
+}
+
+/// Runs `sql` with the row's values as `?1`–`?21`, in [`COLUMNS`] order.
+fn write_connection(conn: &Connection, sql: &str, row: &ConnectionRow) -> Result<(), PartnerError> {
+    let (schedule, minutes, time) = schedule_columns(&row.settings.schedule);
+    let (host, port, username, auth, fingerprint) = sftp_columns(&row.settings);
+    conn.execute(
+        sql,
         params![
             row.id,
             row.settings.name,
@@ -107,35 +181,14 @@ pub(crate) fn insert_connection(
             time,
             row.settings.file_name_pattern,
             row.active,
-            row.revision
-        ],
-    )?;
-    Ok(())
-}
-
-pub(crate) fn update_connection(
-    conn: &Connection,
-    row: &ConnectionRow,
-) -> Result<(), PartnerError> {
-    let (schedule, minutes, time) = schedule_columns(&row.settings.schedule);
-    conn.execute(
-        "UPDATE ifc_partner_connections SET name = ?2, partner = ?3, folder = ?4, \
-         folder_set_by = ?5, rules = ?6, schedule = ?7, schedule_minutes = ?8, \
-         schedule_time = ?9, file_name_pattern = ?10, active = ?11, revision = ?12 \
-         WHERE id = ?1",
-        params![
-            row.id,
-            row.settings.name,
-            row.settings.partner,
-            row.folder,
-            row.folder_set_by,
-            serde_json::to_string(&row.settings.rules)?,
-            schedule,
-            minutes,
-            time,
-            row.settings.file_name_pattern,
-            row.active,
-            row.revision
+            row.revision,
+            host,
+            port,
+            username,
+            auth,
+            fingerprint,
+            row.sealed_password,
+            row.destination
         ],
     )?;
     Ok(())
@@ -284,12 +337,20 @@ pub(crate) fn verification(
 }
 
 /// The settings a history entry keeps: everything a person set, plus the
-/// folder and whether the connection was started.
+/// folder, whether a password was set (never the password) and whether the
+/// connection was started.
 pub(crate) fn snapshot(row: &ConnectionRow) -> Result<String, PartnerError> {
     let mut value = serde_json::to_value(&row.settings)?;
     if let Some(object) = value.as_object_mut() {
         object.insert("folder".to_owned(), row.folder.clone().into());
         object.insert("active".to_owned(), row.active.into());
+        if let Some(sealed) = &row.sealed_password {
+            // Each new password seals differently, so a changed one shows in History.
+            object.insert(
+                "password".to_owned(),
+                hex::encode(Sha256::digest(sealed)).into(),
+            );
+        }
     }
     Ok(value.to_string())
 }

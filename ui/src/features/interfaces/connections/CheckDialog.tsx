@@ -4,15 +4,17 @@ import type { PartnerConnection } from "@/generated/PartnerConnection";
 import type { RecordPartnerDestinationCheck } from "@/generated/RecordPartnerDestinationCheck";
 import { CommandDialog } from "@/lib/CommandDialog";
 import { CONNECTION_QUERIES, MESSAGE_QUERIES, RECORD_CHECK } from "../contract";
+import { destinationText } from "../labels";
 
 interface CheckValues {
   method: string;
 }
 
 /**
- * Records how the connection's current folder was confirmed as the partner's (REQ-RPT-012),
- * before any patient data is written there. A second person records it, or the person who
- * chose the folder where the laboratory's policy allows and they confirm it (ADR 0015).
+ * Records how the connection's current folder, or SFTP server with its user, folder and
+ * fingerprint, was confirmed as the partner's (REQ-RPT-012), before any patient data is
+ * written there. A second person records it, or the person who chose the destination where
+ * the laboratory's policy allows and they confirm it (ADR 0015).
  */
 export function CheckDialog({
   connection,
@@ -21,6 +23,7 @@ export function CheckDialog({
   connection: PartnerConnection;
   onClose: () => void;
 }) {
+  const { sftp } = connection.settings;
   return (
     <CommandDialog<CheckValues, RecordPartnerDestinationCheck>
       title="Record destination check"
@@ -36,9 +39,16 @@ export function CheckDialog({
       successTitle="Destination check recorded"
       onClose={onClose}
     >
-      <p>
-        Folder: <strong>{connection.folder}</strong>
-      </p>
+      {sftp === null ? (
+        <p>
+          Folder: <strong>{connection.folder}</strong>
+        </p>
+      ) : (
+        <p>
+          SFTP server: <strong>{destinationText(connection)}</strong> as{" "}
+          <strong>{sftp.username}</strong>, fingerprint <strong>{sftp.fingerprint}</strong>
+        </p>
+      )}
       <TextInput
         name="method"
         label="How it was confirmed"

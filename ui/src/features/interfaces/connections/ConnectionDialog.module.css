@@ -72,6 +72,14 @@
   max-width: 28rem;
 }
 
+/* SFTP: the server fingerprint and the remote folder side by side, each with its hint. */
+.pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+
 /* Routing rules: their labels are hidden, so the first row keeps the room a label would take
    under the section title, as in the other sections. */
 .rules {

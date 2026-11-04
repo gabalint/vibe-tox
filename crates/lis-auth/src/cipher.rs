@@ -94,8 +94,37 @@ pub(crate) fn seal(
     purpose: SecretPurpose,
     secret: &[u8],
 ) -> Result<Vec<u8>, AuthError> {
+    seal_bound(key, &purpose.associated_data(user_id), secret)
+}
+
+/// The secret sealed by [`seal`] for `user_id`; fails if anything was altered.
+pub(crate) fn open(
+    key: &DataKey,
+    user_id: UserId,
+    purpose: SecretPurpose,
+    sealed: &[u8],
+) -> Result<Zeroizing<Vec<u8>>, AuthError> {
+    open_bound(key, &purpose.associated_data(user_id), sealed)
+}
+
+/// Seals a secret another module stores, such as an interface password, under the same key
+/// and scheme; `context` names its column (and row, where it has one), so a sealed value
+/// copied elsewhere fails to open.
+pub fn seal_secret(key: &DataKey, context: &str, secret: &[u8]) -> Result<Vec<u8>, AuthError> {
+    seal_bound(key, &format!("secret:{context}"), secret)
+}
+
+/// The secret [`seal_secret`] sealed for `context`; fails if anything was altered.
+pub fn open_secret(
+    key: &DataKey,
+    context: &str,
+    sealed: &[u8],
+) -> Result<Zeroizing<Vec<u8>>, AuthError> {
+    open_bound(key, &format!("secret:{context}"), sealed)
+}
+
+fn seal_bound(key: &DataKey, aad: &str, secret: &[u8]) -> Result<Vec<u8>, AuthError> {
     let nonce_bytes: [u8; NONCE_BYTES] = random_bytes()?;
-    let aad = purpose.associated_data(user_id);
     let ciphertext = ChaCha20Poly1305::new(&Key::from(*key.expose()))
         .encrypt(
             &Nonce::from(nonce_bytes),
@@ -111,18 +140,11 @@ pub(crate) fn seal(
     Ok(sealed)
 }
 
-/// The secret sealed by [`seal`] for `user_id`; fails if anything was altered.
-pub(crate) fn open(
-    key: &DataKey,
-    user_id: UserId,
-    purpose: SecretPurpose,
-    sealed: &[u8],
-) -> Result<Zeroizing<Vec<u8>>, AuthError> {
+fn open_bound(key: &DataKey, aad: &str, sealed: &[u8]) -> Result<Zeroizing<Vec<u8>>, AuthError> {
     let (nonce, ciphertext) = sealed
         .split_at_checked(NONCE_BYTES)
         .ok_or(AuthError::SecretCipher)?;
     let nonce = <[u8; NONCE_BYTES]>::try_from(nonce).map_err(|_| AuthError::SecretCipher)?;
-    let aad = purpose.associated_data(user_id);
     ChaCha20Poly1305::new(&Key::from(*key.expose()))
         .decrypt(
             &Nonce::from(nonce),

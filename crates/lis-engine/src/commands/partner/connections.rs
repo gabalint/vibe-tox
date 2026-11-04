@@ -6,6 +6,7 @@ use lis_interfaces::partner::{
     PartnerConnectionSettings, PartnerError, RecordPartnerDestinationCheck,
     SetPartnerConnectionActive, UpdatePartnerConnection,
 };
+use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 use ts_rs::TS;
 
@@ -33,9 +34,14 @@ pub struct PartnerConnectionInput {
 #[ts(export)]
 pub struct CreatePartnerConnectionInput {
     pub settings: PartnerConnectionSettings,
-    /// The folder chosen with `choose_partner_folder`.
-    #[ts(type = "string")]
-    pub folder_choice: FolderChoiceId,
+    /// The folder chosen with `choose_partner_folder`; absent for SFTP.
+    #[serde(default)]
+    #[ts(optional, type = "string")]
+    pub folder_choice: Option<FolderChoiceId>,
+    /// The SFTP password, for password sign-in; sealed before it is kept.
+    #[serde(default)]
+    #[ts(optional, type = "string")]
+    pub password: Option<SecretString>,
     /// False saves it stopped.
     pub active: bool,
 }
@@ -53,6 +59,10 @@ pub struct UpdatePartnerConnectionInput {
     #[serde(default)]
     #[ts(optional, type = "string")]
     pub folder_choice: Option<FolderChoiceId>,
+    /// A new SFTP password; absent keeps the current one for the same server and user.
+    #[serde(default)]
+    #[ts(optional, type = "string")]
+    pub password: Option<SecretString>,
     pub reason: String,
 }
 
@@ -85,13 +95,15 @@ impl Engine {
     ) -> Result<PartnerConnectionDetail, CommandError> {
         self.run(&CREATE_PARTNER_CONNECTION, |call| async move {
             self.authorize(&call).await?;
-            let folder = self.chosen_folder(&call, Some(input.folder_choice))?;
+            let folder = self.chosen_folder(&call, input.folder_choice)?;
+            let sealed_password = self.sealed_password(input.password.as_ref()).await?;
             self.write(&call, move |ctx| {
                 let id = lis_interfaces::partner::create_partner_connection(
                     ctx,
                     CreatePartnerConnection {
                         settings: input.settings,
                         folder: folder.unwrap_or_default(),
+                        sealed_password,
                         active: input.active,
                     },
                 )?;
@@ -110,6 +122,7 @@ impl Engine {
         self.run(&UPDATE_PARTNER_CONNECTION, |call| async move {
             self.authorize(&call).await?;
             let folder = self.chosen_folder(&call, input.folder_choice)?;
+            let sealed_password = self.sealed_password(input.password.as_ref()).await?;
             self.write(&call, move |ctx| {
                 let id = lis_interfaces::partner::update_partner_connection(
                     ctx,
@@ -118,6 +131,7 @@ impl Engine {
                         expected_revision: input.expected_revision,
                         settings: input.settings,
                         folder,
+                        sealed_password,
                         reason: input.reason,
                     },
                 )?;
@@ -156,6 +170,25 @@ impl Engine {
             .await
         })
         .await
+    }
+
+    /// An SFTP password sealed with the installation key; `None` without one.
+    async fn sealed_password(
+        &self,
+        password: Option<&SecretString>,
+    ) -> Result<Option<Vec<u8>>, Failure> {
+        let Some(password) = password.filter(|password| !password.expose_secret().is_empty())
+        else {
+            return Ok(None);
+        };
+        let key = self.data_key().await?;
+        lis_auth::seal_secret(
+            &key,
+            crate::partner_delivery::sftp::PASSWORD_CONTEXT,
+            password.expose_secret().as_bytes(),
+        )
+        .map(Some)
+        .map_err(Failure::from)
     }
 
     /// The folder behind `handle`, chosen in this session; `None` without a handle.

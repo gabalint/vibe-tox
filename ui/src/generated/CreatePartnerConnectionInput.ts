@@ -6,9 +6,13 @@ import type { PartnerConnectionSettings } from "./PartnerConnectionSettings";
  */
 export type CreatePartnerConnectionInput = { settings: PartnerConnectionSettings, 
 /**
- * The folder chosen with `choose_partner_folder`.
+ * The folder chosen with `choose_partner_folder`; absent for SFTP.
  */
-folderChoice: string, 
+folderChoice?: string, 
+/**
+ * The SFTP password, for password sign-in; sealed before it is kept.
+ */
+password?: string, 
 /**
  * False saves it stopped.
  */

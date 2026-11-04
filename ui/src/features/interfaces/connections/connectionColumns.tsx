@@ -3,9 +3,9 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Timestamp } from "@/components/Timestamp";
 import type { PartnerConnection } from "@/generated/PartnerConnection";
 import styles from "@/styles/layout.module.css";
-import { MESSAGE_TYPES, PROTOCOLS, STATUS } from "../labels";
+import { destinationText, MESSAGE_TYPES, PROTOCOLS, STATUS } from "../labels";
 
-/** Verified or not: whether a destination check covers the connection's current folder. */
+/** Verified or not: whether a destination check covers the connection's current destination. */
 export function CheckBadge({ connection }: { connection: PartnerConnection }) {
   return connection.verification ? (
     <StatusBadge tone="success">Verified</StatusBadge>
@@ -51,8 +51,8 @@ export const CONNECTION_COLUMNS: readonly DataGridColumn<PartnerConnection>[] = 
   {
     id: "destination",
     header: "Destination",
-    cell: (row) => <span className={styles.code}>{row.folder}</span>,
-    sortValue: (row) => row.folder,
+    cell: (row) => <span className={styles.code}>{destinationText(row)}</span>,
+    sortValue: (row) => destinationText(row),
     wrap: true,
   },
   {

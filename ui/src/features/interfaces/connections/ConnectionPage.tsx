@@ -50,10 +50,7 @@ export function ConnectionPage() {
             </>
           )
         }
-        description={
-          connection &&
-          connectionDescription(connection.settings.messageType, connection.settings.partner)
-        }
+        description={connection && connectionDescription(connection.settings)}
       />
       <QueryContent query={detail} what="connection">
         {(loaded) => (

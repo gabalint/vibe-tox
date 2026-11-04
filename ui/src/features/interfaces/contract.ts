@@ -12,6 +12,10 @@ export const GET_CONNECTION = "get_partner_connection" satisfies CommandName;
 export const CHOOSE_FOLDER = "choose_partner_folder" satisfies CommandName;
 /** `test_partner_folder({input:{folderChoice}|{connectionId}}) → FolderTestResult`. */
 export const TEST_FOLDER = "test_partner_folder" satisfies CommandName;
+/** `test_partner_sftp({input:TestPartnerSftpInput}) → FolderTestResult` (saves nothing). */
+export const TEST_SFTP = "test_partner_sftp" satisfies CommandName;
+/** `get_lis_sftp_key() → string`: the LIS's public SSH key, made on first use. */
+export const GET_SFTP_KEY = "get_lis_sftp_key" satisfies CommandName;
 export const CREATE_CONNECTION = "create_partner_connection" satisfies CommandName;
 export const UPDATE_CONNECTION = "update_partner_connection" satisfies CommandName;
 export const SET_ACTIVE = "set_partner_connection_active" satisfies CommandName;
