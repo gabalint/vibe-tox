@@ -28,6 +28,7 @@ fn settings() -> PartnerConnectionSettings {
         schedule: Schedule::Immediately,
         file_name_pattern: "{accession}_r{revision}.hl7".to_owned(),
         sftp: None,
+        intake: None,
     }
 }
 

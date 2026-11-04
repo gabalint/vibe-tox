@@ -127,15 +127,23 @@ fn connection_view(
         "update_partner_connection".to_owned(),
         "set_partner_connection_active".to_owned(),
         "test_partner_folder".to_owned(),
-        "send_partner_test_message".to_owned(),
     ];
+    // An incoming connection only reads: the LIS sends it nothing.
+    if !row.settings.message_type.incoming() {
+        allowed_actions.push("send_partner_test_message".to_owned());
+    }
     if verification.is_none() {
         allowed_actions.push("record_partner_destination_check".to_owned());
     }
+    let (processed_folder, failed_folder) = row.moved_to.map_or((None, None), |moved_to| {
+        (Some(moved_to.processed), Some(moved_to.failed))
+    });
     Ok(PartnerConnection {
         id: row.id,
         settings: row.settings,
         folder: row.folder,
+        processed_folder,
+        failed_folder,
         has_password: row.sealed_password.is_some(),
         active: row.active,
         revision: row.revision,

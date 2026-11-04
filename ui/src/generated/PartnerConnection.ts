@@ -10,9 +10,14 @@ import type { PartnerVerification } from "./PartnerVerification";
  */
 export type PartnerConnection = { id: string, settings: PartnerConnectionSettings, 
 /**
- * The local folder, or the remote folder on the SFTP server.
+ * The local folder, or the remote folder on the SFTP server: where files are written,
+ * or for incoming orders where they are read.
  */
 folder: string, 
+/**
+ * For incoming orders: where read files move to, local or on the server.
+ */
+processedFolder: string | null, failedFolder: string | null, 
 /**
  * For SFTP password sign-in: whether a password is kept. The password itself never
  * leaves the engine.

@@ -38,6 +38,8 @@ pub(super) async fn partner_call(engine: &Engine, name: &str) -> Option<Result<(
         "test_partner_folder" => engine
             .test_partner_folder(TestPartnerFolderInput {
                 folder_choice: None,
+                processed_folder_choice: None,
+                failed_folder_choice: None,
                 connection_id: Some(connection_id),
             })
             .await
@@ -47,6 +49,7 @@ pub(super) async fn partner_call(engine: &Engine, name: &str) -> Option<Result<(
                 server: sftp_server(),
                 password: None,
                 connection_id: None,
+                intake: None,
             })
             .await
             .map(drop),
@@ -55,6 +58,8 @@ pub(super) async fn partner_call(engine: &Engine, name: &str) -> Option<Result<(
             .create_partner_connection(CreatePartnerConnectionInput {
                 settings: settings("Synthetic", Vec::new()),
                 folder_choice: Some(lis_core::Id::generate()),
+                processed_folder_choice: None,
+                failed_folder_choice: None,
                 password: None,
                 active: true,
             })
@@ -66,6 +71,8 @@ pub(super) async fn partner_call(engine: &Engine, name: &str) -> Option<Result<(
                 expected_revision: 1,
                 settings: settings("Synthetic", Vec::new()),
                 folder_choice: None,
+                processed_folder_choice: None,
+                failed_folder_choice: None,
                 password: None,
                 reason: "Synthetic authorization test".to_owned(),
             })
@@ -171,6 +178,7 @@ fn settings(name: &str, rules: Vec<RoutingRule>) -> PartnerConnectionSettings {
         schedule: Schedule::Immediately,
         file_name_pattern: PATTERN.to_owned(),
         sftp: None,
+        intake: None,
     }
 }
 
@@ -307,6 +315,8 @@ impl Partners {
             .create_partner_connection(CreatePartnerConnectionInput {
                 settings: settings("Billing - Synthetic", rules),
                 folder_choice: Some(chosen.folder_choice),
+                processed_folder_choice: None,
+                failed_folder_choice: None,
                 password: None,
                 active: true,
             })
@@ -453,6 +463,8 @@ async fn only_another_client(partners: &Partners, connection_id: PartnerConnecti
             expected_revision: current.connection.revision,
             settings: settings("Billing - Synthetic", client_is("SYN-OTHER")),
             folder_choice: None,
+            processed_folder_choice: None,
+            failed_folder_choice: None,
             password: None,
             reason: "Synthetic: only another client".to_owned(),
         })

@@ -10,6 +10,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use lis_core::Id;
+use lis_interfaces::partner::MovedTo;
 
 /// Names tried before giving up on a free one.
 const MAX_SAME_NAME: u32 = 100;
@@ -79,6 +80,15 @@ pub(crate) fn probe(folder: &Path) -> Result<(), WriteProblem> {
     written
         .and(removed)
         .map_err(|error| WriteProblem::from_io(&error))
+}
+
+/// Whether this computer can read the input folder and create, write and delete files in
+/// the Processed and Failed folders: an incoming connection's folders.
+pub(crate) fn probe_intake(input: &Path, moved_to: &MovedTo) -> Result<(), WriteProblem> {
+    ensure_folder(input)?;
+    fs::read_dir(input).map_err(|error| WriteProblem::from_io(&error))?;
+    probe(Path::new(&moved_to.processed))?;
+    probe(Path::new(&moved_to.failed))
 }
 
 fn ensure_folder(folder: &Path) -> Result<(), WriteProblem> {

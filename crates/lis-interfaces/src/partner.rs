@@ -13,11 +13,14 @@
 //! its folder and its schedule allows, and records each attempt here. Analyzers
 //! are configured separately, as instruments.
 
+mod connection_columns;
 mod connection_views;
 mod connections;
 mod delivery;
 mod error;
 pub mod hl7;
+mod intake_model;
+mod intake_settings;
 mod mapping_model;
 mod mapping_repo;
 mod mappings;
@@ -66,12 +69,12 @@ pub use messages::{
     resolve_unrouted_message, route_partner_message,
 };
 pub use model::{
-    ConnectionChange, CreatePartnerConnection, DeliveryReason, DeliveryState, MessageSource,
-    NewPartnerMessage, PartnerConnectionId, PartnerConnectionSettings, PartnerDeliveryId,
-    PartnerMessageId, PartnerMessageType, PartnerProtocol, RecordPartnerDestinationCheck,
-    ReportRef, Routed, RoutingFacts, RoutingRule, RoutingValue, RuleCondition, RuleField, Schedule,
-    SetPartnerConnectionActive, SftpAuth, SftpSettings, UnroutedResolution,
-    UpdatePartnerConnection,
+    ConnectionChange, CreatePartnerConnection, DeliveryReason, DeliveryState, IntakeSettings,
+    MessageSource, MovedTo, MovedToChoice, NewPartnerMessage, PartnerConnectionId,
+    PartnerConnectionSettings, PartnerDeliveryId, PartnerMessageId, PartnerMessageType,
+    PartnerProtocol, RecordPartnerDestinationCheck, ReportRef, Routed, RoutingFacts, RoutingRule,
+    RoutingValue, RuleCondition, RuleField, Schedule, SetPartnerConnectionActive, SftpAuth,
+    SftpSettings, UnknownPatient, UnroutedResolution, UpdatePartnerConnection,
 };
 pub use queries::{carries, get_partner_connection, list_partner_connections};
 pub use queue::{FailedItem, UnroutedItem, failed_queue, unrouted_queue};

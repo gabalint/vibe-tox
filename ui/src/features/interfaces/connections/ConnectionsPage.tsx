@@ -17,13 +17,10 @@ import { ConnectionDialog } from "./ConnectionDialog";
 import styles from "./ConnectionsPage.module.css";
 import { CONNECTION_COLUMNS } from "./connectionColumns";
 
-/**
- * The tabs of the mockup, each with the message types it lists; All lists every connection.
- * Orders, results and report PDFs have no message type in this release, so their tabs are empty.
- */
+/** The tabs of the mockup, each with the message types it lists; All lists every connection. */
 const TYPE_TABS: readonly { id: string; label: string; types: readonly PartnerMessageType[] }[] = [
   { id: "all", label: "All", types: [] },
-  { id: "orders", label: "Orders in", types: [] },
+  { id: "orders", label: "Orders in", types: ["hl7_orders"] },
   { id: "results", label: "Results out", types: ["hl7_oru"] },
   { id: "pdfs", label: "Report PDFs", types: ["report_pdf"] },
   { id: "billing", label: "Billing", types: ["billing_json"] },
@@ -96,8 +93,8 @@ export function ConnectionsPage() {
             title: "No connections",
             description:
               selected?.id !== "orders"
-                ? "Add a connection to write HL7 results, report PDFs or billing handoff files to a folder another system reads."
-                : "No connection of this kind yet.",
+                ? "Add a connection to send HL7 results, report PDFs or billing handoff files to a folder or SFTP server, or to receive HL7 orders."
+                : "Add a connection to read HL7 orders from a clinic's folder or SFTP server.",
           }}
         >
           {() => (

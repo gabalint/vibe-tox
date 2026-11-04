@@ -5,6 +5,7 @@ use std::path::Path;
 use lis_core::required_text;
 
 use super::error::{PartnerError, invalid};
+use super::intake_settings::valid_intake;
 use super::model::{
     PartnerConnectionSettings, PartnerMessageType, RoutingRule, RuleCondition, Schedule,
 };
@@ -26,27 +27,31 @@ struct PatternRules {
     extension: &'static str,
 }
 
-const fn pattern_rules(message_type: PartnerMessageType) -> PatternRules {
+/// The file name rules of an outgoing type; `None` for an incoming one, which writes no file.
+const fn pattern_rules(message_type: PartnerMessageType) -> Option<PatternRules> {
     match message_type {
-        PartnerMessageType::BillingJson => PatternRules {
+        PartnerMessageType::BillingJson => Some(PatternRules {
             required: &["{handoff}"],
             optional: &["{date}", "{time}"],
             extension: ".json",
-        },
-        PartnerMessageType::ReportPdf => PatternRules {
+        }),
+        PartnerMessageType::ReportPdf => Some(PatternRules {
             required: &["{accession}", "{revision}"],
             optional: &["{date}", "{time}"],
             extension: ".pdf",
-        },
-        PartnerMessageType::Hl7Oru => PatternRules {
+        }),
+        PartnerMessageType::Hl7Oru => Some(PatternRules {
             required: &["{accession}", "{revision}"],
             optional: &["{date}", "{time}"],
             extension: ".hl7",
-        },
+        }),
+        PartnerMessageType::Hl7Orders => None,
     }
 }
 
-/// The settings with their text trimmed, or the first field at fault.
+/// The settings with their text trimmed, or the first field at fault. An incoming
+/// connection routes, schedules and names nothing: it keeps no rules, writes at once and
+/// has no file name pattern.
 pub(crate) fn valid_settings(
     settings: PartnerConnectionSettings,
 ) -> Result<PartnerConnectionSettings, PartnerError> {
@@ -54,31 +59,46 @@ pub(crate) fn valid_settings(
         required_text("settings.name", &settings.name, NAME_MAX).map_err(PartnerError::Invalid)?;
     let partner = required_text("settings.partner", &settings.partner, NAME_MAX)
         .map_err(PartnerError::Invalid)?;
+    let sftp = valid_sftp(settings.protocol, settings.sftp)?;
+    let intake = valid_intake(settings.message_type, settings.protocol, settings.intake)?;
+    let Some(pattern) = pattern_rules(settings.message_type) else {
+        return Ok(PartnerConnectionSettings {
+            name,
+            partner,
+            rules: Vec::new(),
+            schedule: Schedule::Immediately,
+            file_name_pattern: String::new(),
+            sftp,
+            intake,
+            ..settings
+        });
+    };
     let rules = valid_rules(settings.rules)?;
     valid_schedule(&settings.schedule)?;
     let file_name_pattern = settings.file_name_pattern.trim().to_owned();
-    valid_pattern(&file_name_pattern, &pattern_rules(settings.message_type))?;
-    let sftp = valid_sftp(settings.protocol, settings.sftp)?;
+    valid_pattern(&file_name_pattern, &pattern)?;
     Ok(PartnerConnectionSettings {
         name,
         partner,
         rules,
         file_name_pattern,
         sftp,
+        intake,
         ..settings
     })
 }
 
 /// A folder the engine resolved: absolute, without control characters.
 pub(crate) fn valid_folder(folder: &str) -> Result<(), PartnerError> {
+    valid_folder_at("folder", folder)
+}
+
+/// [`valid_folder`], for the form field `field`.
+pub(crate) fn valid_folder_at(field: &str, folder: &str) -> Result<(), PartnerError> {
     if valid_text(folder, FOLDER_MAX) && Path::new(folder).is_absolute() {
         Ok(())
     } else {
-        Err(invalid(
-            "folder",
-            "invalid_folder",
-            "Choose the folder again.",
-        ))
+        Err(invalid(field, "invalid_folder", "Choose the folder again."))
     }
 }
 
@@ -250,6 +270,7 @@ mod tests {
             },
             file_name_pattern: "billing-{handoff}_{date}.json".to_owned(),
             sftp: None,
+            intake: None,
         }
     }
 

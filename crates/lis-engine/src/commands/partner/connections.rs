@@ -2,8 +2,8 @@
 
 use lis_core::{CommandError, ErrorCode, FieldError};
 use lis_interfaces::partner::{
-    CreatePartnerConnection, PartnerConnection, PartnerConnectionDetail, PartnerConnectionId,
-    PartnerConnectionSettings, PartnerError, RecordPartnerDestinationCheck,
+    CreatePartnerConnection, MovedToChoice, PartnerConnection, PartnerConnectionDetail,
+    PartnerConnectionId, PartnerConnectionSettings, PartnerError, RecordPartnerDestinationCheck,
     SetPartnerConnectionActive, UpdatePartnerConnection,
 };
 use secrecy::{ExposeSecret, SecretString};
@@ -38,6 +38,14 @@ pub struct CreatePartnerConnectionInput {
     #[serde(default)]
     #[ts(optional, type = "string")]
     pub folder_choice: Option<FolderChoiceId>,
+    /// For incoming orders over a folder: the Processed folder chosen the same way.
+    #[serde(default)]
+    #[ts(optional, type = "string")]
+    pub processed_folder_choice: Option<FolderChoiceId>,
+    /// For incoming orders over a folder: the Failed folder chosen the same way.
+    #[serde(default)]
+    #[ts(optional, type = "string")]
+    pub failed_folder_choice: Option<FolderChoiceId>,
     /// The SFTP password, for password sign-in; sealed before it is kept.
     #[serde(default)]
     #[ts(optional, type = "string")]
@@ -59,6 +67,14 @@ pub struct UpdatePartnerConnectionInput {
     #[serde(default)]
     #[ts(optional, type = "string")]
     pub folder_choice: Option<FolderChoiceId>,
+    /// A newly chosen Processed folder; absent keeps the current one.
+    #[serde(default)]
+    #[ts(optional, type = "string")]
+    pub processed_folder_choice: Option<FolderChoiceId>,
+    /// A newly chosen Failed folder; absent keeps the current one.
+    #[serde(default)]
+    #[ts(optional, type = "string")]
+    pub failed_folder_choice: Option<FolderChoiceId>,
     /// A new SFTP password; absent keeps the current one for the same server and user.
     #[serde(default)]
     #[ts(optional, type = "string")]
@@ -95,7 +111,13 @@ impl Engine {
     ) -> Result<PartnerConnectionDetail, CommandError> {
         self.run(&CREATE_PARTNER_CONNECTION, |call| async move {
             self.authorize(&call).await?;
+            self.ordering_client(&call, &input.settings).await?;
             let folder = self.chosen_folder(&call, input.folder_choice)?;
+            let moved_to = self.chosen_moved_to(
+                &call,
+                input.processed_folder_choice,
+                input.failed_folder_choice,
+            )?;
             let sealed_password = self.sealed_password(input.password.as_ref()).await?;
             self.write(&call, move |ctx| {
                 let id = lis_interfaces::partner::create_partner_connection(
@@ -103,6 +125,7 @@ impl Engine {
                     CreatePartnerConnection {
                         settings: input.settings,
                         folder: folder.unwrap_or_default(),
+                        moved_to,
                         sealed_password,
                         active: input.active,
                     },
@@ -121,7 +144,13 @@ impl Engine {
     ) -> Result<PartnerConnectionDetail, CommandError> {
         self.run(&UPDATE_PARTNER_CONNECTION, |call| async move {
             self.authorize(&call).await?;
+            self.ordering_client(&call, &input.settings).await?;
             let folder = self.chosen_folder(&call, input.folder_choice)?;
+            let moved_to = self.chosen_moved_to(
+                &call,
+                input.processed_folder_choice,
+                input.failed_folder_choice,
+            )?;
             let sealed_password = self.sealed_password(input.password.as_ref()).await?;
             self.write(&call, move |ctx| {
                 let id = lis_interfaces::partner::update_partner_connection(
@@ -131,6 +160,7 @@ impl Engine {
                         expected_revision: input.expected_revision,
                         settings: input.settings,
                         folder,
+                        moved_to,
                         sealed_password,
                         reason: input.reason,
                     },
@@ -197,6 +227,28 @@ impl Engine {
         call: &Call,
         handle: Option<FolderChoiceId>,
     ) -> Result<Option<String>, Failure> {
+        self.chosen_folder_as(call, handle, "folderChoice")
+    }
+
+    /// The Processed and Failed folders chosen in this session, each `None` without a handle.
+    pub(super) fn chosen_moved_to(
+        &self,
+        call: &Call,
+        processed: Option<FolderChoiceId>,
+        failed: Option<FolderChoiceId>,
+    ) -> Result<MovedToChoice, Failure> {
+        Ok(MovedToChoice {
+            processed: self.chosen_folder_as(call, processed, "processedFolderChoice")?,
+            failed: self.chosen_folder_as(call, failed, "failedFolderChoice")?,
+        })
+    }
+
+    fn chosen_folder_as(
+        &self,
+        call: &Call,
+        handle: Option<FolderChoiceId>,
+        field: &str,
+    ) -> Result<Option<String>, Failure> {
         let Some(handle) = handle else {
             return Ok(None);
         };
@@ -204,16 +256,44 @@ impl Engine {
         self.folder_choices
             .get(session, handle)
             .map(Some)
-            .ok_or_else(|| Failure::Refused {
-                code: ErrorCode::Validation,
-                message: "Choose the folder again.".to_owned(),
-                field_errors: vec![FieldError {
-                    field: "folderChoice".to_owned(),
-                    code: "expired".to_owned(),
-                    message: "Choose the folder again.".to_owned(),
-                }],
-                gate_reasons: Vec::new(),
-            })
+            .ok_or_else(|| refused(field, "expired", "Choose the folder again."))
+    }
+
+    /// An incoming connection's partner is the client its orders are for: one of the
+    /// laboratory's active clients, by code.
+    async fn ordering_client(
+        &self,
+        call: &Call,
+        settings: &PartnerConnectionSettings,
+    ) -> Result<(), Failure> {
+        if !settings.message_type.incoming() {
+            return Ok(());
+        }
+        let clients = self.read(call, lis_identity::list_active_clients).await?;
+        let code = settings.partner.trim();
+        if clients.iter().any(|client| client.code == code) {
+            Ok(())
+        } else {
+            Err(refused(
+                "settings.partner",
+                "unknown_client",
+                "Choose one of the laboratory's active clients.",
+            ))
+        }
+    }
+}
+
+/// A refusal of one form field.
+fn refused(field: &str, code: &str, message: &str) -> Failure {
+    Failure::Refused {
+        code: ErrorCode::Validation,
+        message: message.to_owned(),
+        field_errors: vec![FieldError {
+            field: field.to_owned(),
+            code: code.to_owned(),
+            message: message.to_owned(),
+        }],
+        gate_reasons: Vec::new(),
     }
 }
 

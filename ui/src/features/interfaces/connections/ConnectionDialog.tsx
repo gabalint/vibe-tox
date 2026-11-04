@@ -10,6 +10,7 @@ import type { PartnerConnectionDetail } from "@/generated/PartnerConnectionDetai
 import type { UpdatePartnerConnectionInput } from "@/generated/UpdatePartnerConnectionInput";
 import { useCommandMutation } from "@/lib/commands";
 import { CONNECTION_QUERIES, CREATE_CONNECTION, UPDATE_CONNECTION } from "../contract";
+import { isIncoming } from "../labels";
 import { Box, GeneralSection, WhenSection } from "./ConnectionSections";
 import {
   type ConnectionValues,
@@ -19,6 +20,7 @@ import {
   typedPassword,
 } from "./connectionForm";
 import { FolderFields } from "./FolderFields";
+import { AcceptSection, IntakeFolderFields } from "./IntakeSections";
 import { ProtocolCards } from "./ProtocolCards";
 import { RuleFields } from "./RuleFields";
 import { SftpFields } from "./SftpFields";
@@ -56,13 +58,20 @@ export function ConnectionDialog({ connection, onClose, onSaved }: ConnectionDia
     onClose();
   };
   const protocol = useWatch({ control: form.control, name: "protocol" });
+  const incoming = isIncoming(useWatch({ control: form.control, name: "messageType" }));
   const submit = form.handleSubmit((values) => {
     const settings = toSettings(values);
     const password = values.protocol === "sftp" ? typedPassword(values.sftp) : undefined;
-    // A folder comes only from the dialog's handle; an SFTP connection has none.
+    // Folders come only from the dialog's handles; an SFTP connection has none.
+    const local = values.protocol === "folder";
+    const handle = (choice: string) => (local && choice !== "" ? choice : undefined);
     const destination = {
-      ...(values.protocol === "folder" && values.folderChoice
-        ? { folderChoice: values.folderChoice }
+      folderChoice: handle(values.folderChoice),
+      ...(isIncoming(values.messageType)
+        ? {
+            processedFolderChoice: handle(values.processedFolderChoice),
+            failedFolderChoice: handle(values.failedFolderChoice),
+          }
         : {}),
       ...(password ? { password } : {}),
     };
@@ -104,7 +113,11 @@ export function ConnectionDialog({ connection, onClose, onSaved }: ConnectionDia
       command={command}
       onSubmit={submit}
       onClose={onClose}
-      footnote="A new connection can't send patient data until its destination check is recorded."
+      footnote={
+        incoming
+          ? "A new connection reads no orders until its destination check is recorded."
+          : "A new connection can't send patient data until its destination check is recorded."
+      }
       extraActions={
         !connection && (
           <Button isDisabled={command.isPending} onPress={saveStopped}>
@@ -123,13 +136,23 @@ export function ConnectionDialog({ connection, onClose, onSaved }: ConnectionDia
         </Box>
       ) : (
         <Box title="3. Folder">
-          <FolderFields connectionId={connection?.id ?? null} />
+          {incoming ? (
+            <IntakeFolderFields connectionId={connection?.id ?? null} />
+          ) : (
+            <FolderFields connectionId={connection?.id ?? null} />
+          )}
         </Box>
       )}
-      <Box title="4. Routing rules – which messages go here">
-        <RuleFields />
-      </Box>
-      <WhenSection />
+      {incoming ? (
+        <AcceptSection />
+      ) : (
+        <>
+          <Box title="4. Routing rules – which messages go here">
+            <RuleFields />
+          </Box>
+          <WhenSection />
+        </>
+      )}
       {connection && <ReasonField />}
     </FormDialog>
   );

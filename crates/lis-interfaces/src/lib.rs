@@ -125,6 +125,11 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "sftp_connections",
         sql: include_str!("../migrations/0009_sftp_connections.sql"),
     },
+    Migration {
+        version: 10,
+        name: "order_connections",
+        sql: include_str!("../migrations/0010_order_connections.sql"),
+    },
 ];
 
 /// Schema descriptor for tables owned by this crate.

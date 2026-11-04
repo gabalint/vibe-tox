@@ -18,7 +18,7 @@ use rusqlite::{Connection, params};
 use super::error::PartnerError;
 use super::message_repo::{self as repo, MessageRow};
 use super::model::{
-    DeliveryReason, DeliveryState, MessageSource, PartnerConnectionId, PartnerDeliveryId,
+    DeliveryReason, DeliveryState, MessageSource, MovedTo, PartnerConnectionId, PartnerDeliveryId,
     PartnerMessageId, PartnerMessageType, RoutingFacts, Schedule, SftpSettings,
 };
 use super::repo::{ConnectionRow, load_connection};
@@ -33,10 +33,12 @@ const BATCH: u32 = 50;
 /// the sealed password for password sign-in.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Destination {
-    /// The local folder, or the remote folder.
+    /// The local folder, or the remote folder: written to, or for incoming orders read.
     pub folder: String,
     pub sftp: Option<SftpSettings>,
     pub sealed_password: Option<Vec<u8>>,
+    /// For incoming orders: where read files move to.
+    pub moved_to: Option<MovedTo>,
 }
 
 impl Destination {
@@ -45,6 +47,7 @@ impl Destination {
             folder: connection.folder.clone(),
             sftp: connection.settings.sftp.clone(),
             sealed_password: connection.sealed_password.clone(),
+            moved_to: connection.moved_to.clone(),
         }
     }
 }
@@ -143,6 +146,7 @@ pub fn due_partner_deliveries(
                     folder: String::new(),
                     sftp: None,
                     sealed_password: None,
+                    moved_to: None,
                 },
                 file_name_pattern: String::new(),
                 schedule: Schedule::Immediately,

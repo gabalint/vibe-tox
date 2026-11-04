@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use lis_auth::DataKey;
-use lis_interfaces::partner::{SftpAuth, SftpSettings};
+use lis_interfaces::partner::{MovedTo, SftpAuth, SftpSettings};
 use lis_store::Database;
 use russh::client::{self, Handle};
 use russh::keys::{HashAlg, PrivateKey, PrivateKeyWithHashAlg, PublicKeyOrCertificate};
@@ -185,7 +185,7 @@ pub(crate) async fn upload(
     bytes: &[u8],
 ) -> Result<String, SftpProblem> {
     let open = open(server, credential).await?;
-    let folder = folder_of(&open.sftp, server).await?;
+    let folder = folder_at(&open.sftp, &server.remote_folder).await?;
     let temporary = format!("{folder}/{name}.{}.tmp", random_suffix());
     if let Err(error) = fill(&open.sftp, &temporary, bytes).await {
         let _ = open.sftp.remove_file(temporary).await;
@@ -205,16 +205,51 @@ pub(crate) async fn probe(
     credential: &Credential,
 ) -> Result<(), SftpProblem> {
     let open = open(server, credential).await?;
-    let folder = folder_of(&open.sftp, server).await?;
+    probe_in(&open.sftp, &server.remote_folder).await
+}
+
+/// For incoming orders: connects and checks as [`probe`], then lists the input folder and
+/// writes and removes a probe file in the Processed and Failed folders.
+pub(crate) async fn probe_intake(
+    server: &SftpSettings,
+    credential: &Credential,
+    moved_to: &MovedTo,
+) -> Result<(), SftpProblem> {
+    let open = open(server, credential).await?;
+    let input = folder_at(&open.sftp, &server.remote_folder).await?;
+    open.sftp
+        .read_dir(input)
+        .await
+        .map_err(|error| problem(&error))?;
+    probe_in(&open.sftp, &moved_to.processed).await?;
+    probe_in(&open.sftp, &moved_to.failed).await
+}
+
+/// [`probe`], or [`probe_intake`] for incoming orders, from a blocking thread.
+pub(crate) fn probe_blocking(
+    server: &SftpSettings,
+    credential: &Credential,
+    moved_to: Option<&MovedTo>,
+) -> Result<(), SftpProblem> {
+    let runtime = tokio::runtime::Handle::current();
+    match moved_to {
+        Some(moved_to) => runtime.block_on(probe_intake(server, credential, moved_to)),
+        None => runtime.block_on(probe(server, credential)),
+    }
+}
+
+/// Writes and removes a small probe file in `remote_folder`.
+async fn probe_in(sftp: &SftpSession, remote_folder: &str) -> Result<(), SftpProblem> {
+    let folder = folder_at(sftp, remote_folder).await?;
     let probe = format!("{folder}/.vibetox-probe-{}.tmp", random_suffix());
-    let written = fill(&open.sftp, &probe, b"probe\n").await;
-    let removed = open.sftp.remove_file(probe).await;
+    let written = fill(sftp, &probe, b"probe\n").await;
+    let removed = sftp.remove_file(probe).await;
     written.and(removed).map_err(|error| problem(&error))
 }
 
 /// The remote folder without a trailing `/`, once it exists.
-async fn folder_of(sftp: &SftpSession, server: &SftpSettings) -> Result<String, SftpProblem> {
-    let folder = server.remote_folder.trim_end_matches('/').to_owned();
+async fn folder_at(sftp: &SftpSession, remote_folder: &str) -> Result<String, SftpProblem> {
+    let folder = remote_folder.trim_end_matches('/').to_owned();
     let path = if folder.is_empty() { "/" } else { &folder };
     match sftp.metadata(path).await {
         Ok(metadata) if metadata.is_dir() => Ok(folder),

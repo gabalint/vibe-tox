@@ -269,7 +269,9 @@ fn hl7_connection(
 
 fn hl7_only(connection: &ConnectionRow) -> Result<(), PartnerError> {
     match connection.settings.message_type {
-        PartnerMessageType::Hl7Oru => Ok(()),
+        // Results map tests and analytes to the partner's codes; orders map the partner's
+        // order codes to LIS tests.
+        PartnerMessageType::Hl7Oru | PartnerMessageType::Hl7Orders => Ok(()),
         PartnerMessageType::BillingJson | PartnerMessageType::ReportPdf => Err(
             PartnerError::WrongState("Only HL7 connections have code mappings."),
         ),

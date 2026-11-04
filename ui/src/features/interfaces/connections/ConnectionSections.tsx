@@ -2,8 +2,11 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { FieldSection } from "@/components/Form";
 import { ChoiceInput, TextInput } from "@/components/FormFields";
+import type { ClientView } from "@/generated/ClientView";
 import type { PartnerMessageType } from "@/generated/PartnerMessageType";
-import { FILE_NAMES, MESSAGE_OPTIONS, SEND_WHEN } from "../labels";
+import { useCommandQuery } from "@/lib/commands";
+import { LIST_CLIENTS } from "../contract";
+import { directionText, FILE_NAMES, isIncoming, MESSAGE_OPTIONS, SEND_WHEN } from "../labels";
 import styles from "./ConnectionDialog.module.css";
 import type { ConnectionValues } from "./connectionForm";
 
@@ -41,8 +44,28 @@ function useTypeDefaults() {
       setValue("fileNamePattern", fileNames(messageType)?.pattern ?? "");
     }
     setValue("sendWhen", messageType);
+    setValue("direction", directionText(messageType));
     previous.current = messageType;
   }, [messageType, getValues, setValue]);
+}
+
+/**
+ * The partner: free text for a connection that sends; for incoming orders, the laboratory's
+ * client the orders are for, by code.
+ */
+function PartnerInput() {
+  const { control } = useFormContext<ConnectionValues>();
+  const messageType = useWatch({ control, name: "messageType" });
+  const clients = useCommandQuery<ClientView[]>(LIST_CLIENTS, undefined, {
+    enabled: isIncoming(messageType),
+  });
+  if (!isIncoming(messageType)) {
+    return <TextInput name="partner" label="Partner (client)" isRequired />;
+  }
+  const options = (clients.data ?? [])
+    .filter((client) => client.active)
+    .map((client) => ({ id: client.code, label: `${client.code} – ${client.name}` }));
+  return <ChoiceInput name="partner" label="Partner (client)" options={options} isRequired />;
 }
 
 /** Section 1: name, partner, message type and the direction it fixes. */
@@ -52,7 +75,7 @@ export function GeneralSection({ isEdit }: { isEdit: boolean }) {
     <Box title="1. General">
       <div className={styles.row}>
         <TextInput name="name" label="Name" isRequired autoFocus />
-        <TextInput name="partner" label="Partner (client)" isRequired />
+        <PartnerInput />
         <ChoiceInput
           name="messageType"
           label="Message"

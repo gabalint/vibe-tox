@@ -30,7 +30,7 @@ use lis_interfaces::partner::{
 use lis_reporting::ReportRevisionId;
 use lis_store::{ArtifactDigest, Database};
 
-pub(crate) use self::folder_write::{WriteProblem, probe, write_file};
+pub(crate) use self::folder_write::{WriteProblem, probe, probe_intake, write_file};
 use self::hl7_payload::Payload;
 use crate::engine::Engine;
 use crate::ops_worker::{Operations, locked};
@@ -143,6 +143,8 @@ impl PartnerDeliveries {
             PartnerMessageType::BillingJson | PartnerMessageType::ReportPdf => {
                 stored(db, &delivery.artifact_sha256)
             }
+            // The LIS receives orders; nothing routes a delivery to such a connection.
+            PartnerMessageType::Hl7Orders => return,
         };
         let outcome = match bytes {
             Some(bytes) => {
@@ -214,18 +216,24 @@ pub(crate) fn send(
     }
 }
 
-/// Whether the LIS can create, write and remove a file at the destination. Blocking.
+/// Whether the LIS can create, write and remove a file at the destination; for incoming
+/// orders, read the input folder and write in the Processed and Failed folders. Blocking.
 pub(crate) fn probe_destination(
     db: &Database,
     key: Option<&DataKey>,
     destination: &Destination,
 ) -> Result<(), sftp::SftpProblem> {
+    let input = Path::new(&destination.folder);
     let Some(server) = &destination.sftp else {
-        return probe(Path::new(&destination.folder)).map_err(sftp::SftpProblem::Write);
+        return match &destination.moved_to {
+            Some(moved_to) => probe_intake(input, moved_to),
+            None => probe(input),
+        }
+        .map_err(sftp::SftpProblem::Write);
     };
     let credential =
         sftp::credential(db, key, server.auth, destination.sealed_password.as_deref())?;
-    tokio::runtime::Handle::current().block_on(sftp::probe(server, &credential))
+    sftp::probe_blocking(server, &credential, destination.moved_to.as_ref())
 }
 
 /// The attempt outcome of a write.

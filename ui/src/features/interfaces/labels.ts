@@ -23,6 +23,7 @@ export interface Labelled {
 }
 
 export const MESSAGE_TYPES: Record<PartnerMessageType, string> = {
+  hl7_orders: "HL7 Orders (OML^O21)",
   hl7_oru: "HL7 Results (ORU^R01)",
   report_pdf: "Report PDF",
   billing_json: "Billing JSON",
@@ -31,11 +32,20 @@ export const MESSAGE_TYPES: Record<PartnerMessageType, string> = {
 /** The Message choices of the Add connection dialog, as in the mockup. */
 export const MESSAGE_OPTIONS: Record<PartnerMessageType, string> = {
   ...MESSAGE_TYPES,
+  hl7_orders: "HL7 Orders (OML^O21 / ORM, v2.5.1)",
   hl7_oru: "HL7 Results (ORU^R01, v2.5.1)",
 };
 
+/** Whether the LIS receives the type: orders come in, everything else goes out. */
+export const isIncoming = (type: PartnerMessageType | string) => type === "hl7_orders";
+
+/** The Direction field and column, which the message type fixes. */
+export const directionText = (type: PartnerMessageType | string) =>
+  isIncoming(type) ? "In – LIS receives" : "Out – LIS sends";
+
 /** What makes each message type, shown as the connection's "Send when". */
 export const SEND_WHEN: Record<PartnerMessageType, string> = {
+  hl7_orders: "Order message received",
   hl7_oru: "Results released",
   report_pdf: "Report released",
   billing_json: "Billing handoff created",
@@ -43,6 +53,11 @@ export const SEND_WHEN: Record<PartnerMessageType, string> = {
 
 /** What a connection of each type writes, its message, and when it is made. */
 const WRITES: Record<PartnerMessageType, { file: string; message: string; when: string }> = {
+  hl7_orders: {
+    file: "HL7 order messages",
+    message: "HL7 OML^O21 or ORM^O01, v2.5.1",
+    when: "the clinic's EMR writes them",
+  },
   hl7_oru: {
     file: "an HL7 ORU result message with the partner's codes",
     message: "HL7 ORU^R01, v2.5.1",
@@ -61,14 +76,21 @@ const WRITES: Record<PartnerMessageType, { file: string; message: string; when: 
 };
 
 /** The connection page's one-line description, as in the mockup. */
-export const connectionDescription = ({
+export function connectionDescription({
   messageType,
   partner,
   protocol,
-}: PartnerConnectionSettings) =>
-  protocol === "sftp"
-    ? `Uploads ${WRITES[messageType].file} to ${partner}'s SFTP server when ${WRITES[messageType].when}.`
-    : `Writes ${WRITES[messageType].file} to ${partner}'s folder when ${WRITES[messageType].when}.`;
+  intake,
+}: PartnerConnectionSettings): string {
+  const where = protocol === "sftp" ? "SFTP server" : "folder";
+  if (intake) {
+    return `Reads HL7 order messages from ${partner}'s ${where} every ${intake.checkEverySeconds} seconds.`;
+  }
+  const { file, when } = WRITES[messageType];
+  return protocol === "sftp"
+    ? `Uploads ${file} to ${partner}'s SFTP server when ${when}.`
+    : `Writes ${file} to ${partner}'s folder when ${when}.`;
+}
 
 /** The message with its format, such as "Billing JSON (bil-handoff-v2)". */
 export const messageText = (type: PartnerMessageType) => WRITES[type].message;
@@ -79,6 +101,8 @@ export const noRulesText = (type: PartnerMessageType) =>
 
 /** Each message type's file name rule, shown under the File name field. */
 export const FILE_NAMES: Record<PartnerMessageType, { pattern: string; hint: string }> = {
+  // An incoming connection names no file.
+  hl7_orders: { pattern: "", hint: "" },
   hl7_oru: {
     pattern: "{accession}_r{revision}_{date}.hl7",
     hint: "{accession} (the report number) and {revision} are required; {date} and {time} are optional; ends in .hl7.",

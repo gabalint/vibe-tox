@@ -83,6 +83,58 @@ describe("Connections (ticket #4555; REQ-RPT-012)", () => {
     expect(within(dialog).getByText(/Corrections and withdrawals go first/)).toBeTruthy();
   });
 
+  it("sets up HL7 orders coming in: client, folders to read, and what to accept", async () => {
+    const clients = [{ id: "c1", code: "CLINIC-A", name: "Clinic A", active: true }];
+    const { user } = renderPage({ list_clients: () => clients }, "/interfaces/connections");
+    await user.click(await screen.findByRole("button", { name: "Add connection" }));
+    const dialog = await screen.findByRole("dialog", { name: "Add connection" });
+    await user.click(within(dialog).getByRole("button", { name: /Message/ }));
+    await user.click(await screen.findByRole("option", { name: /HL7 Orders/ }));
+    const direction = within(dialog).getByRole("textbox", { name: "Direction" });
+    await waitFor(() => expect((direction as HTMLInputElement).value).toBe("In – LIS receives"));
+    await user.click(within(dialog).getByRole("button", { name: /Partner \(client\)/ }));
+    expect(await screen.findByRole("option", { name: "CLINIC-A – Clinic A" })).toBeTruthy();
+    await user.keyboard("{Escape}");
+    for (const name of ["Input folder", "Processed folder", "Failed folder", "Check every"]) {
+      expect(within(dialog).getByRole("textbox", { name })).toBeTruthy();
+    }
+    expect(within(dialog).getByText("4. What to accept")).toBeTruthy();
+    expect(within(dialog).getByRole("textbox", { name: "Accept messages from" })).toBeTruthy();
+    expect(within(dialog).queryByText(/Routing rules/)).toBeNull();
+    expect(within(dialog).queryByText("5. When to send")).toBeNull();
+    expect(within(dialog).getByText(/reads no orders until its destination check/)).toBeTruthy();
+  });
+
+  it("shows an incoming connection's folders and what it accepts", async () => {
+    const orders = {
+      ...CONNECTION,
+      // The engine offers no test message to a connection that only reads.
+      allowedActions: CONNECTION.allowedActions.filter(
+        (action) => action !== "send_partner_test_message",
+      ),
+      processedFolder: "/srv/clinic-a/processed",
+      failedFolder: "/srv/clinic-a/failed",
+      settings: {
+        ...CONNECTION.settings,
+        partner: "CLINIC-A",
+        messageType: "hl7_orders" as const,
+        rules: [],
+        fileNamePattern: "",
+        intake: { checkEverySeconds: 30, acceptFrom: "CLINIC-A", unknownPatient: "hold" as const },
+      },
+    };
+    renderPage(
+      { get_partner_connection: () => ({ ...DETAIL, connection: orders }) },
+      `/interfaces/connections/${CONNECTION_ID}`,
+    );
+    expect(
+      await screen.findByText("Reads HL7 order messages from CLINIC-A's folder every 30 seconds."),
+    ).toBeTruthy();
+    expect(screen.getByText("/srv/clinic-a/processed")).toBeTruthy();
+    expect(screen.getByText("MSH-4 = CLINIC-A")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Send test message" })).toBeNull();
+  });
+
   it("offers the SFTP server fields of mockup 6 and tests the server as entered", async () => {
     const tested = vi.fn(() => ({ problem: null, fileName: null, presentedFingerprint: null }));
     const { user } = renderPage({ test_partner_sftp: tested }, "/interfaces/connections");

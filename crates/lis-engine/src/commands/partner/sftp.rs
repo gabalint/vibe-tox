@@ -4,8 +4,10 @@
 use std::sync::Arc;
 
 use lis_auth::DataKey;
-use lis_core::CommandError;
-use lis_interfaces::partner::{Destination, PartnerConnectionId, SftpAuth, SftpSettings};
+use lis_core::{CommandError, ErrorCode};
+use lis_interfaces::partner::{
+    Destination, IntakeSettings, MovedTo, PartnerConnectionId, SftpAuth, SftpSettings,
+};
 use rand::TryRng;
 use rand::rngs::SysRng;
 use russh::keys::PrivateKey;
@@ -40,6 +42,11 @@ pub struct TestPartnerSftpInput {
     #[serde(default)]
     #[ts(optional)]
     pub connection_id: Option<PartnerConnectionId>,
+    /// For incoming orders: the server's Processed and Failed folders, where a probe file
+    /// is written; the input folder is only listed.
+    #[serde(default)]
+    #[ts(optional)]
+    pub intake: Option<IntakeSettings>,
 }
 
 impl Engine {
@@ -85,6 +92,7 @@ impl Engine {
                 ),
                 _ => None,
             };
+            let moved_to = input.intake.map(server_folders).transpose()?;
             let key = self.data_key().await.ok();
             let db = Arc::clone(&self.db);
             let tested = blocking(move || {
@@ -94,13 +102,32 @@ impl Engine {
                     )),
                     (auth, _) => sftp::credential(&db, key.as_ref(), auth, kept.as_deref()),
                 }?;
-                tokio::runtime::Handle::current().block_on(sftp::probe(&server, &credential))
+                sftp::probe_blocking(&server, &credential, moved_to.as_ref())
             })
             .await?;
             Ok(FolderTestResult::probed(tested))
         })
         .await
     }
+}
+
+/// The server's Processed and Failed folders as entered, each from the server's root.
+fn server_folders(intake: IntakeSettings) -> Result<MovedTo, Failure> {
+    let from_root = |folder: Option<String>| {
+        folder
+            .map(|folder| folder.trim().to_owned())
+            .filter(|folder| folder.starts_with('/') && !folder.split('/').any(|part| part == ".."))
+            .ok_or_else(|| {
+                Failure::refused(
+                    ErrorCode::Validation,
+                    "Enter the Processed and Failed folders on the server from its root.",
+                )
+            })
+    };
+    Ok(MovedTo {
+        processed: from_root(intake.remote_processed_folder)?,
+        failed: from_root(intake.remote_failed_folder)?,
+    })
 }
 
 /// The connection's sealed password, when it signs in to the same server, port and user.

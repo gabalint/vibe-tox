@@ -6,7 +6,9 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use lis_core::{CommandError, ErrorCode};
-use lis_interfaces::partner::{AttemptOutcome, ConnectionTarget, Destination, PartnerConnectionId};
+use lis_interfaces::partner::{
+    AttemptOutcome, ConnectionTarget, Destination, MovedTo, PartnerConnectionId,
+};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -32,7 +34,8 @@ pub struct ChosenPartnerFolder {
     pub folder: String,
 }
 
-/// Input of `test_partner_folder`: a newly chosen folder, or a connection's folder.
+/// Input of `test_partner_folder`: a newly chosen folder, or a connection's folder. For
+/// incoming orders, the chosen Processed and Failed folders too.
 #[derive(Debug, Clone, Copy, Deserialize, TS)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[ts(export)]
@@ -40,6 +43,12 @@ pub struct TestPartnerFolderInput {
     #[serde(default)]
     #[ts(optional, type = "string")]
     pub folder_choice: Option<FolderChoiceId>,
+    #[serde(default)]
+    #[ts(optional, type = "string")]
+    pub processed_folder_choice: Option<FolderChoiceId>,
+    #[serde(default)]
+    #[ts(optional, type = "string")]
+    pub failed_folder_choice: Option<FolderChoiceId>,
     #[serde(default)]
     #[ts(optional)]
     pub connection_id: Option<PartnerConnectionId>,
@@ -96,8 +105,9 @@ impl Engine {
     }
 
     /// `test_partner_folder`: whether the LIS can create, write and remove a file in the
-    /// folder, or in a connection's folder or SFTP server. Writes no message and changes
-    /// nothing.
+    /// folder, or in a connection's folder or SFTP server. For incoming orders, whether it
+    /// can read the input folder and write in the Processed and Failed folders. Writes no
+    /// message and changes nothing.
     pub async fn test_partner_folder(
         &self,
         input: TestPartnerFolderInput,
@@ -106,11 +116,21 @@ impl Engine {
             self.authorize(&call).await?;
             let destination = match (input.folder_choice, input.connection_id) {
                 (Some(choice), None) => {
+                    let chosen = self.chosen_moved_to(
+                        &call,
+                        input.processed_folder_choice,
+                        input.failed_folder_choice,
+                    )?;
+                    let moved_to = chosen
+                        .processed
+                        .zip(chosen.failed)
+                        .map(|(processed, failed)| MovedTo { processed, failed });
                     self.chosen_folder(&call, Some(choice))?
                         .map(|folder| Destination {
                             folder,
                             sftp: None,
                             sealed_password: None,
+                            moved_to,
                         })
                 }
                 (None, Some(id)) => Some(self.connection_folder(&call, id).await?.destination),
@@ -147,7 +167,13 @@ impl Engine {
                     .flatten()
             })
             .await?;
-            let (bytes, extension) = test_file(id, &target, laboratory.as_ref(), now);
+            let (bytes, extension) =
+                test_file(id, &target, laboratory.as_ref(), now).ok_or_else(|| {
+                    Failure::refused(
+                        ErrorCode::Conflict,
+                        "An incoming connection receives orders; the LIS sends it nothing.",
+                    )
+                })?;
             let destination = target.destination;
             let db = Arc::clone(&self.db);
             let stored = blocking(move || db.artifacts().put(&bytes).map(|stored| (stored, bytes)))

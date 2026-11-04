@@ -10,6 +10,14 @@ import type { Schedule } from "@/generated/Schedule";
 import type { SftpAuth } from "@/generated/SftpAuth";
 import type { SftpSettings } from "@/generated/SftpSettings";
 import type { FieldPaths } from "@/lib/errors";
+import { directionText, isIncoming } from "../labels";
+import {
+  type IntakeValues,
+  type MovedToValues,
+  toIntake,
+  toIntakeValues,
+  toMovedToValues,
+} from "./intakeForm";
 
 interface RuleValues {
   field: RuleField | "";
@@ -28,7 +36,7 @@ export interface SftpValues {
   password: string;
 }
 
-export interface ConnectionValues {
+interface ConnectionFields {
   name: string;
   partner: string;
   messageType: string;
@@ -42,14 +50,24 @@ export interface ConnectionValues {
   /** The handle of a newly chosen folder; empty keeps the current one. */
   folderChoice: string;
   sftp: SftpValues;
+  /** For incoming orders: how the input folder is read and what is accepted. */
+  intake: IntakeValues;
   rules: RuleValues[];
   schedule: { kind: string; minutes: string; time: string };
   fileNamePattern: string;
   reason: string;
 }
 
-/** Engine paths `settings.x` are form fields `x`; the folder handle shows on the folder. */
-export const FIELD_PATHS: FieldPaths = { settings: "", folderChoice: "folder" };
+/** The whole form: the connection's values and, for orders, its local Processed and Failed. */
+export type ConnectionValues = ConnectionFields & MovedToValues;
+
+/** Engine paths `settings.x` are form fields `x`; each folder handle shows on its folder. */
+export const FIELD_PATHS: FieldPaths = {
+  settings: "",
+  folderChoice: "folder",
+  processedFolderChoice: "processedFolder",
+  failedFolderChoice: "failedFolder",
+};
 
 function toSftpValues(sftp: SftpSettings | null | undefined): SftpValues {
   return {
@@ -71,13 +89,15 @@ export function toValues(connection: PartnerConnection | null): ConnectionValues
     name: settings?.name ?? "",
     partner: settings?.partner ?? "",
     messageType: settings?.messageType ?? "",
-    direction: "Out – LIS sends",
+    direction: directionText(settings?.messageType ?? ""),
     protocol,
     // The message type fixes what makes a message; its option shares the type's key.
     sendWhen: settings?.messageType ?? "",
     folder: protocol === "folder" ? (connection?.folder ?? "") : "",
     folderChoice: "",
+    ...toMovedToValues(connection),
     sftp: toSftpValues(settings?.sftp),
+    intake: toIntakeValues(settings?.intake),
     rules: settings?.rules.map((rule) => ({ ...rule })) ?? [],
     schedule: {
       kind: schedule?.kind ?? "immediately",
@@ -110,17 +130,22 @@ export function typedPassword(values: SftpValues): string | undefined {
   return values.auth === "password" && values.password !== "" ? values.password : undefined;
 }
 
+/** The settings to save. An incoming connection routes, schedules and names nothing. */
 export function toSettings(values: ConnectionValues): PartnerConnectionSettings {
+  const incoming = isIncoming(values.messageType);
   return {
     name: values.name.trim(),
     partner: values.partner.trim(),
     messageType: values.messageType as PartnerMessageType,
     protocol: values.protocol,
-    rules: values.rules.flatMap(({ field, condition, value }) =>
-      field === "" || condition === "" ? [] : [{ field, condition, value: value.trim() }],
-    ),
-    schedule: toSchedule(values.schedule),
-    fileNamePattern: values.fileNamePattern.trim(),
+    rules: incoming
+      ? []
+      : values.rules.flatMap(({ field, condition, value }) =>
+          field === "" || condition === "" ? [] : [{ field, condition, value: value.trim() }],
+        ),
+    schedule: incoming ? { kind: "immediately" } : toSchedule(values.schedule),
+    fileNamePattern: incoming ? "" : values.fileNamePattern.trim(),
     sftp: values.protocol === "sftp" ? toSftp(values.sftp) : null,
+    intake: incoming ? toIntake(values.intake, values.protocol) : null,
   };
 }
