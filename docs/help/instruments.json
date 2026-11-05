@@ -2,7 +2,7 @@
   "id": "instruments",
   "title": "Instruments",
   "summary": "Configure analyzer connections and result-file intake for registered instruments.",
-  "reviewedOn": "2026-11-03",
+  "reviewedOn": "2026-11-05",
   "routes": ["/configuration/instruments"],
   "sections": [
     {
@@ -31,7 +31,7 @@
       "title": "Analyzer connections and watched result folders",
       "routes": ["/configuration/instruments"],
       "purpose": "Register analyzers, match their actual communication settings, and control automatic receipt of result messages or result files.",
-      "access": "Manage configuration is required to register, edit, enable or disable an analyzer and choose or clear a result folder. Registration does not approve the analyzer for clinical service or supply source mappings.",
+      "access": "Manage configuration is required to register, edit, enable or disable an analyzer (one at a time or with Enable all / Disable all) and choose or clear a result folder. Registration does not approve the analyzer for clinical service or supply source mappings.",
       "fields": [
         {
           "name": "Find analyzers",
@@ -354,6 +354,12 @@
           "result": "Saves the enabled state. Disabling automatic pickup does not prevent authorized manual loading through Result imports."
         },
         {
+          "name": "Enable all / Disable all",
+          "does": "Turn listening, or folder pickup for result-file instruments, on or off for every analyzer not already in that state. The confirmation lists each analyzer that will change, with its connection and whether listening or folder pickup changes; analyzers already in that state are left alone. There is no reason field: the single Enable or Disable has none either.",
+          "availableWhen": "Manage configuration. Enable all appears only while at least one analyzer is disabled, Disable all only while at least one is enabled. Confirm with the Enable all or Disable all button in the dialog; Cancel changes nothing.",
+          "result": "Each analyzer is changed one after another as a separate saved change with its own audit entry, and all analyzer listeners restart after each one. A refusal, such as a changed revision, does not stop the others. A notice under the page header gives the count changed (for example 3 instruments enabled) and names each analyzer that was not changed, with the reason, and, after Enable all, each enabled analyzer whose listener reports an error, such as Could not open the connection. Close the notice with its dismiss button. Check each listed analyzer's Live status before relying on receipt."
+        },
+        {
           "name": "Choose folder / Change folder",
           "does": "Select a dedicated directory and establish its existing-file baseline.",
           "availableWhen": "Manage configuration, Result files connection, readable folder not assigned to another analyzer.",
@@ -411,6 +417,10 @@
         {
           "problem": "Save reports that the analyzer changed",
           "recovery": "Reload the record and review its latest settings before repeating the edit or enable action."
+        },
+        {
+          "problem": "Enable all or Disable all names analyzers that did not change or cannot listen",
+          "recovery": "Open each named analyzer, read its Live status and last error, and correct its connection (for example a serial port that is missing or used by another program) or reload it after a changed revision. Then use Enable all, Disable all or the analyzer's own Enable or Disable again; analyzers already in the wanted state are skipped."
         }
       ]
     }
@@ -421,6 +431,8 @@
     "ui/src/features/configuration/instruments/ConnectionFields.tsx",
     "ui/src/features/configuration/instruments/AuFields.tsx",
     "ui/src/features/configuration/instruments/EnableInstrumentDialog.tsx",
+    "ui/src/features/configuration/instruments/BulkEnableDialog.tsx",
+    "ui/src/features/configuration/Directory.tsx",
     "ui/src/features/configuration/instruments/FolderDialogs.tsx",
     "ui/src/features/configuration/instruments/LiveGroups.tsx",
     "ui/src/features/configuration/instruments/settingsFacts.ts",

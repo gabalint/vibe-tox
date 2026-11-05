@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "@/components/Button";
 import type { DataGridColumn } from "@/components/DataGrid";
 import type { InstrumentChangeResult } from "@/generated/InstrumentChangeResult";
 import type { InstrumentConfiguration } from "@/generated/InstrumentConfiguration";
@@ -9,6 +10,12 @@ import { openRecordPanel } from "@/lib/openRecordPanel";
 import { codedColumns } from "../catalogColumns";
 import { LIST_INSTRUMENTS } from "../contract";
 import { byId, Directory } from "../Directory";
+import {
+  BulkEnableDialog,
+  type BulkOutcome,
+  BulkOutcomeAlert,
+  bulkTargets,
+} from "./BulkEnableDialog";
 import { useInstrumentActions } from "./InstrumentActions";
 import { RegisterDialog } from "./InstrumentDialogs";
 import { InstrumentPanel, Listening } from "./InstrumentPanel";
@@ -32,6 +39,7 @@ const NONE: readonly InstrumentConfiguration[] = [];
  * Analyzer connections (REQ-INT-005), for people with `manage_configuration`. A network
  * analyzer needs the list of addresses allowed to connect. Each change restarts the
  * listeners, and the engine's answer says whether they came back; the panel shows it.
+ * Enable all and Disable all change every analyzer not already in that state, one by one.
  */
 export function InstrumentsPage() {
   const query = useCommandQuery<InstrumentConfiguration[]>(LIST_INSTRUMENTS);
@@ -44,6 +52,14 @@ export function InstrumentsPage() {
     setRegistered(isRegistration);
   };
   const { actionsOf, rowActions, dialog } = useInstrumentActions(query.data ?? NONE, changed);
+  // The analyzers as listed when Enable all or Disable all was pressed, kept while it runs.
+  const [bulk, setBulk] = useState<{
+    enabling: boolean;
+    targets: readonly InstrumentConfiguration[];
+  } | null>(null);
+  const [outcome, setOutcome] = useState<BulkOutcome | null>(null);
+  const toEnable = bulkTargets(query.data ?? NONE, true);
+  const toDisable = bulkTargets(query.data ?? NONE, false);
   return (
     <>
       <Directory
@@ -60,6 +76,23 @@ export function InstrumentsPage() {
         openRowId={record.openId}
         onOrderChange={record.followOrder}
         // Looked up in the latest list, so the panel always shows the current revision.
+        actions={
+          <>
+            {toEnable.length > 0 && (
+              <Button onPress={() => setBulk({ enabling: true, targets: toEnable })}>
+                Enable all
+              </Button>
+            )}
+            {toDisable.length > 0 && (
+              <Button onPress={() => setBulk({ enabling: false, targets: toDisable })}>
+                Disable all
+              </Button>
+            )}
+          </>
+        }
+        notice={
+          outcome && <BulkOutcomeAlert outcome={outcome} onDismiss={() => setOutcome(null)} />
+        }
         panel={openRecordPanel(record, query.data, byId, (open) => (
           <InstrumentPanel
             instrument={open}
@@ -84,6 +117,14 @@ export function InstrumentsPage() {
         }}
       />
       {dialog}
+      {bulk && (
+        <BulkEnableDialog
+          targets={bulk.targets}
+          enabling={bulk.enabling}
+          onDone={setOutcome}
+          onClose={() => setBulk(null)}
+        />
+      )}
     </>
   );
 }
