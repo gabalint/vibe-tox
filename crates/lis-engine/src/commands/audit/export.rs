@@ -159,9 +159,9 @@ impl Engine {
                 .export_file(&call, file, bytes, move |ctx, name| {
                     ctx.require(Capability::ViewAudit)?;
                     ctx.require(Capability::Export)?;
-                    for capability in capabilities {
-                        ctx.require(capability)?;
-                    }
+                    capabilities
+                        .into_iter()
+                        .try_for_each(|capability| ctx.require(capability))?;
                     let event = export_event(name, format, (count, patients), stream);
                     let event = filter_details
                         .into_iter()
