@@ -303,9 +303,9 @@ impl Engine {
                 .map(|(_, capability)| *capability);
             self.write(&call, move |ctx| {
                 ctx.require(Capability::ViewAudit)?;
-                if let Some(capability) = patient_capability {
-                    ctx.require(capability)?;
-                }
+                patient_capability
+                    .into_iter()
+                    .try_for_each(|capability| ctx.require(capability))?;
                 ctx.audit(event).map(drop)
             })
             .await?;
