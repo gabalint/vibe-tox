@@ -108,7 +108,10 @@ async fn an_hl7_result_over_mllp_is_sent_again_until_acknowledged_and_shows_the_
         assert_eq!(received.len(), 2);
         // Sent again as it was, so the partner can tell a resend from a new result.
         assert_eq!(received[0], received[1]);
-        assert!(String::from_utf8_lossy(&received[0]).contains("|ORU^R01^ORU_R01|"));
+        let text = String::from_utf8_lossy(&received[0]);
+        assert!(text.contains("|ORU^R01^ORU_R01|"));
+        // MSH-15 and MSH-16 empty: the partner answers on the same connection.
+        assert!(text.contains("|P|2.5.1||||||UNICODE UTF-8"), "{text}");
     }
 
     hl7.correct_result().await;
