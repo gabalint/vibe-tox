@@ -60,6 +60,8 @@ export function AuditFind({ filter, pickedLabel, onPick }: AuditFindProps) {
         name="find"
         options={options}
         isLoading={found.isFetching}
+        isClearable
+        optionLayout="stacked"
         onInputChange={setText}
         description={
           found.data?.more
