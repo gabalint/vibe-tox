@@ -31,3 +31,21 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
 }
+
+/* The running version and its Copy label, the menu's last row (ticket #4584). */
+.version {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.copy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-inline-start: auto;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+}
