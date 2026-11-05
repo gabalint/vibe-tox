@@ -35,6 +35,8 @@ pub(crate) struct Header<'a> {
     pub(crate) partner: &'a str,
     /// The report was withdrawn: every result is posted in error.
     pub(crate) withdrawal: bool,
+    /// Sent over MLLP: the partner answers with an application ACK.
+    pub(crate) acknowledged: bool,
 }
 
 /// The ORU, or every test and analyte it misses a mapping for.
@@ -85,6 +87,7 @@ pub(crate) fn oru(
         processing_id: "P",
         laboratory: context.laboratory.clone(),
         receiving_facility: header.partner.to_owned(),
+        acknowledged: header.acknowledged,
         patient: patient(snapshot),
         location: revision.parties.locations.first().cloned(),
         order: order(revision, &zone),

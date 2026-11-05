@@ -126,7 +126,7 @@
         {
           "name": "State / Copies",
           "meaning": "Run outcome and separate result for each destination.",
-          "values": "Requested, Running, Verified, Failed or Interrupted; each copy names its target, verification time or failure code, and whether it was since pruned.",
+          "values": "Requested, Running, Verified (green badge with a check mark), Failed (red badge) or Interrupted; each copy names its target, verification time or failure code, and whether it was since pruned.",
           "rules": "Read-only. Inspect all copy outcomes; one verified copy does not prove every intended target succeeded."
         },
         {

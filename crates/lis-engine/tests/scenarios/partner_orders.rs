@@ -185,6 +185,7 @@ fn settings() -> PartnerConnectionSettings {
             remote_processed_folder: None,
             remote_failed_folder: None,
         }),
+        mllp: None,
     }
 }
 

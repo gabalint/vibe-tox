@@ -35,6 +35,8 @@ pub(crate) struct Target {
     pub(crate) partner: String,
     pub(crate) source: MessageSource,
     pub(crate) source_id: Option<String>,
+    /// Sent over MLLP, which answers each message.
+    pub(crate) acknowledged: bool,
 }
 
 impl Target {
@@ -46,6 +48,7 @@ impl Target {
             partner: delivery.partner.clone(),
             source: delivery.source,
             source_id: delivery.source_id.clone(),
+            acknowledged: delivery.destination.mllp.is_some(),
         }
     }
 }
@@ -64,6 +67,7 @@ pub(crate) fn make(conn: &Connection, target: &Target) -> Result<Made, ReportRou
         created_at: target.created_at,
         partner: &target.partner,
         withdrawal: target.source == MessageSource::ReportWithdrawal,
+        acknowledged: target.acknowledged,
     };
     let version = mappings.as_ref().map_or(0, |mappings| mappings.version);
     Ok(hl7_message::oru(&revision, mappings.as_ref(), &loinc, &header).map(|oru| (oru, version)))

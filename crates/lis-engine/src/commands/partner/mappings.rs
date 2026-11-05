@@ -156,6 +156,8 @@ pub(super) fn missing_for(
         partner: String::new(),
         source: row.source,
         source_id: row.source_id.clone(),
+        // Only what the message misses is read here, not its bytes.
+        acknowledged: false,
     };
     Ok(make(conn, &target)?.err().unwrap_or_default())
 }

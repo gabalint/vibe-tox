@@ -1,4 +1,5 @@
 // Synthetic Interfaces records for the feature's tests.
+import type { MllpPartner } from "@/generated/MllpPartner";
 import type { PartnerConnection } from "@/generated/PartnerConnection";
 import type { PartnerConnectionDetail } from "@/generated/PartnerConnectionDetail";
 import type { PartnerMappings } from "@/generated/PartnerMappings";
@@ -42,6 +43,7 @@ export const CONNECTION: PartnerConnection = {
     fileNamePattern: "billing-{handoff}_{date}.json",
     sftp: null,
     intake: null,
+    mllp: null,
   },
   folder: "/srv/billing/out",
   processedFolder: null,
@@ -54,6 +56,7 @@ export const CONNECTION: PartnerConnection = {
   lastAttempt: null,
   waiting: 1,
   failing: 0,
+  awaitingAck: 0,
   lastChange: { by: ME, at: "2026-11-03T10:00:00.000000000Z" },
   allowedActions: [
     "update_partner_connection",
@@ -74,6 +77,28 @@ export const HL7: PartnerConnection = {
     messageType: "hl7_oru",
     rules: [{ field: "client", condition: "equals", value: "CLINIC-A" }],
     fileNamePattern: "{accession}_r{revision}_{date}.hl7",
+  },
+};
+
+/** A synthetic partner interface on the lab network, as mockup 1 lists it. */
+export const MLLP: MllpPartner = {
+  address: "10.20.0.15",
+  port: 6661,
+  acknowledgement: "application",
+  ackTimeoutSeconds: 30,
+};
+
+/** An HL7 Results connection the LIS sends over MLLP, with two messages awaiting an ACK. */
+export const HL7_MLLP: PartnerConnection = {
+  ...HL7,
+  awaitingAck: 2,
+  settings: {
+    ...HL7.settings,
+    name: "HL7 Results - Hospital B",
+    partner: "CLINIC-B",
+    protocol: "mllp_connect",
+    fileNamePattern: "",
+    mllp: MLLP,
   },
 };
 
@@ -141,6 +166,9 @@ export const WRITTEN: PartnerMessageRow = {
   nextAttemptAt: null,
   errorCode: null,
   writtenPath: "/srv/billing/out/billing-12_20261103.json",
+  ackCode: null,
+  ackText: null,
+  awaitingAck: false,
   unrouted: false,
   resolution: null,
   allowedActions: [],

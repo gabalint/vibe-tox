@@ -13,6 +13,7 @@ import {
   scheduleText,
   shortFingerprint,
 } from "../labels";
+import { socketText } from "../mllpLabels";
 import styles from "./ConnectionPage.module.css";
 import { CodeMappingsSection } from "./mappings/CodeMappingsSection";
 
@@ -32,18 +33,28 @@ function Card({ title, items }: { title: string; items: [string, ReactNode][] })
   );
 }
 
-/**
- * Where it writes, as in the mockup: the protocol and folder, or for SFTP the protocol with
- * the server, the remote folder and the sign-in with the server's fingerprint.
- */
 const code = (key: string, text: string) => (
   <span key={key} className={styles.code}>
     {text}
   </span>
 );
 
+/**
+ * Where it writes, as in the mockup: the protocol and folder; for SFTP the protocol with the
+ * server, the remote folder and the sign-in with the server's fingerprint; for MLLP the
+ * partner's address and the acknowledgement the LIS waits for.
+ */
 function destinationItems({ folder, settings }: PartnerConnection): [string, ReactNode][] {
-  const { sftp } = settings;
+  const { sftp, mllp } = settings;
+  if (mllp) {
+    return [
+      ["Protocol", `${PROTOCOLS.mllp_connect} – ${socketText(mllp)}`],
+      [
+        "Acknowledgement",
+        `Application ACK (AA / AE / AR) · timeout ${mllp.ackTimeoutSeconds} seconds`,
+      ],
+    ];
+  }
   const input = settings.intake ? "Input folder" : "Folder";
   if (sftp === null) {
     return [
@@ -76,9 +87,12 @@ function workingItems(connection: PartnerConnection): [string, ReactNode][] {
     ];
   }
   const type = settings.messageType;
+  const fileName: [string, ReactNode][] = settings.mllp
+    ? []
+    : [["File name", code("file-name", settings.fileNamePattern)]];
   return [
     ["Send when", `${SEND_WHEN[type]} · ${scheduleText(settings.schedule).toLowerCase()}`],
-    ["File name", code("file-name", settings.fileNamePattern)],
+    ...fileName,
     ["Rules", rulesText(connection)],
   ];
 }
@@ -137,8 +151,11 @@ export function ConnectionOverview({ connection, lastReason }: OverviewProps) {
               ? `${formatTime(lastAttempt.at)} · ${lastAttempt.errorCode === null ? "OK" : problemText(lastAttempt.errorCode)}`
               : "None yet",
           ],
-          // A folder or SFTP server never answers, so nothing written there waits for an ACK.
-          ["Awaiting application ACK", "0 messages"],
+          // Only an MLLP partner answers; a folder or SFTP server never does.
+          [
+            "Awaiting application ACK",
+            `${connection.awaitingAck} message${connection.awaitingAck === 1 ? "" : "s"}`,
+          ],
           [
             "Last change",
             `${person(lastChange.by, lastChange.byDisplay)}, ${formatTime(lastChange.at)}${lastReason ? ` · reason: ${lastReason}` : ""}`,

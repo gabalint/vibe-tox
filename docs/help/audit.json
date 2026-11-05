@@ -85,7 +85,7 @@
         {
           "name": "Seq. / Stream / Outcome",
           "meaning": "Sequence number within the event's stream, the stream it belongs to, and the result of the recorded action.",
-          "values": "Increasing sequence number within its stream, so two streams can each have an event 5; Security, Clinical or Access; Succeeded, Denied or Failed.",
+          "values": "Increasing sequence number within its stream, so two streams can each have an event 5; Security, Clinical or Access; Succeeded (green badge with a check mark), Denied (amber warning badge) or Failed (red badge).",
           "rules": "Read-only; denied/failed events are evidence, not completed business changes."
         },
         {

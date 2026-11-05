@@ -9,7 +9,7 @@ use lis_engine::{
     ListPartnerMessages, PartnerConnection, PartnerConnectionDetail, PartnerConnectionInput,
     PartnerMappings, PartnerMessagePage, RecordPartnerDestinationCheck, ResendPartnerDelivery,
     ResolveUnroutedMessage, SetPartnerConnectionActive, TestPartnerFolderInput,
-    TestPartnerSftpInput, UnroutedMessage, UpdatePartnerConnectionInput,
+    TestPartnerMllpInput, TestPartnerSftpInput, UnroutedMessage, UpdatePartnerConnectionInput,
 };
 use tauri::{AppHandle, Manager, Runtime, State};
 use tauri_plugin_dialog::DialogExt;
@@ -64,6 +64,14 @@ pub(crate) async fn test_partner_sftp(
     input: TestPartnerSftpInput,
 ) -> Result<FolderTestResult, CommandError> {
     engine.test_partner_sftp(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn test_partner_mllp(
+    engine: State<'_, Engine>,
+    input: TestPartnerMllpInput,
+) -> Result<FolderTestResult, CommandError> {
+    engine.test_partner_mllp(input).await
 }
 
 #[tauri::command]

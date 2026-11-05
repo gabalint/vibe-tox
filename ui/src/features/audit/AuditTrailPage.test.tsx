@@ -65,6 +65,9 @@ describe("AuditTrailPage (REQ-OPS-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     expect(screen.getByText("100 events shown")).toBeTruthy();
     expect(screen.getByRole("gridcell", { name: "150" })).toBeTruthy();
     expect(screen.getByRole("gridcell", { name: "Denied" })).toBeTruthy();
+    // A succeeded action is a success badge, like Failed is a danger one (ticket #4536).
+    const succeeded = screen.getAllByRole("gridcell", { name: "Succeeded" })[0];
+    expect(succeeded?.querySelector("[data-tone]")?.getAttribute("data-tone")).toBe("success");
     expect(screen.getAllByRole("gridcell", { name: "Sign-in" }).length).toBeGreaterThan(0);
     expect(
       screen.getAllByRole("gridcell", { name: "Test Administrator (user)" }).length,

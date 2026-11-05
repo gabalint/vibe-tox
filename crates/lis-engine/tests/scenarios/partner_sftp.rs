@@ -39,6 +39,7 @@ fn settings(sftp: SftpSettings) -> PartnerConnectionSettings {
         file_name_pattern: "{accession}_r{revision}.hl7".to_owned(),
         sftp: Some(sftp),
         intake: None,
+        mllp: None,
     }
 }
 

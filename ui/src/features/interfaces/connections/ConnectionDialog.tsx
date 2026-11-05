@@ -7,6 +7,7 @@ import { useToast } from "@/components/Toast";
 import type { CreatePartnerConnectionInput } from "@/generated/CreatePartnerConnectionInput";
 import type { PartnerConnection } from "@/generated/PartnerConnection";
 import type { PartnerConnectionDetail } from "@/generated/PartnerConnectionDetail";
+import type { PartnerProtocol } from "@/generated/PartnerProtocol";
 import type { UpdatePartnerConnectionInput } from "@/generated/UpdatePartnerConnectionInput";
 import { useCommandMutation } from "@/lib/commands";
 import { CONNECTION_QUERIES, CREATE_CONNECTION, UPDATE_CONNECTION } from "../contract";
@@ -21,6 +22,7 @@ import {
 } from "./connectionForm";
 import { FolderFields } from "./FolderFields";
 import { AcceptSection, IntakeFolderFields } from "./IntakeSections";
+import { MllpFields } from "./MllpFields";
 import { ProtocolCards } from "./ProtocolCards";
 import { RuleFields } from "./RuleFields";
 import { SftpFields } from "./SftpFields";
@@ -130,19 +132,7 @@ export function ConnectionDialog({ connection, onClose, onSaved }: ConnectionDia
       <Box title="2. Protocol">
         <ProtocolCards />
       </Box>
-      {protocol === "sftp" ? (
-        <Box title="3. SFTP server">
-          <SftpFields connection={connection} />
-        </Box>
-      ) : (
-        <Box title="3. Folder">
-          {incoming ? (
-            <IntakeFolderFields connectionId={connection?.id ?? null} />
-          ) : (
-            <FolderFields connectionId={connection?.id ?? null} />
-          )}
-        </Box>
-      )}
+      <ProtocolSection protocol={protocol} incoming={incoming} connection={connection} />
       {incoming ? (
         <AcceptSection />
       ) : (
@@ -156,4 +146,38 @@ export function ConnectionDialog({ connection, onClose, onSaved }: ConnectionDia
       {connection && <ReasonField />}
     </FormDialog>
   );
+}
+
+interface ProtocolSectionProps {
+  protocol: PartnerProtocol;
+  incoming: boolean;
+  connection: PartnerConnection | null;
+}
+
+/** Section 3, which changes with the protocol: the folder, the SFTP server or the MLLP partner. */
+function ProtocolSection({ protocol, incoming, connection }: ProtocolSectionProps) {
+  switch (protocol) {
+    case "sftp":
+      return (
+        <Box title="3. SFTP server">
+          <SftpFields connection={connection} />
+        </Box>
+      );
+    case "mllp_connect":
+      return (
+        <Box title="3. MLLP partner">
+          <MllpFields />
+        </Box>
+      );
+    case "folder":
+      return (
+        <Box title="3. Folder">
+          {incoming ? (
+            <IntakeFolderFields connectionId={connection?.id ?? null} />
+          ) : (
+            <FolderFields connectionId={connection?.id ?? null} />
+          )}
+        </Box>
+      );
+  }
 }

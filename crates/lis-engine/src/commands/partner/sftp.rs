@@ -21,6 +21,7 @@ use zeroize::Zeroizing;
 use super::folders::{FolderTestResult, blocking};
 use super::{GET_LIS_SFTP_KEY, TEST_PARTNER_SFTP};
 use crate::engine::Engine;
+use crate::partner_delivery::ProbeProblem;
 use crate::partner_delivery::sftp::{self, Credential, KEY_CONTEXT};
 use crate::pipeline::Failure;
 
@@ -105,7 +106,7 @@ impl Engine {
                 sftp::probe_blocking(&server, &credential, moved_to.as_ref())
             })
             .await?;
-            Ok(FolderTestResult::probed(tested))
+            Ok(FolderTestResult::probed(tested.map_err(ProbeProblem::Sftp)))
         })
         .await
     }
