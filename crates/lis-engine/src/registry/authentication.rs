@@ -70,6 +70,8 @@ pub(crate) const DESIGNATE_ONE_PERSON_LABORATORY: CommandSpec = spec(
 );
 pub(crate) const LIST_AUDIT_EVENTS: CommandSpec =
     spec("list_audit_events", "audit.list_events", VIEW_AUDIT);
+pub(crate) const FIND_AUDIT_RECORDS: CommandSpec =
+    spec("find_audit_records", "audit.find_records", VIEW_AUDIT);
 pub(crate) const VERIFY_AUDIT_CHAIN: CommandSpec =
     spec("verify_audit_chain", "audit.verify_chain", VIEW_AUDIT);
 pub(crate) const LIST_LISTENER_STATUS: CommandSpec = spec(

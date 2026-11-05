@@ -44,6 +44,7 @@
     "allow-reset-user-credentials",
     "allow-designate-one-person-laboratory",
     "allow-list-audit-events",
+    "allow-find-audit-records",
     "allow-verify-audit-chain",
     "allow-list-listener-status",
     "allow-get-listener-restart"

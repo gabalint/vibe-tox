@@ -31,6 +31,10 @@ interface RecordPickerBaseProps {
   label: string;
   /** Compact collection filter; form fields keep their stacked label. */
   layout?: "inline";
+  /** Reads the label to screen readers only, as `Select`'s does. */
+  isLabelHidden?: boolean;
+  /** What to type, such as the values searched. */
+  placeholder?: string;
   /** Also the key for engine field errors shown by `Form`. */
   name: string;
   /** The records to choose from; with engine search, the answer for the typed text. */
@@ -81,6 +85,8 @@ export function RecordPicker(props: RecordPickerProps) {
   const {
     label,
     layout,
+    isLabelHidden,
+    placeholder,
     options,
     onInputChange,
     isLoading = false,
@@ -123,10 +129,13 @@ export function RecordPicker(props: RecordPickerProps) {
       }}
       className={formStyles.field}
     >
-      <FieldLabel isRequired={isRequired}>{label}</FieldLabel>
+      <FieldLabel isRequired={isRequired} isHidden={isLabelHidden}>
+        {label}
+      </FieldLabel>
       <div className={styles.control}>
         <PickerInput
           ref={inputRef}
+          placeholder={placeholder}
           autoCorrect="off"
           autoCapitalize="off"
           spellCheck={false}

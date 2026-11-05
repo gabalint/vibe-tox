@@ -102,8 +102,8 @@ pub use model::{
     SubjectIdentifier, SubjectIdentifierId,
 };
 pub use queries::{
-    SubjectMatchQuery, audit_record_label, current_laboratory_profile, find_subject_matches,
-    get_client, get_laboratory_profile_by_id, get_practitioner, get_subject,
+    SubjectMatchQuery, audit_record_label, audit_record_search, current_laboratory_profile,
+    find_subject_matches, get_client, get_laboratory_profile_by_id, get_practitioner, get_subject,
     identity_holds_touching, list_all_open_identity_holds, list_clients, list_laboratory_profiles,
     list_open_identity_holds, list_practitioners, match_subjects, subject_summaries,
     subject_summary,

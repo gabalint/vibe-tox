@@ -5,6 +5,7 @@ import { Page, PageHeader } from "@/components/Page";
 import { isCalendarDate } from "@/lib/format";
 import { AuditEvents, useAuditEvents } from "./AuditEvents";
 import { AuditFilters, type CodeLabels } from "./AuditFilters";
+import type { PickedRecord } from "./AuditFind";
 import styles from "./audit.module.css";
 import { ChainResult, useVerifyChain } from "./ChainCheck";
 import { type AuditFilter, isOutcome } from "./contract";
@@ -28,9 +29,16 @@ export function AuditTrailPage() {
   // The engine sends the actions, record types and users to offer on every event.
   const first = events.data?.pages[0]?.[0];
   const apply = (next: AuditFilter) => setParams(paramsFromFilter(next));
-  // A find replaces the address rather than adding an entry per pause in typing.
-  const find = (recordId: string | undefined) =>
-    setParams(paramsFromFilter({ ...filter, recordId }), { replace: true });
+  // A record picked in Find also chooses its record type; clearing Find keeps the type.
+  const find = (record: PickedRecord | undefined) =>
+    apply({
+      ...filter,
+      recordType: record?.recordType ?? filter.recordType,
+      recordId: record?.recordId,
+    });
+  const pickedLabel = filter.recordId
+    ? events.data?.pages[0]?.find((event) => event.recordId === filter.recordId)?.recordLabel
+    : undefined;
   return (
     <Page layout="collection">
       <PageHeader
@@ -71,6 +79,7 @@ export function AuditTrailPage() {
         actions={first?.availableActions ?? NO_CODES}
         recordTypes={first?.availableRecordTypes ?? NO_CODES}
         users={first?.availableUsers ?? NO_CODES}
+        pickedLabel={pickedLabel}
         onApply={apply}
         onFind={find}
       />

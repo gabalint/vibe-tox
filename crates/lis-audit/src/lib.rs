@@ -6,7 +6,8 @@
 //!   predecessor's hash and a SHA-256 over the versioned canonical
 //!   serialization documented in [`chain`] (`sha256-v1`).
 //! - [`list`] pages through one stream or every stream, newest first, for the
-//!   audit viewer.
+//!   audit viewer; [`audit_records`] finds the records it can filter by, from the
+//!   IDs owner modules match with [`RecordSearch`].
 //! - [`verify`] recomputes a stream's chain and reports edited, deleted,
 //!   inserted and reordered events, and seals that disagree with the chain,
 //!   as [`Finding`]s.
@@ -44,6 +45,7 @@ mod model;
 mod record_events;
 mod repo;
 mod seal;
+mod search;
 mod verify;
 
 use lis_core::{Migration, ModuleSchema};
@@ -58,6 +60,7 @@ pub use model::{
 pub use record_events::{RecordEvent, succeeded_record_events};
 pub use repo::{append, event_recorded_at, heads};
 pub use seal::{Seal, last_seal, seal, seals};
+pub use search::{AuditRecord, RecordRef, RecordSearch, audit_records};
 pub use verify::{Finding, VerifyReport, verify};
 
 /// This module's migrations, in version order.

@@ -88,6 +88,7 @@
 mod account;
 pub mod actions;
 mod admin;
+mod audit_records;
 mod challenge;
 mod cipher;
 mod credentials;
@@ -125,6 +126,7 @@ pub use admin::{
     ChangeUserStatusInput, CreateUserInput, ResetUserCredentialsInput, SetUserRolesInput,
     create_user, disable_user, enable_user, reset_user_credentials, set_user_roles,
 };
+pub use audit_records::{audit_record_label, audit_record_search};
 pub use challenge::{
     CHALLENGE_TTL, Challenge, ChallengeId, ChallengeSlot, ChallengeStep, LiveChallenge,
     PasswordAccepted, PendingSecret, SignInStep,
