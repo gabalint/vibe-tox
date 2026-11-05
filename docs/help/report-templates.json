@@ -2,7 +2,7 @@
   "id": "report-templates",
   "title": "Report templates",
   "summary": "Choose the laboratory's report layout, preview it on synthetic data, and approve or reject a drafted layout.",
-  "reviewedOn": "2026-10-27",
+  "reviewedOn": "2026-11-05",
   "routes": ["/reports/templates"],
   "sections": [
     {
@@ -84,7 +84,7 @@
           "name": "History",
           "meaning": "Every drafted layout version, newest first.",
           "values": "Version, Layout, Status (Waiting for approval, Active, Superseded, Rejected), Drafted (who and when), Approved or rejected (who and when, or Not yet) and Rejection reason.",
-          "rules": "Read-only. Versions are never deleted. An approval supersedes the previous active version."
+          "rules": "Read-only: rows do not open, and Version is plain text. Versions are never deleted. An approval supersedes the previous active version."
         },
         {
           "name": "Reason (Reject dialog)",

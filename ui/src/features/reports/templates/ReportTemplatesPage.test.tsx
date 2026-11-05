@@ -149,6 +149,10 @@ describe("ReportTemplatesPage (REQ-RPT-007)", { timeout: WALKTHROUGH_TIMEOUT_MS 
     const waiting = screen.getByRole("region", { name: "Waiting for approval" });
     expect(within(waiting).getByText("Test Administrator")).toBeTruthy();
     expect(screen.getAllByText("Waiting for approval").length).toBeGreaterThan(1);
+    // History rows do not open, so Version is plain text, not styled as a link (#4582).
+    const history = screen.getByRole("grid", { name: "Layout history" });
+    const version = within(history).getByText("Version 1").closest("[role='gridcell']");
+    expect(version?.hasAttribute("data-identifier")).toBe(false);
     await user.click(within(waiting).getByRole("button", { name: "Approve" }));
     const dialog = await screen.findByRole("alertdialog", { name: "Approve the Standard layout?" });
     await user.click(within(dialog).getByRole("button", { name: "Approve layout" }));
