@@ -51,17 +51,21 @@ function ChangesBody({ changes }: { changes: AuditEventChanges }) {
   const patient = changes.patient;
   const statusText = STATUS_TEXT[changes.status];
   const needs = changes.readCapabilities.map((code) => CAPABILITY_NAMES[code] ?? code);
-  const fields = changes.fields.map(({ field, old, new: next }) => ({
-    label: field,
-    value: hidden ? "Hidden" : `${old ?? NONE} → ${next ?? NONE}`,
-  }));
   // A recorded detail that Changes already shows, such as "Enabled", is not repeated.
   const shown = new Set(changes.fields.map(({ field }) => field.toLowerCase()));
   const facts = changes.facts.filter(([label]) => !shown.has(label.toLowerCase()));
-  const revision =
-    changes.newRevision === null
-      ? []
-      : [{ label: "Revision", value: `${changes.oldRevision ?? NONE} → ${changes.newRevision}` }];
+  const rows: ChangeRow[] = changes.fields.map(({ field, old, new: next }) => ({
+    label: field,
+    old: old ?? NONE,
+    next: next ?? NONE,
+  }));
+  if (changes.newRevision !== null) {
+    rows.unshift({
+      label: "Revision",
+      old: String(changes.oldRevision ?? NONE),
+      next: String(changes.newRevision),
+    });
+  }
   return (
     <>
       {patient && (
@@ -79,7 +83,7 @@ function ChangesBody({ changes }: { changes: AuditEventChanges }) {
           {needs.length > 0 && ` Values need the ${needs.join(" or ")} role capability.`}
         </p>
       )}
-      {revision.length + fields.length > 0 && <Facts items={[...revision, ...fields]} />}
+      {rows.length > 0 && <ChangeTable rows={rows} hidden={hidden} />}
       {facts.length > 0 && (
         <>
           <h3 className={layout.subheading}>Recorded details</h3>
@@ -87,5 +91,41 @@ function ChangesBody({ changes }: { changes: AuditEventChanges }) {
         </>
       )}
     </>
+  );
+}
+
+interface ChangeRow {
+  label: string;
+  old: string;
+  next: string;
+}
+
+/** Each changed field with its old and new value side by side; hidden values say so once. */
+function ChangeTable({ rows, hidden }: { rows: readonly ChangeRow[]; hidden: boolean }) {
+  return (
+    <table className={styles.changes}>
+      <thead>
+        <tr>
+          <th scope="col">Field</th>
+          <th scope="col">Old</th>
+          <th scope="col">New</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.label}>
+            <th scope="row">{row.label}</th>
+            {hidden && row.label !== "Revision" ? (
+              <td colSpan={2}>Hidden</td>
+            ) : (
+              <>
+                <td>{row.old}</td>
+                <td>{row.next}</td>
+              </>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }

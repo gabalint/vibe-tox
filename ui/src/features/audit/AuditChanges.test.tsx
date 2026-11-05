@@ -61,13 +61,14 @@ describe("AuditChanges (REQ-OPS-001)", () => {
         facts: [["Assertion sequence", "2"]],
       }),
     );
-    expect(await screen.findByText("Dae → Doe")).toBeTruthy();
+    expect(await screen.findByRole("row", { name: "Family name Dae Doe" })).toBeTruthy();
     expect(get).toHaveBeenCalledWith({ input: { stream: "clinical", seq: 42 } });
     expect(screen.getByRole("heading", { name: "Changes" })).toBeTruthy();
     expect(screen.getByText("Doe, Jane")).toBeTruthy();
     expect(screen.getByText("MR (TEST): MRN-00000")).toBeTruthy();
-    expect(screen.getByText("— → Jane")).toBeTruthy();
-    expect(screen.getByText("1 → 2")).toBeTruthy();
+    expect(screen.getByRole("row", { name: "Given names — Jane" })).toBeTruthy();
+    expect(screen.getByRole("columnheader", { name: "Old" })).toBeTruthy();
+    expect(screen.getByRole("row", { name: "Revision 1 2" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Recorded details" })).toBeTruthy();
     expect(screen.getByText("Assertion sequence")).toBeTruthy();
     await expectNoA11yViolations(container);
@@ -91,7 +92,7 @@ describe("AuditChanges (REQ-OPS-001)", () => {
   it("says when a revision changed no value, and when an event changed no data", async () => {
     renderChanges(changes({ status: "unchanged_revision", oldRevision: 3, newRevision: 4 }));
     expect(await screen.findByText(/changed no field value/)).toBeTruthy();
-    expect(screen.getByText("3 → 4")).toBeTruthy();
+    expect(screen.getByRole("row", { name: "Revision 3 4" })).toBeTruthy();
   });
 
   it("says no data changed for an event without a revision", async () => {
