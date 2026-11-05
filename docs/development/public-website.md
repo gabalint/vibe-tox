@@ -35,7 +35,8 @@ the single-computer proposition to the video, the workflow shown through applica
 screens, data ownership, common questions, downloading installers or building from source,
 development status with the license and disclaimer, and the repository. Its actions open the
 latest development release, presentation, documentation, contribution and security
-guidance, or source. The hero's “Download development build” action and the
+guidance, the commercial support link that [AGENTS.md](../../AGENTS.md#current-mandate)
+permits, or source. The hero's “Download development build” action and the
 getting-started section link to the [latest release](https://github.com/gabalint/vibe-tox/releases/latest),
 where visitors choose their platform's installer and read its release notes. Keep
 the destination independent of versioned asset filenames; [branches and releases](releases.md)
