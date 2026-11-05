@@ -11,8 +11,7 @@ use ts_rs::TS;
 use crate::engine::Engine;
 use crate::pipeline::{Failure, ModuleError};
 use crate::registry::{
-    EXPORT_AUDIT_EVENTS, FIND_AUDIT_RECORDS, GET_AUDIT_EVENT_CHANGES, LIST_AUDIT_EVENTS,
-    VERIFY_AUDIT_CHAIN,
+    FIND_AUDIT_RECORDS, GET_AUDIT_EVENT_CHANGES, LIST_AUDIT_EVENTS, VERIFY_AUDIT_CHAIN,
 };
 
 mod changes;
