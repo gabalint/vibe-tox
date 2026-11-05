@@ -72,7 +72,6 @@ function ChangesBody({ changes }: { changes: AuditEventChanges }) {
         <Facts
           items={[
             { label: "Patient", value: patient.name },
-            { label: "Birth date", value: patient.birthDate },
             { label: "Identifiers", value: patient.identifiers.join("; ") || NONE },
           ]}
         />
