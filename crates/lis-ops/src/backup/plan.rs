@@ -98,15 +98,7 @@ fn only_bookkeeping_since(conn: &Connection, since: i64, head: i64) -> Result<bo
     }
     let events = lis_audit::list(
         conn,
-        &EventFilter {
-            stream: Stream::Security,
-            before_seq: None,
-            limit: newer,
-            action: None,
-            record_type: None,
-            record_id: None,
-            self_approvals_only: false,
-        },
+        &EventFilter::new(Stream::Security, newer),
     )?;
     Ok(events.len() == newer as usize
         && events

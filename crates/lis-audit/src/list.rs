@@ -1,18 +1,20 @@
-//! Paged reading of one stream for the audit viewer (REQ-OPS-001). The
-//! caller authorizes the read and records it as an `access` event.
+//! Paged reading of one stream or of every stream for the audit viewer
+//! (REQ-OPS-001). The caller authorizes the read and records it as an `access` event.
 
 use lis_core::UtcTimestamp;
-use rusqlite::{Connection, params};
+use rusqlite::types::Type;
+use rusqlite::{Connection, Row, params};
 
 use crate::model::{AuditError, SELF_APPROVAL_DETAIL, Stream};
 
-/// Which events of a stream to read, newest first.
+/// Which events to read, newest first: by sequence number in one stream, by
+/// append time across every stream.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EventFilter<'a> {
-    /// The stream.
-    pub stream: Stream,
-    /// Only events with a lower sequence number (the next page).
-    pub before_seq: Option<i64>,
+    /// The stream; `None` reads every stream.
+    pub stream: Option<Stream>,
+    /// Only events after this one in the order read (the next page).
+    pub before: Option<EventCursor>,
     /// At most this many events.
     pub limit: u32,
     /// Only this action.
@@ -23,6 +25,35 @@ pub struct EventFilter<'a> {
     pub record_id: Option<&'a str>,
     /// Only self-approvals ([`crate::AuditEvent::self_approval`]).
     pub self_approvals_only: bool,
+}
+
+impl EventFilter<'_> {
+    /// Up to `limit` events of `stream`, newest first, with no other filter.
+    #[must_use]
+    pub fn new(stream: Stream, limit: u32) -> Self {
+        Self {
+            stream: Some(stream),
+            before: None,
+            limit,
+            action: None,
+            record_type: None,
+            record_id: None,
+            self_approvals_only: false,
+        }
+    }
+}
+
+/// The last event of a page. Sequence numbers are per stream, so across streams
+/// the order is append time, then stream, then sequence number: unique and
+/// unchanged by later appends.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct EventCursor {
+    /// When the event was appended.
+    pub recorded_at: UtcTimestamp,
+    /// Its stream.
+    pub stream: Stream,
+    /// Its sequence number in the stream.
+    pub seq: i64,
 }
 
 /// One stored event, without its chain and context columns.
@@ -56,68 +87,103 @@ pub struct StoredEvent {
     pub correlation_id: String,
 }
 
-/// The events of `filter.stream` that match it, newest first.
+/// The columns of [`StoredEvent`], in its field order.
+const COLUMNS: &str = "stream, seq, occurred_at, recorded_at, principal_kind, principal_id, action, \
+     outcome, record_type, record_id, reason, authority, correlation_id";
+
+/// The filters besides the stream and the cursor.
+const FILTERS: &str = "(?5 IS NULL OR action = ?5) AND (?6 IS NULL OR record_type = ?6) \
+     AND (?7 IS NULL OR record_id = ?7) AND (NOT ?8 OR json_extract(details, '$.' || ?9) IS 1)";
+
+/// Sorts after every stored timestamp (a digit first) and stream code (a lowercase letter
+/// first), so the first page needs no `IS NULL` branch and the cursor stays an index range.
+const AFTER_EVERY: &str = "~";
+
+/// The events that match `filter`, newest first.
 pub fn list(conn: &Connection, filter: &EventFilter<'_>) -> Result<Vec<StoredEvent>, AuditError> {
-    let stream = filter.stream;
+    // One stream reads its primary key by sequence number; every stream reads
+    // `audit_events_by_time` (migration 4) by append time.
+    let (cursor, order) = if filter.stream.is_some() {
+        ("stream = ?1 AND seq < ?4", "seq DESC")
+    } else {
+        (
+            "(recorded_at, stream, seq) < (?2, ?3, ?4)",
+            "recorded_at DESC, stream DESC, seq DESC",
+        )
+    };
+    let (before_recorded_at, before_stream, before_seq) = filter.before.map_or(
+        (AFTER_EVERY.to_owned(), AFTER_EVERY, i64::MAX),
+        |before| {
+            (
+                before.recorded_at.to_string(),
+                before.stream.as_str(),
+                before.seq,
+            )
+        },
+    );
     let events = conn
-        .prepare_cached(
-            "SELECT seq, occurred_at, recorded_at, principal_kind, principal_id, action, outcome, \
-             record_type, record_id, reason, authority, correlation_id FROM audit_events \
-             WHERE stream = ?1 AND (?2 IS NULL OR seq < ?2) AND (?3 IS NULL OR action = ?3) \
-             AND (?4 IS NULL OR record_type = ?4) AND (?5 IS NULL OR record_id = ?5) \
-             AND (NOT ?7 OR json_extract(details, '$.' || ?8) IS 1) \
-             ORDER BY seq DESC LIMIT ?6",
-        )?
+        .prepare_cached(&format!(
+            "SELECT {COLUMNS} FROM audit_events WHERE {cursor} AND {FILTERS} \
+             ORDER BY {order} LIMIT ?10"
+        ))?
         .query_map(
             params![
-                stream.as_str(),
-                filter.before_seq,
+                filter.stream.map(Stream::as_str),
+                before_recorded_at,
+                before_stream,
+                before_seq,
                 filter.action,
                 filter.record_type,
                 filter.record_id,
-                filter.limit,
                 filter.self_approvals_only,
-                SELF_APPROVAL_DETAIL
+                SELF_APPROVAL_DETAIL,
+                filter.limit,
             ],
-            |row| {
-                Ok(StoredEvent {
-                    stream,
-                    seq: row.get(0)?,
-                    occurred_at: row.get(1)?,
-                    recorded_at: row.get(2)?,
-                    principal_kind: row.get(3)?,
-                    principal_id: row.get(4)?,
-                    action: row.get(5)?,
-                    outcome: row.get(6)?,
-                    record_type: row.get(7)?,
-                    record_id: row.get(8)?,
-                    reason: row.get(9)?,
-                    authority: row.get(10)?,
-                    correlation_id: row.get(11)?,
-                })
-            },
+            stored_event,
         )?
         .collect::<rusqlite::Result<Vec<_>>>()?;
     Ok(events)
 }
 
-/// Distinct action codes present in `stream`, in code order.
-pub fn actions(conn: &Connection, stream: Stream) -> Result<Vec<String>, AuditError> {
+fn stored_event(row: &Row<'_>) -> rusqlite::Result<StoredEvent> {
+    let stream: String = row.get(0)?;
+    Ok(StoredEvent {
+        stream: Stream::parse(&stream).ok_or_else(|| {
+            rusqlite::Error::FromSqlConversionFailure(0, Type::Text, "unknown stream".into())
+        })?,
+        seq: row.get(1)?,
+        occurred_at: row.get(2)?,
+        recorded_at: row.get(3)?,
+        principal_kind: row.get(4)?,
+        principal_id: row.get(5)?,
+        action: row.get(6)?,
+        outcome: row.get(7)?,
+        record_type: row.get(8)?,
+        record_id: row.get(9)?,
+        reason: row.get(10)?,
+        authority: row.get(11)?,
+        correlation_id: row.get(12)?,
+    })
+}
+
+/// Distinct action codes present in `stream` (`None`: every stream), in code order.
+pub fn actions(conn: &Connection, stream: Option<Stream>) -> Result<Vec<String>, AuditError> {
     Ok(conn
         .prepare_cached(
-            "SELECT DISTINCT action FROM audit_events WHERE stream = ?1 ORDER BY action",
+            "SELECT DISTINCT action FROM audit_events WHERE ?1 IS NULL OR stream = ?1 \
+             ORDER BY action",
         )?
-        .query_map([stream.as_str()], |row| row.get(0))?
+        .query_map([stream.map(Stream::as_str)], |row| row.get(0))?
         .collect::<Result<_, _>>()?)
 }
 
-/// Distinct record types present in `stream`, in code order.
-pub fn record_types(conn: &Connection, stream: Stream) -> Result<Vec<String>, AuditError> {
+/// Distinct record types present in `stream` (`None`: every stream), in code order.
+pub fn record_types(conn: &Connection, stream: Option<Stream>) -> Result<Vec<String>, AuditError> {
     Ok(conn
         .prepare_cached(
             "SELECT DISTINCT record_type FROM audit_events \
-             WHERE stream = ?1 AND record_type IS NOT NULL ORDER BY record_type",
+             WHERE (?1 IS NULL OR stream = ?1) AND record_type IS NOT NULL ORDER BY record_type",
         )?
-        .query_map([stream.as_str()], |row| row.get(0))?
+        .query_map([stream.map(Stream::as_str)], |row| row.get(0))?
         .collect::<Result<_, _>>()?)
 }

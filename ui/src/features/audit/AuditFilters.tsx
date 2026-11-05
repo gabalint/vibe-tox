@@ -6,18 +6,21 @@ import { Select } from "@/components/Select";
 import { Toolbar } from "@/components/Toolbar";
 import { optionalText } from "@/lib/choices";
 import type { AuditFilter } from "./contract";
-import { isStream, STREAMS } from "./streams";
+import { ALL_STREAMS, isStream, STREAMS } from "./streams";
 
 /** The option for "no filter" in the action and record type lists. */
 const ANY = "any";
 
-/** Codes and their labels, as the engine lists them for one stream. */
+/** The stream choices: every stream first, the default. */
+const STREAM_OPTIONS = [{ id: ALL_STREAMS, label: "All streams" }, ...STREAMS];
+
+/** Codes and their labels, as the engine lists them for the shown stream or streams. */
 export type CodeLabels = readonly (readonly [string, string])[];
 
 interface AuditFiltersProps {
   filter: AuditFilter;
   count?: ReactNode;
-  /** Every action and record type recorded in the shown stream, from the engine. */
+  /** Every action and record type recorded in the shown stream or streams, from the engine. */
   actions: CodeLabels;
   recordTypes: CodeLabels;
   onApply: (filter: AuditFilter) => void;
@@ -27,8 +30,8 @@ interface AuditFiltersProps {
 
 /**
  * The stream, action and record type apply when chosen; the record ID as a find, after a
- * pause in typing. Actions and record types belong to a stream, so changing the stream
- * clears them. "Self-approvals only" lists the steps one person did alone under the
+ * pause in typing. The stream's description says what the engine records in it. Actions and
+ * record types belong to a stream, so changing the stream clears them. "Self-approvals only" lists the steps one person did alone under the
  * laboratory's separation-of-duties policy (ADR 0015), for the laboratory's review of them.
  */
 export function AuditFilters({
@@ -78,17 +81,19 @@ export function AuditFilters({
         layout="inline"
         label="Stream"
         name="stream"
-        options={STREAMS}
-        value={filter.stream}
-        onChange={(stream) => {
-          if (isStream(stream)) {
-            onApply({
-              stream,
-              recordId: filter.recordId,
-              selfApprovalsOnly: filter.selfApprovalsOnly,
-            });
-          }
-        }}
+        options={STREAM_OPTIONS}
+        value={filter.stream ?? ALL_STREAMS}
+        description={
+          STREAMS.find((stream) => stream.id === filter.stream)?.description ??
+          "Security, clinical and access events together."
+        }
+        onChange={(stream) =>
+          onApply({
+            stream: isStream(stream) ? stream : undefined,
+            recordId: filter.recordId,
+            selfApprovalsOnly: filter.selfApprovalsOnly,
+          })
+        }
       />
       <CodeSelect
         label="Action"

@@ -1,5 +1,6 @@
-//! Reading one page of audit events with the display labels the viewer shows: user names,
-//! action and record-type labels, and record labels from their owner modules.
+//! Reading one page of audit events, of one stream or of every stream, with the display
+//! labels the viewer shows: user names, action and record-type labels, and record labels
+//! from their owner modules.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -14,8 +15,8 @@ pub(super) fn read_page(
     input: &ListAuditEventsInput,
 ) -> Result<Vec<AuditEventView>, AuditReadError> {
     let filter = EventFilter {
-        stream: input.stream.stream(),
-        before_seq: input.before_seq,
+        stream: input.stream.map(AuditStream::stream),
+        before: input.before.map(Into::into),
         limit: input.limit,
         action: input.action.as_deref(),
         record_type: input.record_type.as_deref(),
@@ -56,7 +57,7 @@ pub(super) fn read_page(
                         .cloned()
                 });
             AuditEventView {
-                stream: input.stream,
+                stream: event.stream.into(),
                 principal_display,
                 action_label: Some(lis_audit::action_label(&event.action)),
                 record_type_label: event
@@ -85,9 +86,10 @@ pub(super) fn read_page(
 
 fn available_filters(
     conn: &rusqlite::Connection,
-    stream: AuditStream,
+    stream: Option<AuditStream>,
 ) -> Result<(FilterOptions, FilterOptions), AuditReadError> {
-    let actions = lis_audit::actions(conn, stream.stream())
+    let stream = stream.map(AuditStream::stream);
+    let actions = lis_audit::actions(conn, stream)
         .map_err(StoreError::from)?
         .into_iter()
         .map(|code| {
@@ -95,7 +97,7 @@ fn available_filters(
             (code, label)
         })
         .collect();
-    let record_types = lis_audit::record_types(conn, stream.stream())
+    let record_types = lis_audit::record_types(conn, stream)
         .map_err(StoreError::from)?
         .into_iter()
         .map(|code| {

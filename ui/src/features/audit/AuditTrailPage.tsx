@@ -12,13 +12,16 @@ import { isStream } from "./streams";
 const NO_CODES: CodeLabels = [];
 
 /**
- * The audit trail (REQ-OPS-001), for people with `view_audit`: events newest first, with
- * filters kept in the URL (the action and record type lists come from the engine), and a check of the stream's hash chain started from the page
- * header. The engine records each view as an access event.
+ * The audit trail (REQ-OPS-001), for people with `view_audit`: events of every stream or of
+ * one, newest first, with filters kept in the URL (the action and record type lists come from
+ * the engine), and a check of the chosen stream's hash chain started from the page header.
+ * The engine records each view as an access event.
  */
 export function AuditTrailPage() {
   const [params, setParams] = useSearchParams();
   const filter = filterFromParams(params);
+  // Each stream has its own chain; every stream together has none to verify.
+  const stream = filter.stream;
   const verify = useVerifyChain();
   const events = useAuditEvents(filter);
   // The engine sends the stream's actions and record types on every event.
@@ -31,22 +34,27 @@ export function AuditTrailPage() {
     <Page layout="collection">
       <PageHeader
         title="Audit trail"
-        description="Newest first. Viewing this trail is recorded. Verify chain checks for changed or missing events."
+        description={
+          stream
+            ? "Newest first. Viewing this trail is recorded. Verify chain checks this stream for changed or missing events."
+            : "Newest first. Viewing this trail is recorded. Choose a stream to verify its chain for changed or missing events."
+        }
         actions={
           <>
             <Link to="/audit/anchors" className={styles.headerLink}>
               Audit anchors
             </Link>
             <Button
+              isDisabled={!stream}
               isPending={verify.isPending}
-              onPress={() => verify.mutate({ input: { stream: filter.stream } })}
+              onPress={() => stream && verify.mutate({ input: { stream } })}
             >
               Verify chain
             </Button>
           </>
         }
       />
-      <ChainResult verify={verify} stream={filter.stream} />
+      {stream && <ChainResult verify={verify} stream={stream} />}
       <AuditFilters
         filter={filter}
         count={
@@ -76,7 +84,7 @@ export function AuditTrailPage() {
 function filterFromParams(params: URLSearchParams): AuditFilter {
   const stream = params.get("stream");
   return {
-    stream: isStream(stream) ? stream : "security",
+    stream: isStream(stream) ? stream : undefined,
     action: params.get("action") || undefined,
     recordType: params.get("recordType") || undefined,
     recordId: params.get("recordId") || undefined,

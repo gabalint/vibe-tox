@@ -2,19 +2,26 @@
 
 use lis_auth::RoleCode;
 use lis_core::ErrorCode;
-use lis_engine::{AuditStream, ListAuditEventsInput, VerifyAuditChainInput};
+use lis_engine::{
+    AuditCursor, AuditEventView, AuditStream, ListAuditEventsInput, VerifyAuditChainInput,
+};
 
 use crate::fixture::{TestEngine, code_of};
 
-fn page(stream: AuditStream, before_seq: Option<i64>, limit: u32) -> ListAuditEventsInput {
+fn page(stream: AuditStream, limit: u32) -> ListAuditEventsInput {
     ListAuditEventsInput {
-        stream,
-        before_seq,
+        stream: Some(stream),
         limit,
-        action: None,
-        record_type: None,
-        record_id: None,
-        self_approvals_only: None,
+        ..ListAuditEventsInput::default()
+    }
+}
+
+/// Where the page after `event` starts.
+fn after(event: &AuditEventView) -> AuditCursor {
+    AuditCursor {
+        recorded_at: event.recorded_at,
+        stream: event.stream,
+        seq: event.seq,
     }
 }
 
@@ -31,7 +38,7 @@ async fn auditor_pages_newest_first_and_each_read_is_recorded() {
     let total = t.events("security").len();
     let first = t
         .engine
-        .list_audit_events(page(AuditStream::Security, None, 3))
+        .list_audit_events(page(AuditStream::Security, 3))
         .await
         .unwrap();
     let seqs: Vec<i64> = first.iter().map(|event| event.seq).collect();
@@ -41,7 +48,10 @@ async fn auditor_pages_newest_first_and_each_read_is_recorded() {
     assert_eq!(first[0].principal_kind, "system");
     let next = t
         .engine
-        .list_audit_events(page(AuditStream::Security, Some(newest - 2), 500))
+        .list_audit_events(ListAuditEventsInput {
+            before: Some(after(&first[2])),
+            ..page(AuditStream::Security, 500)
+        })
         .await
         .unwrap();
     assert_eq!(next.len(), total - 3);
@@ -71,7 +81,7 @@ async fn auditor_pages_newest_first_and_each_read_is_recorded() {
             .contains(&("user".to_owned(), "User".to_owned()))
     );
     assert_eq!(created.authority.as_deref(), Some("manage_users"));
-    let mut filtered = page(AuditStream::Security, None, 50);
+    let mut filtered = page(AuditStream::Security, 50);
     filtered.action = Some("auth.mfa_enroll".into());
     assert_eq!(t.engine.list_audit_events(filtered).await.unwrap().len(), 2);
 
@@ -94,13 +104,66 @@ async fn auditor_pages_newest_first_and_each_read_is_recorded() {
 }
 
 #[tokio::test]
+async fn every_stream_reads_newest_first_with_a_stable_cursor() {
+    let t = TestEngine::start().await;
+    auditor_session(&t).await;
+    let stored = t.events("security").len() + t.events("clinical").len();
+    let every = |limit| ListAuditEventsInput {
+        limit,
+        ..ListAuditEventsInput::default()
+    };
+    // Each read below is a second later, so its access event is the newest.
+    t.advance(1);
+    let all = t.engine.list_audit_events(every(500)).await.unwrap();
+    assert_eq!(all.len(), stored);
+    let code = |stream| match stream {
+        AuditStream::Clinical => "clinical",
+        AuditStream::Security => "security",
+        AuditStream::Access => "access",
+    };
+    let order: Vec<_> = all
+        .iter()
+        .map(|event| (event.recorded_at, code(event.stream), event.seq))
+        .collect();
+    assert!(order.windows(2).all(|pair| pair[0] > pair[1]), "{order:?}");
+    assert!(all.iter().any(|event| event.stream == AuditStream::Security));
+
+    t.advance(1);
+    let first = t.engine.list_audit_events(every(2)).await.unwrap();
+    assert_eq!(first[0].stream, AuditStream::Access);
+    assert_eq!(first[0].action, "audit.list_events");
+    assert_eq!(first[0].record_id.as_deref(), Some("all"));
+    // The access event of the first page, appended later, does not shift the next page.
+    t.advance(1);
+    let rest = t
+        .engine
+        .list_audit_events(ListAuditEventsInput {
+            before: Some(after(&first[1])),
+            ..every(500)
+        })
+        .await
+        .unwrap();
+    assert_eq!(first.len() + rest.len(), stored + 1);
+    assert!(rest.iter().all(|event| !first.contains(event)));
+    let details: String = t
+        .conn()
+        .query_row(
+            "SELECT details FROM audit_events WHERE stream = 'access' AND seq = 3",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert!(details.contains("\"before_stream\""), "{details}");
+}
+
+#[tokio::test]
 async fn page_size_is_validated() {
     let t = TestEngine::start().await;
     auditor_session(&t).await;
     for limit in [0, 501] {
         let error = t
             .engine
-            .list_audit_events(page(AuditStream::Access, None, limit))
+            .list_audit_events(page(AuditStream::Access, limit))
             .await
             .unwrap_err();
         assert_eq!(error.code(), ErrorCode::Validation);
@@ -151,7 +214,7 @@ async fn administrator_cannot_read_the_audit_trail() {
     assert_eq!(
         code_of(
             t.engine
-                .list_audit_events(page(AuditStream::Security, None, 10))
+                .list_audit_events(page(AuditStream::Security, 10))
                 .await
         ),
         ErrorCode::Forbidden

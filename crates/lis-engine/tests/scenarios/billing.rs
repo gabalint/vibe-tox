@@ -777,13 +777,11 @@ async fn assert_audit_record_labels(
         let events = desk
             .engine()
             .list_audit_events(ListAuditEventsInput {
-                stream: AuditStream::Clinical,
-                before_seq: None,
+                stream: Some(AuditStream::Clinical),
                 limit: 500,
-                action: None,
                 record_type: Some(record_type.to_owned()),
                 record_id: Some(record_id),
-                self_approvals_only: None,
+                ..ListAuditEventsInput::default()
             })
             .await
             .unwrap();

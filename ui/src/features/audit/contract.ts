@@ -4,5 +4,5 @@
 
 import type { ListAuditEventsInput } from "@/generated/ListAuditEventsInput";
 
-/** The filters of `list_audit_events`, without paging. */
-export type AuditFilter = Omit<ListAuditEventsInput, "beforeSeq" | "limit">;
+/** The filters of `list_audit_events`, without paging; no stream reads every stream. */
+export type AuditFilter = Omit<ListAuditEventsInput, "before" | "limit">;

@@ -308,13 +308,9 @@ async fn admin_call(
             .map(drop),
         "list_audit_events" => engine
             .list_audit_events(ListAuditEventsInput {
-                stream: AuditStream::Security,
-                before_seq: None,
+                stream: Some(AuditStream::Security),
                 limit: 10,
-                action: None,
-                record_type: None,
-                record_id: None,
-                self_approvals_only: None,
+                ..ListAuditEventsInput::default()
             })
             .await
             .map(drop),

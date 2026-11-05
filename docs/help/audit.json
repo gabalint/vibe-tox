@@ -8,7 +8,8 @@
     {
       "title": "How to use this page",
       "paragraphs": [
-        "Audit trail lists events newest first. Use the available filters to narrow the stream, action or record, and open an event for its details. Self-approvals only isolates those events. Verify chain checks the selected stream for changed or missing events.",
+        "Audit trail lists events of every stream together, newest first, and each row names its stream. Security holds sign-ins, users, roles and security settings, backups, restores, updates, exports and instrument and partner connections. Clinical holds patients, orders, specimens, results, QC, reports, billing and laboratory setup such as the catalog and the laboratory profile. Access holds who opened patient records, orders, specimens, runs, results, reports or billing, and who viewed this trail or checked its chain or anchors.",
+        "Use the filters to narrow the stream, action or record, and open an event for its details. Self-approvals only isolates those events. Verify chain checks one chosen stream for changed or missing events.",
         "Audit anchors shows seals copied to backup targets. Use its verification view to compare anchor evidence and its file view to inspect export history. Exporting anchors now requires backup authority in addition to viewing access."
       ]
     },
@@ -30,14 +31,14 @@
     {
       "title": "Audit trail",
       "routes": ["/audit"],
-      "purpose": "Find attributable activity and verify the consistency of a selected audit stream.",
+      "purpose": "Find attributable activity across every audit stream or in one, and verify the consistency of a chosen stream.",
       "access": "View audit authority is required. Viewing the trail is itself recorded as an access event.",
       "fields": [
         {
           "name": "Stream",
-          "meaning": "Category of activity under review.",
-          "values": "Security (default); Clinical; Access.",
-          "rules": "Required selection. Changing stream clears Action and Record type because their choices belong to the stream."
+          "meaning": "Category of activity under review; the text under the field says what the chosen stream holds.",
+          "values": "All streams (default): every event, newest first by the time it was recorded. Security: sign-ins, users, roles and security settings; backups, restores, updates and exports; instrument and partner connections. Clinical: patients, orders, specimens, results, QC, reports and billing, and laboratory setup such as the catalog and the laboratory profile. Access: who opened patient records, orders, specimens, runs, results, reports or billing, and who viewed this audit trail or checked its chain or anchors.",
+          "rules": "Changing stream clears Action and Record type because their choices belong to the stream; Record ID and Self-approvals only stay. With All streams, Action and Record type offer the choices of every stream."
         },
         {
           "name": "Find by record ID",
@@ -48,13 +49,13 @@
         {
           "name": "Action",
           "meaning": "Narrow events to one recorded operation.",
-          "values": "Any action or actions actually recorded in the chosen stream.",
+          "values": "Any action or actions actually recorded in the chosen stream, or in any stream with All streams.",
           "rules": "Optional; choices come from the recorded event vocabulary."
         },
         {
           "name": "Record type (More filters)",
           "meaning": "Narrow events by the kind of affected record.",
-          "values": "Any record type or the chosen stream’s recorded types.",
+          "values": "Any record type or the recorded types of the chosen stream, or of every stream with All streams.",
           "rules": "Optional."
         },
         {
@@ -64,9 +65,9 @@
           "rules": "Optional; use for review of permitted exceptions, not as evidence that every approval required two people."
         },
         {
-          "name": "Seq. / Outcome",
-          "meaning": "Stream sequence and result of the recorded action.",
-          "values": "Increasing sequence number within its stream; Succeeded, Denied or Failed.",
+          "name": "Seq. / Stream / Outcome",
+          "meaning": "Sequence number within the event's stream, the stream it belongs to, and the result of the recorded action.",
+          "values": "Increasing sequence number within its stream, so two streams can each have an event 5; Security, Clinical or Access; Succeeded, Denied or Failed.",
           "rules": "Read-only; denied/failed events are evidence, not completed business changes."
         },
         {
@@ -109,21 +110,21 @@
         },
         {
           "name": "Verify chain",
-          "does": "Recompute the selected stream’s local integrity evidence.",
-          "availableWhen": "View audit authority.",
+          "does": "Recompute the chosen stream’s local integrity evidence.",
+          "availableWhen": "View audit authority and one stream chosen; with All streams the button is unavailable, because each stream has its own chain.",
           "result": "Shows checked count and findings; it does not repair or rewrite events."
         },
         {
           "name": "Load older events",
           "does": "Fetch the next older page matching the selected filters.",
           "availableWhen": "Another page may exist.",
-          "result": "Appends up to 100 events. A failed older-page load preserves rows already read."
+          "result": "Appends up to 100 events that come after the last row shown; events recorded since the first page do not shift it. A failed older-page load preserves rows already read."
         },
         {
           "name": "Clear filters / Show all events",
           "does": "Remove all constraints except Stream.",
           "availableWhen": "A filter is applied or no matching events are found.",
-          "result": "Reloads events for the selected stream."
+          "result": "Reloads events for the selected stream, or for every stream."
         },
         {
           "name": "Audit anchors",
@@ -138,7 +139,7 @@
         "Do not remove or rewrite evidence to obtain a passing check."
       ],
       "workflow": [
-        "Choose the stream and narrow the review by record ID, action and record type.",
+        "Start from All streams, or choose a stream, and narrow the review by record ID, action and record type.",
         "Open relevant events and retain their sequence, actor, time and correlation identifiers.",
         "Verify chain, then use Audit anchors when independent retained evidence is needed.",
         "Investigate findings through the laboratory’s documented review process."
@@ -146,7 +147,7 @@
       "troubleshooting": [
         {
           "problem": "No event matches",
-          "recovery": "Clear filters and verify the stream and internal record identifier; load older events where available."
+          "recovery": "Clear filters, choose All streams in case the event is in another stream, and verify the internal record identifier; load older events where available."
         },
         {
           "problem": "Older events could not be loaded",
@@ -291,6 +292,8 @@
     "ui/src/features/audit/anchors/VerifyAnchorsSection.tsx",
     "ui/src/features/audit/anchors/AnchorExportsSection.tsx",
     "ui/src/features/audit/anchors/anchorText.ts",
-    "crates/lis-engine/src/commands/audit.rs"
+    "crates/lis-engine/src/commands/audit.rs",
+    "crates/lis-engine/src/commands/audit/input.rs",
+    "crates/lis-audit/src/list.rs"
   ]
 }

@@ -4,6 +4,7 @@ import { Timestamp } from "@/components/Timestamp";
 import type { Tone } from "@/components/tones";
 import type { AuditEventView } from "@/generated/AuditEventView";
 import styles from "./audit.module.css";
+import { streamLabel } from "./streams";
 
 const OUTCOMES: Record<AuditEventView["outcome"], { tone: Tone; label: string }> = {
   succeeded: { tone: "neutral", label: "Succeeded" },
@@ -58,6 +59,13 @@ export const AUDIT_COLUMNS: readonly DataGridColumn<AuditEventView>[] = [
     align: "end",
     width: 90,
     identifier: true,
+  },
+  {
+    id: "stream",
+    header: "Stream",
+    cell: (event) => streamLabel(event.stream),
+    sortValue: (event) => event.stream,
+    width: 110,
   },
   {
     id: "occurredAt",
