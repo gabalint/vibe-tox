@@ -182,7 +182,8 @@
   gap: var(--space-2);
 }
 
-.field[data-layout="inline"] > .control {
+.field[data-layout="inline"] > .control,
+.field[data-layout="inline"] > .adorned {
   width: auto;
   flex: 1 1 auto;
 }

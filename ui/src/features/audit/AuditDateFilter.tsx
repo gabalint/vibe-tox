@@ -46,11 +46,12 @@ export function AuditDateFilter({
   const today = calendarDayToday(new Date(), labTimeZone);
   return (
     <TextField
+      layout="inline"
       label={label}
       name={name}
       value={text}
       onChange={change}
-      description="YYYY-MM-DD"
+      placeholder="YYYY-MM-DD"
       errorMessage={error}
       autoComplete="off"
       adornment={
