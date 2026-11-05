@@ -3,6 +3,7 @@ import { Facts } from "@/components/Facts";
 import { Timestamp } from "@/components/Timestamp";
 import type { AuditEventView } from "@/generated/AuditEventView";
 import { AuditChanges } from "./AuditChanges";
+import styles from "./audit.module.css";
 import { actionText, NONE, OutcomeBadge, principalText, recordText } from "./auditColumns";
 import { streamLabel } from "./streams";
 
@@ -25,21 +26,23 @@ export function AuditEventDetails({ event, ...navigation }: AuditEventDetailsPro
       status={<OutcomeBadge outcome={event.outcome} />}
       {...navigation}
     >
-      <Facts
-        items={[
-          { label: "Occurred", value: <Timestamp value={event.occurredAt} seconds /> },
-          { label: "Recorded", value: <Timestamp value={event.recordedAt} seconds /> },
-          { label: "By", value: principalText(event) },
-          { label: "Principal ID", value: event.principalId },
-          { label: "Action", value: withCode(actionText(event), event.action) },
-          { label: "Record", value: recordText(event) },
-          { label: "Record ID", value: event.recordId ?? NONE },
-          { label: "Reason", value: event.reason ?? NONE },
-          { label: "Authority", value: event.authority ?? NONE },
-          { label: "Correlation ID", value: event.correlationId },
-        ]}
-      />
-      <AuditChanges event={event} />
+      <div className={styles.eventDetails}>
+        <Facts
+          items={[
+            { label: "Occurred", value: <Timestamp value={event.occurredAt} seconds /> },
+            { label: "Recorded", value: <Timestamp value={event.recordedAt} seconds /> },
+            { label: "By", value: principalText(event) },
+            { label: "Principal ID", value: event.principalId },
+            { label: "Action", value: withCode(actionText(event), event.action) },
+            { label: "Record", value: recordText(event) },
+            { label: "Record ID", value: event.recordId ?? NONE },
+            { label: "Reason", value: event.reason ?? NONE },
+            { label: "Authority", value: event.authority ?? NONE },
+            { label: "Correlation ID", value: event.correlationId },
+          ]}
+        />
+        <AuditChanges event={event} />
+      </div>
     </DetailPanel>
   );
 }

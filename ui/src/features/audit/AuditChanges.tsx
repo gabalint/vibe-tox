@@ -55,6 +55,9 @@ function ChangesBody({ changes }: { changes: AuditEventChanges }) {
     label: field,
     value: hidden ? "Hidden" : `${old ?? NONE} → ${next ?? NONE}`,
   }));
+  // A recorded detail that Changes already shows, such as "Enabled", is not repeated.
+  const shown = new Set(changes.fields.map(({ field }) => field.toLowerCase()));
+  const facts = changes.facts.filter(([label]) => !shown.has(label.toLowerCase()));
   const revision =
     changes.newRevision === null
       ? []
@@ -77,10 +80,10 @@ function ChangesBody({ changes }: { changes: AuditEventChanges }) {
         </p>
       )}
       {revision.length + fields.length > 0 && <Facts items={[...revision, ...fields]} />}
-      {changes.facts.length > 0 && (
+      {facts.length > 0 && (
         <>
           <h3 className={layout.subheading}>Recorded details</h3>
-          <Facts items={changes.facts.map(([label, value]) => ({ label, value }))} />
+          <Facts items={facts.map(([label, value]) => ({ label, value }))} />
         </>
       )}
     </>
