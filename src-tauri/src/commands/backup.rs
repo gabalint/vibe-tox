@@ -110,7 +110,8 @@ pub(crate) async fn export_recovery_kit<R: Runtime>(
     engine
         .preflight_dialog(DialogCommand::ExportRecoveryKit)
         .await?;
-    let destination = save_file(app, "vibe-tox-recovery-kit.txt").await;
+    let file_name = engine.recovery_kit_file_name().await;
+    let destination = save_file(app, file_name).await;
     engine.export_recovery_kit(input, destination).await
 }
 
@@ -253,10 +254,7 @@ pub(super) async fn pick_folder<R: Runtime>(app: AppHandle<R>) -> Option<PathBuf
     }
 }
 
-pub(super) async fn save_file<R: Runtime>(
-    app: AppHandle<R>,
-    file_name: &'static str,
-) -> Option<PathBuf> {
+pub(super) async fn save_file<R: Runtime>(app: AppHandle<R>, file_name: String) -> Option<PathBuf> {
     let picked = tauri::async_runtime::spawn_blocking(move || {
         app.dialog()
             .file()
