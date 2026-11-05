@@ -46,7 +46,6 @@ export function AuditDateFilter({
   const today = calendarDayToday(new Date(), labTimeZone);
   return (
     <TextField
-      layout="inline"
       label={label}
       name={name}
       value={text}

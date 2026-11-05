@@ -62,6 +62,7 @@ export function AuditFilters({
   return (
     <Toolbar
       variant="collection"
+      align="end"
       count={count}
       actions={
         hasFilters(filter) && (
@@ -78,11 +79,11 @@ export function AuditFilters({
       <FindField
         label="Find by record ID"
         placeholder="Record ID"
+        isLabelHidden
         value={filter.recordId ?? ""}
         onChange={(text) => onFind(optionalText(text) ?? undefined)}
       />
       <Select
-        layout="inline"
         label="Stream"
         name="stream"
         options={STREAM_OPTIONS}
@@ -196,7 +197,6 @@ function CodeSelect({ label, any, codes, value, onChange }: CodeSelectProps) {
   }
   return (
     <Select
-      layout="inline"
       label={label}
       name={label}
       options={options}
