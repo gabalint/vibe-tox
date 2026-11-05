@@ -45,6 +45,52 @@ describe("Logs (ticket #4555; REQ-INT-002, REQ-RPT-011)", () => {
     await expectNoA11yViolations(container, { wholePage: true });
   });
 
+  it("shows what an MLLP partner answered: accepted, rejected with its reason, or not yet", async () => {
+    const hospital = { id: CONNECTION.id, name: "HL7 Results - Hospital B" };
+    const sent = {
+      ...WRITTEN,
+      deliveryId: "01a1a000-0000-7000-8000-000000000031",
+      messageType: "hl7_oru" as const,
+      connection: { ...hospital, protocol: "mllp_connect" as const },
+      outcomeUnknown: false,
+      writtenPath: "10.20.0.15:6661",
+      ackCode: "AA" as const,
+    };
+    const rejected = {
+      ...sent,
+      deliveryId: "01a1a000-0000-7000-8000-000000000032",
+      ackCode: "AE" as const,
+      ackText: "Unknown provider NPI 1234567893",
+    };
+    // Sent, and no ACK in time: it goes again with the same control ID.
+    const awaiting = {
+      ...sent,
+      deliveryId: "01a1a000-0000-7000-8000-000000000033",
+      writtenPath: null,
+      ackCode: null,
+      awaitingAck: true,
+      attempts: 1,
+      nextAttemptAt: "2026-11-05T11:20:00.000000000Z",
+      errorCode: "no_ack",
+    };
+    renderPage(() => ({ rows: [sent, rejected, awaiting], more: false }));
+    expect(await screen.findByRole("gridcell", { name: "Accepted (AA)" })).toBeTruthy();
+    expect(screen.getAllByRole("gridcell", { name: "Sent" })).toHaveLength(3);
+    expect(screen.getByRole("gridcell", { name: "Rejected (AE)" })).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", {
+        name: "Sent to 10.20.0.15:6661 · Partner: Unknown provider NPI 1234567893",
+      }),
+    ).toBeTruthy();
+    expect(screen.getByRole("gridcell", { name: "Awaiting application ACK" })).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", { name: /^No acknowledgement in time; attempt 2 of 5 at/ }),
+    ).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /Rejected \(1\)/ })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /Awaiting ACK \(1\)/ })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /Outcome unknown \(0\)/ })).toBeTruthy();
+  });
+
   it("names a report revision and says a correction went first (REQ-RPT-013)", async () => {
     renderPage(() => ({ rows: [CORRECTION], more: false }));
     expect(await screen.findByRole("gridcell", { name: "A26000005-U r2" })).toBeTruthy();

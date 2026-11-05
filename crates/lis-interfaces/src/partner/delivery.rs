@@ -18,8 +18,9 @@ use rusqlite::{Connection, params};
 use super::error::PartnerError;
 use super::message_repo::{self as repo, MessageRow};
 use super::model::{
-    DeliveryReason, DeliveryState, MessageSource, MovedTo, PartnerConnectionId, PartnerDeliveryId,
-    PartnerMessageId, PartnerMessageType, RoutingFacts, Schedule, SftpSettings,
+    AckCode, DeliveryReason, DeliveryState, MessageSource, MllpPartner, MovedTo,
+    PartnerConnectionId, PartnerDeliveryId, PartnerMessageId, PartnerMessageType, RoutingFacts,
+    Schedule, SftpSettings,
 };
 use super::repo::{ConnectionRow, load_connection};
 use super::settings::{FileNameParts, file_name};
@@ -29,9 +30,9 @@ pub const MAX_ATTEMPTS: i64 = 5;
 /// Deliveries the poller takes per pass.
 const BATCH: u32 = 50;
 
-/// Where a connection writes: its local folder, or its SFTP server and remote folder with
-/// the sealed password for password sign-in.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Where a connection writes: its local folder, its SFTP server and remote folder with the
+/// sealed password for password sign-in, or its MLLP partner.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Destination {
     /// The local folder, or the remote folder: written to, or for incoming orders read.
     pub folder: String,
@@ -39,6 +40,7 @@ pub struct Destination {
     pub sealed_password: Option<Vec<u8>>,
     /// For incoming orders: where read files move to.
     pub moved_to: Option<MovedTo>,
+    pub mllp: Option<MllpPartner>,
 }
 
 impl Destination {
@@ -48,6 +50,7 @@ impl Destination {
             sftp: connection.settings.sftp.clone(),
             sealed_password: connection.sealed_password.clone(),
             moved_to: connection.moved_to.clone(),
+            mllp: connection.settings.mllp.clone(),
         }
     }
 }
@@ -112,8 +115,37 @@ impl DueDelivery {
 pub enum AttemptOutcome {
     /// The file is in the folder, at `path`.
     Written { path: String },
-    /// Nothing usable was written; `error_code` says why (PHI-free).
+    /// Sent over MLLP to `to` (address and port), and acknowledged: accepted, or not with
+    /// the partner's reason.
+    Acknowledged {
+        to: String,
+        code: AckCode,
+        text: Option<String>,
+    },
+    /// Nothing usable was written; `error_code` says why (PHI-free). Over MLLP, `no_ack`:
+    /// sent, but not acknowledged in time; it is sent again.
     Failed { error_code: &'static str },
+}
+
+impl AttemptOutcome {
+    /// Records a written or acknowledged attempt on the delivery; `false` for a failed one,
+    /// which the caller records.
+    fn record_sent(
+        &self,
+        conn: &Connection,
+        delivery_id: PartnerDeliveryId,
+        now: UtcTimestamp,
+    ) -> Result<bool, PartnerError> {
+        match self {
+            Self::Written { path } => repo::set_written(conn, delivery_id, path, now)?,
+            Self::Acknowledged { to, code, text } => {
+                repo::set_written(conn, delivery_id, to, now)?;
+                repo::set_acknowledged(conn, delivery_id, *code, text.as_deref())?;
+            }
+            Self::Failed { .. } => return Ok(false),
+        }
+        Ok(true)
+    }
 }
 
 /// Deliveries waiting on started, checked connections whose retry time has
@@ -142,12 +174,7 @@ pub fn due_partner_deliveries(
                 delivery_id: row.get(0)?,
                 message_id: row.get(1)?,
                 connection_id: row.get(2)?,
-                destination: Destination {
-                    folder: String::new(),
-                    sftp: None,
-                    sealed_password: None,
-                    moved_to: None,
-                },
+                destination: Destination::default(),
                 file_name_pattern: String::new(),
                 schedule: Schedule::Immediately,
                 attempts: row.get(3)?,
@@ -221,8 +248,8 @@ pub fn record_delivery_attempt(
     let now = ctx.now();
     let attempt = delivery.attempts + 1;
     let (state, audit_outcome, error_code) = match &outcome {
-        AttemptOutcome::Written { path } => {
-            repo::set_written(ctx.tx(), delivery_id, path, now)?;
+        AttemptOutcome::Written { .. } | AttemptOutcome::Acknowledged { .. } => {
+            outcome.record_sent(ctx.tx(), delivery_id, now)?;
             (DeliveryState::Written, Outcome::Succeeded, None)
         }
         AttemptOutcome::Failed { error_code } => {
@@ -246,6 +273,9 @@ pub fn record_delivery_attempt(
         .detail("state", AuditDetail::code(state.as_str()));
     if let Some(code) = error_code {
         event = event.detail("error_code", AuditDetail::code(code));
+    }
+    if let AttemptOutcome::Acknowledged { code, .. } = &outcome {
+        event = event.detail("ack_code", AuditDetail::code(code.as_str()));
     }
     ctx.audit(event)?;
     Ok(state)
@@ -291,15 +321,14 @@ pub fn record_partner_test_message(
         DeliveryReason::Test,
         ctx.now(),
     )?;
-    let (audit_outcome, written) = match outcome {
-        AttemptOutcome::Written { path } => {
-            repo::set_written(ctx.tx(), delivery, path, ctx.now())?;
-            (Outcome::Succeeded, true)
-        }
-        AttemptOutcome::Failed { error_code } => {
-            repo::set_failed_attempt(ctx.tx(), delivery, error_code, ctx.now(), None)?;
-            (Outcome::Failed, false)
-        }
+    let written = outcome.record_sent(ctx.tx(), delivery, ctx.now())?;
+    if let AttemptOutcome::Failed { error_code } = outcome {
+        repo::set_failed_attempt(ctx.tx(), delivery, error_code, ctx.now(), None)?;
+    }
+    let audit_outcome = if written {
+        Outcome::Succeeded
+    } else {
+        Outcome::Failed
     };
     ctx.audit(
         AuditEvent::new(

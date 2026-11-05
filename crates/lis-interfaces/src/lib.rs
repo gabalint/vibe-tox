@@ -135,6 +135,11 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "received_orders",
         sql: include_str!("../migrations/0011_received_orders.sql"),
     },
+    Migration {
+        version: 12,
+        name: "mllp_connections",
+        sql: include_str!("../migrations/0012_mllp_connections.sql"),
+    },
 ];
 
 /// Schema descriptor for tables owned by this crate.

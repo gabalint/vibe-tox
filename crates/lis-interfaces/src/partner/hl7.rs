@@ -22,6 +22,9 @@ pub struct Oru {
     pub laboratory: Organization,
     /// MSH-6: the partner.
     pub receiving_facility: String,
+    /// MSH-15 and MSH-16 empty: the partner answers with an application ACK on the same
+    /// connection (original mode, over MLLP). Otherwise `NE` and `NE`: nothing answers a file.
+    pub acknowledged: bool,
     pub patient: Patient,
     /// PV1-3: the client location's code and name, if any.
     pub location: Option<(String, String)>,
@@ -147,6 +150,7 @@ impl Oru {
     }
 
     fn msh(&self) -> String {
+        let ack = if self.acknowledged { "" } else { "NE" };
         let fields = [
             esc(SENDING_APPLICATION),
             comp(&[&self.laboratory.name, &self.laboratory.id, "CLIA"]),
@@ -160,8 +164,8 @@ impl Oru {
             "2.5.1".to_owned(),
             String::new(),
             String::new(),
-            "NE".to_owned(),
-            "NE".to_owned(),
+            ack.to_owned(),
+            ack.to_owned(),
             String::new(),
             "UNICODE UTF-8".to_owned(),
         ];

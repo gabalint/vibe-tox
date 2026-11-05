@@ -1,37 +1,42 @@
 import { Radio, RadioGroup } from "react-aria-components";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 import styles from "./ConnectionDialog.module.css";
 import type { ConnectionValues } from "./connectionForm";
 
-/** The protocols of the Interfaces mockup; Folder and SFTP are available in this release. */
+/**
+ * The protocols of the Interfaces mockup and the message types each carries now: a folder and
+ * SFTP carry every type; the LIS connects over MLLP to send HL7 results. Listening over MLLP
+ * for orders is shown, not offered yet.
+ */
 const PROTOCOLS = [
-  { id: "folder", label: "Folder", hint: "Shared folder on the lab network", available: true },
+  { id: "folder", label: "Folder", hint: "Shared folder on the lab network", carries: () => true },
   {
     id: "sftp",
     label: "SFTP",
     hint: "Partner's server, over the internet, encrypted",
-    available: true,
+    carries: () => true,
   },
   {
-    id: "mllp_connects",
+    id: "mllp_connect",
     label: "MLLP – LIS connects",
     hint: "Real-time HL7 to the partner",
-    available: false,
+    carries: (type: string) => type === "hl7_oru",
   },
   {
-    id: "mllp_listens",
+    id: "mllp_listen",
     label: "MLLP – LIS listens",
     hint: "Partner connects on the lab network only",
-    available: false,
+    carries: () => false,
   },
 ] as const;
 
 /**
- * Section 2, the protocol, as one choice among cards. Folder and SFTP write; MLLP is shown, not
- * offered, and the line below says why.
+ * Section 2, the protocol, as one choice among cards. A card the chosen message cannot travel
+ * by is shown, not offered, and the line below says which messages MLLP carries.
  */
 export function ProtocolCards() {
   const { control } = useFormContext<ConnectionValues>();
+  const messageType = useWatch({ control, name: "messageType" });
   return (
     <>
       <Controller
@@ -49,7 +54,7 @@ export function ProtocolCards() {
               <Radio
                 key={protocol.id}
                 value={protocol.id}
-                isDisabled={!protocol.available}
+                isDisabled={!protocol.carries(messageType)}
                 className={styles.card}
               >
                 {({ isSelected }) => (
@@ -65,7 +70,10 @@ export function ProtocolCards() {
           </RadioGroup>
         )}
       />
-      <p className={styles.hint}>MLLP is not available yet.</p>
+      <p className={styles.hint}>
+        MLLP – LIS connects sends HL7 Results. MLLP – LIS listens, for HL7 Orders, is not available
+        yet.
+      </p>
     </>
   );
 }

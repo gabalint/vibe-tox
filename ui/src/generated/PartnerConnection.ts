@@ -34,7 +34,11 @@ waiting: number,
 /**
  * Messages whose attempts failed, retrying or given up.
  */
-failing: number, lastChange: ChangeStamp, 
+failing: number, 
+/**
+ * Messages sent over MLLP without an acknowledgement yet; they are sent again.
+ */
+awaitingAck: number, lastChange: ChangeStamp, 
 /**
  * Commands that apply to the connection as it is now.
  */

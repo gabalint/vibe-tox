@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 pub use super::intake_model::{IntakeSettings, MovedTo, MovedToChoice, UnknownPatient};
+pub use super::mllp_model::{AckCode, MllpAcknowledgement, MllpPartner};
 
 /// Marker for one connection to an outside system.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -58,6 +59,8 @@ text_enum! {
         Folder = "folder",
         /// The partner's SFTP server, over the internet, encrypted.
         Sftp = "sftp",
+        /// HL7 over MLLP to the partner's interface on the lab network; the LIS connects.
+        MllpConnect = "mllp_connect",
     }
 }
 
@@ -244,6 +247,9 @@ pub struct PartnerConnectionSettings {
     /// How incoming orders are read and accepted; `None` for an outgoing type.
     #[serde(default)]
     pub intake: Option<IntakeSettings>,
+    /// The partner's interface, for MLLP; `None` for a folder or SFTP.
+    #[serde(default)]
+    pub mllp: Option<MllpPartner>,
 }
 
 /// Input of [`create_partner_connection`](crate::create_partner_connection).

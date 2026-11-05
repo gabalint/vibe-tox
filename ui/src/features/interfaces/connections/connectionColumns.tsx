@@ -89,6 +89,14 @@ export const CONNECTION_COLUMNS: readonly DataGridColumn<PartnerConnection>[] = 
     width: 90,
   },
   {
+    id: "awaiting",
+    header: "Awaiting ACK",
+    cell: (row) => row.awaitingAck,
+    sortValue: (row) => row.awaitingAck,
+    align: "end",
+    width: 110,
+  },
+  {
     id: "failing",
     header: "Errors",
     cell: (row) => row.failing,

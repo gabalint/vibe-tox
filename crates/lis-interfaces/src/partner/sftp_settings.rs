@@ -4,6 +4,7 @@
 use lis_core::required_text;
 
 use super::error::{PartnerError, invalid};
+use super::mllp_settings::mllp_destination;
 use super::model::{PartnerConnectionSettings, PartnerProtocol, SftpSettings};
 use crate::validation::valid_text;
 
@@ -13,17 +14,17 @@ const REMOTE_FOLDER_MAX: usize = 1024;
 /// `SHA256:` and 43 unpadded base64 characters, as OpenSSH prints a key fingerprint.
 const FINGERPRINT_DIGEST: usize = 43;
 
-/// The protocol's server settings, trimmed: present for SFTP, absent for a folder.
+/// The protocol's server settings, trimmed: present for SFTP, absent otherwise.
 pub(crate) fn valid_sftp(
     protocol: PartnerProtocol,
     sftp: Option<SftpSettings>,
 ) -> Result<Option<SftpSettings>, PartnerError> {
     match (protocol, sftp) {
-        (PartnerProtocol::Folder, None) => Ok(None),
-        (PartnerProtocol::Folder, Some(_)) => Err(invalid(
+        (PartnerProtocol::Folder | PartnerProtocol::MllpConnect, None) => Ok(None),
+        (PartnerProtocol::Folder | PartnerProtocol::MllpConnect, Some(_)) => Err(invalid(
             "settings.sftp",
-            "not_for_folder",
-            "A folder connection has no server.",
+            "not_for_protocol",
+            "Only an SFTP connection has a server.",
         )),
         (PartnerProtocol::Sftp, None) => Err(invalid(
             "settings.sftp.host",
@@ -100,9 +101,13 @@ fn is_fingerprint(text: &str) -> bool {
     })
 }
 
-/// What a destination check covers: the folder, or every setting that decides which SFTP
-/// server and folder receive the files. Changing any of them needs a new check.
+/// What a destination check covers: the folder, every setting that decides which SFTP
+/// server and folder receive the files, or the MLLP partner's address and port. Changing
+/// any of them needs a new check.
 pub(crate) fn destination_of(settings: &PartnerConnectionSettings, folder: &str) -> String {
+    if let Some(partner) = &settings.mllp {
+        return mllp_destination(partner);
+    }
     match &settings.sftp {
         Some(sftp) => format!(
             "sftp://{}@{}:{}{} {}",

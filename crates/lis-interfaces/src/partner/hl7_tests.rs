@@ -16,6 +16,7 @@ fn message() -> Oru {
         processing_id: "P",
         laboratory: laboratory(),
         receiving_facility: "CLINIC-A".to_owned(),
+        acknowledged: false,
         patient: Patient {
             identifiers: vec![(
                 "MRN-00000".to_owned(),
@@ -109,6 +110,19 @@ fn an_oru_has_every_segment_in_order_with_exact_values() {
             "",
         ]
     );
+}
+
+#[test]
+fn a_message_sent_over_mllp_asks_for_the_application_ack_in_original_mode() {
+    let oru = Oru {
+        acknowledged: true,
+        ..message()
+    };
+    let text = String::from_utf8(oru.encode()).unwrap();
+    let msh = text.split('\r').next().unwrap();
+    // MSH-13 to MSH-17 empty, MSH-15 and MSH-16 among them: the partner answers on the
+    // same connection.
+    assert!(msh.ends_with("|P|2.5.1||||||UNICODE UTF-8"), "{msh}");
 }
 
 #[test]
