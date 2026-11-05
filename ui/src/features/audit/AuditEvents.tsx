@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
 import { Button } from "@/components/Button";
 import { DataGrid } from "@/components/DataGrid";
 import { DetailLayout } from "@/components/DetailPanel";
@@ -10,11 +10,12 @@ import type { AuditCursor } from "@/generated/AuditCursor";
 import type { AuditEventView } from "@/generated/AuditEventView";
 import type { ListAuditEventsInput } from "@/generated/ListAuditEventsInput";
 import { useCommandPages } from "@/lib/commands";
+import { LabTimeZoneContext, labDayStart } from "@/lib/format";
 import { useOpenRecord } from "@/lib/openRecord";
 import { openRecordPanel } from "@/lib/openRecordPanel";
 import { AuditEventDetails } from "./AuditEventDetails";
 import { AUDIT_COLUMNS } from "./auditColumns";
-import type { AuditFilter } from "./contract";
+import { type AuditFilter, hasFilters } from "./contract";
 import { streamLabel } from "./streams";
 
 /** Events per page; the engine accepts 1 to 500. */
@@ -30,12 +31,28 @@ const cursorAfter = ({ recordedAt, stream, seq }: AuditEventView): AuditCursor =
   seq,
 });
 
+/**
+ * The engine's filters for `filter`: the days as the instants they begin and end in the
+ * laboratory's time zone, and "By" as a kind of principal or a user.
+ */
+function auditInput({ from, to, by, ...rest }: AuditFilter, timeZone: string | null) {
+  const kind = by === "people" || by === "system" ? by : undefined;
+  return {
+    ...rest,
+    recordedFrom: from === undefined ? undefined : (labDayStart(from, timeZone) ?? undefined),
+    recordedBefore: to === undefined ? undefined : (labDayStart(to, timeZone, 1) ?? undefined),
+    byKind: kind,
+    byUser: kind === undefined ? by : undefined,
+  } satisfies Omit<ListAuditEventsInput, "limit">;
+}
+
 /** Events matching `filter`, newest first, with older pages loaded on request. */
 export function useAuditEvents(filter: AuditFilter) {
+  const input = auditInput(filter, useContext(LabTimeZoneContext));
   return useCommandPages<AuditEventView, AuditCursor>("list_audit_events", {
-    key: { input: filter },
+    key: { input },
     pageArgs: (before): { input: ListAuditEventsInput } => ({
-      input: { ...filter, before, limit: PAGE_SIZE },
+      input: { ...input, before, limit: PAGE_SIZE },
     }),
     // A short page is the oldest one; otherwise the next page starts after its last event.
     nextCursor: (page) => {
@@ -60,11 +77,7 @@ export function AuditEvents({ filter, events, onShowAll }: AuditEventsProps) {
   const rows = useMemo(() => events.data?.pages.flat() ?? [], [events.data]);
   const record = useOpenRecord();
   const shown = filter.stream ? "this stream" : "any stream";
-  const filtered =
-    filter.action !== undefined ||
-    filter.recordType !== undefined ||
-    filter.recordId !== undefined ||
-    filter.selfApprovalsOnly === true;
+  const filtered = hasFilters(filter);
 
   if (events.isPending) return <LoadingState label="Loading audit events…" rows={8} />;
   if (events.isError && !events.isFetchNextPageError) {

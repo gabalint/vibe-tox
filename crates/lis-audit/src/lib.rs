@@ -50,7 +50,7 @@ use lis_core::{Migration, ModuleSchema};
 
 pub use anchor::{Anchor, AnchorStatus, compare_anchors, parse_line, to_line};
 pub use labels::{action_label, record_type_label};
-pub use list::{EventCursor, EventFilter, StoredEvent, actions, list, record_types};
+pub use list::{ByFilter, EventCursor, EventFilter, StoredEvent, actions, list, record_types};
 pub use model::{
     Attribution, AuditDetail, AuditError, AuditEvent, ChainLink, MAX_DETAILS_BYTES,
     MAX_MACHINE_TOKEN_BYTES, Outcome, Stream,

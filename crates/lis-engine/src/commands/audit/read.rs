@@ -4,25 +4,21 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use lis_audit::EventFilter;
+use lis_audit::{ByFilter, EventFilter};
 use lis_core::UserId;
 use lis_store::StoreError;
 
-use super::{AuditEventView, AuditReadError, AuditStream, FilterOptions, ListAuditEventsInput};
+use super::{
+    AuditActorKind, AuditEventView, AuditOutcome, AuditReadError, AuditStream, FilterOptions,
+    ListAuditEventsInput,
+};
 
 pub(super) fn read_page(
     conn: &rusqlite::Connection,
     input: &ListAuditEventsInput,
 ) -> Result<Vec<AuditEventView>, AuditReadError> {
-    let filter = EventFilter {
-        stream: input.stream.map(AuditStream::stream),
-        before: input.before.map(Into::into),
-        limit: input.limit,
-        action: input.action.as_deref(),
-        record_type: input.record_type.as_deref(),
-        record_id: input.record_id.as_deref(),
-        self_approvals_only: input.self_approvals_only == Some(true),
-    };
+    let user_id = input.by_user.map(|id| id.to_string());
+    let filter = event_filter(input, user_id.as_deref());
     let events = lis_audit::list(conn, &filter).map_err(StoreError::from)?;
     let users: BTreeSet<UserId> = events
         .iter()
@@ -40,6 +36,10 @@ pub(super) fn read_page(
     let names = lis_auth::display_names(conn, &users)?;
     let record_labels = record_labels(conn, &events, &names)?;
     let (available_actions, available_record_types) = available_filters(conn, input.stream)?;
+    let available_users: FilterOptions = lis_auth::user_names(conn)?
+        .into_iter()
+        .map(|(id, name)| (id.to_string(), name))
+        .collect();
     Ok(events
         .into_iter()
         .map(|event| {
@@ -67,6 +67,7 @@ pub(super) fn read_page(
                 record_label,
                 available_actions: Some(available_actions.clone()),
                 available_record_types: Some(available_record_types.clone()),
+                available_users: Some(available_users.clone()),
                 seq: event.seq,
                 occurred_at: event.occurred_at,
                 recorded_at: event.recorded_at,
@@ -82,6 +83,29 @@ pub(super) fn read_page(
             }
         })
         .collect())
+}
+
+/// The engine filter for `input`; `user_id` is its "By" user as stored.
+fn event_filter<'a>(input: &'a ListAuditEventsInput, user_id: Option<&'a str>) -> EventFilter<'a> {
+    let by = match (user_id, input.by_kind) {
+        (Some(id), _) => Some(ByFilter::User(id)),
+        (None, Some(AuditActorKind::People)) => Some(ByFilter::People),
+        (None, Some(AuditActorKind::System)) => Some(ByFilter::System),
+        (None, None) => None,
+    };
+    EventFilter {
+        stream: input.stream.map(AuditStream::stream),
+        before: input.before.map(Into::into),
+        limit: input.limit,
+        action: input.action.as_deref(),
+        record_type: input.record_type.as_deref(),
+        record_id: input.record_id.as_deref(),
+        self_approvals_only: input.self_approvals_only == Some(true),
+        recorded_from: input.recorded_from,
+        recorded_before: input.recorded_before,
+        by,
+        outcome: input.outcome.map(AuditOutcome::outcome),
+    }
 }
 
 fn available_filters(

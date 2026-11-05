@@ -9,7 +9,7 @@
       "title": "How to use this page",
       "paragraphs": [
         "Audit trail lists events of every stream together, newest first, and each row names its stream. Security holds sign-ins, users, roles and security settings, backups, restores, updates, exports and instrument and partner connections. Clinical holds patients, orders, specimens, results, QC, reports, billing and laboratory setup such as the catalog and the laboratory profile. Access holds who opened patient records, orders, specimens, runs, results, reports or billing, and who viewed this trail or checked its chain or anchors.",
-        "Use the filters to narrow the stream, action or record, and open an event for its details. Self-approvals only isolates those events. Verify chain checks one chosen stream for changed or missing events.",
+        "Use the filters to narrow the stream, action, record, who acted, the outcome and the days recorded; they combine, the LIS applies them before it sends a page, and Clear filters removes them all at once. Open an event for its details. Self-approvals only isolates those events. Verify chain checks one chosen stream for changed or missing events.",
         "Audit anchors shows seals copied to backup targets. Use its verification view to compare anchor evidence and its file view to inspect export history. Exporting anchors now requires backup authority in addition to viewing access."
       ]
     },
@@ -53,10 +53,28 @@
           "rules": "Optional; choices come from the recorded event vocabulary."
         },
         {
+          "name": "By",
+          "meaning": "Narrow events by who acted.",
+          "values": "Anyone (default); People only: events by signed-in users; System only: events by the LIS itself, instruments and interface partners; or one user, by name, from every account.",
+          "rules": "Optional. A sign-in is recorded by the system, so People only leaves sign-ins out; choose System only or Anyone to see them. Kept when the stream changes."
+        },
+        {
+          "name": "Outcome",
+          "meaning": "Narrow events by how the recorded action ended.",
+          "values": "Any outcome (default); Succeeded; Failed: attempted and did not complete; Denied: refused by an authorization check, such as a missing permission.",
+          "rules": "Optional. Kept when the stream changes."
+        },
+        {
           "name": "Record type (More filters)",
           "meaning": "Narrow events by the kind of affected record.",
           "values": "Any record type or the recorded types of the chosen stream, or of every stream with All streams.",
           "rules": "Optional."
+        },
+        {
+          "name": "Recorded from / Recorded to (More filters)",
+          "meaning": "Narrow events to the days they were recorded, in the laboratory's time zone (UTC before a laboratory profile exists).",
+          "values": "A day as YYYY-MM-DD, typed or picked from the calendar; blank for no limit. Recorded to includes the whole of its day.",
+          "rules": "Optional; either end may be used alone. A day that is not a real date, a Recorded to before Recorded from, or a Recorded from after Recorded to shows a message under the field and is not applied. The calendar offers no day after today. While More filters is closed, the days applied are shown under the filter row."
         },
         {
           "name": "Self-approvals only",
@@ -122,7 +140,7 @@
         },
         {
           "name": "Clear filters / Show all events",
-          "does": "Remove all constraints except Stream.",
+          "does": "Remove every filter at once (record ID, action, By, Outcome, self-approvals, record type and days) except Stream.",
           "availableWhen": "A filter is applied or no matching events are found.",
           "result": "Reloads events for the selected stream, or for every stream."
         },
@@ -139,7 +157,7 @@
         "Do not remove or rewrite evidence to obtain a passing check."
       ],
       "workflow": [
-        "Start from All streams, or choose a stream, and narrow the review by record ID, action and record type.",
+        "Start from All streams, or choose a stream, and narrow the review by record ID, action, who acted, outcome, record type and the days recorded.",
         "Open relevant events and retain their sequence, actor, time and correlation identifiers.",
         "Verify chain, then use Audit anchors when independent retained evidence is needed.",
         "Investigate findings through the laboratory’s documented review process."

@@ -74,10 +74,14 @@ authority: string | null,
  */
 correlationId: string, 
 /**
- * Every action code present in this stream, for the filter control.
+ * Every action code present in the stream or streams read, for the filter control.
  */
 availableActions?: Array<[string, string]>, 
 /**
- * Every record type present in this stream, for the filter control.
+ * Every record type present in the stream or streams read, for the filter control.
  */
-availableRecordTypes?: Array<[string, string]>, };
+availableRecordTypes?: Array<[string, string]>, 
+/**
+ * Every user's ID and name, for the "By" filter control.
+ */
+availableUsers?: Array<[string, string]>, };

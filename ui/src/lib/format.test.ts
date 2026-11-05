@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatBirthDate, formatTimestamp } from "./format";
+import { formatBirthDate, formatTimestamp, isCalendarDate, labDayStart } from "./format";
 
 describe("formatTimestamp", () => {
   it("formats in the laboratory zone and names it, across daylight saving", () => {
@@ -65,5 +65,27 @@ describe("formatBirthDate", () => {
     expect(formatBirthDate("1961-02-30", now, null)).toBe("1961-02-30");
     expect(formatBirthDate("11/09/1961", now, null)).toBe("11/09/1961");
     expect(formatBirthDate("", now, null)).toBe("");
+  });
+});
+
+describe("labDayStart", () => {
+  it("gives the instant a laboratory day begins, and the next day for an inclusive end", () => {
+    expect(labDayStart("2026-10-12", "America/Chicago")).toBe("2026-10-12T05:00:00.000000000Z");
+    expect(labDayStart("2026-10-12", "America/Chicago", 1)).toBe("2026-10-13T05:00:00.000000000Z");
+    expect(labDayStart("2026-10-12", "Asia/Tokyo")).toBe("2026-10-11T15:00:00.000000000Z");
+  });
+
+  it("follows the zone's offset across daylight saving changes", () => {
+    expect(labDayStart("2026-11-01", "America/Chicago", 1)).toBe("2026-11-02T06:00:00.000000000Z");
+    expect(labDayStart("2026-03-08", "America/Chicago")).toBe("2026-03-08T06:00:00.000000000Z");
+    expect(labDayStart("2026-03-08", "America/Chicago", 1)).toBe("2026-03-09T05:00:00.000000000Z");
+  });
+
+  it("uses UTC without a known zone, and refuses a date that is not real", () => {
+    expect(labDayStart("2026-10-12", null)).toBe("2026-10-12T00:00:00.000000000Z");
+    expect(labDayStart("2026-10-12", "Mars/Olympus")).toBe("2026-10-12T00:00:00.000000000Z");
+    expect(labDayStart("2026-02-30", null)).toBeNull();
+    expect(isCalendarDate("2026-02-28")).toBe(true);
+    expect(isCalendarDate("2026-2-28")).toBe(false);
   });
 });

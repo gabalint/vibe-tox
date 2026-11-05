@@ -96,10 +96,7 @@ fn only_bookkeeping_since(conn: &Connection, since: i64, head: i64) -> Result<bo
     if newer > BOOKKEEPING_LIMIT {
         return Ok(false);
     }
-    let events = lis_audit::list(
-        conn,
-        &EventFilter::new(Stream::Security, newer),
-    )?;
+    let events = lis_audit::list(conn, &EventFilter::new(Stream::Security, newer))?;
     Ok(events.len() == newer as usize
         && events
             .iter()

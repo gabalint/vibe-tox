@@ -11,6 +11,7 @@ import { renderWithProviders } from "@/lib/test/render";
 import { AuditTrailPage } from "./AuditTrailPage";
 
 const RECORDED_AT = "2026-10-12T14:03:06Z";
+const ADMIN = "00000000-0000-7000-8000-000000000101";
 
 /** Synthetic security events with sequence numbers `from` down to `from - count + 1`. */
 function events(from: number, count: number): AuditEventView[] {
@@ -20,7 +21,7 @@ function events(from: number, count: number): AuditEventView[] {
     occurredAt: "2026-10-12T14:03:05Z",
     recordedAt: RECORDED_AT,
     principalKind: "user",
-    principalId: "00000000-0000-7000-8000-000000000101",
+    principalId: ADMIN,
     principalDisplay: "Test Administrator",
     action: "auth.sign_in",
     actionLabel: "Sign-in",
@@ -37,6 +38,7 @@ function events(from: number, count: number): AuditEventView[] {
       ["auth.lock", "Session locked"],
     ],
     availableRecordTypes: [["user", "User account"]],
+    availableUsers: [[ADMIN, "Test Administrator"]],
   }));
 }
 
@@ -62,7 +64,7 @@ describe("AuditTrailPage (REQ-OPS-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     expect(screen.getAllByRole("gridcell", { name: "Security" }).length).toBe(PAGE);
     expect(screen.getByText("100 events shown")).toBeTruthy();
     expect(screen.getByRole("gridcell", { name: "150" })).toBeTruthy();
-    expect(screen.getByText("Denied")).toBeTruthy();
+    expect(screen.getByRole("gridcell", { name: "Denied" })).toBeTruthy();
     expect(screen.getAllByRole("gridcell", { name: "Sign-in" }).length).toBeGreaterThan(0);
     expect(
       screen.getAllByRole("gridcell", { name: "Test Administrator (user)" }).length,
@@ -167,6 +169,82 @@ describe("AuditTrailPage (REQ-OPS-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     await user.click(screen.getByRole("button", { name: "Clear filters" }));
     await waitFor(() => expect(router.state.location.search).toBe("?stream=access"));
     expect(list).toHaveBeenLastCalledWith({ input: { stream: "access", limit: PAGE } });
+  });
+
+  it("filters by who acted and the outcome in the engine's query, and keeps both in the address", async () => {
+    const list = vi.fn(() => events(3, 3));
+    const { user, router } = renderPage({ list_audit_events: list });
+    expect(await screen.findByRole("grid", { name: "Audit events" })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: /By/ }));
+    await user.click(await screen.findByRole("option", { name: "System only" }));
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith({ input: { byKind: "system", limit: PAGE } }),
+    );
+    await user.click(screen.getByRole("button", { name: /By/ }));
+    await user.click(await screen.findByRole("option", { name: "Test Administrator" }));
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith({ input: { byUser: ADMIN, limit: PAGE } }),
+    );
+    await user.click(screen.getByRole("button", { name: /Outcome/ }));
+    await user.click(await screen.findByRole("option", { name: "Denied" }));
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith({
+        input: { byUser: ADMIN, outcome: "denied", limit: PAGE },
+      }),
+    );
+    expect(router.state.location.search).toBe(`?by=${ADMIN}&outcome=denied`);
+    // The stream is independent of who acted and how it ended.
+    await user.click(screen.getByRole("button", { name: /Stream/ }));
+    await user.click(await screen.findByRole("option", { name: "Clinical" }));
+    await waitFor(() =>
+      expect(router.state.location.search).toBe(`?stream=clinical&by=${ADMIN}&outcome=denied`),
+    );
+  });
+
+  it("filters by the days recorded, as the laboratory's days, and refuses an end before the start", async () => {
+    const list = vi.fn(() => events(3, 3));
+    const { user, router } = renderPage({ list_audit_events: list });
+    expect(await screen.findByRole("grid", { name: "Audit events" })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "More filters" }));
+    await user.type(screen.getByRole("textbox", { name: "Recorded from" }), "2026-10-01");
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith({
+        input: { recordedFrom: "2026-10-01T00:00:00.000000000Z", limit: PAGE },
+      }),
+    );
+    const calls = list.mock.calls.length;
+    await user.type(screen.getByRole("textbox", { name: "Recorded to" }), "2026-09-30");
+    expect(await screen.findByText("Choose a day on or after the start day.")).toBeTruthy();
+    expect(list).toHaveBeenCalledTimes(calls);
+    await user.clear(screen.getByRole("textbox", { name: "Recorded to" }));
+    await user.type(screen.getByRole("textbox", { name: "Recorded to" }), "2026-10-05");
+    // The last day counts in full: the range ends where the next day begins.
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith({
+        input: {
+          recordedFrom: "2026-10-01T00:00:00.000000000Z",
+          recordedBefore: "2026-10-06T00:00:00.000000000Z",
+          limit: PAGE,
+        },
+      }),
+    );
+    expect(router.state.location.search).toBe("?from=2026-10-01&to=2026-10-05");
+    expect(screen.getByText("Recorded 2026-10-01 to 2026-10-05")).toBeTruthy();
+  });
+
+  it("clears every filter at once, keeping the stream", async () => {
+    const list = vi.fn(() => events(3, 3));
+    const { user, router } = renderPage(
+      { list_audit_events: list },
+      "/audit?stream=security&action=auth.lock&from=2026-10-01&by=system&outcome=failed",
+    );
+    expect(await screen.findByText("Recorded from 2026-10-01")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /By/ }).textContent).toContain("System only");
+    expect(screen.getByRole("button", { name: /Outcome/ }).textContent).toContain("Failed");
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+    await waitFor(() => expect(router.state.location.search).toBe("?stream=security"));
+    expect(list).toHaveBeenLastCalledWith({ input: { stream: "security", limit: PAGE } });
+    expect(screen.queryByText("Recorded from 2026-10-01")).toBeNull();
   });
 
   it("clamps a long reason to two lines in the grid and shows all of it in the panel", async () => {

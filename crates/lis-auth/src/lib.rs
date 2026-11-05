@@ -158,6 +158,7 @@ pub use policy::{
 };
 pub use queries::{
     SessionUser, SetupStatus, UserSummary, display_names, list_users, session_user, setup_status,
+    user_names,
 };
 pub use reauthenticate::{ReauthPurpose, Reauthentication, reauthenticate};
 pub use repo::UserStatus;

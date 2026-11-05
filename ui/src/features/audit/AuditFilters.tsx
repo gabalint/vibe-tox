@@ -5,10 +5,11 @@ import { FindField } from "@/components/FindField";
 import { Select } from "@/components/Select";
 import { Toolbar } from "@/components/Toolbar";
 import { optionalText } from "@/lib/choices";
-import type { AuditFilter } from "./contract";
+import { AuditDateFilter } from "./AuditDateFilter";
+import { type AuditFilter, hasFilters, isOutcome } from "./contract";
 import { ALL_STREAMS, isStream, STREAMS } from "./streams";
 
-/** The option for "no filter" in the action and record type lists. */
+/** The option for "no filter" in the code lists. */
 const ANY = "any";
 
 /** The stream choices: every stream first, the default. */
@@ -17,58 +18,62 @@ const STREAM_OPTIONS = [{ id: ALL_STREAMS, label: "All streams" }, ...STREAMS];
 /** Codes and their labels, as the engine lists them for the shown stream or streams. */
 export type CodeLabels = readonly (readonly [string, string])[];
 
+/** The kinds of principal offered before the users in "By". */
+const BY_KINDS: CodeLabels = [
+  ["people", "People only"],
+  ["system", "System only"],
+];
+
+/** Outcomes as the engine records them; Denied is a refusal by authorization. */
+const OUTCOMES: CodeLabels = [
+  ["succeeded", "Succeeded"],
+  ["failed", "Failed"],
+  ["denied", "Denied"],
+];
+
 interface AuditFiltersProps {
   filter: AuditFilter;
   count?: ReactNode;
   /** Every action and record type recorded in the shown stream or streams, from the engine. */
   actions: CodeLabels;
   recordTypes: CodeLabels;
+  /** Every user, by ID and name, from the engine. */
+  users: CodeLabels;
   onApply: (filter: AuditFilter) => void;
   /** The record ID to find, after a pause in typing or on Enter; empty finds every record. */
   onFind: (recordId: string | undefined) => void;
 }
 
 /**
- * The stream, action and record type apply when chosen; the record ID as a find, after a
- * pause in typing. The stream's description says what the engine records in it. Actions and
- * record types belong to a stream, so changing the stream clears them. "Self-approvals only" lists the steps one person did alone under the
- * laboratory's separation-of-duties policy (ADR 0015), for the laboratory's review of them.
+ * Each filter applies when chosen, the record ID as a find after a pause in typing, and the
+ * engine applies them all in its query. The stream's description says what the engine
+ * records in it. Actions and record types belong to a stream, so changing the stream clears
+ * them. "Self-approvals only" lists the steps one person did alone under the laboratory's
+ * separation-of-duties policy (ADR 0015), for the laboratory's review of them.
  */
 export function AuditFilters({
   filter,
   count,
   actions,
   recordTypes,
+  users,
   onApply,
   onFind,
 }: AuditFiltersProps) {
-  const recordTypeLabel =
-    recordTypes.find(([id]) => id === filter.recordType)?.[1] ?? filter.recordType;
-  const filtered = Boolean(
-    filter.action || filter.recordType || filter.recordId || filter.selfApprovalsOnly,
-  );
   return (
     <Toolbar
       variant="collection"
       count={count}
       actions={
-        filtered && (
+        hasFilters(filter) && (
           <Button variant="quiet" onPress={() => onApply({ stream: filter.stream })}>
             Clear filters
           </Button>
         )
       }
       moreFilters={{
-        content: (
-          <CodeSelect
-            label="Record type"
-            any="Any record type"
-            codes={recordTypes}
-            value={filter.recordType}
-            onChange={(recordType) => onApply({ ...filter, recordType })}
-          />
-        ),
-        applied: recordTypeLabel ? `Record type: ${recordTypeLabel}` : undefined,
+        content: <MoreFilters filter={filter} recordTypes={recordTypes} onApply={onApply} />,
+        applied: moreApplied(filter, recordTypes),
       }}
     >
       <FindField
@@ -89,9 +94,10 @@ export function AuditFilters({
         }
         onChange={(stream) =>
           onApply({
+            ...filter,
             stream: isStream(stream) ? stream : undefined,
-            recordId: filter.recordId,
-            selfApprovalsOnly: filter.selfApprovalsOnly,
+            action: undefined,
+            recordType: undefined,
           })
         }
       />
@@ -102,6 +108,22 @@ export function AuditFilters({
         value={filter.action}
         onChange={(action) => onApply({ ...filter, action })}
       />
+      <CodeSelect
+        label="By"
+        any="Anyone"
+        codes={[...BY_KINDS, ...users]}
+        value={filter.by}
+        onChange={(by) => onApply({ ...filter, by })}
+      />
+      <CodeSelect
+        label="Outcome"
+        any="Any outcome"
+        codes={OUTCOMES}
+        value={filter.outcome}
+        onChange={(outcome) =>
+          onApply({ ...filter, outcome: isOutcome(outcome) ? outcome : undefined })
+        }
+      />
       <Checkbox
         name="selfApprovalsOnly"
         isSelected={filter.selfApprovalsOnly === true}
@@ -111,6 +133,56 @@ export function AuditFilters({
       </Checkbox>
     </Toolbar>
   );
+}
+
+interface MoreFiltersProps {
+  filter: AuditFilter;
+  recordTypes: CodeLabels;
+  onApply: (filter: AuditFilter) => void;
+}
+
+/** The record type and the days recorded, less used than the filters in the row. */
+function MoreFilters({ filter, recordTypes, onApply }: MoreFiltersProps) {
+  return (
+    <>
+      <CodeSelect
+        label="Record type"
+        any="Any record type"
+        codes={recordTypes}
+        value={filter.recordType}
+        onChange={(recordType) => onApply({ ...filter, recordType })}
+      />
+      <AuditDateFilter
+        label="Recorded from"
+        name="from"
+        value={filter.from}
+        latest={filter.to}
+        onChange={(from) => onApply({ ...filter, from })}
+      />
+      <AuditDateFilter
+        label="Recorded to"
+        name="to"
+        value={filter.to}
+        earliest={filter.from}
+        onChange={(to) => onApply({ ...filter, to })}
+      />
+    </>
+  );
+}
+
+/** The filters applied in "More filters", shown while it is closed. */
+function moreApplied(filter: AuditFilter, recordTypes: CodeLabels): string | undefined {
+  const recordType =
+    filter.recordType &&
+    `Record type: ${recordTypes.find(([id]) => id === filter.recordType)?.[1] ?? filter.recordType}`;
+  const { from, to } = filter;
+  const days =
+    from && to
+      ? `Recorded ${from} to ${to}`
+      : from
+        ? `Recorded from ${from}`
+        : to && `Recorded to ${to}`;
+  return [recordType, days].filter(Boolean).join(" · ") || undefined;
 }
 
 interface CodeSelectProps {

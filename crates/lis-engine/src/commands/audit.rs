@@ -14,7 +14,7 @@ use crate::registry::{LIST_AUDIT_EVENTS, VERIFY_AUDIT_CHAIN};
 
 mod input;
 mod read;
-pub use input::{AuditCursor, AuditStream, ListAuditEventsInput};
+pub use input::{AuditActorKind, AuditCursor, AuditOutcome, AuditStream, ListAuditEventsInput};
 use input::{audit_filter_details, page_event};
 use read::read_page;
 
@@ -121,14 +121,18 @@ pub struct AuditEventView {
     pub authority: Option<String>,
     /// Finds the diagnostic log line of the same command.
     pub correlation_id: String,
-    /// Every action code present in this stream, for the filter control.
+    /// Every action code present in the stream or streams read, for the filter control.
     #[ts(optional)]
     #[ts(type = "Array<[string, string]>")]
     pub available_actions: Option<Vec<(String, String)>>,
-    /// Every record type present in this stream, for the filter control.
+    /// Every record type present in the stream or streams read, for the filter control.
     #[ts(optional)]
     #[ts(type = "Array<[string, string]>")]
     pub available_record_types: Option<Vec<(String, String)>>,
+    /// Every user's ID and name, for the "By" filter control.
+    #[ts(optional)]
+    #[ts(type = "Array<[string, string]>")]
+    pub available_users: Option<Vec<(String, String)>>,
 }
 
 /// Input of `verify_audit_chain`.

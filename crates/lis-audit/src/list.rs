@@ -5,7 +5,7 @@ use lis_core::UtcTimestamp;
 use rusqlite::types::Type;
 use rusqlite::{Connection, Row, params};
 
-use crate::model::{AuditError, SELF_APPROVAL_DETAIL, Stream};
+use crate::model::{AuditError, Outcome, SELF_APPROVAL_DETAIL, Stream};
 
 /// Which events to read, newest first: by sequence number in one stream, by
 /// append time across every stream.
@@ -25,6 +25,25 @@ pub struct EventFilter<'a> {
     pub record_id: Option<&'a str>,
     /// Only self-approvals ([`crate::AuditEvent::self_approval`]).
     pub self_approvals_only: bool,
+    /// Only events recorded at or after this instant.
+    pub recorded_from: Option<UtcTimestamp>,
+    /// Only events recorded before this instant.
+    pub recorded_before: Option<UtcTimestamp>,
+    /// Only events by these principals.
+    pub by: Option<ByFilter<'a>>,
+    /// Only events with this outcome.
+    pub outcome: Option<Outcome>,
+}
+
+/// Who acted, for [`EventFilter::by`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ByFilter<'a> {
+    /// Signed-in users.
+    People,
+    /// Everyone else: the system, instruments and partners.
+    System,
+    /// The user with this ID.
+    User(&'a str),
 }
 
 impl EventFilter<'_> {
@@ -39,6 +58,10 @@ impl EventFilter<'_> {
             record_type: None,
             record_id: None,
             self_approvals_only: false,
+            recorded_from: None,
+            recorded_before: None,
+            by: None,
+            outcome: None,
         }
     }
 }
@@ -91,9 +114,12 @@ pub struct StoredEvent {
 const COLUMNS: &str = "stream, seq, occurred_at, recorded_at, principal_kind, principal_id, action, \
      outcome, record_type, record_id, reason, authority, correlation_id";
 
-/// The filters besides the stream and the cursor.
+/// The filters besides the stream and the cursor; `?13` is whether a person acted.
 const FILTERS: &str = "(?5 IS NULL OR action = ?5) AND (?6 IS NULL OR record_type = ?6) \
-     AND (?7 IS NULL OR record_id = ?7) AND (NOT ?8 OR json_extract(details, '$.' || ?9) IS 1)";
+     AND (?7 IS NULL OR record_id = ?7) AND (NOT ?8 OR json_extract(details, '$.' || ?9) IS 1) \
+     AND (?11 IS NULL OR recorded_at >= ?11) AND (?12 IS NULL OR recorded_at < ?12) \
+     AND (?13 IS NULL OR (principal_kind = 'user') = ?13) \
+     AND (?14 IS NULL OR principal_id = ?14) AND (?15 IS NULL OR outcome = ?15)";
 
 /// Sorts after every stored timestamp (a digit first) and stream code (a lowercase letter
 /// first), so the first page needs no `IS NULL` branch and the cursor stays an index range.
@@ -111,16 +137,16 @@ pub fn list(conn: &Connection, filter: &EventFilter<'_>) -> Result<Vec<StoredEve
             "recorded_at DESC, stream DESC, seq DESC",
         )
     };
-    let (before_recorded_at, before_stream, before_seq) = filter.before.map_or(
-        (AFTER_EVERY.to_owned(), AFTER_EVERY, i64::MAX),
-        |before| {
-            (
-                before.recorded_at.to_string(),
-                before.stream.as_str(),
-                before.seq,
-            )
-        },
-    );
+    let (before_recorded_at, before_stream, before_seq) =
+        filter
+            .before
+            .map_or((AFTER_EVERY.to_owned(), AFTER_EVERY, i64::MAX), |before| {
+                (
+                    before.recorded_at.to_string(),
+                    before.stream.as_str(),
+                    before.seq,
+                )
+            });
     let events = conn
         .prepare_cached(&format!(
             "SELECT {COLUMNS} FROM audit_events WHERE {cursor} AND {FILTERS} \
@@ -138,6 +164,14 @@ pub fn list(conn: &Connection, filter: &EventFilter<'_>) -> Result<Vec<StoredEve
                 filter.self_approvals_only,
                 SELF_APPROVAL_DETAIL,
                 filter.limit,
+                filter.recorded_from,
+                filter.recorded_before,
+                filter.by.map(|by| by != ByFilter::System),
+                match filter.by {
+                    Some(ByFilter::User(id)) => Some(id),
+                    _ => None,
+                },
+                filter.outcome.map(Outcome::as_str),
             ],
             stored_event,
         )?

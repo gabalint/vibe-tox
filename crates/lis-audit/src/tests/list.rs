@@ -24,7 +24,10 @@ fn append_at(conn: &mut Connection, stream: Stream, time: &str) {
 }
 
 /// Up to two events of every stream after `before`, as (stream, seq), and the next cursor.
-fn page(conn: &Connection, before: Option<EventCursor>) -> (Vec<(Stream, i64)>, Option<EventCursor>) {
+fn page(
+    conn: &Connection,
+    before: Option<EventCursor>,
+) -> (Vec<(Stream, i64)>, Option<EventCursor>) {
     let filter = EventFilter {
         stream: None,
         before,
@@ -43,7 +46,8 @@ fn page(conn: &Connection, before: Option<EventCursor>) -> (Vec<(Stream, i64)>, 
 fn list_pages_newest_first_with_filters() {
     let (_dir, mut conn) = open();
     append_clinical(&mut conn, 5);
-    let recorded_at = crate::list(&conn, &EventFilter::new(Stream::Clinical, 1)).unwrap()[0].recorded_at;
+    let recorded_at =
+        crate::list(&conn, &EventFilter::new(Stream::Clinical, 1)).unwrap()[0].recorded_at;
     let before = |seq| EventCursor {
         recorded_at,
         stream: Stream::Clinical,
@@ -55,7 +59,10 @@ fn list_pages_newest_first_with_filters() {
         record_id,
         ..EventFilter::new(Stream::Clinical, 2)
     };
-    assert_eq!(seqs(&crate::list(&conn, &filter(None, None)).unwrap()), [5, 4]);
+    assert_eq!(
+        seqs(&crate::list(&conn, &filter(None, None)).unwrap()),
+        [5, 4]
+    );
     assert_eq!(
         seqs(&crate::list(&conn, &filter(Some(before(4)), None)).unwrap()),
         [3, 2]
@@ -82,16 +89,36 @@ fn list_pages_newest_first_with_filters() {
 #[test]
 fn list_reads_every_stream_by_append_time_with_a_stable_cursor() {
     let (_dir, mut conn) = open();
-    append_at(&mut conn, Stream::Clinical, "2026-10-12T10:00:00.000000000Z");
-    append_at(&mut conn, Stream::Security, "2026-10-12T10:00:01.000000000Z");
-    append_at(&mut conn, Stream::Clinical, "2026-10-12T10:00:02.000000000Z");
+    append_at(
+        &mut conn,
+        Stream::Clinical,
+        "2026-10-12T10:00:00.000000000Z",
+    );
+    append_at(
+        &mut conn,
+        Stream::Security,
+        "2026-10-12T10:00:01.000000000Z",
+    );
+    append_at(
+        &mut conn,
+        Stream::Clinical,
+        "2026-10-12T10:00:02.000000000Z",
+    );
     // The same instant: the stream code breaks the tie.
     append_at(&mut conn, Stream::Access, "2026-10-12T10:00:02.000000000Z");
-    append_at(&mut conn, Stream::Security, "2026-10-12T10:00:03.000000000Z");
+    append_at(
+        &mut conn,
+        Stream::Security,
+        "2026-10-12T10:00:03.000000000Z",
+    );
     let (first, next) = page(&conn, None);
     assert_eq!(first, [(Stream::Security, 2), (Stream::Clinical, 2)]);
     // An event appended after the first page does not move the next one.
-    append_at(&mut conn, Stream::Clinical, "2026-10-12T10:00:04.000000000Z");
+    append_at(
+        &mut conn,
+        Stream::Clinical,
+        "2026-10-12T10:00:04.000000000Z",
+    );
     let (second, next) = page(&conn, next);
     assert_eq!(second, [(Stream::Access, 1), (Stream::Security, 1)]);
     let (third, next) = page(&conn, next);
@@ -122,10 +149,14 @@ fn every_stream_pages_through_the_time_index_without_sorting() {
         .collect::<Result<_, _>>()
         .unwrap();
     assert!(
-        plan.iter().any(|step| step.contains("audit_events_by_time")),
+        plan.iter()
+            .any(|step| step.contains("audit_events_by_time")),
         "{plan:?}"
     );
-    assert!(!plan.iter().any(|step| step.contains("TEMP B-TREE")), "{plan:?}");
+    assert!(
+        !plan.iter().any(|step| step.contains("TEMP B-TREE")),
+        "{plan:?}"
+    );
 }
 
 #[test]
@@ -156,9 +187,96 @@ fn list_can_show_only_self_approvals() {
         self_approvals_only,
         ..EventFilter::new(Stream::Clinical, 10)
     };
-    assert_eq!(seqs(&crate::list(&conn, &filter(false)).unwrap()), [3, 2, 1]);
+    assert_eq!(
+        seqs(&crate::list(&conn, &filter(false)).unwrap()),
+        [3, 2, 1]
+    );
     assert_eq!(seqs(&crate::list(&conn, &filter(true)).unwrap()), [3]);
     let mut every = filter(true);
     every.stream = None;
     assert_eq!(seqs(&crate::list(&conn, &every).unwrap()), [3]);
+}
+
+/// Appends one clinical event by `principal` with `outcome`, recorded at `time`.
+fn append_by(conn: &mut Connection, principal: &Principal, outcome: Outcome, time: &str) {
+    let attribution = Attribution {
+        principal,
+        occurred_at: at(time),
+        recorded_at: at(time),
+        correlation_id: CorrelationId::generate(),
+        authority: &[],
+    };
+    let tx = conn
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .unwrap();
+    let event = AuditEvent::new(Stream::Clinical, "specimen.receive", outcome);
+    append(&tx, &attribution, &event).unwrap();
+    tx.commit().unwrap();
+}
+
+#[test]
+fn list_filters_by_recorded_time_principal_and_outcome() {
+    let (_dir, mut conn) = open();
+    let person = user();
+    let other = user();
+    let instrument = Principal::instrument(InstrumentId::generate());
+    append_by(
+        &mut conn,
+        &person,
+        Outcome::Succeeded,
+        "2026-10-12T10:00:00.000000000Z",
+    );
+    append_by(
+        &mut conn,
+        &instrument,
+        Outcome::Failed,
+        "2026-10-13T10:00:00.000000000Z",
+    );
+    append_by(
+        &mut conn,
+        &other,
+        Outcome::Denied,
+        "2026-10-14T10:00:00.000000000Z",
+    );
+    let person_id = person.actor().id_text();
+    let read = |change: &dyn Fn(&mut EventFilter<'_>)| {
+        let mut filter = EventFilter::new(Stream::Clinical, 10);
+        change(&mut filter);
+        seqs(&crate::list(&conn, &filter).unwrap())
+    };
+    assert_eq!(read(&|f| f.by = Some(crate::ByFilter::People)), [3, 1]);
+    assert_eq!(read(&|f| f.by = Some(crate::ByFilter::System)), [2]);
+    let one_user = EventFilter {
+        by: Some(crate::ByFilter::User(&person_id)),
+        ..EventFilter::new(Stream::Clinical, 10)
+    };
+    assert_eq!(seqs(&crate::list(&conn, &one_user).unwrap()), [1]);
+    assert_eq!(read(&|f| f.outcome = Some(Outcome::Failed)), [2]);
+    assert_eq!(read(&|f| f.outcome = Some(Outcome::Denied)), [3]);
+    let from = at("2026-10-13T00:00:00.000000000Z");
+    let before = at("2026-10-14T00:00:00.000000000Z");
+    assert_eq!(read(&|f| f.recorded_from = Some(from)), [3, 2]);
+    assert_eq!(read(&|f| f.recorded_before = Some(before)), [2, 1]);
+    // Filters combine, in one stream and across every stream.
+    let both = |f: &mut EventFilter<'_>| {
+        f.recorded_from = Some(from);
+        f.recorded_before = Some(before);
+        f.outcome = Some(Outcome::Failed);
+        f.by = Some(crate::ByFilter::System);
+    };
+    assert_eq!(read(&both), [2]);
+    assert_eq!(
+        read(&|f| {
+            both(f);
+            f.stream = None;
+        }),
+        [2]
+    );
+    assert!(
+        read(&|f| {
+            both(f);
+            f.by = Some(crate::ByFilter::People);
+        })
+        .is_empty()
+    );
 }
