@@ -6,8 +6,8 @@ fn record(conn: &mut Connection, event: AuditEvent) -> ChainLink {
     let principal = user();
     let attribution = Attribution {
         principal: &principal,
-        occurred_at: at("2026-10-12T10:00:00Z"),
-        recorded_at: at("2026-10-12T10:00:00Z"),
+        occurred_at: at("2026-10-12T10:00:00.000000000Z"),
+        recorded_at: at("2026-10-12T10:00:00.000000000Z"),
         correlation_id: CorrelationId::generate(),
         authority: &[Capability::Accession],
     };

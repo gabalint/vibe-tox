@@ -144,7 +144,7 @@ mod tests {
             (
                 "audit-export",
                 1,
-                "5e362b9f800458a2a5ebf2ec76e581557a558022f559388a016401a2d00d788d",
+                "38ce46d1fbfd47fcad43117202ec604ff9eb784e630a413aaaefa207c03ce68b",
             ),
         ];
         for (id, version, digest) in pinned {

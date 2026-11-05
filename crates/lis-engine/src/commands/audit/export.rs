@@ -393,8 +393,8 @@ mod tests {
 
     #[test]
     fn an_export_reads_every_page_up_to_the_export_instant() {
-        let now = at("2026-11-05T10:00:00Z");
-        let earlier = at("2026-11-04T10:00:00Z");
+        let now = at("2026-11-05T10:00:00.000000000Z");
+        let earlier = at("2026-11-04T10:00:00.000000000Z");
         let cursor = AuditCursor {
             recorded_at: earlier,
             stream: AuditStream::Security,

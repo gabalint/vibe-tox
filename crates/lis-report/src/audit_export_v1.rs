@@ -137,8 +137,9 @@ mod tests {
         let text = rendered_text(&template, &to_json(&data).expect("serializes")).expect("renders");
         assert!(text.contains("Audittrailexport"));
         assert!(text.contains("Containspatientinformation:confidential"));
-        assert!(text.contains("Exportedby:TestAuditor"));
-        assert!(text.contains("Stream:Clinical"));
+        // A term list prints its term and description without the colon.
+        assert!(text.contains("ExportedbyTestAuditor"));
+        assert!(text.contains("StreamClinical"));
         assert!(text.contains("Familyname:Dae→Doe"));
         assert!(text.contains("Typointhefamilyname"));
     }
