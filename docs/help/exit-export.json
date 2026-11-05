@@ -66,7 +66,7 @@
         {
           "name": "State",
           "meaning": "Progress or final outcome of the export job.",
-          "values": "Requested; Running; Verified; Failed; Interrupted.",
+          "values": "Requested; Running; Verified (green badge with a check mark); Failed (red badge); Interrupted.",
           "rules": "Read-only. Requested and Running are not completed exports; the page refreshes while jobs are unfinished."
         },
         {
