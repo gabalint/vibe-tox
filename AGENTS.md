@@ -27,7 +27,10 @@ supported releases or clinical use (Q-19, Q-34).
 **Open-source preparation — user instruction, 2026-10-20.** Retain GPL-3.0-only
 and keep the free clinical toxicology LIS scope explicit. Keep project pricing,
 business-model material and other LIS organizations' names and brands out of
-tracked documents. Tracked documents describe current decisions and open
+tracked documents. Exception (user instruction, 2026-11-05): the README and the
+website each carry one factual support notice linking to
+<https://limsiq.com/solutions/vibe-tox-support/>, limited to the link and a one-line
+description with no pricing or offer terms. Tracked documents describe current decisions and open
 proposals only; they do not narrate earlier internal project choices. The public
 history starts from a single initial snapshot. This does not authorize cloud
 implementation or change clinical scope. Preserve third-party license notices and
