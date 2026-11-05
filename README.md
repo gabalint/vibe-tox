@@ -61,6 +61,13 @@ written agreements. See the
 [full development disclaimer](docs/governance/development-disclaimer.md), which does
 not modify the license or add use restrictions.
 
+## Support
+
+Community support is through [GitHub issues](https://github.com/gabalint/vibe-tox/issues).
+Commercial support for laboratories (installation, instrument connections, report
+configuration and validation for the laboratory's intended use) is available from
+[LIMS IQ](https://limsiq.com/solutions/vibe-tox-support/).
+
 ## Start here
 
 1. [At a glance](docs/overview.md) and [project scope](docs/project-scope.md): the product, its confirmed clinical scope and exclusions.
