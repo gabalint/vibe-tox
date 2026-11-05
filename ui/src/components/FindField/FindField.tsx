@@ -70,10 +70,15 @@ export function FindField({
         onClear={() => pause.now("")}
         className={styles.field}
       >
-        <Label className={styles.label}>
-          {!isLabelHidden && <span aria-hidden="true">Find</span>}
-          <span className={styles.accessibleLabel}>{label}</span>
-        </Label>
+        {isLabelHidden ? (
+          // Out of the row, so the field starts where the content below it does.
+          <Label className={styles.accessibleLabel}>{label}</Label>
+        ) : (
+          <Label className={styles.label}>
+            <span aria-hidden="true">Find</span>
+            <span className={styles.accessibleLabel}>{label}</span>
+          </Label>
+        )}
         <div className={styles.control}>
           <Search aria-hidden="true" className={styles.icon} />
           <Input placeholder={placeholder} className={styles.input} />
