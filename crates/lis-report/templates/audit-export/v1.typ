@@ -29,10 +29,10 @@
 
 #let data = json("/data.json")
 
-// A very long word cannot wrap, so it would run off the page: allow a line
+// A long word (a code or an ID) cannot wrap, so it would run off the page: allow a line
 // break (a zero-width space) between its characters.
 #let breakable(value) = value.replace(
-  regex("\S{24,}"),
+  regex("\S{12,}"),
   run => run.text.clusters().join("\u{200B}"),
 )
 // A string that must not be empty; anything else fails the render.
@@ -123,7 +123,7 @@
 == Events
 
 #table(
-  columns: (5.5em, 6em, 7em, 8em, 4.5em, 9em, 1fr, 1.6fr),
+  columns: (5.5em, 6em, 7em, 8em, 5.5em, 9em, 1fr, 1.6fr),
   table.header(
     [*Stream · Seq.*], [*Recorded*], [*By*], [*Action*], [*Outcome*],
     [*Record*], [*Reason · Authority*], [*Changes*],
