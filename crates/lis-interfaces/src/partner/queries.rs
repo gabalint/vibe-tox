@@ -2,7 +2,7 @@
 
 use std::collections::BTreeSet;
 
-use rusqlite::{Connection, OptionalExtension};
+use rusqlite::{Connection, OptionalExtension, params};
 use serde_json::Value;
 
 use super::connection_views::{
@@ -10,6 +10,7 @@ use super::connection_views::{
     PartnerConnectionDetail, PartnerVerification,
 };
 use super::error::PartnerError;
+use super::mllp::NO_ACK;
 use super::model::{PartnerConnectionId, PartnerMessageType};
 use super::received_queries::intake_counts;
 use super::repo::{self, ConnectionRow};
@@ -79,12 +80,13 @@ fn changed_fields(before: &Value, after: &Value) -> Vec<String> {
         .collect()
 }
 
-/// An outgoing connection's last write attempt, its messages not written yet and its
-/// failing ones; synthetic tests are not counted.
+/// An outgoing connection's last write attempt, its messages not written yet, its failing
+/// ones and those sent over MLLP that await an acknowledgement; synthetic tests are not
+/// counted.
 fn delivery_counts(
     conn: &Connection,
     connection_id: PartnerConnectionId,
-) -> Result<(Option<LastAttempt>, u32, u32), PartnerError> {
+) -> Result<(Option<LastAttempt>, u32, u32, u32), PartnerError> {
     let last_attempt = conn
         .prepare_cached(
             "SELECT last_attempt_at, last_error_code FROM ifc_partner_deliveries \
@@ -98,14 +100,18 @@ fn delivery_counts(
             })
         })
         .optional()?;
-    let (waiting, failing): (u32, u32) = conn
+    let (waiting, failing, awaiting_ack): (u32, u32, u32) = conn
         .prepare_cached(
             "SELECT COALESCE(SUM(state = 'waiting'), 0), \
-             COALESCE(SUM(state = 'failed' OR (state = 'waiting' AND attempts > 0)), 0) \
+             COALESCE(SUM(state = 'failed' OR (state = 'waiting' AND attempts > 0 \
+                 AND last_error_code IS NOT ?2)), 0), \
+             COALESCE(SUM(state = 'waiting' AND last_error_code IS ?2), 0) \
              FROM ifc_partner_deliveries WHERE connection_id = ?1 AND reason <> 'test'",
         )?
-        .query_row([connection_id], |found| Ok((found.get(0)?, found.get(1)?)))?;
-    Ok((last_attempt, waiting, failing))
+        .query_row(params![connection_id, NO_ACK], |found| {
+            Ok((found.get(0)?, found.get(1)?, found.get(2)?))
+        })?;
+    Ok((last_attempt, waiting, failing, awaiting_ack))
 }
 
 fn connection_view(
@@ -122,8 +128,9 @@ fn connection_view(
             },
             self_approval: check.self_approval,
         });
-    let (last_attempt, waiting, failing) = if row.settings.message_type.incoming() {
-        intake_counts(conn, row.id)?
+    let (last_attempt, waiting, failing, awaiting_ack) = if row.settings.message_type.incoming() {
+        let (last_attempt, waiting, failing) = intake_counts(conn, row.id)?;
+        (last_attempt, waiting, failing, 0)
     } else {
         delivery_counts(conn, row.id)?
     };
@@ -167,6 +174,7 @@ fn connection_view(
         last_attempt,
         waiting,
         failing,
+        awaiting_ack,
         last_change: ChangeStamp {
             by,
             by_display: None,

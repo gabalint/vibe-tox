@@ -13,7 +13,7 @@ import row from "../actionRow.module.css";
 import { GET_SFTP_KEY, TEST_SFTP } from "../contract";
 import { isIncoming, sftpTestText } from "../labels";
 import styles from "./ConnectionDialog.module.css";
-import { type ConnectionValues, toSftp, typedPassword } from "./connectionForm";
+import { type ConnectionValues, toSftp, typedPassword, validPort } from "./connectionForm";
 import { CheckEveryInput } from "./IntakeSections";
 import { toIntake } from "./intakeForm";
 
@@ -21,11 +21,6 @@ const SIGN_IN_OPTIONS = [
   { id: "key", label: "SSH key (recommended)" },
   { id: "password", label: "Password" },
 ];
-
-const validPort = (value: string) =>
-  /^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= 65535
-    ? true
-    : "Use a port from 1 to 65535.";
 
 /** The password, masked; a saved one is kept while the field is empty. */
 function PasswordInput({ hasPassword }: { hasPassword: boolean }) {

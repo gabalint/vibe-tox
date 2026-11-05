@@ -57,8 +57,9 @@ fn valid_reading(
     let remote = |field: &str, folder: Option<&String>| {
         valid_remote_folder(field, folder.map_or("", String::as_str)).map(Some)
     };
+    // MLLP – LIS connects sends results; its settings check refuses it for orders.
     let (processed, failed) = match protocol {
-        PartnerProtocol::Folder => (None, None),
+        PartnerProtocol::Folder | PartnerProtocol::MllpConnect => (None, None),
         PartnerProtocol::Sftp => (
             remote(
                 "settings.intake.remoteProcessedFolder",

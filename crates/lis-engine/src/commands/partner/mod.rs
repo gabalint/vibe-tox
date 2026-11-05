@@ -13,6 +13,7 @@ mod folder_choices;
 mod folders;
 mod mappings;
 mod messages;
+mod mllp;
 mod routing;
 mod sftp;
 mod test_files;
@@ -26,6 +27,7 @@ pub use self::connections::{
 pub(crate) use self::folder_choices::FolderChoices;
 pub use self::folders::{ChosenPartnerFolder, FolderTestResult, TestPartnerFolderInput};
 pub use self::messages::ExportedMessageLog;
+pub use self::mllp::TestPartnerMllpInput;
 pub(crate) use self::routing::{
     HandoffError, ReportRoutingError, route_billing_handoff, route_report_revision,
     route_report_withdrawal,
@@ -52,6 +54,8 @@ pub(crate) const TEST_PARTNER_FOLDER: CommandSpec =
     spec("test_partner_folder", "interfaces.test_folder", MANAGE);
 pub(crate) const TEST_PARTNER_SFTP: CommandSpec =
     spec("test_partner_sftp", "interfaces.test_sftp", MANAGE);
+pub(crate) const TEST_PARTNER_MLLP: CommandSpec =
+    spec("test_partner_mllp", "interfaces.test_mllp", MANAGE);
 pub(crate) const GET_LIS_SFTP_KEY: CommandSpec =
     spec("get_lis_sftp_key", "interfaces.get_sftp_key", MANAGE);
 pub(crate) const CREATE_PARTNER_CONNECTION: CommandSpec = spec(

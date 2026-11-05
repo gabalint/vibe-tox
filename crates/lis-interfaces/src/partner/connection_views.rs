@@ -68,6 +68,8 @@ pub struct PartnerConnection {
     pub waiting: u32,
     /// Messages whose attempts failed, retrying or given up.
     pub failing: u32,
+    /// Messages sent over MLLP without an acknowledgement yet; they are sent again.
+    pub awaiting_ack: u32,
     pub last_change: ChangeStamp,
     /// Commands that apply to the connection as it is now.
     pub allowed_actions: Vec<String>,

@@ -26,9 +26,9 @@ import { MessagesGrid } from "./MessagesSection";
 type Row = PartnerMessageRow;
 
 /**
- * The tabs of the mockup. A folder or SFTP server never answers, so nothing sent there awaits
- * an acknowledgement; Rejected and Duplicates hold received orders the LIS refused or had read
- * before.
+ * The tabs of the mockup. Only an MLLP partner answers: what it rejected (AE, AR) shows under
+ * Rejected, with received orders the LIS refused, and what it has not acknowledged yet under
+ * Awaiting ACK; a folder or SFTP server never answers. Duplicates hold orders read before.
  */
 const TABS = [
   { id: "all", label: "All" },
@@ -43,8 +43,8 @@ type TabId = (typeof TABS)[number]["id"];
 const IN_TAB: Record<TabId, (row: Row) => boolean> = {
   all: () => true,
   failed: (row) => row.transport === "failed",
-  rejected: (row) => row.received === "rejected",
-  awaiting_ack: () => false,
+  rejected: (row) => row.received === "rejected" || row.ackCode === "AE" || row.ackCode === "AR",
+  awaiting_ack: (row) => row.awaitingAck,
   outcome_unknown: (row) => row.outcomeUnknown,
   duplicates: (row) => row.received === "duplicate",
 };

@@ -16,6 +16,7 @@ import {
   UPDATE_CONNECTION,
 } from "../contract";
 import { problemText } from "../labels";
+import { testAnswerText } from "../mllpLabels";
 import { CheckDialog } from "./CheckDialog";
 import { ConnectionDialog } from "./ConnectionDialog";
 
@@ -31,12 +32,16 @@ export function ConnectionActions({ connection }: { connection: PartnerConnectio
   // The latest test's result, on the action row as in the mockup; the next test replaces it.
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   const allowed = (action: string) => connection.allowedActions.includes(action);
-  const tested = (done: (fileName: string | null) => string) => (outcome: FolderTestResult) =>
-    setResult(
-      outcome.problem === null
-        ? { ok: true, text: `✓ ${done(outcome.fileName)}` }
-        : { ok: false, text: `✗ Not done: ${problemText(outcome.problem)}.` },
-    );
+  const mllp = connection.settings.protocol === "mllp_connect";
+  // An MLLP partner that answers AE or AR has the message, but did not accept it.
+  const tested = (done: (outcome: FolderTestResult) => string) => (outcome: FolderTestResult) => {
+    if (outcome.problem !== null) {
+      setResult({ ok: false, text: `✗ Not done: ${problemText(outcome.problem)}.` });
+      return;
+    }
+    const ok = outcome.ackCode === undefined || outcome.ackCode === "AA";
+    setResult({ ok, text: `${ok ? "✓" : "✗"} ${done(outcome)}` });
+  };
   const test = useCommandMutation<FolderTestResult, { input: { connectionId: string } }>(
     TEST_FOLDER,
     { invalidates: [] },
@@ -60,7 +65,13 @@ export function ConnectionActions({ connection }: { connection: PartnerConnectio
             onPress={() =>
               test.mutate(
                 { input },
-                { onSuccess: tested(() => "The LIS can create, write and remove files here.") },
+                {
+                  onSuccess: tested(() =>
+                    mllp
+                      ? "The partner's interface takes a connection; nothing was sent."
+                      : "The LIS can create, write and remove files here.",
+                  ),
+                },
               )
             }
           >
@@ -73,7 +84,13 @@ export function ConnectionActions({ connection }: { connection: PartnerConnectio
             onPress={() =>
               sendTest.mutate(
                 { input },
-                { onSuccess: tested((file) => `Synthetic test message written as ${file}.`) },
+                {
+                  onSuccess: tested((outcome) =>
+                    mllp
+                      ? testAnswerText(outcome)
+                      : `Synthetic test message written as ${outcome.fileName}.`,
+                  ),
+                },
               )
             }
           >

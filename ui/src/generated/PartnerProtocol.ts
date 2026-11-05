@@ -3,4 +3,4 @@
 /**
  * How messages travel.
  */
-export type PartnerProtocol = "folder" | "sftp";
+export type PartnerProtocol = "folder" | "sftp" | "mllp_connect";
