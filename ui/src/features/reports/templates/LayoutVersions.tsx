@@ -12,7 +12,6 @@ function columns(person: (userId: string, display?: string) => string) {
       header: "Version",
       cell: (row) => `Version ${row.versionNo}`,
       sortValue: (row) => row.versionNo,
-      identifier: true,
       width: 110,
     },
     { id: "layout", header: "Layout", cell: (row) => row.name, width: 140 },
