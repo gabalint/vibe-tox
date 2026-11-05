@@ -310,7 +310,7 @@ mod tests {
 
     #[test]
     fn times_are_shown_to_the_second_in_the_laboratory_zone() {
-        let at = UtcTimestamp::parse("2026-11-05T16:00:05Z").unwrap();
+        let at = UtcTimestamp::parse("2026-11-05T16:00:05.000000000Z").unwrap();
         assert_eq!(
             lab_time(at, "America/Chicago").unwrap(),
             "2026-11-05 10:00:05 CST"
