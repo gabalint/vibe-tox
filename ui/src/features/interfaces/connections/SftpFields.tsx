@@ -16,6 +16,7 @@ import styles from "./ConnectionDialog.module.css";
 import { type ConnectionValues, toSftp, typedPassword, validPort } from "./connectionForm";
 import { CheckEveryInput } from "./IntakeSections";
 import { toIntake } from "./intakeForm";
+import { type TestOutcome, TestStatus } from "./TestStatus";
 
 const SIGN_IN_OPTIONS = [
   { id: "key", label: "SSH key (recommended)" },
@@ -59,7 +60,7 @@ export function SftpFields({ connection }: { connection: PartnerConnection | nul
   const { control, getValues } = useFormContext<ConnectionValues>();
   const auth = useWatch({ control, name: "sftp.auth" });
   const incoming = isIncoming(useWatch({ control, name: "messageType" }));
-  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
+  const [status, setStatus] = useState<TestOutcome | null>(null);
   const getKey = useCommandMutation<string>(GET_SFTP_KEY, { invalidates: [] });
   const test = useCommandMutation<FolderTestResult, { input: TestPartnerSftpInput }>(TEST_SFTP, {
     invalidates: [],
@@ -153,11 +154,7 @@ export function SftpFields({ connection }: { connection: PartnerConnection | nul
         <Button isPending={test.isPending} onPress={runTest}>
           Test connection
         </Button>
-        {status && (
-          <span role="status" className={status.ok ? row.ok : row.problem}>
-            {status.text}
-          </span>
-        )}
+        <TestStatus status={status} />
       </div>
       {getKey.error && <ErrorState title="Key not copied" error={getKey.error} />}
       {test.error && <ErrorState title="Connection not tested" error={test.error} />}

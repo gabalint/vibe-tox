@@ -12,6 +12,7 @@ import { TEST_MLLP } from "../contract";
 import { mllpTestText } from "../mllpLabels";
 import styles from "./ConnectionDialog.module.css";
 import { type ConnectionValues, toMllp, validPort } from "./connectionForm";
+import { type TestOutcome, TestStatus } from "./TestStatus";
 
 const ACKNOWLEDGEMENTS = [{ id: "application", label: "Application ACK (AA / AE / AR)" }];
 
@@ -28,7 +29,7 @@ const validTimeout = (value: string) =>
  */
 export function MllpFields() {
   const { getValues } = useFormContext<ConnectionValues>();
-  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
+  const [status, setStatus] = useState<TestOutcome | null>(null);
   const test = useCommandMutation<FolderTestResult, { input: TestPartnerMllpInput }>(TEST_MLLP, {
     invalidates: [],
   });
@@ -74,11 +75,7 @@ export function MllpFields() {
         <Button isPending={test.isPending} onPress={runTest}>
           Test connection
         </Button>
-        {status && (
-          <span role="status" className={status.ok ? row.ok : row.problem}>
-            {status.text}
-          </span>
-        )}
+        <TestStatus status={status} />
       </div>
       {test.error && <ErrorState title="Connection not tested" error={test.error} />}
     </>

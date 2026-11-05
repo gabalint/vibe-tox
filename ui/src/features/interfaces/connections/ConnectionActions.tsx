@@ -19,6 +19,7 @@ import { problemText } from "../labels";
 import { testAnswerText } from "../mllpLabels";
 import { CheckDialog } from "./CheckDialog";
 import { ConnectionDialog } from "./ConnectionDialog";
+import { type TestOutcome, TestStatus } from "./TestStatus";
 
 type Open = "edit" | "active" | "check" | null;
 
@@ -30,7 +31,7 @@ type Open = "edit" | "active" | "check" | null;
 export function ConnectionActions({ connection }: { connection: PartnerConnection }) {
   const [open, setOpen] = useState<Open>(null);
   // The latest test's result, on the action row as in the mockup; the next test replaces it.
-  const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
+  const [result, setResult] = useState<TestOutcome | null>(null);
   const allowed = (action: string) => connection.allowedActions.includes(action);
   const mllp = connection.settings.protocol === "mllp_connect";
   // An MLLP partner that answers AE or AR has the message, but did not accept it.
@@ -100,11 +101,7 @@ export function ConnectionActions({ connection }: { connection: PartnerConnectio
         {allowed(RECORD_CHECK) && (
           <Button onPress={() => setOpen("check")}>Record destination check</Button>
         )}
-        {result && (
-          <span role="status" className={result.ok ? row.ok : row.problem}>
-            {result.text}
-          </span>
-        )}
+        <TestStatus status={result} />
       </div>
       {testError && <ErrorState title="Test not run" error={testError} />}
       {open === "edit" && (
