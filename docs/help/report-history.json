@@ -2,14 +2,14 @@
   "id": "report-history",
   "title": "Reports and revisions",
   "summary": "Inspect issued reports, preserved revisions, delivery history and post-release work.",
-  "reviewedOn": "2026-10-15",
+  "reviewedOn": "2026-11-05",
   "routes": ["/reports", "/reports/:reportId", "/reports/revisions/:revisionId"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
         "Open a report from Reports to see its revision history, delivery obligations and attempts, exports, and any impact assessment or preservation incident. Open a revision to inspect the content exactly as issued and its recorded provenance.",
-        "Prepare next revision returns to the specimen’s report workspace when permitted. Withdrawal and impact actions appear according to the report’s state and your authority. A revision may offer PDF export with a specified purpose."
+        "Prepare next revision returns to the specimen’s report workspace when permitted. Withdrawal and impact actions appear according to the report’s state and your authority. Export PDF (revision N, current) saves the current revision; to export an earlier revision, open it and use its Export PDF. Every export asks for a purpose and is listed under PDF exports; an export is not a delivery."
       ]
     },
     {
@@ -263,10 +263,10 @@
           "rules": "Security-key accounts only; replaces Your password. Select one key, review and submit the action, then follow its PIN or biometric verification and touch prompt. The key confirms only that submitted action. Permissions, reasons and record-state gates still apply. Use your own key; a selected label alone does not authorize anything."
         },
         {
-          "name": "PDF exports",
-          "meaning": "Records generated copies without claiming delivery.",
-          "values": "Exporting-person label, filename, time and purpose.",
-          "rules": "Read-only; exporting an issued file does not create a handoff attestation."
+          "name": "PDF exports: Exported / Revision / Purpose / By / File",
+          "meaning": "Lists every recorded export of this report’s revisions and withdrawal notice, without claiming delivery.",
+          "values": "Export date/time; Revision N with its availability now (current, superseded or withdrawn) or Withdrawal notice; For delivery to this destination, For the laboratory’s records or Internal use; the exporting person; the saved file name, the report number and revision such as A26000004-UR-r1.pdf (A26000004-UR-withdrawal.pdf for a notice), with -1, -2 added when Downloads already holds that name.",
+          "rules": "Read-only; most recent first, and Exported can be sorted either way. Not exported. when there is none. Exporting an issued file does not create a handoff attestation."
         },
         {
           "name": "Preservation incidents: Subject / Record / Kind / Detected / Closure",
@@ -350,7 +350,7 @@
           "name": "Export PDF: Purpose",
           "meaning": "Distinguishes a delivery copy from other authorized uses.",
           "values": "For delivery to this destination; For the laboratory’s records; Internal use.",
-          "rules": "Required. Defaults to delivery when opened from an obligation. A revision page offers only records/internal use and has no default."
+          "rules": "Required. Defaults to delivery when opened from an obligation. Export PDF (revision N, current) and a revision page offer only records/internal use and have no default."
         }
       ],
       "actions": [
@@ -359,6 +359,12 @@
           "does": "Opens the exact content and provenance of that issued version.",
           "availableWhen": "An issued revision is listed.",
           "result": "Shows that revision with Previous/Next through this report’s revisions."
+        },
+        {
+          "name": "Export PDF (revision N, current)",
+          "does": "Opens Export PDF for the current revision N, where you choose the purpose and select Export PDF.",
+          "availableWhen": "The report has a current revision (not withdrawn). The engine still requires report-delivery authority and an intact stored file; a refusal is shown in the dialog.",
+          "result": "Saves the exact issued PDF to Downloads, records the export in the audit trail and adds it to PDF exports. No attempt or delivery is recorded. To export a superseded or withdrawn revision, open that revision and use its Export PDF."
         },
         {
           "name": "Prepare next revision",
@@ -443,6 +449,7 @@
         "Confirm identity and the current revision. Open earlier revisions when investigating a change.",
         "Review open impact, correction-due and preservation incidents before further report handling.",
         "Use a new revision for corrected content; document quality decisions with the specific changes they cover.",
+        "For a records or internal copy of the current revision, choose Export PDF (revision N, current), select the purpose and check the Downloads confirmation and the new PDF exports row.",
         "Reconcile delivery obligations, follow-up notices and exports separately."
       ],
       "troubleshooting": [

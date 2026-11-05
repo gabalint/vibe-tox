@@ -97,6 +97,7 @@ export type { DispositionView } from "@/generated/DispositionView";
 export type { ExportedReportFile } from "@/generated/ExportedReportFile";
 export type { ExportPurpose } from "@/generated/ExportPurpose";
 export type { ExportReportPdfInput } from "@/generated/ExportReportPdfInput";
+export type { ExportView } from "@/generated/ExportView";
 export type { ImpactDecision } from "@/generated/ImpactDecision";
 export type { ImpactView } from "@/generated/ImpactView";
 export type { IncidentResolution } from "@/generated/IncidentResolution";

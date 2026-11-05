@@ -305,7 +305,7 @@ describe("ReportPage (REQ-RPT-002, REQ-RPT-003, REQ-RPT-013)", () => {
     });
   });
 
-  it("shows a withdrawn report, its exports in the engine's words, and no actions", async () => {
+  it("shows a withdrawn report, its exports, and no actions", async () => {
     renderPage({
       get_report: () => ({
         ...REPORT,
@@ -340,9 +340,9 @@ describe("ReportPage (REQ-RPT-002, REQ-RPT-003, REQ-RPT-013)", () => {
       }),
     });
     expect(await screen.findByText("This report is withdrawn")).toBeTruthy();
-    expect(screen.getByRole("list", { name: "PDF exports" }).textContent).toContain(
-      "PDF exported by Test Releaser (not a delivery): A26000001-URN-r1.pdf",
-    );
+    expect(screen.getByRole("gridcell", { name: "Revision 1 (withdrawn)" })).toBeTruthy();
+    expect(screen.getByRole("gridcell", { name: "A26000001-URN-r1.pdf" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Export PDF/ })).toBeNull();
     expect(screen.queryByRole("button", { name: "Withdraw report" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Add destination" })).toBeNull();
   });
