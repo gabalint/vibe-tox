@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Info, KeyRound, Lock, LogOut, UserRound } from "lucide-react";
+import { Check, ChevronDown, Copy, Info, KeyRound, Lock, LogOut, UserRound } from "lucide-react";
 import { useState } from "react";
 import {
   Header,
@@ -13,6 +13,7 @@ import {
 import { useNavigate } from "react-router";
 import { Button } from "@/components/Button";
 import { useToast } from "@/components/Toast";
+import type { AppInfo } from "@/generated/AppInfo";
 import type { CommandError } from "@/generated/CommandError";
 import type { SessionInfo } from "@/generated/SessionInfo";
 import { APPEARANCES, type Appearance, useAppearance } from "@/lib/appearance";
@@ -26,7 +27,8 @@ import styles from "./UserMenu.module.css";
 
 /**
  * The signed-in person's menu: change password, lock, sign out, Appearance (light, dark or the
- * system's setting, applied at once) and "About this app" (the app and web engine versions). Lock and sign-out clear every cached engine result, so nothing
+ * system's setting, applied at once), "About this app" (the app and web engine versions) and, last, the
+ * running version with Copy (ticket #4584). Lock and sign-out clear every cached engine result, so nothing
  * from this session is shown to the next person (REQ-IDN-004).
  */
 export function UserMenu({ session }: { session: SessionInfo }) {
@@ -139,6 +141,7 @@ export function UserMenu({ session }: { session: SessionInfo }) {
               <Info aria-hidden="true" className={styles.icon} />
               About this app
             </MenuItem>
+            <VersionItem />
           </Menu>
         </Popover>
       </MenuTrigger>
@@ -147,6 +150,44 @@ export function UserMenu({ session }: { session: SessionInfo }) {
         <SecurityKeysDialog session={session} onClose={() => setManagingKeys(false)} />
       )}
       {managingPin && <UnlockPinDialog onClose={() => setManagingPin(false)} />}
+    </>
+  );
+}
+
+/**
+ * The running version, from the same `app_info` query as About this app. A menu holds only items,
+ * so the whole row is the Copy action; it stays open to show "Copied".
+ */
+function VersionItem() {
+  const info = useCommandQuery<AppInfo>("app_info");
+  const [copy, setCopy] = useState<"Copy" | "Copied" | "Not copied">("Copy");
+  const version = info.data?.appVersion;
+  if (version === undefined) return null;
+  return (
+    <>
+      <Separator className={styles.separator} />
+      <MenuItem
+        className={styles.item}
+        textValue={`Version ${version}`}
+        aria-label={`Version ${version}, ${copy}`}
+        shouldCloseOnSelect={false}
+        onAction={() =>
+          void navigator.clipboard.writeText(version).then(
+            () => setCopy("Copied"),
+            () => setCopy("Not copied"),
+          )
+        }
+      >
+        <span className={styles.version}>Version {version}</span>
+        <span className={styles.copy}>
+          {copy === "Copied" ? (
+            <Check aria-hidden="true" className={styles.icon} />
+          ) : (
+            <Copy aria-hidden="true" className={styles.icon} />
+          )}
+          {copy}
+        </span>
+      </MenuItem>
     </>
   );
 }

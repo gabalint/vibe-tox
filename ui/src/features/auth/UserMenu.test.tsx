@@ -90,6 +90,25 @@ describe("UserMenu", () => {
     expect(await screen.findByText("Navigated to /about")).toBeTruthy();
   });
 
+  it("shows the running version last and copies it, staying open (#4584)", async () => {
+    mockCommands({
+      current_session: () => TEST_SESSION,
+      app_info: () => ({ appVersion: "0.1.2-nightly.20261103.24" }),
+    });
+    const { user } = renderMenu();
+    await user.click(await screen.findByRole("button", { name: "Signed in as Test Analyst" }));
+    const item = await screen.findByRole("menuitem", {
+      name: "Version 0.1.2-nightly.20261103.24, Copy",
+    });
+    expect(screen.getAllByRole("menuitem").at(-1)).toBe(item);
+    await expectNoA11yViolations(document.body);
+    await user.click(item);
+    expect(
+      await screen.findByRole("menuitem", { name: "Version 0.1.2-nightly.20261103.24, Copied" }),
+    ).toBeTruthy();
+    expect(await navigator.clipboard.readText()).toBe("0.1.2-nightly.20261103.24");
+  });
+
   it("enables and disables the personal PIN from the menu and refreshes its status", async () => {
     let enabled = false;
     mockCommands({
