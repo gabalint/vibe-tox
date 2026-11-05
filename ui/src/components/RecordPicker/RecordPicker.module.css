@@ -11,6 +11,27 @@
   padding-right: var(--space-8);
 }
 
+.control[data-clearable] .input {
+  padding-right: calc(var(--space-8) + var(--space-6));
+}
+
+/* Clears the choice; sits before the arrow, as quiet as it. */
+.clear {
+  position: absolute;
+  right: calc(var(--space-2) + var(--space-6));
+  display: flex;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.clear svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
+
 /* The arrow looks and sits as a Select's does: no box or hover of its own. */
 .opener {
   position: absolute;
@@ -41,11 +62,28 @@
   visibility: visible;
 }
 
+/* Label and description side by side; stacked, the description goes under the label. */
+.texts {
+  display: flex;
+  flex: 1 1 auto;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.texts[data-layout="stacked"] {
+  flex-direction: column;
+  gap: 0;
+}
+
 /* The text that tells near-duplicates apart stays on one line; a long name wraps instead. */
 .description {
   flex: none;
   color: var(--color-text-muted);
   white-space: nowrap;
+}
+
+.texts[data-layout="stacked"] .description {
+  white-space: normal;
 }
 
 .empty {
