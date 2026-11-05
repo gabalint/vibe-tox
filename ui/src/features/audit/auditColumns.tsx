@@ -7,7 +7,7 @@ import styles from "./audit.module.css";
 import { streamLabel } from "./streams";
 
 const OUTCOMES: Record<AuditEventView["outcome"], { tone: Tone; label: string }> = {
-  succeeded: { tone: "neutral", label: "Succeeded" },
+  succeeded: { tone: "success", label: "Succeeded" },
   denied: { tone: "warning", label: "Denied" },
   failed: { tone: "danger", label: "Failed" },
 };

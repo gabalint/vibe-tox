@@ -32,13 +32,13 @@ export function healthState(state: string): Status {
 }
 
 /**
- * Backup runs, restore tests and exit exports share these job states. A routine verified copy
- * is finished, so it is plain text; `passed` is the outcome of a check the person ran.
+ * Backup runs, restore tests and exit exports share these job states. Verified and Passed are
+ * outcomes of a job's checks, so they show as a success, as Failed shows as a danger.
  */
 const JOB_STATES: Record<string, Status> = {
   requested: { label: "Requested", tone: "info" },
   running: { label: "Running", tone: "info" },
-  succeeded: { label: "Verified", tone: "neutral" },
+  succeeded: { label: "Verified", tone: "success" },
   passed: { label: "Passed", tone: "success" },
   failed: { label: "Failed", tone: "danger" },
   interrupted: { label: "Interrupted", tone: "warning" },

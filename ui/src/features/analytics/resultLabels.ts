@@ -175,7 +175,7 @@ export function quarantineStatus(state: QuarantineState): Status {
 }
 
 const IMPORT_OUTCOMES: Record<ImportOutcome, Status> = {
-  processed: { label: "Processed", tone: "neutral" },
+  processed: { label: "Processed", tone: "success" },
   processed_with_quarantine: { label: "Processed, some rows quarantined", tone: "warning" },
   quarantined: { label: "Quarantined", tone: "danger" },
 };
