@@ -60,7 +60,7 @@ describe("AuditTrailPage (REQ-OPS-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     const { container, user } = renderPage({ list_audit_events: list });
     expect(await screen.findByRole("grid", { name: "Audit events" })).toBeTruthy();
     expect(screen.getByRole("button", { name: /Stream/ }).textContent).toContain("All streams");
-    expect(screen.getByText("Security, clinical and access events together.")).toBeTruthy();
+    expect(screen.getByText(/^Security, clinical and access events together\./)).toBeTruthy();
     expect(screen.getAllByRole("gridcell", { name: "Security" }).length).toBe(PAGE);
     expect(screen.getByText("100 events shown")).toBeTruthy();
     expect(screen.getByRole("gridcell", { name: "150" })).toBeTruthy();

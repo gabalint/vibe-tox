@@ -8,7 +8,7 @@ import { AuditFilters, type CodeLabels } from "./AuditFilters";
 import styles from "./audit.module.css";
 import { ChainResult, useVerifyChain } from "./ChainCheck";
 import { type AuditFilter, isOutcome } from "./contract";
-import { isStream } from "./streams";
+import { isStream, streamDescription } from "./streams";
 
 const NO_CODES: CodeLabels = [];
 
@@ -35,11 +35,11 @@ export function AuditTrailPage() {
     <Page layout="collection">
       <PageHeader
         title="Audit trail"
-        description={
+        description={`${streamDescription(stream)} Newest first. Viewing this trail is recorded. ${
           stream
-            ? "Newest first. Viewing this trail is recorded. Verify chain checks this stream for changed or missing events."
-            : "Newest first. Viewing this trail is recorded. Choose a stream to verify its chain for changed or missing events."
-        }
+            ? "Verify chain checks this stream for changed or missing events."
+            : "Choose a stream to verify its chain for changed or missing events."
+        }`}
         actions={
           <>
             <Link to="/audit/anchors" className={styles.headerLink}>
