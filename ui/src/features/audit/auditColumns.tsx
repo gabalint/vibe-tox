@@ -45,8 +45,13 @@ export function recordText(event: AuditEventView): string {
   return id === null ? type : `${type} ${id}`;
 }
 
+/** Every outcome badge has the same width, so a column of them lines up. */
 export function OutcomeBadge({ outcome }: { outcome: AuditEventView["outcome"] }) {
-  return <StatusBadge tone={OUTCOMES[outcome].tone}>{OUTCOMES[outcome].label}</StatusBadge>;
+  return (
+    <span className={styles.outcome}>
+      <StatusBadge tone={OUTCOMES[outcome].tone}>{OUTCOMES[outcome].label}</StatusBadge>
+    </span>
+  );
 }
 
 export const AUDIT_COLUMNS: readonly DataGridColumn<AuditEventView>[] = [
