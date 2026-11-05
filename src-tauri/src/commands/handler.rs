@@ -75,6 +75,7 @@ pub(crate) fn handler<R: Runtime>() -> impl Fn(Invoke<R>) -> bool + Send + Sync 
         users::reset_user_credentials,
         users::designate_one_person_laboratory,
         audit::list_audit_events,
+        audit::get_audit_event_changes,
         audit::verify_audit_chain,
         listeners::list_listener_status,
         listeners::get_listener_restart,

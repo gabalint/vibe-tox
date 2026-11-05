@@ -39,6 +39,8 @@ Never use one for another: logs are not an audit trail, and audit events are not
 
 **No PHI in `details` or `reason` templates.** Do not include names, birth dates, addresses, phone numbers, MRNs, result values or free-text comments. Reference the record by ID; the record and its revisions hold the content. A user-typed reason is stored as entered, because it is part of the record. Never echo it into logs.
 
+**Values behind an event.** The audit viewer shows a changed field's old and new value by reading the record's own immutable history when an event is opened (`get_audit_event_changes`, REQ-OPS-001), never from the event. Owner modules answer for their records (`audit_record_changes`). Patient values need `view_audit` plus the patient record's own read capability; without it only the changed field names are returned. Each opening appends an `access` event `audit.view_changes` with the event's stream and sequence number, naming the patient when patient values were returned.
+
 **Authority attribution.** For a command allowing either of two capabilities, record the capability actually granted to the actor. Audited reads establish that grant in the same transactional context as their access event. Session-only reads record session authority without inventing a clinical capability. Historical audit events are never rewritten to repair attribution.
 
 **Integrity (ADR 0008).**

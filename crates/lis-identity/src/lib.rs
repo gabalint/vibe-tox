@@ -58,6 +58,7 @@
 
 #![warn(clippy::wildcard_enum_match_arm)]
 
+mod audit_changes;
 mod billing;
 mod billing_model;
 mod billing_validation;
@@ -73,6 +74,7 @@ mod views;
 
 use lis_core::{Migration, ModuleSchema};
 
+pub use audit_changes::audit_record_changes;
 pub use billing::{get_patient_billing_profile, patient_billing_view, set_patient_billing_profile};
 pub use billing_model::{
     BillingContact, BillingNoticeEvidence, BillingParty, BillingRelationship, FinancialEvidence,

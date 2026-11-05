@@ -3,6 +3,7 @@
 //! append-only triggers first, then change rows with plain SQL.
 
 mod anchors;
+mod changes;
 mod list;
 mod record_events;
 mod seals;

@@ -3,17 +3,22 @@
 
 use lis_audit::{AuditDetail, AuditEvent, Finding, Outcome, Stream};
 use lis_auth::AuthError;
-use lis_core::{CommandError, ErrorCode, FieldError, UtcTimestamp};
+use lis_core::{Capability, CommandError, ErrorCode, FieldError, UtcTimestamp};
 use lis_store::StoreError;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::engine::Engine;
 use crate::pipeline::{Failure, ModuleError};
-use crate::registry::{LIST_AUDIT_EVENTS, VERIFY_AUDIT_CHAIN};
+use crate::registry::{GET_AUDIT_EVENT_CHANGES, LIST_AUDIT_EVENTS, VERIFY_AUDIT_CHAIN};
 
+mod changes;
 mod input;
 mod read;
+pub use changes::{
+    AuditChangeStatus, AuditEventChanges, AuditFieldChange, AuditPatient, GetAuditEventChangesInput,
+};
+use changes::{changes_event, read_changes};
 pub use input::{AuditActorKind, AuditCursor, AuditOutcome, AuditStream, ListAuditEventsInput};
 use input::{audit_filter_details, page_event};
 use read::read_page;
@@ -24,6 +29,8 @@ type FilterOptions = Vec<(String, String)>;
 
 #[derive(Debug, thiserror::Error)]
 enum AuditReadError {
+    #[error("audit event not found")]
+    EventNotFound,
     #[error(transparent)]
     Auth(#[from] AuthError),
     #[error(transparent)]
@@ -50,7 +57,8 @@ impl ModuleError for AuditReadError {
             Self::Reporting(lis_reporting::ReportingError::Store(error)) => error.denied(),
             Self::Specimens(lis_specimens::SpecimenError::Store(error)) => error.denied(),
             Self::Billing(lis_billing::BillingError::Store(error)) => error.denied(),
-            Self::Auth(_)
+            Self::EventNotFound
+            | Self::Auth(_)
             | Self::Catalog(_)
             | Self::Identity(_)
             | Self::Reporting(_)
@@ -71,6 +79,9 @@ impl From<AuditReadError> for Failure {
             | AuditReadError::Specimens(lis_specimens::SpecimenError::Store(error))
             | AuditReadError::Billing(lis_billing::BillingError::Store(error)) => error.into(),
             AuditReadError::Auth(error) => error.into(),
+            AuditReadError::EventNotFound => {
+                Failure::refused(ErrorCode::NotFound, "This audit event does not exist.")
+            }
             other => Failure::Internal(other.to_string()),
         }
     }
@@ -224,6 +235,36 @@ impl Engine {
                 move |page| page_event(stream, page.len(), filter_details),
             )
             .await
+        })
+        .await
+    }
+
+    /// `get_audit_event_changes`: the Changes section of one event. Patient
+    /// values need `view_audit` and the patient record's read capability; the
+    /// `access` event naming the patient is written before they are returned.
+    pub async fn get_audit_event_changes(
+        &self,
+        input: GetAuditEventChangesInput,
+    ) -> Result<AuditEventChanges, CommandError> {
+        self.run(&GET_AUDIT_EVENT_CHANGES, |call| async move {
+            let principal = call.principal.clone();
+            let viewed = self
+                .read(&call, move |conn| read_changes(conn, input, &principal))
+                .await?;
+            let event = changes_event(GET_AUDIT_EVENT_CHANGES.action, input, &viewed);
+            let patient_capability = viewed
+                .patient_read
+                .as_ref()
+                .map(|(_, capability)| *capability);
+            self.write(&call, move |ctx| {
+                ctx.require(Capability::ViewAudit)?;
+                if let Some(capability) = patient_capability {
+                    ctx.require(capability)?;
+                }
+                ctx.audit(event).map(drop)
+            })
+            .await?;
+            Ok(viewed.changes)
         })
         .await
     }

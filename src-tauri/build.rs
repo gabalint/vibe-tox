@@ -62,6 +62,7 @@ const APP_COMMANDS: &[&str] = &[
     "reset_user_credentials",
     "designate_one_person_laboratory",
     "list_audit_events",
+    "get_audit_event_changes",
     "verify_audit_chain",
     "list_listener_status",
     "get_listener_restart",

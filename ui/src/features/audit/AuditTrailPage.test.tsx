@@ -42,8 +42,19 @@ function events(from: number, count: number): AuditEventView[] {
   }));
 }
 
+/** What an opened sign-in event changed: nothing (ticket #4534). */
+const NO_CHANGE = {
+  status: "no_change",
+  oldRevision: null,
+  newRevision: null,
+  patient: null,
+  fields: [],
+  facts: [],
+  readCapabilities: [],
+};
+
 function renderPage(commands: Record<string, (args: unknown) => unknown>, path = "/audit") {
-  mockCommands(commands);
+  mockCommands({ get_audit_event_changes: () => NO_CHANGE, ...commands });
   const router = createMemoryRouter([{ path: "/audit", element: <AuditTrailPage /> }], {
     initialEntries: [path],
   });
@@ -296,6 +307,7 @@ describe("AuditTrailPage (REQ-OPS-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     expect(details.textContent).toContain("Sign-in (auth.sign_in)");
     expect(details.textContent).toContain("user-2");
     expect(details.textContent).toContain("2026-10-12 14:03:06 UTC");
+    expect(await within(details).findByText("No data changed.")).toBeTruthy();
     await expectNoA11yViolations(container, { wholePage: true });
   });
 

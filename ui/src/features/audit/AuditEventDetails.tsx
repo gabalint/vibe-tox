@@ -2,6 +2,7 @@ import { DetailPanel } from "@/components/DetailPanel";
 import { Facts } from "@/components/Facts";
 import { Timestamp } from "@/components/Timestamp";
 import type { AuditEventView } from "@/generated/AuditEventView";
+import { AuditChanges } from "./AuditChanges";
 import { actionText, NONE, OutcomeBadge, principalText, recordText } from "./auditColumns";
 import { streamLabel } from "./streams";
 
@@ -14,8 +15,8 @@ interface AuditEventDetailsProps {
 
 /**
  * Every field of one event, in full, to reconstruct who did what, when and why (REQ-OPS-001),
- * in the side panel. The event comes from the list the engine returned for this view, which it
- * recorded as an access; opening one reads nothing more.
+ * in the side panel, with what it changed. The event comes from the list the engine returned for
+ * this view; its Changes are read on opening, and the engine records that read as an access.
  */
 export function AuditEventDetails({ event, ...navigation }: AuditEventDetailsProps) {
   return (
@@ -38,6 +39,7 @@ export function AuditEventDetails({ event, ...navigation }: AuditEventDetailsPro
           { label: "Correlation ID", value: event.correlationId },
         ]}
       />
+      <AuditChanges event={event} />
     </DetailPanel>
   );
 }

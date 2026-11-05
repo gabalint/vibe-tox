@@ -11,6 +11,51 @@ use crate::model::{
     OrderableVersionId, SpecimenTypeId, ValidityPolicyVersion, ValidityPolicyVersionId,
 };
 
+/// The old and new values behind an analyte audit event (REQ-OPS-001), read
+/// from the analyte's immutable history when the event is viewed.
+pub fn audit_record_changes(
+    conn: &Connection,
+    query: &lis_audit::ChangeQuery<'_>,
+) -> Result<Option<lis_audit::RecordChanges>, CatalogError> {
+    let (Ok(analyte_id), Some(new_revision)) = (
+        query.record_id.parse::<AnalyteId>(),
+        query.produced_revision(),
+    ) else {
+        return Ok(None);
+    };
+    if query.record_type != "analyte" {
+        return Ok(None);
+    }
+    let history = match crate::analyte_history(conn, crate::AnalyteInput { analyte_id }) {
+        Ok(history) => history,
+        Err(CatalogError::NotFound(_)) => return Ok(None),
+        Err(error) => return Err(error),
+    };
+    let values = |revision: Option<i64>| {
+        let entry = history
+            .iter()
+            .find(|entry| Some(entry.revision) == revision);
+        [
+            entry.map(|entry| entry.code.clone()),
+            entry.map(|entry| entry.name.clone()),
+            entry.and_then(|entry| entry.loinc_code.clone()),
+            entry.and_then(|entry| entry.drug_class_code.clone()),
+            entry.map(|entry| String::from(if entry.active { "Yes" } else { "No" })),
+        ]
+    };
+    let new = values(Some(new_revision));
+    if new[0].is_none() {
+        return Ok(None);
+    }
+    let rows = ["Code", "Name", "LOINC code", "Drug class", "Active"]
+        .into_iter()
+        .zip(values(query.old_revision).into_iter().zip(new))
+        .map(|(label, (old, new))| (label.to_owned(), old, new));
+    Ok(Some(lis_audit::RecordChanges::configuration(
+        lis_audit::differing(rows),
+    )))
+}
+
 /// Current human label for an audit record, when this module owns one.
 /// Labels are resolved at read time and never copied into audit storage.
 pub fn audit_record_label(

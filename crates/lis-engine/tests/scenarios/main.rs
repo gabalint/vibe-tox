@@ -5,6 +5,7 @@
 #![cfg(test)]
 
 mod administration;
+mod audit_changes;
 mod audit_trail;
 mod authorization;
 mod fixture;

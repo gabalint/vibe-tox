@@ -113,6 +113,12 @@
           "rules": "Read-only; opening the panel shows full unclipped evidence."
         },
         {
+          "name": "Changes (event panel)",
+          "meaning": "What the event changed: for each changed field, its value before and after, read from the record's own history when the event is opened. Audit events themselves never store values.",
+          "values": "Revision: the record's revision before → after. One line per changed field, as \"old → new\", with — for an empty or not yet recorded value. Patient, Birth date and Identifiers: the patient's current identification, for changes to a patient record. Recorded details: other facts stored with the event (codes, counts, IDs), labeled. Or one of these sentences: \"No data changed.\" (an event with no record revision, such as a sign-in, a list or a check); \"This revision changed no field value…\" (the history was read and both revisions hold the same values, for example a laboratory profile saved with only a reason); \"The values of this kind of record are not kept in a history…\" (a revision was recorded but the record type keeps no readable history); \"These are patient values, which your roles cannot read…\" (field names are listed, each value shows Hidden).",
+          "rules": "Read-only. Old and new values are shown for patients (demographic corrections, identifiers added or deactivated, billing profile versions with address, phone, coverage and guarantor), the laboratory profile, clients, locations, practitioners and analytes, and for an instrument's Enabled and Transport. Patient values need View audit plus Enter orders or Manage quality (demographics and identifiers) or Enter orders or Billing (billing profile); without them only the changed field names are shown. Every opening is recorded as an access event; when patient values are shown it names the patient. Other record types show their revision only; result and report revisions, other configuration versions and instrument connection settings are not yet compared here."
+        },
+        {
           "name": "Chain intact / The chain is not intact",
           "meaning": "Outcome of recomputing the selected stream’s chain.",
           "values": "Count checked and findings such as hash mismatch, broken link, missing events, unknown algorithm or seal mismatch.",
@@ -122,9 +128,9 @@
       "actions": [
         {
           "name": "Open event / Previous / Next / Close",
-          "does": "Inspect the full details of already-loaded events.",
+          "does": "Inspect the full details of already-loaded events, and what each changed.",
           "availableWhen": "A row is displayed.",
-          "result": "Read-only panel; events cannot be edited or deleted here."
+          "result": "Read-only panel; events cannot be edited or deleted here. Opening an event reads its Changes from the record's history and records that read as an access event."
         },
         {
           "name": "Verify chain",
@@ -174,6 +180,14 @@
         {
           "problem": "The chain is not intact",
           "recovery": "Preserve the result and event/sequence details and escalate through the laboratory’s incident process; do not alter evidence."
+        },
+        {
+          "problem": "Changes says the values are hidden",
+          "recovery": "The event changed a patient record and your roles cannot read patients. Ask the laboratory's user administrator for a role with Enter orders or Manage quality (or Billing, for billing profile changes) if your review needs the values; the field names stay visible."
+        },
+        {
+          "problem": "The changes could not be loaded",
+          "recovery": "Use Retry in the Changes section. The rest of the event stays visible; an event that no longer exists in the chosen stream shows \"This audit event does not exist.\""
         }
       ]
     },
@@ -312,6 +326,10 @@
     "ui/src/features/audit/anchors/anchorText.ts",
     "crates/lis-engine/src/commands/audit.rs",
     "crates/lis-engine/src/commands/audit/input.rs",
-    "crates/lis-audit/src/list.rs"
+    "crates/lis-audit/src/list.rs",
+    "ui/src/features/audit/AuditChanges.tsx",
+    "crates/lis-engine/src/commands/audit/changes.rs",
+    "crates/lis-identity/src/audit_changes.rs",
+    "crates/lis-audit/src/changes.rs"
   ]
 }

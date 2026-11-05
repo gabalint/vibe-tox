@@ -3,7 +3,8 @@
 
 use lis_core::CommandError;
 use lis_engine::{
-    AuditEventView, ChainVerification, Engine, ListAuditEventsInput, VerifyAuditChainInput,
+    AuditEventChanges, AuditEventView, ChainVerification, Engine, GetAuditEventChangesInput,
+    ListAuditEventsInput, VerifyAuditChainInput,
 };
 use tauri::State;
 
@@ -13,6 +14,14 @@ pub(crate) async fn list_audit_events(
     input: ListAuditEventsInput,
 ) -> Result<Vec<AuditEventView>, CommandError> {
     engine.list_audit_events(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn get_audit_event_changes(
+    engine: State<'_, Engine>,
+    input: GetAuditEventChangesInput,
+) -> Result<AuditEventChanges, CommandError> {
+    engine.get_audit_event_changes(input).await
 }
 
 #[tauri::command]
