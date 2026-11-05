@@ -1,12 +1,12 @@
 # Interfaces
 
-Status: **implemented on synthetic data; third delivery step**. The Interfaces menu receives HL7 orders from a clinic's EMR and sends HL7 results, issued report PDFs and billing handoff files to outside systems, through a folder or the partner's SFTP server (REQ-INT-001–004, REQ-ORD-001, REQ-RPT-003, REQ-RPT-011–013, REQ-BIL-002). The built-in help, Interfaces topic, describes every field and action; this guide covers setup, behavior and recovery. Analyzers are configured separately, under Laboratory setup › Instruments.
+Status: **implemented on synthetic data; fourth delivery step, first part**. The Interfaces menu receives HL7 orders from a clinic's EMR and sends HL7 results, issued report PDFs and billing handoff files to outside systems, through a folder or the partner's SFTP server, and HL7 results over MLLP to a partner on the lab network (REQ-INT-001–004, REQ-INT-006, REQ-ORD-001, REQ-RPT-003, REQ-RPT-011–013, REQ-BIL-002). The built-in help, Interfaces topic, describes every field and action; this guide covers setup, behavior and recovery. Analyzers are configured separately, under Laboratory setup › Instruments.
 
 ## What is available
 
 | Message type | Made when | Direction | Protocol | Default file name |
 | --- | --- | --- | --- | --- |
-| HL7 Results (ORU^R01, v2.5.1) | A report revision is released; a withdrawal message when the report is withdrawn | Out | Folder, or the partner's SFTP server | `{accession}_r{revision}_{date}.hl7` |
+| HL7 Results (ORU^R01, v2.5.1) | A report revision is released; a withdrawal message when the report is withdrawn | Out | Folder, the partner's SFTP server, or MLLP – LIS connects | `{accession}_r{revision}_{date}.hl7` (none over MLLP) |
 | Report PDF | A report revision is released; its withdrawal notice when the report is withdrawn | Out | Folder, or the partner's SFTP server | `{accession}_r{revision}_{date}.pdf` |
 | Billing JSON (`bil-handoff-v2`) | A billing handoff is created | Out | Folder, or the partner's SFTP server | `billing-{handoff}_{date}.json` |
 
@@ -14,7 +14,7 @@ In a report's file name, `{accession}` is the report number (the accession numbe
 
 | HL7 Orders (OML^O21, or ORM^O01, v2.5.1) | The clinic's EMR writes a file | In | Folder, or the clinic's SFTP server | — (read, not named) |
 
-A folder is on this computer or on the lab network. HL7 acknowledgement files back to the clinic, MLLP and per-partner interface contracts with acceptance tests are later steps. They are not available and no setting enables them.
+A folder is on this computer or on the lab network. MLLP – LIS listens (orders received over MLLP), HL7 acknowledgement files back to the clinic and per-partner interface contracts with acceptance tests are later steps. They are not available and no setting enables them.
 
 ## HL7 Orders (incoming)
 
@@ -38,13 +38,26 @@ The LIS connects out to the partner's SFTP server ([integrations](../architectur
 - **Destination check.** It covers the server, port, username, remote folder and fingerprint together. Changing any of them needs a new check; changing the sign-in or the password does not.
 - **Problems** in Logs and on Overview: `server_unreachable` (no answer, refused, or an RSA-only server), `fingerprint_mismatch`, `sign_in_failed`, `credential_unavailable`, and the folder codes `folder_missing`, `access_denied`, `name_taken`, `write_failed`.
 
+## MLLP – LIS connects
+
+An HL7 Results connection can send over MLLP: the LIS opens a TCP connection to the partner's interface, sends one message framed for MLLP (VT, the message, FS CR), reads the partner's application acknowledgement on the same connection and closes it ([integrations](../architecture/integrations.md)). Framing and acknowledgement reading are the LIS's own narrow code; no HL7 or MLLP library is bundled ([ADR 0007](../architecture/decisions/0007-integration-edge-and-interface-engines.md) §7).
+
+- **Lab network only (REQ-INT-006).** MLLP is framing, not encryption. The partner's address must be an IP address on the lab network: private IPv4 (10/8, 172.16/12, 192.168/16), link-local, loopback, or IPv6 unique-local or link-local. Another address, or a server name, is refused when saving and again before every connection, so a changed record never sends patient data to the internet. A partner outside the lab network is reached through the laboratory's VPN, at the address the VPN gives it, or uses SFTP. MLLP over TLS is not available.
+- **The message.** The ORU^R01 is the same as for a folder, except MSH-15 and MSH-16, which are empty over MLLP (original acknowledgement mode: the partner answers each message on the same connection) and `NE` for a file. No file name is used.
+- **Acknowledgement.** The LIS waits up to the connection's ACK timeout (1–300 seconds, default 30) for an ACK whose MSA-2 names the message's control ID (MSH-10). MSA-1 `AA` shows as **Accepted (AA)**; `AE` as **Rejected (AE)** and `AR` as **Rejected (AR)**, with the partner's reason (ERR-8, else MSA-3, one line, at most 200 characters). A commit acknowledgement (`CA`), an unreadable answer or one for another message is not an acknowledgement. An acknowledgement is the partner's answer, never proof that a clinician saw the result.
+- **No acknowledgement in time.** The message left, so it shows transport **Sent** and **Awaiting application ACK**, and is sent again at the usual retries (1, 2, 4 and 8 minutes), the same bytes with the same control ID, so the partner can recognize a resend. After the fifth attempt it fails and waits for **Send again**. Messages awaiting their acknowledgement are counted on Connections (**Waiting for acknowledgement**, column **Awaiting ACK**) and on the connection's Overview, not under Errors.
+- **Rejected.** A message the partner answered with AE or AR is not sent again: it shows under **Logs › Rejected** with the partner's reason until the cause is fixed with the partner. Correcting the result releases a new revision, which is sent as a correction.
+- **Tests.** **Test connection** connects to the address and port and closes, sending nothing. **Send test message** sends the synthetic ORU^R01 (processing ID `T`) and shows the partner's answer.
+- **Destination check.** It covers the partner's address and port. Changing either needs a new check; changing the ACK timeout does not.
+- **Problems** in Logs and on Overview: `not_lab_network`, `partner_unreachable` (no answer or refused within 10 seconds), `connection_lost` (closed before the ACK), `no_ack`, `ack_unreadable`, `ack_other_message`.
+
 ## HL7 Results messages
 
 The LIS's own narrow encoder writes the message (no HL7 library is bundled; [ADR 0007](../architecture/decisions/0007-integration-edge-and-interface-engines.md) §7). It claims no LRI conformance: the partner's contract and acceptance tests decide that, and the profile choices below are defaults to confirm with each partner.
 
 | Segment | Content |
 | --- | --- |
-| MSH | Sending application `VIBETOX LIS`, the laboratory's name and CLIA number, the partner as receiving facility (MSH-6), the delivery ID as control ID, processing ID `P` (`T` for the test message), no acknowledgement requested (`NE`), UTF-8 |
+| MSH | Sending application `VIBETOX LIS`, the laboratory's name and CLIA number, the partner as receiving facility (MSH-6), the delivery ID as control ID, processing ID `P` (`T` for the test message), no acknowledgement requested in a file (`NE`; empty over MLLP, which answers each message), UTF-8 |
 | PID, PV1 | The patient's identifiers, name, birth date and administrative sex as recorded; the client location (PV1-3), patient class `U` |
 | ORC, OBR | One group per ordered test with a reported line: the ordering source's order number, a filler order number stable across revisions (report number and test position), the partner's test code (OBR-4), collection time, ordering provider by NPI, ordering facility (ORC-21), release time, status `F` or `C` for a correction |
 | OBX | One per reported analyte: the partner's code and the LOINC code (the mapping's, else the catalog's), the value exactly as stored (NM), a censored value as comparator and number (SN), a qualitative code as received (ST), no value with status `X` when no result could be obtained; the mapping's UCUM unit, the reference interval if configured, the performing laboratory. No abnormal flag or interpretation is sent (REQ-RPT-008) |
@@ -61,12 +74,13 @@ Everything needs Manage configuration.
 1. **Interfaces › Connections › Add connection.** Name the connection and its partner and choose the message (HL7 Results, Report PDF or Billing JSON). For HL7 Results, the partner's name is sent as the receiving facility (MSH-6).
    - **Folder:** **Choose folder…**: the folder comes from the system dialog and cannot be typed. **Test folder** writes and removes a probe file.
    - **SFTP:** enter the server, port, username, server fingerprint and remote folder. With SSH key sign-in, **Copy LIS public key** and send it to the partner's IT; with password sign-in, type the password. **Test connection** connects, checks the fingerprint and sign-in, and writes and removes a probe file. Nothing is saved by either.
-2. Add **routing rules** when only some reports or handoffs belong to this partner. Choose the **schedule** and **file name** (the message type's required placeholders and extension). **Save as stopped**.
+   - **MLLP – LIS connects** (HL7 Results): enter the partner's address on the lab network, its port and the ACK timeout. **Test connection** connects and sends nothing.
+2. Add **routing rules** when only some reports or handoffs belong to this partner. Choose the **schedule** and, except for MLLP, the **file name** (the message type's required placeholders and extension). **Save as stopped**.
 3. On the connection's page, **Send test message** writes a synthetic file with no patient data: an ORU^R01 with processing ID `T` for HL7 Results, a one-page PDF for Report PDF, a JSON file for Billing JSON. Ask the partner to confirm it. For HL7 Results, add the partner's codes under **Code mappings** and have a second person approve them.
 4. A second person uses **Record destination check** and records how the folder or server was confirmed. The laboratory's separation-of-duties policy decides whether the person who chose the folder may record it ([ADR 0015](../architecture/decisions/0015-separation-of-duties-policy.md)). The partner must be covered by a business associate agreement; that is the laboratory's responsibility.
 5. **Start** the connection, with a reason.
 
-Choosing another folder later, or another SFTP server, port, username, remote folder or fingerprint, needs a new destination check before patient data goes there.
+Choosing another folder later, another SFTP server, port, username, remote folder or fingerprint, or another MLLP partner address or port, needs a new destination check before patient data goes there.
 
 ## How messages travel
 
@@ -75,7 +89,7 @@ Choosing another folder later, or another SFTP server, port, username, remote fo
 - **Impact pause (L13).** A report revision waits, unwritten, while its impact review is open or a correction is due; Logs say so. Withdrawal notices never wait for it.
 - **Writing.** While the app is open, at the sign-in screen too, the LIS looks every 10 seconds for messages it may write. A message is written only while its connection is started, a destination check covers its current folder or server, its schedule allows it, and no recovery reconciliation after a restore is open. The file is the stored file, byte for byte: the issued report PDF is never regenerated. It is written under a temporary `.tmp` name, synced (in a folder), and only then given its final name. An existing file is never replaced: a name taken by other content gets `-1`, `-2` before the extension.
 - **Retries.** A failed write is retried after 1, 2, 4 and 8 minutes. After the fifth failure the message waits for **Send again** in **Logs › Failed** and appears in the **Interface messages not written** work queue. Sending again uses the same stored file and never makes a new message or report.
-- **Evidence.** Logs show what the folder or server can prove: **Written** (**Uploaded** for SFTP), **Failed** or **Not sent**. A folder or SFTP server never confirms that the other system used the file, so a written file shows **Outcome unknown**, never Delivered. The billing owner's acknowledgement or rejection is recorded on the handoff (REQ-BIL-002). A written report PDF is not a staff-attested delivery on the report's page, but a revision that goes to a connection leaves the **Reports without a destination** work queue. Each write attempt is an audit event on the security stream; routing, connection changes, destination checks, unrouted decisions and log exports are audited too.
+- **Evidence.** Logs show what the folder, server or MLLP connection can prove: **Written** (**Uploaded** for SFTP, **Sent** for MLLP), **Failed** or **Not sent**. A folder or SFTP server never confirms that the other system used the file, so a written file shows **Outcome unknown**, never Delivered; an MLLP partner's acknowledgement shows as **Accepted (AA)**, **Rejected (AE/AR)** or **Awaiting application ACK**. The billing owner's acknowledgement or rejection is recorded on the handoff (REQ-BIL-002). A written report PDF is not a staff-attested delivery on the report's page, but a revision that goes to a connection leaves the **Reports without a destination** work queue. Each write attempt is an audit event on the security stream; routing, connection changes, destination checks, unrouted decisions and log exports are audited too.
 
 ## Unrouted messages
 
@@ -98,6 +112,9 @@ A message that matched no connection waits in **Interfaces › Unrouted messages
 | SFTP **fingerprint mismatch** | Do not copy the presented fingerprint. Confirm with the partner's IT through a trusted channel whether the server's key changed; if it did, Edit the fingerprint and record a new destination check |
 | SFTP **sign-in failed** | Check that the partner allowed the LIS public key for the username, or type the password again |
 | SFTP **credential unavailable** | Use Copy LIS public key once to make the LIS key, type the password again, or restore the installation key (System › Recovery kit shows whether it is usable) |
+| MLLP **partner unreachable** | Check the address and port with the partner's IT, that its interface runs, and that the lab network or VPN lets this computer connect out to that port; then **Test connection** |
+| MLLP messages stay **Awaiting application ACK** | The partner's interface takes the message but does not answer with an application ACK in time. Ask the partner's IT to check its acknowledgement mode, or raise the ACK timeout; the LIS resends the same message until the fifth attempt |
+| MLLP **Rejected (AE/AR)** | Read the partner's reason in Details; fix the cause with the partner (a mapping, a provider, the partner's own setup). A corrected result goes as a correction |
 | Messages stay **Not sent** | The row's details say why: connection stopped, destination check not recorded, waiting for the schedule, paused for the report's impact review, held for a code mapping, or written at the next pass |
 | An HL7 message is **held** | Map the rows marked Not mapped – held on the connection's Code mappings tab, with the result's unit as the UCUM unit, and have a second person approve them |
 | A report revision shows **Replaced by a newer revision** | Nothing to do: the newer revision went to the connection instead |
@@ -110,3 +127,4 @@ A message that matched no connection waits in **Interfaces › Unrouted messages
 - Message content is not shown in Logs. Reports are opened from Reports, and the handoff file from Billing › Billing handoffs, by people with those rights, as audited reads.
 - The folder's network share, permissions and the partner's process for reading files are the laboratory's to qualify. Passing tests on synthetic data is not qualification.
 - The SFTP transport is tested against an in-process server on synthetic files, not against a partner's server. Each partner's server, network path and account are the laboratory's to qualify.
+- The MLLP transport is tested against an in-process partner on localhost with synthetic messages. Each partner's interface, its acknowledgement behavior, the network path or VPN, and what AA, AE and AR mean for it are the laboratory's to qualify in the partner's contract.
