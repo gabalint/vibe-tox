@@ -1,26 +1,38 @@
-# Vibe Toxicology LIS
+# Vibe Toxicology LIS: free, open-source LIS/LIMS for toxicology labs
 
 [Presentation website](https://gabalint.github.io/vibe-tox/) ·
+[Download](https://github.com/gabalint/vibe-tox/releases/latest) ·
 [Documentation](docs/README.md) ·
 [Contributing](CONTRIBUTING.md) ·
 [Security](SECURITY.md)
 
-A free, open-source laboratory information system (LIS) for small **US clinical
-toxicology** laboratories. It runs as a desktop application on one laboratory
-computer, which holds the laboratory's records, and covers a test from order to
-delivered report: orders, specimens and labels, analyzer and result-file intake,
-quality control, review and release, delivery, clinical billing handoff, audit,
-backup and data export. It is built with a Rust engine, Tauri 2 and a
-TypeScript/React interface for Windows, macOS and Linux. See [the product at a
-glance](docs/overview.md) and the [project scope](docs/project-scope.md) for what it
-covers and excludes.
+Vibe Toxicology LIS is a free, open-source laboratory information system (LIS/LIMS)
+for small **US clinical toxicology** laboratories, such as physician-office labs and
+small independent tox labs. It runs as a desktop application on one laboratory
+computer, which holds the laboratory's records, with no server, subscription or
+internet connection required. It is built with a Rust engine, Tauri 2 and a
+TypeScript/React interface for Windows, macOS and Linux.
+
+[![Result review in Vibe Toxicology LIS: analyte values with cutoff classifications, methods and the evidence for the selected result, shown with demo data](website/media/screens/result-review-960.webp)](https://gabalint.github.io/vibe-tox/)
+
+It covers a test from order to delivered report:
+
+- **Orders and accessioning:** orders recorded as the clinic supplied them, specimen receipt and barcode labels.
+- **Bench:** worklists and runs, ASTM and Olympus AU400/AU640 analyzer interfaces, LC-MS/MS result files and quality control.
+- **Review and release:** technical review, QC and identity holds, and versioned PDF reports.
+- **Delivery and billing:** delivery logged with its evidence and a clinical billing handoff based on performed work.
+- **Audit and data ownership:** personal accounts with two-factor sign-in, a tamper-evident audit trail, encrypted backup, restore and complete data export.
+- **A head start:** a standard catalog for urine and oral fluid drug testing, loaded as drafts for the lab to approve, and a demo laboratory.
+
+See [the product at a glance](docs/overview.md) and the [project scope](docs/project-scope.md)
+for what it covers and excludes.
 
 **Status: development on synthetic data.** There is no supported installer release
 or clinically validated application. The [implementation status](docs/planning/implementation-plan.md#status)
 records current capability; [quality guidance and limitations](docs/quality/README.md)
 record what remains before laboratory use.
 
-## Run from source
+## Download or run from source
 
 Unsigned development installers for Windows, macOS and Linux are on the
 [releases page](https://github.com/gabalint/vibe-tox/releases): a `nightly` prerelease

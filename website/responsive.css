@@ -87,6 +87,7 @@
   .presentation-section,
   .workflow-section,
   .ownership-section,
+  .faq-section,
   .start-section,
   .status-section {
     padding-block: 44px;
@@ -108,7 +109,8 @@
   }
   .screens,
   .principles,
-  .notices {
+  .notices,
+  .faq {
     grid-template-columns: 1fr;
   }
   .screens {
