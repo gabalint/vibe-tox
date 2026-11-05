@@ -2,6 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuditEventView } from "@/generated/AuditEventView";
+import type { FoundAuditRecords } from "@/generated/FoundAuditRecords";
 import { expectNoA11yViolations } from "@/lib/test/a11y";
 import { openRow, openRowWithEnter } from "@/lib/test/grid";
 import { engineError, mockCommands } from "@/lib/test/ipc";
@@ -51,6 +52,21 @@ const NO_CHANGE = {
   fields: [],
   facts: [],
   readCapabilities: [],
+};
+
+/** Find's synthetic answer: one user, and more than it lists. */
+const FOUND: FoundAuditRecords = {
+  records: [
+    {
+      recordType: "user",
+      recordTypeLabel: "User account",
+      recordId: "user-7",
+      label: "Test Analyst",
+      streams: ["security", "access"],
+      lastRecordedAt: RECORDED_AT,
+    },
+  ],
+  more: true,
 };
 
 function renderPage(commands: Record<string, (args: unknown) => unknown>, path = "/audit") {
@@ -124,7 +140,10 @@ describe("AuditTrailPage (REQ-OPS-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
 
   it("applies each filter when chosen, offering the engine's lists, and keeps them in the address", async () => {
     const list = vi.fn(() => events(3, 3));
-    const { user, router } = renderPage({ list_audit_events: list }, "/audit?stream=security");
+    const { user, router } = renderPage(
+      { list_audit_events: list, find_audit_records: () => FOUND },
+      "/audit?stream=security",
+    );
     expect(await screen.findByRole("grid", { name: "Security audit events" })).toBeTruthy();
     expect(screen.getByText(/^Sign-ins, users, roles and security settings/)).toBeTruthy();
     expect(screen.getAllByRole("gridcell", { name: "User account Test Analyst" })).toHaveLength(1);
@@ -136,28 +155,53 @@ describe("AuditTrailPage (REQ-OPS-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
         input: { stream: "security", action: "auth.lock", limit: PAGE },
       }),
     );
-    // The record ID is a find: no "Press Enter" hint, and Enter applies it at once.
-    expect(screen.queryByText(/Press Enter/)).toBeNull();
-    await user.type(
-      screen.getByRole("searchbox", { name: "Find by record ID" }),
-      " user-7 {Enter}",
-    );
+    // A record picked in Find applies with its record type.
+    await user.type(screen.getByRole("combobox", { name: "Find a record" }), "analyst");
+    await user.click(await screen.findByRole("option", { name: /Test Analyst/ }));
     await waitFor(() =>
       expect(list).toHaveBeenLastCalledWith({
-        input: { stream: "security", action: "auth.lock", recordId: "user-7", limit: PAGE },
+        input: {
+          stream: "security",
+          action: "auth.lock",
+          recordType: "user",
+          recordId: "user-7",
+          limit: PAGE,
+        },
       }),
     );
-    expect(router.state.location.search).toBe("?stream=security&action=auth.lock&recordId=user-7");
-    // Actions belong to a stream: another stream keeps only the record ID.
+    expect(router.state.location.search).toBe(
+      "?stream=security&action=auth.lock&recordType=user&recordId=user-7",
+    );
+    // Actions, record types and so records belong to a stream: another stream clears them.
     await user.click(screen.getByRole("button", { name: /Stream/ }));
     await user.click(await screen.findByRole("option", { name: "Access" }));
-    await waitFor(() =>
-      expect(router.state.location.search).toBe("?stream=access&recordId=user-7"),
-    );
+    await waitFor(() => expect(router.state.location.search).toBe("?stream=access"));
     await user.click(screen.getByRole("button", { name: /Stream/ }));
     await user.click(await screen.findByRole("option", { name: "All streams" }));
-    await waitFor(() => expect(router.state.location.search).toBe("?recordId=user-7"));
-    expect(list).toHaveBeenLastCalledWith({ input: { recordId: "user-7", limit: PAGE } });
+    await waitFor(() => expect(router.state.location.search).toBe(""));
+    expect(list).toHaveBeenLastCalledWith({ input: { limit: PAGE } });
+  });
+
+  it("finds records by readable values in the chosen record type and stream", async () => {
+    const find = vi.fn(() => FOUND);
+    const { user } = renderPage(
+      { list_audit_events: () => events(3, 3), find_audit_records: find },
+      "/audit?stream=security&recordType=instrument",
+    );
+    const field = await screen.findByRole("combobox", {
+      name: "Find: Instrument code or name or record ID",
+    });
+    expect(field.getAttribute("placeholder")).toBe("Instrument code or name or record ID");
+    // One letter is not a search.
+    await user.type(field, "A");
+    expect(find).not.toHaveBeenCalled();
+    await user.type(field, "U-SER");
+    await waitFor(() =>
+      expect(find).toHaveBeenLastCalledWith({
+        input: { text: "AU-SER", recordType: "instrument", stream: "security" },
+      }),
+    );
+    expect(await screen.findByText(/More records match than are listed/)).toBeTruthy();
   });
 
   it("lists only self-approvals, across streams, and keeps the filter in the address (ADR 0015)", async () => {

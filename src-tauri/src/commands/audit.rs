@@ -4,9 +4,18 @@
 use lis_core::CommandError;
 use lis_engine::{
     AuditEventChanges, AuditEventView, ChainVerification, Engine, ExportAuditEventsInput,
-    ExportedAuditFile, GetAuditEventChangesInput, ListAuditEventsInput, VerifyAuditChainInput,
+    ExportedAuditFile, FindAuditRecordsInput, FoundAuditRecords, GetAuditEventChangesInput,
+    ListAuditEventsInput, VerifyAuditChainInput,
 };
 use tauri::{AppHandle, Manager, Runtime, State};
+
+#[tauri::command]
+pub(crate) async fn find_audit_records(
+    engine: State<'_, Engine>,
+    input: FindAuditRecordsInput,
+) -> Result<FoundAuditRecords, CommandError> {
+    engine.find_audit_records(input).await
+}
 
 #[tauri::command]
 pub(crate) async fn list_audit_events(

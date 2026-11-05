@@ -7,6 +7,7 @@ mod changes;
 mod list;
 mod record_events;
 mod seals;
+mod search;
 
 use lis_core::{
     Capability, CorrelationId, InstrumentId, Principal, SessionId, UserId, UtcTimestamp,

@@ -64,6 +64,7 @@ const APP_COMMANDS: &[&str] = &[
     "list_audit_events",
     "get_audit_event_changes",
     "export_audit_events",
+    "find_audit_records",
     "verify_audit_chain",
     "list_listener_status",
     "get_listener_restart",

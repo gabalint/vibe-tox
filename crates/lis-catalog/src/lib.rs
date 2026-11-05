@@ -132,10 +132,10 @@ pub use previews::{
     list_catalog_previews,
 };
 pub use queries::{
-    approved_validity_policy, audit_record_changes, audit_record_label, get_method_version,
-    get_orderable_version, list_active_orderables, list_analytes, list_method_versions,
-    list_methods, list_orderable_versions, list_orderables, list_specimen_types,
-    list_validity_policy_versions, validity_policy,
+    approved_validity_policy, audit_record_changes, audit_record_label, audit_record_search,
+    get_method_version, get_orderable_version, list_active_orderables, list_analytes,
+    list_method_versions, list_methods, list_orderable_versions, list_orderables,
+    list_specimen_types, list_validity_policy_versions, validity_policy,
 };
 pub use standard::state::{StandardItemState, StandardItemStatus};
 pub use standard::tree::{

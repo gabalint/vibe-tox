@@ -246,7 +246,7 @@ pub(super) fn audit_filter_details(
 }
 
 /// A validation refusal naming one input field.
-fn refused(field: &str, code: &str, message: String) -> Failure {
+pub(super) fn refused(field: &str, code: &str, message: String) -> Failure {
     Failure::Refused {
         code: ErrorCode::Validation,
         message: "Check the highlighted fields.".to_owned(),

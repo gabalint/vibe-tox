@@ -2,6 +2,7 @@
 //! caller's transaction) and perform no authorization: the engine checks the
 //! capability before calling them. Catalog content holds no PHI.
 
+use lis_audit::{RecordRef, RecordSearch};
 use rusqlite::Connection;
 
 use crate::error::CatalogError;
@@ -125,6 +126,40 @@ pub fn audit_record_label(
         },
         _ => Ok(None),
     }
+}
+
+/// Specimen types, analytes, methods and orderables by the start of their code or name
+/// (REQ-OPS-001).
+pub fn audit_record_search(
+    conn: &Connection,
+    search: &RecordSearch<'_>,
+) -> Result<Vec<RecordRef>, CatalogError> {
+    let mut records = Vec::new();
+    for (record_type, sql) in [
+        (
+            "specimen_type",
+            "SELECT id FROM cat_specimen_types WHERE code LIKE ?1 ESCAPE '\\' \
+             OR name LIKE ?1 ESCAPE '\\' ORDER BY name LIMIT ?2",
+        ),
+        (
+            "analyte",
+            "SELECT id FROM cat_analytes WHERE code LIKE ?1 ESCAPE '\\' \
+             OR name LIKE ?1 ESCAPE '\\' ORDER BY name LIMIT ?2",
+        ),
+        (
+            "method",
+            "SELECT id FROM cat_methods WHERE code LIKE ?1 ESCAPE '\\' \
+             OR name LIKE ?1 ESCAPE '\\' ORDER BY name LIMIT ?2",
+        ),
+        (
+            "orderable",
+            "SELECT id FROM cat_orderables WHERE code LIKE ?1 ESCAPE '\\' \
+             OR name LIKE ?1 ESCAPE '\\' ORDER BY name LIMIT ?2",
+        ),
+    ] {
+        records.extend(search.records(conn, record_type, sql)?);
+    }
+    Ok(records)
 }
 
 fn not_found_is_none(error: CatalogError) -> Result<Option<String>, CatalogError> {

@@ -43,10 +43,11 @@ pub use commands::security_keys::{
 };
 
 pub use commands::audit::{
-    AuditActorKind, AuditChangeStatus, AuditCursor, AuditEventChanges, AuditEventView,
+    AuditActorKind, AuditChangeStatus, AuditCursor, AuditDay, AuditEventChanges, AuditEventView,
     AuditExportFormat, AuditFieldChange, AuditOutcome, AuditPatient, AuditStream, ChainFinding,
-    ChainVerification, ExportAuditEventsInput, ExportedAuditFile, GetAuditEventChangesInput,
-    ListAuditEventsInput, VerifyAuditChainInput,
+    ChainVerification, ExportAuditEventsInput, ExportedAuditFile, FindAuditRecordsInput,
+    FoundAuditRecord, FoundAuditRecords, GetAuditEventChangesInput, ListAuditEventsInput,
+    VerifyAuditChainInput,
 };
 pub use commands::listeners::ListenerStatusView;
 // Wave 3+: re-exports per area. Edit only your block.

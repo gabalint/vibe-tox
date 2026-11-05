@@ -8,11 +8,11 @@ use lis_auth::{
     CreateFirstAdministratorInput, CreateUserInput, DesignateOnePersonLaboratoryInput,
     ResetUserCredentialsInput, SetUserRolesInput, SignInInput, UnlockSessionInput, VerifyMfaInput,
 };
-use lis_core::{CommandError, ErrorCode, UserId};
+use lis_core::{CommandError, ErrorCode, Phi, UserId};
 use lis_engine::registry::{Access, COMMANDS, CommandSpec};
 use lis_engine::{
-    AuditExportFormat, AuditStream, Engine, ExportAuditEventsInput, GetAuditEventChangesInput,
-    ListAuditEventsInput, VerifyAuditChainInput,
+    AuditExportFormat, AuditStream, Engine, ExportAuditEventsInput, FindAuditRecordsInput,
+    GetAuditEventChangesInput, ListAuditEventsInput, VerifyAuditChainInput,
 };
 
 use crate::fixture::{PASSWORD, TestEngine, secret};
@@ -335,6 +335,15 @@ async fn admin_call(
                 },
                 None,
             )
+            .await
+            .map(drop),
+        "find_audit_records" => engine
+            .find_audit_records(FindAuditRecordsInput {
+                text: Phi::new("A26".to_owned()),
+                record_type: None,
+                stream: None,
+                day: None,
+            })
             .await
             .map(drop),
         "verify_audit_chain" => engine

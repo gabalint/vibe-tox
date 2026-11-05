@@ -17,7 +17,7 @@ Never use one for another: logs are not an audit trail, and audit events are not
 **When to write.**
 
 - **State changes.** Every command that changes state appends at least one audit event through `ctx.audit(…)`, inside its `BEGIN IMMEDIATE` transaction. If the append fails, the whole command fails and nothing commits.
-- **Sensitive reads.** Opening a patient or report record, exporting, printing a report, viewing the audit trail and delivering a report each append an `access` event before data leaves the engine. If that event cannot be written, the read fails.
+- **Sensitive reads.** Opening a patient or report record, exporting, printing a report, viewing or searching the audit trail and delivering a report each append an `access` event before data leaves the engine. If that event cannot be written, the read fails. A search's event records what was searched (record type, stream) and how many records were found, never the typed text, which may be a patient name. The audit trail shows patient names, and finds patients by name, only for users who may read patients (`enter_orders` or `manage_quality`).
 - **Security events** use the `security` stream: sign-in success and failure, MFA failure, lockout, lock and unlock, user switch, enrolment, role or grant change, break-glass use, update approval, backup, restore and export. An authorization denial is recorded in its own transaction after the denied command rolls back.
 - **Clinical configuration** (catalog, methods, rules, mappings, templates) is recorded on the `clinical` stream, including drafts, approvals and retirements, because it determines results.
 - **Listener and worker actions** are attributed to the instrument, partner or worker principal, never to whoever is signed in.

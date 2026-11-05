@@ -1,6 +1,7 @@
 //! The handoff read model: items with their reconciliation status from
 //! `bil_v_handoff_status` and any recorded outcome (REQ-BIL-002).
 
+use lis_audit::{RecordRef, RecordSearch};
 use lis_core::{UserId, UtcTimestamp};
 use rusqlite::{Connection, OptionalExtension};
 use serde::Serialize;
@@ -157,6 +158,28 @@ pub fn audit_record_label(
             .map(|number| format!("Handoff {number}"))),
         _ => Ok(None),
     }
+}
+
+/// Billing handoffs by the start of their number, or holding work for an accession whose
+/// number starts with the searched text (REQ-OPS-001).
+pub fn audit_record_search(
+    conn: &Connection,
+    search: &RecordSearch<'_>,
+) -> Result<Vec<RecordRef>, BillingError> {
+    Ok(search.records(
+        conn,
+        "billing_handoff",
+        "SELECT handoff.id FROM bil_handoffs handoff \
+         WHERE CAST(handoff.handoff_no AS TEXT) LIKE ?1 ESCAPE '\\' OR EXISTS ( \
+         SELECT 1 FROM bil_handoff_items item \
+         JOIN bil_derivation_specimens derived ON derived.derivation_id = item.derivation_id \
+         JOIN spc_specimens specimen ON specimen.id = derived.specimen_id \
+         JOIN spc_collections collection ON collection.id = specimen.collection_id \
+         JOIN spc_accessions accession ON accession.id = collection.accession_id \
+         WHERE item.handoff_id = handoff.id \
+         AND accession.accession_number LIKE ?1 ESCAPE '\\') \
+         ORDER BY handoff.handoff_no DESC LIMIT ?2",
+    )?)
 }
 
 fn number_label(
