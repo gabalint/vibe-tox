@@ -32,14 +32,36 @@ The canonical product copy is [the overview](../overview.md), checked against th
 [operator guide](../operations/README.md). The intended readers are laboratory owners,
 potential collaborators, and developers evaluating the project. The page moves from
 the single-computer proposition to the video, the workflow shown through application
-screens, data ownership, downloading installers or building from source, development
-status with the license and disclaimer, and the repository. Its actions open the
+screens, data ownership, common questions, downloading installers or building from source,
+development status with the license and disclaimer, and the repository. Its actions open the
 latest development release, presentation, documentation, contribution and security
-guidance, or source. The hero's “Download development build” action and the
+guidance, the commercial support link that [AGENTS.md](../../AGENTS.md#current-mandate)
+permits, or source. The hero's “Download development build” action and the
 getting-started section link to the [latest release](https://github.com/gabalint/vibe-tox/releases/latest),
 where visitors choose their platform's installer and read its release notes. Keep
 the destination independent of versioned asset filenames; [branches and releases](releases.md)
 describes the unsigned development builds and the separate nightly channel.
+
+### Search and sharing metadata
+
+The page targets what laboratories search for, such as a free toxicology LIS or LIMS. The
+`<title>`, meta description, first heading and Open Graph tags use those terms in readable
+copy, without keyword lists (WEB-06). The questions section answers cost, LIS versus LIMS,
+intended laboratories and how to try the application. The [README](../../README.md) opens
+with the same terms because GitHub search and the repository page index it. A JSON-LD
+block in `index.html` describes the application (`SoftwareApplication`: free offer,
+platforms, GPL-3.0-only) and the presentation (`VideoObject`). Keep its facts in step with
+the visible copy. Google shows a software rich result only with ratings or reviews; the
+project has none and must not invent them (WEB-07). The video's `uploadDate` is the first
+Pages deployment, 2026-10-20 15:42 UTC; change it and `duration` only when a different
+recording is published.
+
+A project site at `gabalint.github.io/vibe-tox/` is a subdirectory of the host. Google
+reads `robots.txt` only from the host root and does not support site names for
+subdirectories (WEB-08), so the site ships neither a `robots.txt` nor `WebSite` markup.
+Search Console verification and sitemap submission would be project-owner actions outside
+the repository. The repository's GitHub description and topics carry the same terms and are
+edited in the repository settings.
 
 The website inherits the application's blue/neutral palette and system typography
 from `ui/src/styles/tokens.css`, with larger type and spacing for reading. It uses
@@ -64,7 +86,7 @@ the page or choosing a later recording.
 
 | File | Purpose |
 | --- | --- |
-| `website/index.html` | Public content, metadata, navigation, native player and links |
+| `website/index.html` | Public content, search metadata and structured data, navigation, native player and links |
 | `website/styles.css`, `website/responsive.css` | Presentation styles and responsive adaptations |
 | `website/favicon.svg` | Authored geometric V mark |
 | `website/media/vibe-tox-overview.mp4` | Supplied narrated H.264/AAC application walkthrough; progressive playback |
@@ -139,6 +161,14 @@ regulatory conclusions; no jurisdiction-specific rule is introduced.
 | WEB-04 | GitHub, [static workflow](https://github.com/actions/starter-workflows/blob/main/pages/static.yml) and [Pages API](https://docs.github.com/en/rest/pages/pages#create-a-github-pages-site) | Official artifact/deployment workflow and `build_type=workflow` configuration. Versions checked at implementation time. |
 | WEB-05 | Apple, [macOS Tahoe software license](https://www.apple.com/legal/sla/docs/macOSTahoe.pdf), System Voices section | System voice use for original content is limited to personal, noncommercial projects; public sharing is excluded. The supplied video uses Kokoro narration and original music under the notices in its media credits; this Apple license is not permission to substitute system-voice narration in public media. |
 
-The Modern Web Guidance `lazy-load-video-and-audio` guide was retrieved on the same
-date. It informed explicit player dimensions, deliberate preload behavior and the
+Search sources were checked 2026-11-05; they describe Google Search behavior only.
+
+| ID | Publisher and direct source | Application and limits |
+| --- | --- | --- |
+| WEB-06 | Google Search Central, [title links](https://developers.google.com/search/docs/appearance/title-link) and [snippets and meta descriptions](https://developers.google.com/search/docs/appearance/snippet) | Use a concise, descriptive title, a prominent first heading and an accurate page summary; repeated terms and keyword lists are discouraged. No length limit; results truncate to the device width. Publication date not stated. |
+| WEB-07 | Google Search Central, [software app](https://developers.google.com/search/docs/appearance/structured-data/software-app) and [video](https://developers.google.com/search/docs/appearance/structured-data/video) structured data | Software rich results require `name`, `offers.price` and `aggregateRating` or `review`. Video requires `name`, `thumbnailUrl` and `uploadDate`; `contentUrl`, `description` and ISO 8601 `duration` are recommended. Eligibility does not guarantee display. Publication dates not stated. |
+| WEB-08 | Google Search Central, [create a robots.txt file](https://developers.google.com/search/docs/crawling-indexing/robots/create-robots-txt) and [site names](https://developers.google.com/search/docs/appearance/site-names) | `robots.txt` must be at the root of the host and cannot be placed in a subdirectory. Site names are not supported at the subdirectory level. Publication dates not stated. |
+
+The Modern Web Guidance `lazy-load-video-and-audio` guide was retrieved on
+2026-10-14. It informed explicit player dimensions, deliberate preload behavior and the
 native fallback; media lazy loading is a progressive enhancement.
