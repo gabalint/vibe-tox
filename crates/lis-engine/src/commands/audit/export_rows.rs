@@ -247,10 +247,17 @@ pub(super) fn changes_text(changes: &AuditEventChanges) -> String {
         .join(" ")
 }
 
+/// The recorded details, without one that the changes already show, as the panel lists them.
 fn details_text(changes: &AuditEventChanges) -> String {
     changes
         .facts
         .iter()
+        .filter(|(label, _)| {
+            !changes
+                .fields
+                .iter()
+                .any(|change| change.field.eq_ignore_ascii_case(label))
+        })
         .map(|(label, value)| format!("{label}: {value}"))
         .collect::<Vec<_>>()
         .join("; ")
@@ -292,6 +299,13 @@ mod tests {
             details_text(&changes(AuditChangeStatus::Changed)),
             "Transport: tcp"
         );
+    }
+
+    #[test]
+    fn details_skip_what_the_changes_already_show() {
+        let mut shown = changes(AuditChangeStatus::Changed);
+        shown.facts.push(("phone".to_owned(), "—".to_owned()));
+        assert_eq!(details_text(&shown), "Transport: tcp");
     }
 
     #[test]
