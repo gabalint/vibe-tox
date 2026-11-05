@@ -6,7 +6,7 @@ import type { AuditEventView } from "@/generated/AuditEventView";
 import styles from "./audit.module.css";
 
 const OUTCOMES: Record<AuditEventView["outcome"], { tone: Tone; label: string }> = {
-  succeeded: { tone: "neutral", label: "Succeeded" },
+  succeeded: { tone: "success", label: "Succeeded" },
   denied: { tone: "warning", label: "Denied" },
   failed: { tone: "danger", label: "Failed" },
 };
@@ -45,8 +45,13 @@ export function recordText(event: AuditEventView): string {
   return id === null ? type : `${type} ${id}`;
 }
 
+/** Every outcome badge has the same width, so a column of them lines up. */
 export function OutcomeBadge({ outcome }: { outcome: AuditEventView["outcome"] }) {
-  return <StatusBadge tone={OUTCOMES[outcome].tone}>{OUTCOMES[outcome].label}</StatusBadge>;
+  return (
+    <span className={styles.outcome}>
+      <StatusBadge tone={OUTCOMES[outcome].tone}>{OUTCOMES[outcome].label}</StatusBadge>
+    </span>
+  );
 }
 
 export const AUDIT_COLUMNS: readonly DataGridColumn<AuditEventView>[] = [

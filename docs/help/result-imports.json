@@ -83,7 +83,7 @@
         {
           "name": "Outcome",
           "meaning": "Summarizes processing, not clinical approval.",
-          "values": "Processed; Processed, some rows quarantined; Quarantined.",
+          "values": "Processed (green badge with a check mark); Processed, some rows quarantined (amber warning badge); Quarantined (red badge).",
           "rules": "Read-only; supplied by the current record."
         },
         {

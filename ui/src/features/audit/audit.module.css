@@ -27,3 +27,9 @@
   -webkit-line-clamp: 2;
   line-clamp: 2;
 }
+
+/* An outcome badge as wide as the longest, "Succeeded", whatever its outcome. */
+.outcome > span {
+  min-width: 6.5rem;
+  justify-content: center;
+}
