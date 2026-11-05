@@ -139,6 +139,12 @@
           "result": "Shows checked count and findings; it does not repair or rewrite events."
         },
         {
+          "name": "Export › CSV, for analysis / PDF, for printing",
+          "does": "Saves every event that matches the current Stream and filters, not only the rows loaded on screen, to a new file in your Downloads folder: a CSV file for analysis or a PDF for printing or sending to an auditor. Each event lists stream, sequence number, occurred and recorded times (laboratory time zone; the CSV also in UTC), who acted, action, outcome, record, the patient for patient records, reason, authority, revision, its Changes as old → new values, the other recorded details and the correlation ID. The PDF also shows the laboratory, the filters used, the export time, who exported and the number of events, and says on every page when it contains patient information.",
+          "availableWhen": "Shown to users holding both View audit and Export (in the standard roles: Auditor together with Administrator). Patient values and identification are included only for patients the exporter's roles may read, as in the event panel; otherwise the changed field names are listed as hidden.",
+          "result": "A success notice names the file and the number of events. The file covers events recorded up to the moment of export; a CSV holds up to 50,000 events and a PDF up to 2,000. If more match, nothing is written and the page says to narrow the filters. The export is recorded in the Security stream (action Export events) with the format, number of events and patients, and every filter, so the same filters reproduce it; the file is never overwritten, a second export the same day gets a numbered name."
+        },
+        {
           "name": "Load older events",
           "does": "Fetch the next older page matching the selected filters.",
           "availableWhen": "Another page may exist.",
@@ -160,7 +166,8 @@
       "restrictions": [
         "A local chain check cannot detect every rewritten chain or events removed from its end; compare separately held anchors.",
         "Audit consistency does not establish that each recorded action was appropriate.",
-        "Do not remove or rewrite evidence to obtain a passing check."
+        "Do not remove or rewrite evidence to obtain a passing check.",
+        "An exported file leaves the application's protections: keep, send and dispose of it under the laboratory's procedure for records, especially when it contains patient information."
       ],
       "workflow": [
         "Start from All streams, or choose a stream, and narrow the review by record ID, action, who acted, outcome, record type and the days recorded.",
@@ -188,6 +195,18 @@
         {
           "problem": "The changes could not be loaded",
           "recovery": "Use Retry in the Changes section. The rest of the event stays visible; an event that no longer exists in the chosen stream shows \"This audit event does not exist.\""
+        },
+        {
+          "problem": "Not exported: more events match than one file holds",
+          "recovery": "Narrow the filters, for example choose one stream, fewer days (Recorded from / Recorded to), one user or one action, and export again; or use CSV, which holds more events than PDF."
+        },
+        {
+          "problem": "Not exported: the Downloads folder is not available",
+          "recovery": "The computer's account has no Downloads folder the app can use. Ask the person who manages the computer to restore it, then export again."
+        },
+        {
+          "problem": "There is no Export button",
+          "recovery": "Export needs the Export permission besides View audit. Ask the laboratory's user administrator for a role that holds it, if laboratory policy allows you to take audit records out of the application."
         }
       ]
     },
@@ -330,6 +349,10 @@
     "ui/src/features/audit/AuditChanges.tsx",
     "crates/lis-engine/src/commands/audit/changes.rs",
     "crates/lis-identity/src/audit_changes.rs",
-    "crates/lis-audit/src/changes.rs"
+    "crates/lis-audit/src/changes.rs",
+    "ui/src/features/audit/AuditExport.tsx",
+    "crates/lis-engine/src/commands/audit/export.rs",
+    "crates/lis-engine/src/commands/audit/export_rows.rs",
+    "crates/lis-report/templates/audit-export/v1.typ"
   ]
 }

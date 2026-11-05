@@ -11,7 +11,8 @@ use lis_auth::{
 use lis_core::{CommandError, ErrorCode, UserId};
 use lis_engine::registry::{Access, COMMANDS, CommandSpec};
 use lis_engine::{
-    AuditStream, Engine, GetAuditEventChangesInput, ListAuditEventsInput, VerifyAuditChainInput,
+    AuditExportFormat, AuditStream, Engine, ExportAuditEventsInput, GetAuditEventChangesInput,
+    ListAuditEventsInput, VerifyAuditChainInput,
 };
 
 use crate::fixture::{PASSWORD, TestEngine, secret};
@@ -321,6 +322,19 @@ async fn admin_call(
                 stream: AuditStream::Security,
                 seq: 1,
             })
+            .await
+            .map(drop),
+        "export_audit_events" => engine
+            .export_audit_events(
+                ExportAuditEventsInput {
+                    format: AuditExportFormat::Csv,
+                    filter: ListAuditEventsInput {
+                        limit: 10,
+                        ..ListAuditEventsInput::default()
+                    },
+                },
+                None,
+            )
             .await
             .map(drop),
         "verify_audit_chain" => engine

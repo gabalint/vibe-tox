@@ -13,12 +13,15 @@ use crate::pipeline::{Failure, ModuleError};
 use crate::registry::{GET_AUDIT_EVENT_CHANGES, LIST_AUDIT_EVENTS, VERIFY_AUDIT_CHAIN};
 
 mod changes;
+mod export;
+mod export_rows;
 mod input;
 mod read;
 pub use changes::{
     AuditChangeStatus, AuditEventChanges, AuditFieldChange, AuditPatient, GetAuditEventChangesInput,
 };
 use changes::{changes_event, read_changes};
+pub use export::{AuditExportFormat, ExportAuditEventsInput, ExportedAuditFile};
 pub use input::{AuditActorKind, AuditCursor, AuditOutcome, AuditStream, ListAuditEventsInput};
 use input::{audit_filter_details, page_event};
 use read::read_page;
@@ -31,6 +34,8 @@ type FilterOptions = Vec<(String, String)>;
 enum AuditReadError {
     #[error("audit event not found")]
     EventNotFound,
+    #[error("more events match than one export holds")]
+    ExportTooLarge(usize),
     #[error(transparent)]
     Auth(#[from] AuthError),
     #[error(transparent)]
@@ -58,6 +63,7 @@ impl ModuleError for AuditReadError {
             Self::Specimens(lis_specimens::SpecimenError::Store(error)) => error.denied(),
             Self::Billing(lis_billing::BillingError::Store(error)) => error.denied(),
             Self::EventNotFound
+            | Self::ExportTooLarge(_)
             | Self::Auth(_)
             | Self::Catalog(_)
             | Self::Identity(_)
@@ -82,6 +88,15 @@ impl From<AuditReadError> for Failure {
             AuditReadError::EventNotFound => {
                 Failure::refused(ErrorCode::NotFound, "This audit event does not exist.")
             }
+            AuditReadError::ExportTooLarge(limit) => Failure::Refused {
+                code: ErrorCode::Validation,
+                message: format!(
+                    "More than {limit} events match these filters, more than one file of this \
+                     format holds. Narrow the filters, for example to fewer days, and export again."
+                ),
+                field_errors: Vec::new(),
+                gate_reasons: Vec::new(),
+            },
             other => Failure::Internal(other.to_string()),
         }
     }

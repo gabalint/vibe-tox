@@ -35,7 +35,7 @@ const cursorAfter = ({ recordedAt, stream, seq }: AuditEventView): AuditCursor =
  * The engine's filters for `filter`: the days as the instants they begin and end in the
  * laboratory's time zone, and "By" as a kind of principal or a user.
  */
-function auditInput({ from, to, by, ...rest }: AuditFilter, timeZone: string | null) {
+export function auditInput({ from, to, by, ...rest }: AuditFilter, timeZone: string | null) {
   const kind = by === "people" || by === "system" ? by : undefined;
   return {
     ...rest,

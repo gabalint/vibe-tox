@@ -41,6 +41,8 @@ Never use one for another: logs are not an audit trail, and audit events are not
 
 **Values behind an event.** The audit viewer shows a changed field's old and new value by reading the record's own immutable history when an event is opened (`get_audit_event_changes`, REQ-OPS-001), never from the event. Owner modules answer for their records (`audit_record_changes`). Patient values need `view_audit` plus the patient record's own read capability; without it only the changed field names are returned. Each opening appends an `access` event `audit.view_changes` with the event's stream and sequence number, naming the patient when patient values were returned.
 
+**Exporting the audit trail.** `export_audit_events` needs `view_audit` and `export`. It writes every event matching the viewer's filters, recorded up to the export instant, as CSV or PDF through the one export path (intent event, digest, no partial file; NFR-07), with each event's changes read as the viewer reads them: patient values only where the exporter holds the patient's read capability. The `audit.export_events` security event records the format, event and patient counts and every filter, never values. A CSV holds up to 50,000 events and a PDF up to 2,000; above that nothing is written.
+
 **Authority attribution.** For a command allowing either of two capabilities, record the capability actually granted to the actor. Audited reads establish that grant in the same transactional context as their access event. Session-only reads record session authority without inventing a clinical capability. Historical audit events are never rewritten to repair attribution.
 
 **Integrity (ADR 0008).**

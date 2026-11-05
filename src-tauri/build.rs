@@ -63,6 +63,7 @@ const APP_COMMANDS: &[&str] = &[
     "designate_one_person_laboratory",
     "list_audit_events",
     "get_audit_event_changes",
+    "export_audit_events",
     "verify_audit_chain",
     "list_listener_status",
     "get_listener_restart",

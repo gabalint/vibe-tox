@@ -7,7 +7,7 @@ use lis_core::{ErrorCode, Phi};
 use lis_engine::{
     AssertDemographics, AuditChangeStatus, AuditStream, GetAuditEventChangesInput, RegisterSubject,
 };
-use lis_identity::{DemographicsInput, IdentifierInput};
+use lis_identity::{DemographicsInput, IdentifierInput, SubjectId};
 
 use crate::fixture::{NEW_PASSWORD, TestEngine, code_of};
 
@@ -17,6 +17,32 @@ fn demographics(family_name: &str) -> DemographicsInput {
         given_names: Some(Phi::new("Test".to_owned())),
         birth_date: Phi::new("1980-01-01".to_owned()),
         administrative_sex: None,
+    }
+}
+
+/// A synthetic patient registered as "Dae, Test" with one MRN.
+pub(crate) fn registration() -> RegisterSubject {
+    RegisterSubject {
+        demographics: demographics("Dae"),
+        source: "requisition".to_owned(),
+        identifiers: vec![IdentifierInput {
+            assigning_authority: "SYN-CLINIC".to_owned(),
+            identifier_type: "MR".to_owned(),
+            value: Phi::new("MRN-00000".to_owned()),
+        }],
+        acknowledged_candidates: vec![],
+    }
+}
+
+/// Corrects the family name of the patient from [`registration`] to "Doe".
+pub(crate) fn correction(subject_id: SubjectId) -> AssertDemographics {
+    AssertDemographics {
+        subject_id,
+        expected_revision: 1,
+        demographics: demographics("Doe"),
+        source: "requisition".to_owned(),
+        reason: "Typo in the family name".to_owned(),
+        acknowledged_candidates: vec![],
     }
 }
 
@@ -57,30 +83,10 @@ async fn patient_changes_show_values_only_to_people_who_may_read_the_patient() {
     t.create_user("acc1", &[RoleCode::Accessioner]).await;
     let (_, quality) = t.first_sign_in("qa1").await;
     t.first_sign_in("acc1").await;
-    let registered = t
-        .engine
-        .register_subject(RegisterSubject {
-            demographics: demographics("Dae"),
-            source: "requisition".to_owned(),
-            identifiers: vec![IdentifierInput {
-                assigning_authority: "SYN-CLINIC".to_owned(),
-                identifier_type: "MR".to_owned(),
-                value: Phi::new("MRN-00000".to_owned()),
-            }],
-            acknowledged_candidates: vec![],
-        })
-        .await
-        .unwrap();
+    let registered = t.engine.register_subject(registration()).await.unwrap();
     t.sign_in_with("qa1", NEW_PASSWORD, &quality).await;
     t.engine
-        .assert_demographics(AssertDemographics {
-            subject_id: registered.subject_id,
-            expected_revision: 1,
-            demographics: demographics("Doe"),
-            source: "requisition".to_owned(),
-            reason: "Typo in the family name".to_owned(),
-            acknowledged_candidates: vec![],
-        })
+        .assert_demographics(correction(registered.subject_id))
         .await
         .unwrap();
     let corrected = input(

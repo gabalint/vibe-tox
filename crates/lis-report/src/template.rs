@@ -73,6 +73,11 @@ pub(crate) const TEMPLATES: &[Template] = &[
         version: 2,
         source: include_str!("../templates/catalog-preview/v2.typ"),
     },
+    Template {
+        id: "audit-export",
+        version: 1,
+        source: include_str!("../templates/audit-export/v1.typ"),
+    },
 ];
 
 pub(crate) fn find(template: &TemplateRef) -> Option<&'static Template> {
@@ -135,6 +140,11 @@ mod tests {
                 "catalog-preview",
                 2,
                 "e92ee55fa619a7ad44c9160f8c6cc47024dac90a81755a65a7863b19bc306c10",
+            ),
+            (
+                "audit-export",
+                1,
+                "5e362b9f800458a2a5ebf2ec76e581557a558022f559388a016401a2d00d788d",
             ),
         ];
         for (id, version, digest) in pinned {
