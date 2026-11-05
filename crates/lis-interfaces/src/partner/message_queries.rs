@@ -8,8 +8,9 @@ use ts_rs::TS;
 
 use super::error::PartnerError;
 use super::message_repo::NOT_REPLACED;
+use super::mllp::NO_ACK;
 use super::model::{
-    DeliveryReason, DeliveryState, MessageSource, PartnerConnectionId, PartnerDeliveryId,
+    AckCode, DeliveryReason, DeliveryState, MessageSource, PartnerConnectionId, PartnerDeliveryId,
     PartnerMessageId, PartnerMessageType, PartnerProtocol, UnroutedResolution,
 };
 use super::received::ReceivedState;
@@ -131,7 +132,13 @@ pub struct PartnerMessageRow {
     pub superseded: bool,
     pub next_attempt_at: Option<UtcTimestamp>,
     pub error_code: Option<String>,
+    /// The file written, or over MLLP the partner's address and port.
     pub written_path: Option<String>,
+    /// Over MLLP: the partner's acknowledgement code and its reason.
+    pub ack_code: Option<AckCode>,
+    pub ack_text: Option<String>,
+    /// Over MLLP: sent without an acknowledgement in time; it is sent again.
+    pub awaiting_ack: bool,
     /// The message matched no connection.
     pub unrouted: bool,
     /// For an unrouted message, the decision; `None` while it waits.
@@ -211,7 +218,7 @@ fn delivery_rows(
          d.state, d.attempts, d.next_attempt_at, d.last_error_code, d.written_path, c.active, \
          EXISTS (SELECT 1 FROM ifc_partner_verifications v \
                  WHERE v.connection_id = c.id AND v.folder = c.destination), c.schedule, \
-         m.source_label, c.protocol \
+         m.source_label, c.protocol, d.ack_code, d.ack_text \
          FROM ifc_partner_deliveries d \
          JOIN ifc_partner_messages m ON m.id = d.message_id \
          JOIN ifc_partner_connections c ON c.id = d.connection_id \
@@ -242,6 +249,9 @@ fn delivery_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<PartnerMessageRow> 
     } else {
         None
     };
+    let error_code: Option<String> = row.get(13)?;
+    let ack_code: Option<AckCode> = row.get(20)?;
+    let awaiting_ack = state == DeliveryState::Waiting && error_code.as_deref() == Some(NO_ACK);
     Ok(PartnerMessageRow {
         delivery_id: Some(row.get(0)?),
         message_id: row.get(1)?,
@@ -257,15 +267,23 @@ fn delivery_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<PartnerMessageRow> 
             protocol: row.get(19)?,
         }),
         reason: Some(reason),
-        transport: transport(state, attempts),
-        outcome_unknown: state == DeliveryState::Written,
+        // A message awaiting its acknowledgement left; only the answer is missing.
+        transport: if awaiting_ack {
+            TransportOutcome::Written
+        } else {
+            transport(state, attempts)
+        },
+        outcome_unknown: state == DeliveryState::Written && ack_code.is_none(),
         waiting,
         attempts,
         given_up: state == DeliveryState::Failed,
         superseded: state == DeliveryState::Superseded,
         next_attempt_at: row.get(12)?,
-        error_code: row.get(13)?,
+        error_code,
         written_path: row.get(14)?,
+        ack_code,
+        ack_text: row.get(21)?,
+        awaiting_ack,
         unrouted: false,
         resolution: None,
         allowed_actions: if resendable {
@@ -330,6 +348,9 @@ fn unrouted_rows(
             next_attempt_at: None,
             error_code: None,
             written_path: None,
+            ack_code: None,
+            ack_text: None,
+            awaiting_ack: false,
             unrouted: true,
             resolution: row.get(6)?,
             allowed_actions: Vec::new(),

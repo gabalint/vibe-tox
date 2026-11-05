@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use lis_core::{CommandError, ErrorCode};
 use lis_interfaces::partner::{
-    AttemptOutcome, ConnectionTarget, Destination, MovedTo, PartnerConnectionId,
+    AckCode, AttemptOutcome, ConnectionTarget, Destination, MovedTo, PartnerConnectionId,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -19,7 +19,7 @@ use super::{CHOOSE_PARTNER_FOLDER, SEND_PARTNER_TEST_MESSAGE, TEST_PARTNER_FOLDE
 use crate::commands::sign_in::session_of;
 use crate::engine::Engine;
 use crate::partner_delivery::sftp::SftpProblem;
-use crate::partner_delivery::{lab_zone, probe_destination, send, stamp};
+use crate::partner_delivery::{ProbeProblem, lab_zone, probe_destination, send, stamp};
 use crate::pipeline::{Call, Failure};
 
 /// A folder chosen in the native dialog.
@@ -54,8 +54,8 @@ pub struct TestPartnerFolderInput {
     pub connection_id: Option<PartnerConnectionId>,
 }
 
-/// What a folder or server test, or a test message, found.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+/// What a folder, server or partner test, or a test message, found.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct FolderTestResult {
@@ -65,18 +65,46 @@ pub struct FolderTestResult {
     pub file_name: Option<String>,
     /// The fingerprint an SFTP server presented instead of the one entered.
     pub presented_fingerprint: Option<String>,
+    /// For a test message sent over MLLP: the partner's acknowledgement code and reason.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub ack_code: Option<AckCode>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub ack_text: Option<String>,
 }
 
 impl FolderTestResult {
-    /// The result of a test that writes and removes a probe file.
-    pub(super) fn probed(tested: Result<(), SftpProblem>) -> Self {
+    /// The result of a test that writes and removes a probe file, or connects.
+    pub(super) fn probed(tested: Result<(), ProbeProblem>) -> Self {
         let problem = tested.err();
         Self {
             problem: problem.as_ref().map(|problem| problem.code().to_owned()),
-            file_name: None,
             presented_fingerprint: match problem {
-                Some(SftpProblem::FingerprintMismatch { presented }) => Some(presented),
+                Some(ProbeProblem::Sftp(SftpProblem::FingerprintMismatch { presented })) => {
+                    Some(presented)
+                }
                 _ => None,
+            },
+            ..Self::default()
+        }
+    }
+
+    /// The result of a test message: its file, or the partner's acknowledgement.
+    fn sent(outcome: &AttemptOutcome) -> Self {
+        match outcome {
+            AttemptOutcome::Written { path } => Self {
+                file_name: file_name(path),
+                ..Self::default()
+            },
+            AttemptOutcome::Acknowledged { code, text, .. } => Self {
+                ack_code: Some(*code),
+                ack_text: text.clone(),
+                ..Self::default()
+            },
+            AttemptOutcome::Failed { error_code } => Self {
+                problem: Some((*error_code).to_owned()),
+                ..Self::default()
             },
         }
     }
@@ -128,9 +156,8 @@ impl Engine {
                     self.chosen_folder(&call, Some(choice))?
                         .map(|folder| Destination {
                             folder,
-                            sftp: None,
-                            sealed_password: None,
                             moved_to,
+                            ..Destination::default()
                         })
                 }
                 (None, Some(id)) => Some(self.connection_folder(&call, id).await?.destination),
@@ -188,17 +215,7 @@ impl Engine {
             let db = Arc::clone(&self.db);
             let outcome =
                 blocking(move || send(&db, key.as_ref(), &destination, &name, &bytes)).await?;
-            let result = FolderTestResult {
-                problem: match &outcome {
-                    AttemptOutcome::Written { .. } => None,
-                    AttemptOutcome::Failed { error_code } => Some((*error_code).to_owned()),
-                },
-                file_name: match &outcome {
-                    AttemptOutcome::Written { path } => file_name(path),
-                    AttemptOutcome::Failed { .. } => None,
-                },
-                presented_fingerprint: None,
-            };
+            let result = FolderTestResult::sent(&outcome);
             let digest = stored.digest.to_string();
             self.write(&call, move |ctx| {
                 lis_interfaces::partner::record_partner_test_message(ctx, id, &digest, &outcome)

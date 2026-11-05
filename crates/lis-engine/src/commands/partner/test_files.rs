@@ -26,7 +26,12 @@ pub(super) fn test_file(
         PartnerMessageType::BillingJson => (test_message(connection_id, sent_at), "json"),
         PartnerMessageType::ReportPdf => (test_pdf(connection_id, sent_at), "pdf"),
         PartnerMessageType::Hl7Oru => (
-            test_oru(connection_id, &target.partner, laboratory, sent_at).encode(),
+            Oru {
+                // Over MLLP the partner answers the test message too.
+                acknowledged: target.destination.mllp.is_some(),
+                ..test_oru(connection_id, &target.partner, laboratory, sent_at)
+            }
+            .encode(),
             "hl7",
         ),
         PartnerMessageType::Hl7Orders => return None,
@@ -121,6 +126,7 @@ fn test_oru(
         processing_id: "T",
         laboratory: lab.clone(),
         receiving_facility: partner.to_owned(),
+        acknowledged: false,
         patient: Patient {
             identifiers: vec![(
                 "TEST-00000".to_owned(),

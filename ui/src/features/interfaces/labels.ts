@@ -17,6 +17,7 @@ import type { Schedule } from "@/generated/Schedule";
 import type { UnroutedResolution } from "@/generated/UnroutedResolution";
 import type { WaitReason } from "@/generated/WaitReason";
 import { INTAKE_REASONS, receivedDetail, receivedOutcome } from "./intakeLabels";
+import { ackOutcome, MLLP_PROBLEMS, sentText, socketText } from "./mllpLabels";
 
 export interface Labelled {
   label: string;
@@ -88,9 +89,14 @@ export function connectionDescription({
     return `Reads HL7 order messages from ${partner}'s ${where} every ${intake.checkEverySeconds} seconds.`;
   }
   const { file, when } = WRITES[messageType];
-  return protocol === "sftp"
-    ? `Uploads ${file} to ${partner}'s SFTP server when ${when}.`
-    : `Writes ${file} to ${partner}'s folder when ${when}.`;
+  switch (protocol) {
+    case "sftp":
+      return `Uploads ${file} to ${partner}'s SFTP server when ${when}.`;
+    case "mllp_connect":
+      return `Sends ${file} to ${partner}'s interface over MLLP when ${when}.`;
+    case "folder":
+      return `Writes ${file} to ${partner}'s folder when ${when}.`;
+  }
 }
 
 /** The message with its format, such as "Billing JSON (bil-handoff-v2)". */
@@ -118,10 +124,25 @@ export const FILE_NAMES: Record<PartnerMessageType, { pattern: string; hint: str
   },
 };
 
-export const PROTOCOLS: Record<PartnerProtocol, string> = { folder: "Folder", sftp: "SFTP" };
+export const PROTOCOLS: Record<PartnerProtocol, string> = {
+  folder: "Folder",
+  sftp: "SFTP",
+  mllp_connect: "MLLP – LIS connects",
+};
 
-/** Where a connection writes, as the Connections table shows it: a folder, or `host:folder`. */
+/** How a message that left shows in Logs: what each transport can say. */
+const LEFT_AS: Record<PartnerProtocol, string> = {
+  folder: "Written",
+  sftp: "Uploaded",
+  mllp_connect: "Sent",
+};
+
+/**
+ * Where a connection writes, as the Connections table shows it: a folder, `host:folder`, or
+ * the MLLP partner's `address:port`.
+ */
 export function destinationText({ folder, settings }: PartnerConnection): string {
+  if (settings.mllp) return socketText(settings.mllp);
   const sftp = settings.sftp;
   if (sftp === null) return folder;
   const port = sftp.port === 22 ? "" : `:${sftp.port}`;
@@ -202,7 +223,7 @@ const PROBLEMS: Record<string, string> = {
 };
 
 export const problemText = (code: string) =>
-  PROBLEMS[code] ?? INTAKE_REASONS[code] ?? code.replaceAll("_", " ");
+  PROBLEMS[code] ?? MLLP_PROBLEMS[code] ?? INTAKE_REASONS[code] ?? code.replaceAll("_", " ");
 
 /** The line after Test connection, as in mockup 6. */
 export function sftpTestText({ problem, presentedFingerprint }: FolderTestResult): string {
@@ -229,14 +250,11 @@ const RESOLUTIONS: Record<UnroutedResolution, string> = {
   dismissed: "Dismissed",
 };
 
-/** Did it leave: what the folder or SFTP server can prove. */
+/** Did it leave: what the folder, SFTP server or MLLP connection can prove. */
 export function transportOf(row: PartnerMessageRow): Labelled {
   switch (row.transport) {
     case "written":
-      return {
-        label: row.connection?.protocol === "sftp" ? "Uploaded" : "Written",
-        tone: "neutral",
-      };
+      return { label: LEFT_AS[row.connection?.protocol ?? "folder"], tone: "neutral" };
     case "failed":
       return { label: "Failed", tone: "danger" };
     case "not_sent":
@@ -246,9 +264,14 @@ export function transportOf(row: PartnerMessageRow): Labelled {
   }
 }
 
-/** Did the partner accept it (a folder never says), or what a received message became. */
+/**
+ * Did the partner accept it (an MLLP partner says, a folder never does), or what a received
+ * message became.
+ */
 export function applicationOf(row: PartnerMessageRow): Labelled | null {
   if (row.received !== null) return receivedOutcome(row.received, row.errorCode);
+  const ack = ackOutcome(row);
+  if (ack) return ack;
   return row.outcomeUnknown ? { label: "Outcome unknown", tone: "warning" } : null;
 }
 
@@ -291,15 +314,26 @@ function stateText(row: PartnerMessageRow, formatTime: (at: string) => string): 
       ? "No connection rule matched; waiting in Unrouted messages"
       : RESOLUTIONS[row.resolution];
   }
-  if (row.writtenPath !== null) return `Written as ${row.writtenPath}`;
+  if (row.writtenPath !== null) {
+    return row.connection?.protocol === "mllp_connect"
+      ? sentText(row)
+      : `Written as ${row.writtenPath}`;
+  }
+  return attemptsText(row, formatTime) ?? (row.waiting === null ? "" : WAITING[row.waiting]);
+}
+
+/** A message whose attempts failed: given up, or when it is tried next; `null` before any. */
+function attemptsText(row: PartnerMessageRow, formatTime: (at: string) => string): string | null {
   const problem = row.errorCode === null ? "" : problemText(row.errorCode);
   if (row.givenUp) {
-    return `${problem}; not written after ${row.attempts} attempt${row.attempts === 1 ? "" : "s"}`;
+    const outcome =
+      row.connection?.protocol === "mllp_connect" ? "not acknowledged" : "not written";
+    return `${problem}; ${outcome} after ${row.attempts} attempt${row.attempts === 1 ? "" : "s"}`;
   }
   if (row.attempts > 0 && row.nextAttemptAt !== null) {
     return `${problem}; attempt ${row.attempts + 1} of 5 at ${formatTime(row.nextAttemptAt)}`;
   }
-  return row.waiting === null ? "" : WAITING[row.waiting];
+  return null;
 }
 
 /** One line on why the row stands where it does. */

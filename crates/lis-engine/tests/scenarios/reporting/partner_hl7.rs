@@ -29,6 +29,7 @@ fn settings() -> PartnerConnectionSettings {
         file_name_pattern: "{accession}_r{revision}.hl7".to_owned(),
         sftp: None,
         intake: None,
+        mllp: None,
     }
 }
 
@@ -45,7 +46,7 @@ async fn mappings(hl7: &Pdfs, staff: Staff) -> PartnerMappings {
 }
 
 /// The administrator drafts the partner's code for every held test and analyte.
-async fn draft_held(hl7: &Pdfs) {
+pub(super) async fn draft_held(hl7: &Pdfs) {
     let held = mappings(hl7, Staff::Desk(Role::Admin)).await;
     assert!(!held.rows.is_empty());
     assert!(
@@ -75,7 +76,7 @@ async fn draft_held(hl7: &Pdfs) {
 }
 
 /// The drafter may not approve under the default policy; a second administrator does.
-async fn approve(hl7: &Pdfs) {
+pub(super) async fn approve(hl7: &Pdfs) {
     let current = mappings(hl7, Staff::Desk(Role::Admin)).await;
     assert!(current.rows.iter().all(|row| row.draft.is_some()));
     let revision = hl7

@@ -62,8 +62,12 @@ export function ConnectionsPage() {
           tone="danger"
           value={loaded ? all.filter((row) => row.status === "error").length : null}
         />
-        {/* A folder never answers, so folder connections never wait for an acknowledgement. */}
-        <Tile label="Waiting for acknowledgement" tone="warning" value={loaded ? 0 : null} />
+        {/* Only MLLP partners answer; a folder or SFTP server never does. */}
+        <Tile
+          label="Waiting for acknowledgement"
+          tone="warning"
+          value={loaded ? all.reduce((sum, row) => sum + row.awaitingAck, 0) : null}
+        />
         <Tile label="Unrouted messages" tone="warning" value={unrouted.data?.length ?? null} />
       </div>
       <Tabs

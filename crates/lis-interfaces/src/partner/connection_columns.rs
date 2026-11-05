@@ -12,13 +12,14 @@ use super::repo::ConnectionRow;
 const COLUMNS: &str = "id, name, partner, message_type, protocol, folder, folder_set_by, rules, \
      schedule, schedule_minutes, schedule_time, file_name_pattern, active, revision, sftp_host, \
      sftp_port, sftp_username, sftp_auth, sftp_fingerprint, sftp_password, destination, intake, \
-     processed_folder, failed_folder";
+     processed_folder, failed_folder, mllp";
 
-/// The row, with its rules and intake settings still as JSON.
+/// The row, with its rules, intake and MLLP settings still as JSON.
 struct Stored {
     row: ConnectionRow,
     rules: String,
     intake: Option<String>,
+    mllp: Option<String>,
 }
 
 fn connection_row(row: &Row<'_>) -> rusqlite::Result<Stored> {
@@ -58,6 +59,7 @@ fn connection_row(row: &Row<'_>) -> rusqlite::Result<Stored> {
                 file_name_pattern: row.get(11)?,
                 sftp,
                 intake: None,
+                mllp: None,
             },
             folder,
             moved_to,
@@ -69,6 +71,7 @@ fn connection_row(row: &Row<'_>) -> rusqlite::Result<Stored> {
         },
         rules: row.get(7)?,
         intake: row.get(21)?,
+        mllp: row.get(24)?,
     })
 }
 
@@ -79,8 +82,10 @@ fn decoded(stored: Stored) -> Result<ConnectionRow, PartnerError> {
         mut row,
         rules,
         intake,
+        mllp,
     } = stored;
     row.settings.rules = serde_json::from_str(&rules)?;
+    row.settings.mllp = mllp.as_deref().map(serde_json::from_str).transpose()?;
     if let Some(intake) = intake {
         let intake: IntakeSettings = serde_json::from_str(&intake)?;
         let remote = |folder: fn(&MovedTo) -> &String| {
@@ -154,7 +159,7 @@ pub(crate) fn insert_connection(
         &format!(
             "INSERT INTO ifc_partner_connections ({COLUMNS}) VALUES (?1, ?2, ?3, ?4, ?5, ?6, \
              ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, \
-             ?24)"
+             ?24, ?25)"
         ),
         row,
     )
@@ -172,12 +177,12 @@ pub(crate) fn update_connection(
          schedule_minutes = ?10, schedule_time = ?11, file_name_pattern = ?12, active = ?13, \
          revision = ?14, sftp_host = ?15, sftp_port = ?16, sftp_username = ?17, \
          sftp_auth = ?18, sftp_fingerprint = ?19, sftp_password = ?20, destination = ?21, \
-         intake = ?22, processed_folder = ?23, failed_folder = ?24 WHERE id = ?1",
+         intake = ?22, processed_folder = ?23, failed_folder = ?24, mllp = ?25 WHERE id = ?1",
         row,
     )
 }
 
-/// Runs `sql` with the row's values as `?1`–`?24`, in [`COLUMNS`] order.
+/// Runs `sql` with the row's values as `?1`–`?25`, in [`COLUMNS`] order.
 fn write_connection(conn: &Connection, sql: &str, row: &ConnectionRow) -> Result<(), PartnerError> {
     let (schedule, minutes, time) = schedule_columns(&row.settings.schedule);
     let (host, port, username, auth, fingerprint) = sftp_columns(&row.settings);
@@ -208,7 +213,12 @@ fn write_connection(conn: &Connection, sql: &str, row: &ConnectionRow) -> Result
             row.destination,
             intake_column(&row.settings)?,
             moved_to.map(|moved_to| &moved_to.processed),
-            moved_to.map(|moved_to| &moved_to.failed)
+            moved_to.map(|moved_to| &moved_to.failed),
+            row.settings
+                .mllp
+                .as_ref()
+                .map(serde_json::to_string)
+                .transpose()?
         ],
     )?;
     Ok(())

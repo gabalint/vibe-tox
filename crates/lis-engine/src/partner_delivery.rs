@@ -13,6 +13,7 @@
 mod folder_write;
 pub(crate) mod hl7_message;
 pub(crate) mod hl7_payload;
+pub(crate) mod mllp;
 pub(crate) mod sftp;
 
 use std::path::Path;
@@ -156,7 +157,7 @@ impl PartnerDeliveries {
         };
         let delivery_id = delivery.delivery_id;
         let failure = match &outcome {
-            AttemptOutcome::Written { .. } => None,
+            AttemptOutcome::Written { .. } | AttemptOutcome::Acknowledged { .. } => None,
             AttemptOutcome::Failed { error_code } => Some(*error_code),
         };
         let recorded = db.write_blocking(
@@ -185,7 +186,8 @@ fn stored(db: &Database, digest: &str) -> Option<Vec<u8>> {
 }
 
 /// Writes `bytes` as `name` into the destination's folder or onto its SFTP server, with the
-/// installation `key` for the sign-in. Blocking: call it off the async runtime.
+/// installation `key` for the sign-in, or sends them to its MLLP partner, unnamed.
+/// Blocking: call it off the async runtime.
 pub(crate) fn send(
     db: &Database,
     key: Option<&DataKey>,
@@ -193,6 +195,21 @@ pub(crate) fn send(
     name: &str,
     bytes: &[u8],
 ) -> AttemptOutcome {
+    if let Some(partner) = &destination.mllp {
+        let sent = tokio::runtime::Handle::current().block_on(mllp::send(partner, bytes));
+        return match sent {
+            Ok(ack) => AttemptOutcome::Acknowledged {
+                to: partner
+                    .socket()
+                    .map_or_else(String::new, |socket| socket.to_string()),
+                code: ack.code,
+                text: ack.text,
+            },
+            Err(problem) => AttemptOutcome::Failed {
+                error_code: problem.code(),
+            },
+        };
+    }
     let Some(server) = &destination.sftp else {
         return written(write_file(Path::new(&destination.folder), name, bytes));
     };
@@ -213,24 +230,49 @@ pub(crate) fn send(
     }
 }
 
+/// Why a destination test failed.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum ProbeProblem {
+    Sftp(sftp::SftpProblem),
+    Mllp(mllp::MllpProblem),
+}
+
+impl ProbeProblem {
+    /// The displayed code.
+    pub(crate) const fn code(&self) -> &'static str {
+        match self {
+            Self::Sftp(problem) => problem.code(),
+            Self::Mllp(problem) => problem.code(),
+        }
+    }
+}
+
 /// Whether the LIS can create, write and remove a file at the destination; for incoming
-/// orders, read the input folder and write in the Processed and Failed folders. Blocking.
+/// orders, read the input folder and write in the Processed and Failed folders; over MLLP,
+/// connect to the partner. Blocking.
 pub(crate) fn probe_destination(
     db: &Database,
     key: Option<&DataKey>,
     destination: &Destination,
-) -> Result<(), sftp::SftpProblem> {
+) -> Result<(), ProbeProblem> {
+    if let Some(partner) = &destination.mllp {
+        return tokio::runtime::Handle::current()
+            .block_on(mllp::probe(partner))
+            .map_err(ProbeProblem::Mllp);
+    }
     let input = Path::new(&destination.folder);
     let Some(server) = &destination.sftp else {
         return match &destination.moved_to {
             Some(moved_to) => probe_intake(input, moved_to),
             None => probe(input),
         }
-        .map_err(sftp::SftpProblem::Write);
+        .map_err(|problem| ProbeProblem::Sftp(sftp::SftpProblem::Write(problem)));
     };
-    let credential =
-        sftp::credential(db, key, server.auth, destination.sealed_password.as_deref())?;
-    sftp::probe_blocking(server, &credential, destination.moved_to.as_ref())
+    sftp::credential(db, key, server.auth, destination.sealed_password.as_deref())
+        .and_then(|credential| {
+            sftp::probe_blocking(server, &credential, destination.moved_to.as_ref())
+        })
+        .map_err(ProbeProblem::Sftp)
 }
 
 /// The attempt outcome of a write.

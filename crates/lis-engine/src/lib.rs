@@ -258,7 +258,7 @@ mod partner_intake;
 mod poller;
 pub use commands::partner::{
     ChosenPartnerFolder, CreatePartnerConnectionInput, ExportedMessageLog, FolderTestResult,
-    PartnerConnectionInput, TestPartnerFolderInput, TestPartnerSftpInput,
+    PartnerConnectionInput, TestPartnerFolderInput, TestPartnerMllpInput, TestPartnerSftpInput,
     UpdatePartnerConnectionInput,
 };
 pub use lis_interfaces::partner::{

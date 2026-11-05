@@ -5,7 +5,7 @@ use rusqlite::{Connection, OptionalExtension, params};
 
 use super::error::PartnerError;
 use super::model::{
-    DeliveryReason, DeliveryState, MessageSource, PartnerConnectionId, PartnerDeliveryId,
+    AckCode, DeliveryReason, DeliveryState, MessageSource, PartnerConnectionId, PartnerDeliveryId,
     PartnerMessageId, PartnerMessageType, RoutingFacts, UnroutedResolution,
 };
 
@@ -234,6 +234,20 @@ pub(crate) fn set_written(
          written_at = ?3, last_attempt_at = ?3, last_error_code = NULL, next_attempt_at = NULL \
          WHERE id = ?1",
         params![id, path, now],
+    )?;
+    Ok(())
+}
+
+/// The partner's acknowledgement of a delivery sent over MLLP, and its reason.
+pub(crate) fn set_acknowledged(
+    conn: &Connection,
+    id: PartnerDeliveryId,
+    code: AckCode,
+    text: Option<&str>,
+) -> Result<(), PartnerError> {
+    conn.execute(
+        "UPDATE ifc_partner_deliveries SET ack_code = ?2, ack_text = ?3 WHERE id = ?1",
+        params![id, code, text],
     )?;
     Ok(())
 }

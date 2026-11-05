@@ -150,6 +150,7 @@ pub(crate) fn handler<R: Runtime>() -> impl Fn(Invoke<R>) -> bool + Send + Sync 
         partner::choose_partner_folder,
         partner::test_partner_folder,
         partner::test_partner_sftp,
+        partner::test_partner_mllp,
         partner::get_lis_sftp_key,
         partner::create_partner_connection,
         partner::update_partner_connection,

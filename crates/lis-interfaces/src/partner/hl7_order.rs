@@ -5,6 +5,8 @@
 //! It claims no profile conformance; a partner's contract and acceptance tests decide that
 //! (REQ-INT-001).
 
+use super::hl7_read::{Reader, Segment, find, message_text, segments, separators};
+
 /// The message types read.
 const ACCEPTED: [&str; 2] = ["OML^O21", "ORM^O01"];
 
@@ -89,39 +91,12 @@ pub struct OrderPatient {
     pub sex: Option<String>,
 }
 
-/// The separators of one message.
-#[derive(Debug, Clone, Copy)]
-struct Separators {
-    field: char,
-    component: char,
-    repetition: char,
-    escape: char,
-    subcomponent: char,
-}
-
-/// One segment's fields, numbered as HL7 numbers them (MSH-1 is the field separator).
-struct Segment<'a> {
-    name: &'a str,
-    fields: Vec<&'a str>,
-}
-
-impl Segment<'_> {
-    fn field(&self, number: usize) -> &str {
-        self.fields.get(number).copied().unwrap_or("")
-    }
-}
-
 /// Reads one OML^O21 or ORM^O01 message.
 pub fn read_order_message(bytes: &[u8]) -> Result<OrderMessage, ParseProblem> {
-    let text = std::str::from_utf8(bytes).map_err(|_| ParseProblem::NotText)?;
     // A file may still carry MLLP framing or a byte order mark.
-    let text = text.trim_matches(|c| c == '\u{b}' || c == '\u{1c}' || c == '\u{feff}');
-    let separators = separators(text)?;
-    let segments: Vec<Segment<'_>> = text
-        .split(['\r', '\n'])
-        .filter(|line| !line.trim().is_empty())
-        .map(|line| segment(line, separators))
-        .collect();
+    let text = message_text(bytes).ok_or(ParseProblem::NotText)?;
+    let separators = separators(text).ok_or(ParseProblem::NotHl7)?;
+    let segments = segments(text, separators);
     let msh = &segments[0];
     let reader = Reader { separators };
     let message_type = format!(
@@ -155,55 +130,6 @@ pub fn read_order_message(bytes: &[u8]) -> Result<OrderMessage, ParseProblem> {
     })
 }
 
-/// MSH-1 and MSH-2.
-fn separators(text: &str) -> Result<Separators, ParseProblem> {
-    let mut chars = text
-        .strip_prefix("MSH")
-        .ok_or(ParseProblem::NotHl7)?
-        .chars();
-    let mut next = || chars.next().ok_or(ParseProblem::NotHl7);
-    let separators = Separators {
-        field: next()?,
-        component: next()?,
-        repetition: next()?,
-        escape: next()?,
-        subcomponent: next()?,
-    };
-    let all = [
-        separators.field,
-        separators.component,
-        separators.repetition,
-        separators.escape,
-        separators.subcomponent,
-    ];
-    let distinct = all
-        .iter()
-        .enumerate()
-        .all(|(index, c)| !all[..index].contains(c));
-    if distinct && all.iter().all(|c| c.is_ascii_punctuation()) {
-        Ok(separators)
-    } else {
-        Err(ParseProblem::NotHl7)
-    }
-}
-
-fn segment(line: &str, separators: Separators) -> Segment<'_> {
-    let mut parts: Vec<&str> = line.split(separators.field).collect();
-    let name = parts.first().copied().unwrap_or("");
-    if name == "MSH" {
-        // MSH-1 is the field separator itself, so MSH-2 is the second part.
-        parts.insert(1, "");
-    }
-    Segment {
-        name,
-        fields: parts,
-    }
-}
-
-fn find<'a, 'b>(segments: &'b [Segment<'a>], name: &str) -> Option<&'b Segment<'a>> {
-    segments.iter().find(|segment| segment.name == name)
-}
-
 /// What the order segments say, together.
 struct Orders {
     placer_order: String,
@@ -213,61 +139,7 @@ struct Orders {
     collected_at: Option<String>,
 }
 
-struct Reader {
-    separators: Separators,
-}
-
 impl Reader {
-    /// The first repetition's component `number` (1-based), unescaped and trimmed.
-    fn component(&self, field: &str, number: usize) -> String {
-        let first = field.split(self.separators.repetition).next().unwrap_or("");
-        let component = first.split(self.separators.component).nth(number - 1);
-        self.text(component.unwrap_or(""))
-    }
-
-    /// The first subcomponent of `value`, unescaped and trimmed.
-    fn text(&self, value: &str) -> String {
-        let first = value
-            .split(self.separators.subcomponent)
-            .next()
-            .unwrap_or("");
-        self.unescape(first).trim().to_owned()
-    }
-
-    fn some(&self, value: &str) -> Option<String> {
-        (!value.is_empty()).then(|| value.to_owned())
-    }
-
-    /// The standard escapes; any other escape sequence is kept as written.
-    fn unescape(&self, value: &str) -> String {
-        let escape = self.separators.escape;
-        let mut out = String::with_capacity(value.len());
-        let mut rest = value;
-        while let Some(start) = rest.find(escape) {
-            out.push_str(&rest[..start]);
-            let after = &rest[start + escape.len_utf8()..];
-            let Some(end) = after.find(escape) else {
-                out.push_str(&rest[start..]);
-                return out;
-            };
-            match &after[..end] {
-                "F" => out.push(self.separators.field),
-                "S" => out.push(self.separators.component),
-                "R" => out.push(self.separators.repetition),
-                "E" => out.push(escape),
-                "T" => out.push(self.separators.subcomponent),
-                other => {
-                    out.push(escape);
-                    out.push_str(other);
-                    out.push(escape);
-                }
-            }
-            rest = &after[end + escape.len_utf8()..];
-        }
-        out.push_str(rest);
-        out
-    }
-
     fn patient(&self, pid: &Segment<'_>) -> Result<OrderPatient, ParseProblem> {
         let identifiers: Vec<_> = pid
             .field(3)
