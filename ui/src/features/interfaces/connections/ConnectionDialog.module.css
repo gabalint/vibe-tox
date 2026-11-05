@@ -72,6 +72,13 @@
   max-width: 28rem;
 }
 
+/* Incoming orders: a folder with its Choose folder… button below it. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 /* SFTP: the server fingerprint and the remote folder side by side, each with its hint. */
 .pair {
   display: grid;

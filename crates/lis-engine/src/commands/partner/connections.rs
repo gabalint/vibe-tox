@@ -2,8 +2,8 @@
 
 use lis_core::{CommandError, ErrorCode, FieldError};
 use lis_interfaces::partner::{
-    CreatePartnerConnection, PartnerConnection, PartnerConnectionDetail, PartnerConnectionId,
-    PartnerConnectionSettings, PartnerError, RecordPartnerDestinationCheck,
+    CreatePartnerConnection, MovedToChoice, PartnerConnection, PartnerConnectionDetail,
+    PartnerConnectionId, PartnerConnectionSettings, PartnerError, RecordPartnerDestinationCheck,
     SetPartnerConnectionActive, UpdatePartnerConnection,
 };
 use secrecy::{ExposeSecret, SecretString};
@@ -16,7 +16,6 @@ use super::{
     RECORD_PARTNER_DESTINATION_CHECK, SET_PARTNER_CONNECTION_ACTIVE, UPDATE_PARTNER_CONNECTION,
 };
 use crate::commands::people::{display_names, name_of};
-use crate::commands::sign_in::session_of;
 use crate::engine::Engine;
 use crate::pipeline::{Call, Failure};
 
@@ -38,6 +37,14 @@ pub struct CreatePartnerConnectionInput {
     #[serde(default)]
     #[ts(optional, type = "string")]
     pub folder_choice: Option<FolderChoiceId>,
+    /// For incoming orders over a folder: the Processed folder chosen the same way.
+    #[serde(default)]
+    #[ts(optional, type = "string")]
+    pub processed_folder_choice: Option<FolderChoiceId>,
+    /// For incoming orders over a folder: the Failed folder chosen the same way.
+    #[serde(default)]
+    #[ts(optional, type = "string")]
+    pub failed_folder_choice: Option<FolderChoiceId>,
     /// The SFTP password, for password sign-in; sealed before it is kept.
     #[serde(default)]
     #[ts(optional, type = "string")]
@@ -59,11 +66,41 @@ pub struct UpdatePartnerConnectionInput {
     #[serde(default)]
     #[ts(optional, type = "string")]
     pub folder_choice: Option<FolderChoiceId>,
+    /// A newly chosen Processed folder; absent keeps the current one.
+    #[serde(default)]
+    #[ts(optional, type = "string")]
+    pub processed_folder_choice: Option<FolderChoiceId>,
+    /// A newly chosen Failed folder; absent keeps the current one.
+    #[serde(default)]
+    #[ts(optional, type = "string")]
+    pub failed_folder_choice: Option<FolderChoiceId>,
     /// A new SFTP password; absent keeps the current one for the same server and user.
     #[serde(default)]
     #[ts(optional, type = "string")]
     pub password: Option<SecretString>,
     pub reason: String,
+}
+
+impl CreatePartnerConnectionInput {
+    /// The input, Processed and Failed folder handles.
+    fn folder_choices(&self) -> [Option<FolderChoiceId>; 3] {
+        [
+            self.folder_choice,
+            self.processed_folder_choice,
+            self.failed_folder_choice,
+        ]
+    }
+}
+
+impl UpdatePartnerConnectionInput {
+    /// The input, Processed and Failed folder handles.
+    fn folder_choices(&self) -> [Option<FolderChoiceId>; 3] {
+        [
+            self.folder_choice,
+            self.processed_folder_choice,
+            self.failed_folder_choice,
+        ]
+    }
 }
 
 impl Engine {
@@ -94,16 +131,19 @@ impl Engine {
         input: CreatePartnerConnectionInput,
     ) -> Result<PartnerConnectionDetail, CommandError> {
         self.run(&CREATE_PARTNER_CONNECTION, |call| async move {
-            self.authorize(&call).await?;
-            let folder = self.chosen_folder(&call, input.folder_choice)?;
-            let sealed_password = self.sealed_password(input.password.as_ref()).await?;
+            let folders = input.folder_choices();
+            let password = input.password.as_ref();
+            let chosen = self
+                .chosen(&call, &input.settings, folders, password)
+                .await?;
             self.write(&call, move |ctx| {
                 let id = lis_interfaces::partner::create_partner_connection(
                     ctx,
                     CreatePartnerConnection {
                         settings: input.settings,
-                        folder: folder.unwrap_or_default(),
-                        sealed_password,
+                        folder: chosen.folder.unwrap_or_default(),
+                        moved_to: chosen.moved_to,
+                        sealed_password: chosen.sealed_password,
                         active: input.active,
                     },
                 )?;
@@ -120,9 +160,11 @@ impl Engine {
         input: UpdatePartnerConnectionInput,
     ) -> Result<PartnerConnectionDetail, CommandError> {
         self.run(&UPDATE_PARTNER_CONNECTION, |call| async move {
-            self.authorize(&call).await?;
-            let folder = self.chosen_folder(&call, input.folder_choice)?;
-            let sealed_password = self.sealed_password(input.password.as_ref()).await?;
+            let folders = input.folder_choices();
+            let password = input.password.as_ref();
+            let chosen = self
+                .chosen(&call, &input.settings, folders, password)
+                .await?;
             self.write(&call, move |ctx| {
                 let id = lis_interfaces::partner::update_partner_connection(
                     ctx,
@@ -130,8 +172,9 @@ impl Engine {
                         connection_id: input.connection_id,
                         expected_revision: input.expected_revision,
                         settings: input.settings,
-                        folder,
-                        sealed_password,
+                        folder: chosen.folder,
+                        moved_to: chosen.moved_to,
+                        sealed_password: chosen.sealed_password,
                         reason: input.reason,
                     },
                 )?;
@@ -172,6 +215,24 @@ impl Engine {
         .await
     }
 
+    /// Authorizes a create or update, checks an incoming connection's client, and resolves
+    /// the chosen input, Processed and Failed folders and the password.
+    async fn chosen(
+        &self,
+        call: &Call,
+        settings: &PartnerConnectionSettings,
+        [folder, processed, failed]: [Option<FolderChoiceId>; 3],
+        password: Option<&SecretString>,
+    ) -> Result<Chosen, Failure> {
+        self.authorize(call).await?;
+        self.ordering_client(call, settings).await?;
+        Ok(Chosen {
+            folder: self.chosen_folder(call, folder)?,
+            moved_to: self.chosen_moved_to(call, processed, failed)?,
+            sealed_password: self.sealed_password(password).await?,
+        })
+    }
+
     /// An SFTP password sealed with the installation key; `None` without one.
     async fn sealed_password(
         &self,
@@ -191,29 +252,48 @@ impl Engine {
         .map_err(Failure::from)
     }
 
-    /// The folder behind `handle`, chosen in this session; `None` without a handle.
-    pub(super) fn chosen_folder(
+    /// An incoming connection's partner is the client its orders are for: one of the
+    /// laboratory's active clients, by code.
+    async fn ordering_client(
         &self,
         call: &Call,
-        handle: Option<FolderChoiceId>,
-    ) -> Result<Option<String>, Failure> {
-        let Some(handle) = handle else {
-            return Ok(None);
-        };
-        let (_, session) = session_of(&call.principal)?;
-        self.folder_choices
-            .get(session, handle)
-            .map(Some)
-            .ok_or_else(|| Failure::Refused {
-                code: ErrorCode::Validation,
-                message: "Choose the folder again.".to_owned(),
-                field_errors: vec![FieldError {
-                    field: "folderChoice".to_owned(),
-                    code: "expired".to_owned(),
-                    message: "Choose the folder again.".to_owned(),
-                }],
-                gate_reasons: Vec::new(),
-            })
+        settings: &PartnerConnectionSettings,
+    ) -> Result<(), Failure> {
+        if !settings.message_type.incoming() {
+            return Ok(());
+        }
+        let clients = self.read(call, lis_identity::list_active_clients).await?;
+        let code = settings.partner.trim();
+        if clients.iter().any(|client| client.code == code) {
+            Ok(())
+        } else {
+            Err(refused(
+                "settings.partner",
+                "unknown_client",
+                "Choose one of the laboratory's active clients.",
+            ))
+        }
+    }
+}
+
+/// What a create or update keeps besides its settings, resolved before the write.
+struct Chosen {
+    folder: Option<String>,
+    moved_to: MovedToChoice,
+    sealed_password: Option<Vec<u8>>,
+}
+
+/// A refusal of one form field.
+pub(super) fn refused(field: &str, code: &str, message: &str) -> Failure {
+    Failure::Refused {
+        code: ErrorCode::Validation,
+        message: message.to_owned(),
+        field_errors: vec![FieldError {
+            field: field.to_owned(),
+            code: code.to_owned(),
+            message: message.to_owned(),
+        }],
+        gate_reasons: Vec::new(),
     }
 }
 

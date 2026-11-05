@@ -47,7 +47,7 @@ pub(crate) fn mappings(
     version: i64,
 ) -> Result<Vec<StoredMapping>, PartnerError> {
     conn.prepare_cached(
-        "SELECT kind, lis_id, lis_code, lis_name, partner_code, loinc, ucum_unit \
+        "SELECT kind, lis_id, lis_code, lis_name, partner_code, loinc, ucum_unit, sequence_role \
          FROM ifc_partner_mappings WHERE connection_id = ?1 AND version = ?2 \
          ORDER BY kind DESC, lis_name COLLATE NOCASE",
     )?
@@ -61,15 +61,15 @@ pub(crate) fn drafts(
     connection_id: PartnerConnectionId,
 ) -> Result<Vec<StoredDraft>, PartnerError> {
     conn.prepare_cached(
-        "SELECT kind, lis_id, lis_code, lis_name, partner_code, loinc, ucum_unit, \
+        "SELECT kind, lis_id, lis_code, lis_name, partner_code, loinc, ucum_unit, sequence_role, \
          drafted_by, drafted_at FROM ifc_partner_mapping_drafts WHERE connection_id = ?1 \
          ORDER BY kind DESC, lis_name COLLATE NOCASE",
     )?
     .query_map([connection_id], |row| {
         Ok(StoredDraft {
             mapping: stored(row)?,
-            drafted_by: row.get(7)?,
-            drafted_at: row.get(8)?,
+            drafted_by: row.get(8)?,
+            drafted_at: row.get(9)?,
         })
     })?
     .collect::<rusqlite::Result<_>>()
@@ -88,6 +88,7 @@ fn stored(row: &rusqlite::Row<'_>) -> rusqlite::Result<StoredMapping> {
                 partner_code,
                 loinc: row.get(5)?,
                 ucum_unit: row.get(6)?,
+                sequence_role: row.get(7)?,
             }),
             None => None,
         },
@@ -105,12 +106,13 @@ pub(crate) fn upsert_draft(
     let values = draft.values.as_ref();
     conn.execute(
         "INSERT INTO ifc_partner_mapping_drafts (connection_id, kind, lis_id, lis_code, \
-         lis_name, partner_code, loinc, ucum_unit, drafted_by, drafted_at) \
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) \
+         lis_name, partner_code, loinc, ucum_unit, drafted_by, drafted_at, sequence_role) \
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) \
          ON CONFLICT (connection_id, kind, lis_id) DO UPDATE SET lis_code = excluded.lis_code, \
          lis_name = excluded.lis_name, partner_code = excluded.partner_code, \
          loinc = excluded.loinc, ucum_unit = excluded.ucum_unit, \
-         drafted_by = excluded.drafted_by, drafted_at = excluded.drafted_at",
+         drafted_by = excluded.drafted_by, drafted_at = excluded.drafted_at, \
+         sequence_role = excluded.sequence_role",
         params![
             connection_id,
             draft.kind,
@@ -121,7 +123,8 @@ pub(crate) fn upsert_draft(
             values.and_then(|values| values.loinc.as_ref()),
             values.and_then(|values| values.ucum_unit.as_ref()),
             by,
-            at
+            at,
+            values.and_then(|values| values.sequence_role.as_ref())
         ],
     )?;
     Ok(())
@@ -163,8 +166,8 @@ pub(crate) fn insert_version(
         };
         conn.execute(
             "INSERT INTO ifc_partner_mappings (connection_id, version, kind, lis_id, lis_code, \
-             lis_name, partner_code, loinc, ucum_unit) \
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+             lis_name, partner_code, loinc, ucum_unit, sequence_role) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             params![
                 connection_id,
                 version,
@@ -174,7 +177,8 @@ pub(crate) fn insert_version(
                 mapping.lis_name,
                 values.partner_code,
                 values.loinc,
-                values.ucum_unit
+                values.ucum_unit,
+                values.sequence_role
             ],
         )?;
     }

@@ -4,4 +4,4 @@
  * What a connection carries. The type fixes the direction and when a
  * message is made.
  */
-export type PartnerMessageType = "billing_json" | "report_pdf" | "hl7_oru";
+export type PartnerMessageType = "billing_json" | "report_pdf" | "hl7_oru" | "hl7_orders";

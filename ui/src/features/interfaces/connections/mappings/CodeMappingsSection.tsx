@@ -21,7 +21,7 @@ import {
   LIST_MAPPINGS,
   MAPPING_QUERIES,
 } from "../../contract";
-import type { Labelled } from "../../labels";
+import { isIncoming, type Labelled } from "../../labels";
 import styles from "../ConnectionPage.module.css";
 import { ApproveMappingsDialog } from "./ApproveMappingsDialog";
 import { MappingDialog } from "./MappingDialog";
@@ -46,19 +46,18 @@ function statusOf(mapping: MappingRow, version: number | null): Labelled {
   return { label: "Not mapped – held", tone: "warning" };
 }
 
+const ROLES: Record<string, string> = { first_line: "First line", confirmation: "Confirmation" };
+
 /** The table; rows open only where they can be changed, so only there the name looks like a link. */
-function columns(version: number | null, opens: boolean): readonly DataGridColumn<MappingRow>[] {
+function columns(
+  version: number | null,
+  opens: boolean,
+  orders: boolean,
+): readonly DataGridColumn<MappingRow>[] {
   const code = (text: string | undefined | null) => (
     <span className={styles.code}>{text || "—"}</span>
   );
-  return [
-    {
-      id: "lis",
-      header: "LIS test / analyte",
-      cell: (mapping) => mapping.lisName,
-      identifier: opens,
-    },
-    { id: "partner", header: "Partner code", cell: (mapping) => code(shown(mapping)?.partnerCode) },
+  const results: DataGridColumn<MappingRow>[] = [
     {
       id: "loinc",
       header: "LOINC",
@@ -69,6 +68,21 @@ function columns(version: number | null, opens: boolean): readonly DataGridColum
       },
     },
     { id: "unit", header: "Unit (UCUM)", cell: (mapping) => code(shown(mapping)?.ucumUnit) },
+  ];
+  const role: DataGridColumn<MappingRow> = {
+    id: "role",
+    header: "Sequence role",
+    cell: (mapping) => ROLES[shown(mapping)?.sequenceRole ?? ""] ?? "—",
+  };
+  return [
+    {
+      id: "lis",
+      header: orders ? "LIS test" : "LIS test / analyte",
+      cell: (mapping) => mapping.lisName,
+      identifier: opens,
+    },
+    { id: "partner", header: "Partner code", cell: (mapping) => code(shown(mapping)?.partnerCode) },
+    ...(orders ? [role] : results),
     {
       id: "status",
       header: "Status",
@@ -123,8 +137,12 @@ export function CodeMappingsSection({
   const rowError = draft.error ?? discard.error;
   const data = mappings.data;
   const canApprove = data?.allowedActions.includes(APPROVE_MAPPINGS) ?? false;
+  const orders = isIncoming(connection.settings.messageType);
+  const partner = connection.settings.partner;
   return (
-    <Section title={`Code mappings (LIS → ${connection.settings.partner})`}>
+    <Section
+      title={orders ? `Code mappings (${partner} → LIS)` : `Code mappings (LIS → ${partner})`}
+    >
       {!readOnly && (
         <div className={row.row}>
           <Button onPress={() => setEditing("new")}>Add mapping</Button>
@@ -143,14 +161,15 @@ export function CodeMappingsSection({
         empty={{
           when: (loaded) => loaded.rows.length === 0,
           title: "No code mappings",
-          description:
-            "Add the partner's code for each LIS test and analyte this connection sends.",
+          description: orders
+            ? "Add the LIS test and its sequence role for each order code the clinic sends."
+            : "Add the partner's code for each LIS test and analyte this connection sends.",
         }}
       >
         {(loaded) => (
           <DataGrid
             label="Code mappings"
-            columns={columns(loaded.version, !readOnly)}
+            columns={columns(loaded.version, !readOnly, orders)}
             rows={loaded.rows}
             getRowId={(mapping) => `${mapping.kind}:${mapping.lisId}`}
             {...(!readOnly && { onRowAction: setEditing, rowActions })}
@@ -158,12 +177,14 @@ export function CodeMappingsSection({
         )}
       </QueryContent>
       <p className={styles.hint}>
-        Unmapped results are held, never sent with a guessed code. A mapping change applies to new
-        messages only.
+        {orders
+          ? "An order with an unmapped code is rejected and logged, never guessed. A mapping change applies to new messages only."
+          : "Unmapped results are held, never sent with a guessed code. A mapping change applies to new messages only."}
       </p>
       {editing !== null && (
         <MappingDialog
           connectionId={connection.id}
+          orders={orders}
           row={editing === "new" ? null : editing}
           onClose={() => setEditing(null)}
         />

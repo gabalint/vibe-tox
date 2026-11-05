@@ -204,10 +204,12 @@ fn csv(rows: &[PartnerMessageRow]) -> String {
             MessageSource::ReportRevision => format!("{label} r{number}"),
             MessageSource::ReportWithdrawal => format!("{label} withdrawal r{number}"),
             MessageSource::Test => "test".to_owned(),
+            MessageSource::Order => format!("order {label}"),
         };
+        let direction = if row.received.is_some() { "in" } else { "out" };
         let cells = [
             row.at.to_string(),
-            "out".to_owned(),
+            direction.to_owned(),
             row.connection
                 .as_ref()
                 .map(|connection| connection.name.clone())

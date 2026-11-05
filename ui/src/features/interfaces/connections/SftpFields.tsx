@@ -11,9 +11,11 @@ import { useCommandMutation } from "@/lib/commands";
 import { textFieldProps } from "@/lib/form";
 import row from "../actionRow.module.css";
 import { GET_SFTP_KEY, TEST_SFTP } from "../contract";
-import { sftpTestText } from "../labels";
+import { isIncoming, sftpTestText } from "../labels";
 import styles from "./ConnectionDialog.module.css";
 import { type ConnectionValues, toSftp, typedPassword } from "./connectionForm";
+import { CheckEveryInput } from "./IntakeSections";
+import { toIntake } from "./intakeForm";
 
 const SIGN_IN_OPTIONS = [
   { id: "key", label: "SSH key (recommended)" },
@@ -54,11 +56,14 @@ function PasswordInput({ hasPassword }: { hasPassword: boolean }) {
  * Section 3 for SFTP, as in mockup 6: the server, port, username and sign-in, the server's
  * fingerprint and the remote folder; Copy LIS public key (made on first use, for the partner's
  * IT to allow for the username) and Test connection, which connects, checks the fingerprint
- * and writes and removes a test file. Nothing is saved by either.
+ * and writes and removes a test file. Nothing is saved by either. For incoming orders the
+ * remote folder is the one read, and the server's Processed and Failed folders and how often
+ * it is read follow; the test then lists the input folder and writes in the other two.
  */
 export function SftpFields({ connection }: { connection: PartnerConnection | null }) {
   const { control, getValues } = useFormContext<ConnectionValues>();
   const auth = useWatch({ control, name: "sftp.auth" });
+  const incoming = isIncoming(useWatch({ control, name: "messageType" }));
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
   const getKey = useCommandMutation<string>(GET_SFTP_KEY, { invalidates: [] });
   const test = useCommandMutation<FolderTestResult, { input: TestPartnerSftpInput }>(TEST_SFTP, {
@@ -86,6 +91,7 @@ export function SftpFields({ connection }: { connection: PartnerConnection | nul
       server: toSftp(values),
       ...(password ? { password } : {}),
       ...(connection ? { connectionId: connection.id } : {}),
+      ...(incoming ? { intake: toIntake(getValues("intake"), "sftp") } : {}),
     };
     test.mutate(
       { input },
@@ -112,11 +118,32 @@ export function SftpFields({ connection }: { connection: PartnerConnection | nul
         />
         <TextInput
           name="sftp.remoteFolder"
-          label="Remote folder"
-          description="Files are uploaded as .tmp and renamed when complete."
+          label={incoming ? "Remote input folder" : "Remote folder"}
+          description={
+            incoming
+              ? "The folder the LIS reads new files from."
+              : "Files are uploaded as .tmp and renamed when complete."
+          }
           isRequired
         />
       </div>
+      {incoming && (
+        <div className={styles.row}>
+          <TextInput
+            name="intake.remoteProcessedFolder"
+            label="Remote processed folder"
+            description="Read files move here, in year and month subfolders."
+            isRequired
+          />
+          <TextInput
+            name="intake.remoteFailedFolder"
+            label="Remote failed folder"
+            description="Files with errors move here; the reason is logged."
+            isRequired
+          />
+          <CheckEveryInput />
+        </div>
+      )}
       {auth === "password" && (
         <div className={styles.half}>
           <PasswordInput hasPassword={connection?.hasPassword ?? false} />

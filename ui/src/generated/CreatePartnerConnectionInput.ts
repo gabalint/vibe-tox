@@ -10,6 +10,14 @@ export type CreatePartnerConnectionInput = { settings: PartnerConnectionSettings
  */
 folderChoice?: string, 
 /**
+ * For incoming orders over a folder: the Processed folder chosen the same way.
+ */
+processedFolderChoice?: string, 
+/**
+ * For incoming orders over a folder: the Failed folder chosen the same way.
+ */
+failedFolderChoice?: string, 
+/**
  * The SFTP password, for password sign-in; sealed before it is kept.
  */
 password?: string, 

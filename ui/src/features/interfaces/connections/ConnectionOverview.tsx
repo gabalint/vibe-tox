@@ -36,29 +36,57 @@ function Card({ title, items }: { title: string; items: [string, ReactNode][] })
  * Where it writes, as in the mockup: the protocol and folder, or for SFTP the protocol with
  * the server, the remote folder and the sign-in with the server's fingerprint.
  */
+const code = (key: string, text: string) => (
+  <span key={key} className={styles.code}>
+    {text}
+  </span>
+);
+
 function destinationItems({ folder, settings }: PartnerConnection): [string, ReactNode][] {
   const { sftp } = settings;
-  const code = (key: string, text: string) => (
-    <span key={key} className={styles.code}>
-      {text}
-    </span>
-  );
+  const input = settings.intake ? "Input folder" : "Folder";
   if (sftp === null) {
     return [
       ["Protocol", PROTOCOLS[settings.protocol]],
-      ["Folder", code("folder", folder)],
+      [input, code("folder", folder)],
     ];
   }
   const signIn = sftp.auth === "key" ? "SSH key" : "Password";
   return [
     ["Protocol", `SFTP – ${sftp.host}:${sftp.port}`],
-    ["Remote folder", code("remote-folder", sftp.remoteFolder)],
+    [`Remote ${input.toLowerCase()}`, code("remote-folder", sftp.remoteFolder)],
     [
       "Sign-in",
       `${signIn} as ${sftp.username} · fingerprint ${shortFingerprint(sftp.fingerprint)}`,
     ],
   ];
 }
+
+/** When and what: sending's schedule, file name and rules, or reading's folders and rules. */
+function workingItems(connection: PartnerConnection): [string, ReactNode][] {
+  const { settings } = connection;
+  const { intake } = settings;
+  if (intake) {
+    return [
+      ["Processed folder", code("processed", connection.processedFolder ?? "")],
+      ["Failed folder", code("failed", connection.failedFolder ?? "")],
+      ["Check every", `${intake.checkEverySeconds} seconds`],
+      ["Accept messages from", `MSH-4 = ${intake.acceptFrom}`],
+      ["Unknown patient", UNKNOWN_PATIENT_TEXT[intake.unknownPatient]],
+    ];
+  }
+  const type = settings.messageType;
+  return [
+    ["Send when", `${SEND_WHEN[type]} · ${scheduleText(settings.schedule).toLowerCase()}`],
+    ["File name", code("file-name", settings.fileNamePattern)],
+    ["Rules", rulesText(connection)],
+  ];
+}
+
+const UNKNOWN_PATIENT_TEXT = {
+  hold: "Held until the patient is registered",
+  reject: "Moved to Failed and logged",
+} as const;
 
 const rulesText = (connection: PartnerConnection) =>
   connection.settings.rules.length === 0
@@ -91,14 +119,7 @@ export function ConnectionOverview({ connection, lastReason }: OverviewProps) {
           ["Partner", settings.partner],
           ["Message", messageText(type)],
           ...destinationItems(connection),
-          ["Send when", `${SEND_WHEN[type]} · ${scheduleText(settings.schedule).toLowerCase()}`],
-          [
-            "File name",
-            <span key="file-name" className={styles.code}>
-              {settings.fileNamePattern}
-            </span>,
-          ],
-          ["Rules", rulesText(connection)],
+          ...workingItems(connection),
         ]}
       />
       <Card
@@ -124,7 +145,7 @@ export function ConnectionOverview({ connection, lastReason }: OverviewProps) {
           ],
         ]}
       />
-      {type === "hl7_oru" && (
+      {(type === "hl7_oru" || type === "hl7_orders") && (
         <div className={styles.wide}>
           <CodeMappingsSection connection={connection} readOnly />
         </div>
@@ -135,7 +156,20 @@ export function ConnectionOverview({ connection, lastReason }: OverviewProps) {
 
 /** The routing rules, one per line, and how they combine. */
 export function ConnectionRules({ connection }: { connection: PartnerConnection }) {
-  const { rules } = connection.settings;
+  const { rules, intake } = connection.settings;
+  if (intake) {
+    return (
+      <Card
+        title="What to accept"
+        items={[
+          ["Accept messages from", `MSH-4 = ${intake.acceptFrom}`],
+          ["Unknown patient", UNKNOWN_PATIENT_TEXT[intake.unknownPatient]],
+          ["Unknown test code", "Moved to Failed and logged"],
+          ["Replays", "An exact replay is ignored; the same ID with changed content is held"],
+        ]}
+      />
+    );
+  }
   return (
     <Card
       title="Routing rules"
@@ -156,7 +190,7 @@ export function ConnectionRules({ connection }: { connection: PartnerConnection 
  * Billing JSON files carry the LIS's own codes, so they have no mapping to a partner's codes.
  */
 export function CodeMappings({ connection }: { connection: PartnerConnection }) {
-  if (connection.settings.messageType === "hl7_oru") {
+  if (["hl7_oru", "hl7_orders"].includes(connection.settings.messageType)) {
     return <CodeMappingsSection connection={connection} />;
   }
   return (

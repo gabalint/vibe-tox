@@ -26,9 +26,9 @@ import { MessagesGrid } from "./MessagesSection";
 type Row = PartnerMessageRow;
 
 /**
- * The tabs of the mockup. A folder never answers, so nothing written to one is rejected or
- * awaits an acknowledgement, and duplicates are received messages: those three tabs stay
- * empty until protocols that answer, and incoming connections, exist.
+ * The tabs of the mockup. A folder or SFTP server never answers, so nothing sent there awaits
+ * an acknowledgement; Rejected and Duplicates hold received orders the LIS refused or had read
+ * before.
  */
 const TABS = [
   { id: "all", label: "All" },
@@ -43,10 +43,10 @@ type TabId = (typeof TABS)[number]["id"];
 const IN_TAB: Record<TabId, (row: Row) => boolean> = {
   all: () => true,
   failed: (row) => row.transport === "failed",
-  rejected: () => false,
+  rejected: (row) => row.received === "rejected",
   awaiting_ack: () => false,
   outcome_unknown: (row) => row.outcomeUnknown,
-  duplicates: () => false,
+  duplicates: (row) => row.received === "duplicate",
 };
 
 const PERIODS = [
@@ -55,7 +55,6 @@ const PERIODS = [
   { id: "30", label: "Last 30 days" },
   { id: "all", label: "All time" },
 ];
-// Every message of this release goes out of the LIS.
 const DIRECTIONS = [
   { id: "both", label: "In and out" },
   { id: "out", label: "Out" },
@@ -66,7 +65,12 @@ const OUTCOMES = [
   { id: "written", label: "Written" },
   { id: "failed", label: "Failed" },
   { id: "not_sent", label: "Not sent" },
+  { id: "received", label: "Received" },
 ];
+
+/** Whether the row goes the chosen way: received orders come in, everything else goes out. */
+const inDirection = (row: Row, direction: string) =>
+  direction === "both" || (direction === "in") === (row.received !== null);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** The engine's timestamp form: nine fractional digits. */
@@ -126,7 +130,7 @@ export function LogsPage() {
     { invalidates: [] },
   );
   const visible = (messages.data?.rows ?? []).filter(
-    (row) => direction !== "in" && (outcome === "all" || row.transport === outcome),
+    (row) => inDirection(row, direction) && (outcome === "all" || row.transport === outcome),
   );
   const shown = visible.filter(IN_TAB[tab]);
   const setParam = (key: string, value: string | null, all: string) =>

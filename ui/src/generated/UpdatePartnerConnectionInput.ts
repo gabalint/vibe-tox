@@ -10,6 +10,14 @@ export type UpdatePartnerConnectionInput = { connectionId: string, expectedRevis
  */
 folderChoice?: string, 
 /**
+ * A newly chosen Processed folder; absent keeps the current one.
+ */
+processedFolderChoice?: string, 
+/**
+ * A newly chosen Failed folder; absent keeps the current one.
+ */
+failedFolderChoice?: string, 
+/**
  * A new SFTP password; absent keeps the current one for the same server and user.
  */
 password?: string, reason: string, };

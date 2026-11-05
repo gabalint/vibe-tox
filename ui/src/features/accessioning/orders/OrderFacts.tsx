@@ -4,7 +4,7 @@ import { Timestamp } from "@/components/Timestamp";
 import type { OrderDetail } from "@/generated/OrderDetail";
 import { labelOf } from "@/lib/choices";
 import { orNotRecorded } from "../subjects";
-import { BILLING_RESPONSIBILITIES, SOURCE_KINDS } from "./labels";
+import { BILLING_RESPONSIBILITIES, RECEIVED_VIA } from "./labels";
 import { clientById, type OrderReferences, practitionerById } from "./references";
 
 interface OrderFactsProps {
@@ -30,7 +30,7 @@ export function OrderFacts({ order, references }: OrderFactsProps) {
           { label: "Clinic order number", value: placerText(order) },
           {
             label: "Received as",
-            value: `${labelOf(SOURCE_KINDS, order.sourceKind)}, document ${orNotRecorded(order.sourceDocumentRef)}`,
+            value: `${labelOf(RECEIVED_VIA, order.sourceKind)}, document ${orNotRecorded(order.sourceDocumentRef)}`,
           },
           {
             label: "Billing responsibility",

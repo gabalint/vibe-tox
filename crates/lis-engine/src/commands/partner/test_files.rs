@@ -14,21 +14,23 @@ use crate::partner_delivery::hl7_message::dtm;
 
 const NOTE: &str = "Synthetic test message from the Vibe Tox LIS. It contains no patient data.";
 
-/// The test file's bytes and extension for the connection's message type.
+/// The test file's bytes and extension for the connection's message type; `None` for an
+/// incoming type, to which the LIS sends nothing.
 pub(super) fn test_file(
     connection_id: PartnerConnectionId,
     target: &ConnectionTarget,
     laboratory: Option<&LaboratoryProfileView>,
     sent_at: UtcTimestamp,
-) -> (Vec<u8>, &'static str) {
-    match target.message_type {
+) -> Option<(Vec<u8>, &'static str)> {
+    Some(match target.message_type {
         PartnerMessageType::BillingJson => (test_message(connection_id, sent_at), "json"),
         PartnerMessageType::ReportPdf => (test_pdf(connection_id, sent_at), "pdf"),
         PartnerMessageType::Hl7Oru => (
             test_oru(connection_id, &target.partner, laboratory, sent_at).encode(),
             "hl7",
         ),
-    }
+        PartnerMessageType::Hl7Orders => return None,
+    })
 }
 
 /// The synthetic test file: a fixed format, the connection and the time, no patient data.

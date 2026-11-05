@@ -8,6 +8,7 @@ use lis_core::{Actor, Capability, GateReason, required_text};
 use lis_store::CommandContext;
 
 use super::error::{PartnerError, invalid};
+use super::intake_settings::moved_to;
 use super::model::{
     ConnectionChange, CreatePartnerConnection, PartnerConnectionId, PartnerConnectionSettings,
     RecordPartnerDestinationCheck, SetPartnerConnectionActive, SftpAuth, SftpSettings,
@@ -38,11 +39,13 @@ pub fn create_partner_connection(
     };
     unique_name(ctx, &settings.name, None)?;
     let sealed_password = password_for(&settings, input.sealed_password, None)?;
+    let moved_to = moved_to(&settings, input.moved_to, None)?;
     let row = ConnectionRow {
         id: PartnerConnectionId::generate(),
         destination: destination_of(&settings, &folder),
         settings,
         folder,
+        moved_to,
         folder_set_by: actor,
         sealed_password,
         active: input.active,
@@ -96,11 +99,18 @@ pub fn update_partner_connection(
         .then(|| current.sealed_password.clone())
         .flatten();
     let sealed_password = password_for(&settings, input.sealed_password, previous)?;
+    // Local Processed and Failed folders stay only while the connection reads a folder.
+    let local = current
+        .moved_to
+        .as_ref()
+        .filter(|_| current.settings.sftp.is_none());
+    let moved_to = moved_to(&settings, input.moved_to, local)?;
     let destination = destination_of(&settings, &folder);
     let destination_changed = destination != current.destination;
     let row = ConnectionRow {
         settings,
         folder,
+        moved_to,
         folder_set_by: if destination_changed {
             actor
         } else {

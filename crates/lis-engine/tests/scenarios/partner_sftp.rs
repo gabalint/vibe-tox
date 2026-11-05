@@ -38,6 +38,7 @@ fn settings(sftp: SftpSettings) -> PartnerConnectionSettings {
         schedule: Schedule::Immediately,
         file_name_pattern: "{accession}_r{revision}.hl7".to_owned(),
         sftp: Some(sftp),
+        intake: None,
     }
 }
 
@@ -50,6 +51,8 @@ async fn create(
         .create_partner_connection(CreatePartnerConnectionInput {
             settings: settings(sftp),
             folder_choice: None,
+            processed_folder_choice: None,
+            failed_folder_choice: None,
             password: password.map(secret),
             active: false,
         })
@@ -68,6 +71,8 @@ async fn change(
             expected_revision: connection.revision,
             settings: settings(sftp),
             folder_choice: None,
+            processed_folder_choice: None,
+            failed_folder_choice: None,
             password: None,
             reason: "Synthetic server change".to_owned(),
         })
@@ -103,6 +108,8 @@ async fn a_folder_connection_can_move_to_sftp() {
         .create_partner_connection(CreatePartnerConnectionInput {
             settings: in_folder,
             folder_choice: Some(chosen.folder_choice),
+            processed_folder_choice: None,
+            failed_folder_choice: None,
             password: None,
             active: false,
         })
@@ -116,6 +123,8 @@ async fn a_folder_connection_can_move_to_sftp() {
             expected_revision: created.revision,
             settings: settings(server(local_port())),
             folder_choice: None,
+            processed_folder_choice: None,
+            failed_folder_choice: None,
             password: Some(secret(SYNTHETIC_PASSWORD)),
             reason: "Synthetic move to the partner's server".to_owned(),
         })
@@ -198,6 +207,7 @@ async fn a_password_is_sealed_never_returned_and_kept_only_for_the_same_server()
             server: server(port),
             password: None,
             connection_id: Some(connection.id),
+            intake: None,
         })
         .await
         .unwrap();

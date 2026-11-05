@@ -99,7 +99,7 @@ pub struct Engine {
     pub(crate) listeners: Arc<ListenerSupervisor>,
     /// The watched-folder poller of result-file instruments, beside the listeners (F13).
     pub(crate) result_folders: Arc<ResultFolders>,
-    /// The watched-folder poller, then the partner delivery poller.
+    /// The watched-folder poller, the partner delivery poller and the incoming-order reader.
     pollers: Mutex<Vec<Poller>>,
     /// Set from `stop_listeners_for_update` until a failed installation restarts them.
     pub(crate) listeners_stopped_for_update: AtomicBool,
@@ -128,8 +128,8 @@ impl Engine {
     ///    quarantine, before anything lists or prunes sets;
     /// 9. record the app run (`ops.app_start`: unclean previous stop, gap, version and
     ///    web-engine change) and mark interrupted backups, restore tests and exports;
-    /// 10. reconcile analyzer receipts, start the listeners, the watched-folder poller and
-    ///     the partner delivery poller, whose first passes run now;
+    /// 10. reconcile analyzer receipts, start the listeners, the watched-folder poller, the
+    ///     partner delivery poller and the incoming-order reader, whose first passes run now;
     /// 11. start the outbox dispatcher, which holds label printing while a recovery
     ///     reconciliation is open.
     ///
@@ -180,6 +180,7 @@ impl Engine {
         ));
         // The partner poller opens SFTP sign-ins with the installation key the operations hold.
         let partner_poller = crate::partner_delivery::start(&ops);
+        let intake_poller = crate::partner_intake::start(&ops);
         let dispatcher = start_dispatcher(
             &db,
             config.outbox_handlers,
@@ -206,7 +207,7 @@ impl Engine {
             loops: Mutex::new(None),
             listeners,
             result_folders,
-            pollers: Mutex::new(vec![folder_poller, partner_poller]),
+            pollers: Mutex::new(vec![folder_poller, partner_poller, intake_poller]),
             listeners_stopped_for_update: AtomicBool::new(false),
             listeners_after_update,
             runtime: tokio::runtime::Handle::current(),

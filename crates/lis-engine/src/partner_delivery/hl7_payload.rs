@@ -79,7 +79,9 @@ fn revision_of(conn: &Connection, target: &Target) -> Result<ReportRevisionId, R
             let report_id: ReportId = id.parse().map_err(|_| inconsistent())?;
             Ok(lis_reporting::latest_revision_id(conn, report_id)?)
         }
-        MessageSource::BillingHandoff | MessageSource::Test => Err(inconsistent().into()),
+        MessageSource::BillingHandoff | MessageSource::Test | MessageSource::Order => {
+            Err(inconsistent().into())
+        }
     }
 }
 

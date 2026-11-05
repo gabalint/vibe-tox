@@ -63,17 +63,7 @@ pub fn valid_sftp_server(sftp: SftpSettings) -> Result<SftpSettings, PartnerErro
             "Enter the server's SHA256 fingerprint as the partner's IT gives it, such as SHA256:8Zq3…",
         ));
     }
-    let remote_folder = sftp.remote_folder.trim().to_owned();
-    if !valid_text(&remote_folder, REMOTE_FOLDER_MAX)
-        || !remote_folder.starts_with('/')
-        || remote_folder.split('/').any(|part| part == "..")
-    {
-        return Err(invalid(
-            "settings.sftp.remoteFolder",
-            "invalid_folder",
-            "Enter the folder on the server from its root, such as /inbound/results.",
-        ));
-    }
+    let remote_folder = valid_remote_folder("settings.sftp.remoteFolder", &sftp.remote_folder)?;
     Ok(SftpSettings {
         host,
         username,
@@ -81,6 +71,23 @@ pub fn valid_sftp_server(sftp: SftpSettings) -> Result<SftpSettings, PartnerErro
         remote_folder,
         ..sftp
     })
+}
+
+/// A folder on the server, trimmed: from its root, without `..`.
+pub(crate) fn valid_remote_folder(field: &str, folder: &str) -> Result<String, PartnerError> {
+    let folder = folder.trim().to_owned();
+    if valid_text(&folder, REMOTE_FOLDER_MAX)
+        && folder.starts_with('/')
+        && !folder.split('/').any(|part| part == "..")
+    {
+        Ok(folder)
+    } else {
+        Err(invalid(
+            field,
+            "invalid_folder",
+            "Enter the folder on the server from its root, such as /inbound/results.",
+        ))
+    }
 }
 
 /// `SHA256:` followed by 43 standard base64 characters without padding.

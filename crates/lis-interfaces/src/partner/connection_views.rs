@@ -48,8 +48,12 @@ pub struct LastAttempt {
 pub struct PartnerConnection {
     pub id: PartnerConnectionId,
     pub settings: PartnerConnectionSettings,
-    /// The local folder, or the remote folder on the SFTP server.
+    /// The local folder, or the remote folder on the SFTP server: where files are written,
+    /// or for incoming orders where they are read.
     pub folder: String,
+    /// For incoming orders: where read files move to, local or on the server.
+    pub processed_folder: Option<String>,
+    pub failed_folder: Option<String>,
     /// For SFTP password sign-in: whether a password is kept. The password itself never
     /// leaves the engine.
     pub has_password: bool,

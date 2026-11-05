@@ -5,6 +5,12 @@
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
 use lis_core::{Id, SessionId};
+use lis_interfaces::partner::MovedToChoice;
+
+use super::connections::refused;
+use crate::commands::sign_in::session_of;
+use crate::engine::Engine;
+use crate::pipeline::{Call, Failure};
 
 /// Folders one session may hold chosen at a time.
 const MAX_CHOICES: usize = 8;
@@ -53,6 +59,46 @@ impl FolderChoices {
             .iter()
             .find(|choice| choice.handle == handle && choice.session == session)
             .map(|choice| choice.folder.clone())
+    }
+}
+
+impl Engine {
+    /// The folder behind `handle`, chosen in this session; `None` without a handle.
+    pub(super) fn chosen_folder(
+        &self,
+        call: &Call,
+        handle: Option<FolderChoiceId>,
+    ) -> Result<Option<String>, Failure> {
+        self.chosen_folder_as(call, handle, "folderChoice")
+    }
+
+    /// The Processed and Failed folders chosen in this session, each `None` without a handle.
+    pub(super) fn chosen_moved_to(
+        &self,
+        call: &Call,
+        processed: Option<FolderChoiceId>,
+        failed: Option<FolderChoiceId>,
+    ) -> Result<MovedToChoice, Failure> {
+        Ok(MovedToChoice {
+            processed: self.chosen_folder_as(call, processed, "processedFolderChoice")?,
+            failed: self.chosen_folder_as(call, failed, "failedFolderChoice")?,
+        })
+    }
+
+    fn chosen_folder_as(
+        &self,
+        call: &Call,
+        handle: Option<FolderChoiceId>,
+        field: &str,
+    ) -> Result<Option<String>, Failure> {
+        let Some(handle) = handle else {
+            return Ok(None);
+        };
+        let (_, session) = session_of(&call.principal)?;
+        self.folder_choices
+            .get(session, handle)
+            .map(Some)
+            .ok_or_else(|| refused(field, "expired", "Choose the folder again."))
     }
 }
 

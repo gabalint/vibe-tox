@@ -41,8 +41,11 @@ export const CONNECTION: PartnerConnection = {
     schedule: { kind: "immediately" },
     fileNamePattern: "billing-{handoff}_{date}.json",
     sftp: null,
+    intake: null,
   },
   folder: "/srv/billing/out",
+  processedFolder: null,
+  failedFolder: null,
   hasPassword: false,
   active: false,
   revision: 1,
@@ -141,6 +144,7 @@ export const WRITTEN: PartnerMessageRow = {
   unrouted: false,
   resolution: null,
   allowedActions: [],
+  received: null,
 };
 
 export const FAILED: PartnerMessageRow = {

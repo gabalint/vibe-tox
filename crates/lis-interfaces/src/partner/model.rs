@@ -4,6 +4,8 @@ use lis_core::{Id, text_enum};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+pub use super::intake_model::{IntakeSettings, MovedTo, MovedToChoice, UnknownPatient};
+
 /// Marker for one connection to an outside system.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PartnerConnectionMarker {}
@@ -34,6 +36,17 @@ text_enum! {
         /// An HL7 v2.5.1 ORU^R01 result message with the partner's codes, sent when a
         /// report revision is released.
         Hl7Oru = "hl7_oru",
+        /// An HL7 v2.5.1 order message (OML^O21, or ORM^O01) received from a clinic's
+        /// EMR; it becomes an order the laboratory accepts or rejects.
+        Hl7Orders = "hl7_orders",
+    }
+}
+
+impl PartnerMessageType {
+    /// Whether the LIS receives this type, rather than sends it.
+    #[must_use]
+    pub const fn incoming(self) -> bool {
+        matches!(self, Self::Hl7Orders)
     }
 }
 
@@ -146,6 +159,8 @@ text_enum! {
         ReportWithdrawal = "report_withdrawal",
         /// A synthetic test message, with no patient data.
         Test = "test",
+        /// An order message received from a clinic's EMR.
+        Order = "order",
     }
 }
 
@@ -226,6 +241,9 @@ pub struct PartnerConnectionSettings {
     /// The server, for the SFTP protocol; `None` for a folder.
     #[serde(default)]
     pub sftp: Option<SftpSettings>,
+    /// How incoming orders are read and accepted; `None` for an outgoing type.
+    #[serde(default)]
+    pub intake: Option<IntakeSettings>,
 }
 
 /// Input of [`create_partner_connection`](crate::create_partner_connection).
@@ -234,6 +252,8 @@ pub struct CreatePartnerConnection {
     pub settings: PartnerConnectionSettings,
     /// The canonical folder the engine checked; empty for SFTP, whose folder is remote.
     pub folder: String,
+    /// For incoming orders over a folder: the canonical Processed and Failed folders.
+    pub moved_to: MovedToChoice,
     /// The SFTP password, sealed by the engine with the installation key.
     pub sealed_password: Option<Vec<u8>>,
     /// False for "Save as stopped".
@@ -248,6 +268,8 @@ pub struct UpdatePartnerConnection {
     pub settings: PartnerConnectionSettings,
     /// A newly chosen canonical folder; `None` keeps the current one.
     pub folder: Option<String>,
+    /// Newly chosen Processed and Failed folders; each `None` keeps the current one.
+    pub moved_to: MovedToChoice,
     /// A new sealed SFTP password; `None` keeps the current one.
     pub sealed_password: Option<Vec<u8>>,
     pub reason: String,

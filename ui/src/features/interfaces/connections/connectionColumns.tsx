@@ -3,7 +3,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Timestamp } from "@/components/Timestamp";
 import type { PartnerConnection } from "@/generated/PartnerConnection";
 import styles from "@/styles/layout.module.css";
-import { destinationText, MESSAGE_TYPES, PROTOCOLS, STATUS } from "../labels";
+import { destinationText, isIncoming, MESSAGE_TYPES, PROTOCOLS, STATUS } from "../labels";
 
 /** Verified or not: whether a destination check covers the connection's current destination. */
 export function CheckBadge({ connection }: { connection: PartnerConnection }) {
@@ -40,8 +40,12 @@ export const CONNECTION_COLUMNS: readonly DataGridColumn<PartnerConnection>[] = 
     sortValue: (row) => MESSAGE_TYPES[row.settings.messageType],
     width: 130,
   },
-  // Every message type of this release goes out of the LIS.
-  { id: "direction", header: "Dir.", cell: () => "Out", width: 70 },
+  {
+    id: "direction",
+    header: "Dir.",
+    cell: (row) => (isIncoming(row.settings.messageType) ? "In" : "Out"),
+    width: 70,
+  },
   {
     id: "protocol",
     header: "Protocol",

@@ -35,6 +35,9 @@ export const DRAFT_MAPPING = "draft_partner_mapping" satisfies CommandName;
 export const DISCARD_MAPPING_DRAFT = "discard_partner_mapping_draft" satisfies CommandName;
 export const APPROVE_MAPPINGS = "approve_partner_mappings" satisfies CommandName;
 
+/** `list_clients() → ClientView[]`: an incoming connection's partner is one of them. */
+export const LIST_CLIENTS = "list_clients" satisfies CommandName;
+
 const WORK_QUEUES = "list_work_queues" satisfies CommandName;
 
 /** What a code mapping change makes stale: approval changes the connection's history. */

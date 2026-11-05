@@ -13,11 +13,16 @@
 //! its folder and its schedule allows, and records each attempt here. Analyzers
 //! are configured separately, as instruments.
 
+mod connection_columns;
 mod connection_views;
 mod connections;
 mod delivery;
 mod error;
 pub mod hl7;
+pub mod hl7_order;
+mod intake_model;
+mod intake_settings;
+mod intake_sources;
 mod mapping_model;
 mod mapping_repo;
 mod mappings;
@@ -27,6 +32,8 @@ mod messages;
 mod model;
 mod queries;
 mod queue;
+mod received;
+mod received_queries;
 mod repo;
 mod rules;
 mod settings;
@@ -48,6 +55,7 @@ pub use delivery::{
     record_delivery_payload, record_partner_test_message,
 };
 pub use error::PartnerError;
+pub use intake_sources::{IntakeSource, intake_sources};
 pub use mapping_model::{
     ApprovePartnerMappings, ApprovedMappings, CodeMapping, DiscardPartnerMappingDraft,
     DraftPartnerMapping, LisRecordId, MappingDraft, MappingKind, MappingRow, MappingValues,
@@ -66,15 +74,20 @@ pub use messages::{
     resolve_unrouted_message, route_partner_message,
 };
 pub use model::{
-    ConnectionChange, CreatePartnerConnection, DeliveryReason, DeliveryState, MessageSource,
-    NewPartnerMessage, PartnerConnectionId, PartnerConnectionSettings, PartnerDeliveryId,
-    PartnerMessageId, PartnerMessageType, PartnerProtocol, RecordPartnerDestinationCheck,
-    ReportRef, Routed, RoutingFacts, RoutingRule, RoutingValue, RuleCondition, RuleField, Schedule,
-    SetPartnerConnectionActive, SftpAuth, SftpSettings, UnroutedResolution,
-    UpdatePartnerConnection,
+    ConnectionChange, CreatePartnerConnection, DeliveryReason, DeliveryState, IntakeSettings,
+    MessageSource, MovedTo, MovedToChoice, NewPartnerMessage, PartnerConnectionId,
+    PartnerConnectionSettings, PartnerDeliveryId, PartnerMessageId, PartnerMessageType,
+    PartnerProtocol, RecordPartnerDestinationCheck, ReportRef, Routed, RoutingFacts, RoutingRule,
+    RoutingValue, RuleCondition, RuleField, Schedule, SetPartnerConnectionActive, SftpAuth,
+    SftpSettings, UnknownPatient, UnroutedResolution, UpdatePartnerConnection,
 };
 pub use queries::{carries, get_partner_connection, list_partner_connections};
 pub use queue::{FailedItem, UnroutedItem, failed_queue, unrouted_queue};
+pub use received::{
+    EarlierRead, NewReceived, PartnerReceivedId, ReceivedOutcome, ReceivedState, WaitingMessage,
+    control_id_seen, earlier_read, record_moved, record_received, resolve_waiting,
+    waiting_messages,
+};
 pub use rules::{rules_match, schedule_due};
 pub use sftp_identity::{create_sftp_identity, sealed_sftp_key, sftp_public_key};
 pub use sftp_settings::valid_sftp_server;

@@ -17,7 +17,12 @@ export function messageColumns(
       defaultSort: "desc",
       width: 190,
     },
-    { id: "direction", header: "Dir.", cell: () => "Out", width: 70 },
+    {
+      id: "direction",
+      header: "Dir.",
+      cell: (row) => (row.received === null ? "Out" : "In"),
+      width: 70,
+    },
     {
       id: "connection",
       header: "Connection",
@@ -58,7 +63,8 @@ export function messageColumns(
           "—"
         );
       },
-      width: 160,
+      // Fits the longest outcome, Rejected – unknown test.
+      width: 200,
     },
     {
       id: "details",

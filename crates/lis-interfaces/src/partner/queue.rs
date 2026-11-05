@@ -79,5 +79,6 @@ fn record_text(source: MessageSource, number: Option<i64>, label: Option<String>
         MessageSource::ReportRevision => format!("{label} r{number}"),
         MessageSource::ReportWithdrawal => format!("{label} withdrawal notice"),
         MessageSource::Test => "Test message".to_owned(),
+        MessageSource::Order => format!("Order {label}"),
     }
 }
