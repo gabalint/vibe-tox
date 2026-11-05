@@ -309,6 +309,13 @@ async fn admin_call(
             })
             .await
             .map(drop),
+        _ => return audit_call(engine, name).await,
+    })
+}
+
+/// The audit trail commands.
+async fn audit_call(engine: &Engine, name: &str) -> Option<Result<(), CommandError>> {
+    Some(match name {
         "list_audit_events" => engine
             .list_audit_events(ListAuditEventsInput {
                 stream: Some(AuditStream::Security),
