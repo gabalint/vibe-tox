@@ -535,17 +535,28 @@ dd {
 .status-table {
   background: var(--paper);
 }
-.notices {
+.notices,
+.faq {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
+}
+.notices {
   margin-top: 44px;
 }
-.notices h3 {
+.notices h3,
+.faq h3 {
   font-size: 17px;
   font-weight: 650;
 }
-.notices section > p {
+.faq-section {
+  padding-block: 84px;
+}
+.faq-section + .start-section {
+  border-top: 1px solid var(--line);
+}
+.notices section > p,
+.faq section > p {
   margin-top: 10px;
   font-size: 15px;
   color: var(--muted);

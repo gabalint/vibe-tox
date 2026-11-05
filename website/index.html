@@ -3,12 +3,13 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Meet Vibe Toxicology LIS: a free, open-source laboratory information system for small US clinical toxicology labs, built for one lab computer. Watch the overview and explore the development project.">
+    <meta name="description" content="Free, open-source toxicology LIS/LIMS for small US clinical labs: orders, specimens, analyzer results, QC, review, reports and billing on one lab computer. In development.">
     <meta name="theme-color" content="#0b5cad">
     <meta property="og:site_name" content="Vibe Toxicology LIS">
-    <meta property="og:title" content="Vibe Toxicology LIS — Your laboratory, on your computer">
-    <meta property="og:description" content="From order to report, with your laboratory in control. Explore the project and watch the presentation.">
+    <meta property="og:title" content="Vibe Toxicology LIS — a free, open-source toxicology LIS">
+    <meta property="og:description" content="A free laboratory information system (LIS/LIMS) for small US clinical toxicology labs, from order to report on one computer the lab owns. Watch the presentation.">
     <meta property="og:type" content="website">
+    <meta property="og:locale" content="en_US">
     <meta property="og:url" content="https://gabalint.github.io/vibe-tox/">
     <meta property="og:image" content="https://gabalint.github.io/vibe-tox/media/vibe-tox-overview-poster.jpg">
     <meta property="og:image:width" content="1920">
@@ -19,7 +20,40 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="responsive.css">
-    <title>Vibe Toxicology LIS — Your laboratory, on your computer</title>
+    <title>Vibe Toxicology LIS: free open-source LIS/LIMS for tox labs</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "Vibe Toxicology LIS",
+            "alternateName": "Vibe Tox",
+            "description": "Free, open-source laboratory information system (LIS/LIMS) for small US clinical toxicology laboratories, running on one laboratory computer. In development; not clinically validated.",
+            "url": "https://gabalint.github.io/vibe-tox/",
+            "applicationCategory": "BusinessApplication",
+            "applicationSubCategory": "Laboratory information system",
+            "operatingSystem": "Windows, macOS, Linux",
+            "downloadUrl": "https://github.com/gabalint/vibe-tox/releases/latest",
+            "license": "https://spdx.org/licenses/GPL-3.0-only.html",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "screenshot": "https://gabalint.github.io/vibe-tox/media/screens/result-review-1600.webp",
+            "sameAs": "https://github.com/gabalint/vibe-tox"
+          },
+          {
+            "@type": "VideoObject",
+            "name": "Meet Vibe Toxicology LIS",
+            "description": "A two-minute narrated walkthrough of a free, open-source toxicology LIS, from order and accession to review, versioned report release, delivery and audit, using demo data.",
+            "thumbnailUrl": "https://gabalint.github.io/vibe-tox/media/vibe-tox-overview-poster.jpg",
+            "uploadDate": "2026-10-20T15:42:00Z",
+            "duration": "PT2M1S",
+            "contentUrl": "https://gabalint.github.io/vibe-tox/media/vibe-tox-overview.mp4",
+            "inLanguage": "en"
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -38,9 +72,9 @@
     <main id="main">
       <section class="hero wrap" aria-labelledby="hero-title">
         <div class="hero-copy">
-          <p class="eyebrow">Free and open source · GPL-3.0-only</p>
-          <h1 id="hero-title">Your laboratory.<br>Your computer.<br><span>Your control.</span></h1>
-          <p class="intro">A laboratory information system for small US clinical toxicology labs. One connected workflow, from the first order to the final report, on a computer the lab owns.</p>
+          <p class="eyebrow">Open source · GPL-3.0-only</p>
+          <h1 id="hero-title">Free toxicology LIS.<br>Your computer.<br><span>Your control.</span></h1>
+          <p class="intro">A free laboratory information system (LIS/LIMS) for small US clinical toxicology labs. One connected workflow, from the first order to the final report, on a computer the lab owns.</p>
           <div class="actions">
             <a class="button primary" href="https://github.com/gabalint/vibe-tox/releases/latest">Download development build <span aria-hidden="true">↗</span></a>
             <a class="button secondary" href="#presentation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z" fill="currentColor"/></svg>Watch the presentation</a>
@@ -129,6 +163,28 @@
             <div><dt>Every action is attributed</dt><dd>Personal accounts with two-factor sign-in or a security key, roles, and configurable separation of duties, including a one-person mode.</dd></div>
             <div><dt>Hosted services are optional</dt><dd>A clinic portal, off-site backup, secure delivery, and EHR interfaces are separate future proposals. They would only relay copies; the LIS remains the system of record.</dd></div>
           </dl>
+        </div>
+      </section>
+
+      <section class="faq-section wrap" id="faq" aria-labelledby="faq-title">
+        <div class="section-heading"><h2 id="faq-title">Questions about a free toxicology LIS.</h2><p>What the software costs, who it is for, and how to try it.</p></div>
+        <div class="faq">
+          <section aria-labelledby="faq-free">
+            <h3 id="faq-free">Is Vibe Toxicology LIS really free?</h3>
+            <p>Yes. The application has no license fee, subscription or per-test charge. It is free software under GPL-3.0-only: a lab may use, study, change and share it. Backup, restore and complete data export are included.</p>
+          </section>
+          <section aria-labelledby="faq-lims">
+            <h3 id="faq-lims">Is it an LIS or a LIMS?</h3>
+            <p>Laboratories that report patient results usually call their system a laboratory information system (LIS). Laboratory information management system (LIMS) is the broader term, and the two are often used interchangeably. Vibe Toxicology LIS is built for patient testing: orders, specimens, results, review and reports.</p>
+          </section>
+          <section aria-labelledby="faq-labs">
+            <h3 id="faq-labs">Which laboratories is it for?</h3>
+            <p>Small US clinical toxicology labs, such as physician-office labs and small independent labs, whose work fits on one computer. A standard catalog for urine and oral fluid drug testing loads as drafts for the lab to review and approve. Workplace, forensic and postmortem testing are not in scope.</p>
+          </section>
+          <section aria-labelledby="faq-try">
+            <h3 id="faq-try">How can I try it?</h3>
+            <p>Download a development build for Windows, macOS or Linux, or build it from source. On first start, choose the demo laboratory: a separate workspace with a fictitious laboratory, clinics and patients, so no real patient information is needed.</p>
+          </section>
         </div>
       </section>
 
