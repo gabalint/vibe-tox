@@ -20,6 +20,7 @@ import {
   WITHDRAW_REPORT,
 } from "../contract";
 import { DeliverySection } from "../delivery/DeliverySection";
+import { ExportDialog } from "../delivery/ExportDialog";
 import { AVAILABILITY } from "../labels";
 import { reportPath, workspacePath } from "../paths";
 import { ExportsSection } from "./ExportsSection";
@@ -79,14 +80,23 @@ export function ReportPage() {
 const currentOf = (report: ReportDetail) =>
   report.revisions.find((each) => each.availability === "current");
 
-/** Preparing the next revision and withdrawing, each when the engine allows it. */
+/**
+ * Exporting the current revision, preparing the next one and withdrawing, the last two when
+ * the engine allows them. An earlier revision is exported from its own page.
+ */
 function ReportActions({ report }: { report: ReportDetail }) {
   const navigate = useNavigate();
   const [isWithdrawing, setWithdrawing] = useState(false);
+  const [isExporting, setExporting] = useState(false);
   const allows = (action: string) => report.allowedActions.includes(action);
   const current = currentOf(report);
   return (
     <>
+      {current && (
+        <Button variant="primary" onPress={() => setExporting(true)}>
+          Export PDF (revision {current.revisionNo}, current)
+        </Button>
+      )}
       {allows(PREPARE_REPORT_CANDIDATE) && (
         <Button onPress={() => navigate(workspacePath(report.specimenId))}>
           Prepare next revision
@@ -103,6 +113,13 @@ function ReportActions({ report }: { report: ReportDetail }) {
           reportNumber={report.reportNumber}
           currentRevisionNo={current.revisionNo}
           onClose={() => setWithdrawing(false)}
+        />
+      )}
+      {isExporting && current && (
+        <ExportDialog
+          revisionId={current.revisionId}
+          reportNumber={report.reportNumber}
+          onClose={() => setExporting(false)}
         />
       )}
     </>
@@ -133,7 +150,7 @@ function ReportHistory({ report }: { report: ReportDetail }) {
         clientId={report.clientId}
         currentRevisionId={allows(ADD_DELIVERY_OBLIGATION) ? current?.revisionId : undefined}
       />
-      <ExportsSection exports={report.exports} />
+      <ExportsSection exports={report.exports} revisions={report.revisions} />
       {<IncidentsSection incidents={report.incidents} revisions={report.revisions} />}
     </div>
   );
