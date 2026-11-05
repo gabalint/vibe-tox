@@ -6,8 +6,6 @@ import formStyles from "@/components/Form/Form.module.css";
 
 interface TextFieldProps {
   label: string;
-  /** `inline` puts the label beside the field, as in a filter row. */
-  layout?: "inline";
   /** Shown in the empty field, such as the format to type. */
   placeholder?: string;
   /** Also the key for engine field errors shown by `Form`. */
@@ -33,7 +31,6 @@ interface TextFieldProps {
 
 export function TextField({
   label,
-  layout,
   placeholder,
   description,
   errorMessage,
@@ -58,7 +55,6 @@ export function TextField({
   return (
     <AriaTextField
       {...rest}
-      data-layout={layout}
       validationBehavior="aria"
       isRequired={isRequired}
       isInvalid={errorMessage === undefined ? undefined : true}
