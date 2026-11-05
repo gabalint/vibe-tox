@@ -36,7 +36,7 @@
       "fields": [
         {
           "name": "Stream",
-          "meaning": "Category of activity under review; the text under the field says what the chosen stream holds.",
+          "meaning": "Category of activity under review; the page description under the title says what the chosen stream holds.",
           "values": "All streams (default): every event, newest first by the time it was recorded. Security: sign-ins, users, roles and security settings; backups, restores, updates and exports; instrument and partner connections. Clinical: patients, orders, specimens, results, QC, reports and billing, and laboratory setup such as the catalog and the laboratory profile. Access: who opened patient records, orders, specimens, runs, results, reports or billing, and who viewed this audit trail or checked its chain or anchors.",
           "rules": "Changing stream clears Action and Record type because their choices belong to the stream; Record ID and Self-approvals only stay. With All streams, Action and Record type offer the choices of every stream."
         },

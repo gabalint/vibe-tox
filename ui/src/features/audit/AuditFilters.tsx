@@ -46,8 +46,7 @@ interface AuditFiltersProps {
 
 /**
  * Each filter applies when chosen, the record ID as a find after a pause in typing, and the
- * engine applies them all in its query. The stream's description says what the engine
- * records in it. Actions and record types belong to a stream, so changing the stream clears
+ * engine applies them all in its query. Actions and record types belong to a stream, so changing the stream clears
  * them. "Self-approvals only" lists the steps one person did alone under the laboratory's
  * separation-of-duties policy (ADR 0015), for the laboratory's review of them.
  */
@@ -88,10 +87,6 @@ export function AuditFilters({
         name="stream"
         options={STREAM_OPTIONS}
         value={filter.stream ?? ALL_STREAMS}
-        description={
-          STREAMS.find((stream) => stream.id === filter.stream)?.description ??
-          "Security, clinical and access events together."
-        }
         onChange={(stream) =>
           onApply({
             ...filter,

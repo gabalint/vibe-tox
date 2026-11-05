@@ -28,6 +28,14 @@ export const STREAMS: readonly { id: AuditStream; label: string; description: st
   },
 ];
 
+/** What the shown stream or streams hold, for the page description. */
+export function streamDescription(stream: AuditStream | undefined): string {
+  return (
+    STREAMS.find((each) => each.id === stream)?.description ??
+    "Security, clinical and access events together."
+  );
+}
+
 export function isStream(value: string | null): value is AuditStream {
   return STREAMS.some((stream) => stream.id === value);
 }
