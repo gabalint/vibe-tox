@@ -33,3 +33,15 @@
   min-width: 6.5rem;
   justify-content: center;
 }
+
+/* The event panel: space between its blocks, and one label column for every list in it,
+   so the Changes values line up with the event's own facts. */
+.eventDetails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.eventDetails dl {
+  grid-template-columns: 8rem minmax(0, 1fr);
+}
