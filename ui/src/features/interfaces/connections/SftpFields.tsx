@@ -13,19 +13,15 @@ import row from "../actionRow.module.css";
 import { GET_SFTP_KEY, TEST_SFTP } from "../contract";
 import { isIncoming, sftpTestText } from "../labels";
 import styles from "./ConnectionDialog.module.css";
-import { type ConnectionValues, toSftp, typedPassword } from "./connectionForm";
+import { type ConnectionValues, toSftp, typedPassword, validPort } from "./connectionForm";
 import { CheckEveryInput } from "./IntakeSections";
 import { toIntake } from "./intakeForm";
+import { type TestOutcome, TestStatus } from "./TestStatus";
 
 const SIGN_IN_OPTIONS = [
   { id: "key", label: "SSH key (recommended)" },
   { id: "password", label: "Password" },
 ];
-
-const validPort = (value: string) =>
-  /^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= 65535
-    ? true
-    : "Use a port from 1 to 65535.";
 
 /** The password, masked; a saved one is kept while the field is empty. */
 function PasswordInput({ hasPassword }: { hasPassword: boolean }) {
@@ -64,7 +60,7 @@ export function SftpFields({ connection }: { connection: PartnerConnection | nul
   const { control, getValues } = useFormContext<ConnectionValues>();
   const auth = useWatch({ control, name: "sftp.auth" });
   const incoming = isIncoming(useWatch({ control, name: "messageType" }));
-  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
+  const [status, setStatus] = useState<TestOutcome | null>(null);
   const getKey = useCommandMutation<string>(GET_SFTP_KEY, { invalidates: [] });
   const test = useCommandMutation<FolderTestResult, { input: TestPartnerSftpInput }>(TEST_SFTP, {
     invalidates: [],
@@ -158,11 +154,7 @@ export function SftpFields({ connection }: { connection: PartnerConnection | nul
         <Button isPending={test.isPending} onPress={runTest}>
           Test connection
         </Button>
-        {status && (
-          <span role="status" className={status.ok ? row.ok : row.problem}>
-            {status.text}
-          </span>
-        )}
+        <TestStatus status={status} />
       </div>
       {getKey.error && <ErrorState title="Key not copied" error={getKey.error} />}
       {test.error && <ErrorState title="Connection not tested" error={test.error} />}

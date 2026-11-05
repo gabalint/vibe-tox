@@ -9,6 +9,7 @@
     "allow-choose-partner-folder",
     "allow-test-partner-folder",
     "allow-test-partner-sftp",
+    "allow-test-partner-mllp",
     "allow-get-lis-sftp-key",
     "allow-create-partner-connection",
     "allow-update-partner-connection",

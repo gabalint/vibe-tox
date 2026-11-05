@@ -94,6 +94,8 @@ export function WhenSection() {
   const { control } = useFormContext<ConnectionValues>();
   const scheduleKind = useWatch({ control, name: "schedule.kind" });
   const messageType = useWatch({ control, name: "messageType" });
+  // An MLLP message travels as it is: there is no file to name.
+  const namesFiles = useWatch({ control, name: "protocol" }) !== "mllp_connect";
   const sendWhen =
     messageType === ""
       ? []
@@ -120,12 +122,14 @@ export function WhenSection() {
             isRequired
           />
         )}
-        <TextInput
-          name="fileNamePattern"
-          label="File name"
-          description={fileNames(messageType)?.hint ?? "Choose the message first."}
-          isRequired
-        />
+        {namesFiles && (
+          <TextInput
+            name="fileNamePattern"
+            label="File name"
+            description={fileNames(messageType)?.hint ?? "Choose the message first."}
+            isRequired
+          />
+        )}
       </div>
       {(messageType === "report_pdf" || messageType === "hl7_oru") && (
         <p className={styles.hint}>

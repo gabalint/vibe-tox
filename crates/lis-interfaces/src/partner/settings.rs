@@ -6,6 +6,7 @@ use lis_core::required_text;
 
 use super::error::{PartnerError, invalid};
 use super::intake_settings::valid_intake;
+use super::mllp_settings::valid_mllp;
 use super::model::{
     PartnerConnectionSettings, PartnerMessageType, RoutingRule, RuleCondition, Schedule,
 };
@@ -51,7 +52,7 @@ const fn pattern_rules(message_type: PartnerMessageType) -> Option<PatternRules>
 
 /// The settings with their text trimmed, or the first field at fault. An incoming
 /// connection routes, schedules and names nothing: it keeps no rules, writes at once and
-/// has no file name pattern.
+/// has no file name pattern. An MLLP connection sends each message as it is, unnamed.
 pub(crate) fn valid_settings(
     settings: PartnerConnectionSettings,
 ) -> Result<PartnerConnectionSettings, PartnerError> {
@@ -60,6 +61,7 @@ pub(crate) fn valid_settings(
     let partner = required_text("settings.partner", &settings.partner, NAME_MAX)
         .map_err(PartnerError::Invalid)?;
     let sftp = valid_sftp(settings.protocol, settings.sftp)?;
+    let mllp = valid_mllp(settings.message_type, settings.protocol, settings.mllp)?;
     let intake = valid_intake(settings.message_type, settings.protocol, settings.intake)?;
     let Some(pattern) = pattern_rules(settings.message_type) else {
         return Ok(PartnerConnectionSettings {
@@ -70,13 +72,19 @@ pub(crate) fn valid_settings(
             file_name_pattern: String::new(),
             sftp,
             intake,
+            mllp,
             ..settings
         });
     };
     let rules = valid_rules(settings.rules)?;
     valid_schedule(&settings.schedule)?;
-    let file_name_pattern = settings.file_name_pattern.trim().to_owned();
-    valid_pattern(&file_name_pattern, &pattern)?;
+    let file_name_pattern = if mllp.is_some() {
+        String::new()
+    } else {
+        let file_name_pattern = settings.file_name_pattern.trim().to_owned();
+        valid_pattern(&file_name_pattern, &pattern)?;
+        file_name_pattern
+    };
     Ok(PartnerConnectionSettings {
         name,
         partner,
@@ -84,6 +92,7 @@ pub(crate) fn valid_settings(
         file_name_pattern,
         sftp,
         intake,
+        mllp,
         ..settings
     })
 }
@@ -271,7 +280,28 @@ mod tests {
             file_name_pattern: "billing-{handoff}_{date}.json".to_owned(),
             sftp: None,
             intake: None,
+            mllp: None,
         }
+    }
+
+    #[test]
+    fn an_mllp_connection_keeps_its_rules_and_names_no_file() {
+        use crate::partner::model::{MllpAcknowledgement, MllpPartner};
+        let valid = valid_settings(PartnerConnectionSettings {
+            message_type: PartnerMessageType::Hl7Oru,
+            protocol: PartnerProtocol::MllpConnect,
+            file_name_pattern: "not a pattern".to_owned(),
+            mllp: Some(MllpPartner {
+                address: "10.20.0.15".to_owned(),
+                port: 6661,
+                acknowledgement: MllpAcknowledgement::Application,
+                ack_timeout_seconds: 30,
+            }),
+            ..settings()
+        })
+        .unwrap();
+        assert_eq!(valid.file_name_pattern, "");
+        assert_eq!(valid.rules.len(), 1);
     }
 
     fn field_of(error: PartnerError) -> String {

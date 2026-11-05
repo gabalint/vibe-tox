@@ -10,14 +10,14 @@ use lis_engine::{
     CreatePartnerConnectionInput, ListPartnerMessages, PartnerConnectionDetail,
     PartnerConnectionInput, RecordPartnerDestinationCheck, ResendPartnerDelivery,
     ResolveUnroutedMessage, SetPartnerConnectionActive, TestPartnerFolderInput,
-    TestPartnerSftpInput, UpdatePartnerConnectionInput,
+    TestPartnerMllpInput, TestPartnerSftpInput, UpdatePartnerConnectionInput,
 };
 use lis_interfaces::partner::{
     ApprovePartnerMappings, DiscardPartnerMappingDraft, DraftPartnerMapping, MappingKind,
-    MessageView, PartnerConnectionId, PartnerConnectionSettings, PartnerDeliveryId,
-    PartnerMessageId, PartnerMessageRow, PartnerMessageType, PartnerProtocol, RoutingRule,
-    RuleCondition, RuleField, Schedule, SftpAuth, SftpSettings, TransportOutcome, UnroutedDecision,
-    WaitReason,
+    MessageView, MllpAcknowledgement, MllpPartner, PartnerConnectionId, PartnerConnectionSettings,
+    PartnerDeliveryId, PartnerMessageId, PartnerMessageRow, PartnerMessageType, PartnerProtocol,
+    RoutingRule, RuleCondition, RuleField, Schedule, SftpAuth, SftpSettings, TransportOutcome,
+    UnroutedDecision, WaitReason,
 };
 use tempfile::TempDir;
 
@@ -50,6 +50,17 @@ pub(super) async fn partner_call(engine: &Engine, name: &str) -> Option<Result<(
                 password: None,
                 connection_id: None,
                 intake: None,
+            })
+            .await
+            .map(drop),
+        "test_partner_mllp" => engine
+            .test_partner_mllp(TestPartnerMllpInput {
+                partner: MllpPartner {
+                    address: "127.0.0.1".to_owned(),
+                    port: 9,
+                    acknowledgement: MllpAcknowledgement::Application,
+                    ack_timeout_seconds: 1,
+                },
             })
             .await
             .map(drop),
@@ -179,6 +190,7 @@ fn settings(name: &str, rules: Vec<RoutingRule>) -> PartnerConnectionSettings {
         file_name_pattern: PATTERN.to_owned(),
         sftp: None,
         intake: None,
+        mllp: None,
     }
 }
 

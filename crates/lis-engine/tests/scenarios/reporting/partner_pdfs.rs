@@ -38,6 +38,7 @@ fn settings(rules: Vec<RoutingRule>) -> PartnerConnectionSettings {
         file_name_pattern: PATTERN.to_owned(),
         sftp: None,
         intake: None,
+        mllp: None,
     }
 }
 
@@ -59,15 +60,21 @@ impl Pdfs {
         let folder = tempfile::tempdir().unwrap();
         bench.sign_in(Staff::Desk(Role::Admin)).await;
         let engine = bench.lab().engine();
-        let chosen = engine
-            .choose_partner_folder(Some(folder.path().to_owned()))
-            .await
-            .unwrap()
-            .unwrap();
+        // Only a folder connection has a folder to choose; an MLLP one sends to an address.
+        let folder_choice = if settings.protocol == PartnerProtocol::Folder {
+            let chosen = engine
+                .choose_partner_folder(Some(folder.path().to_owned()))
+                .await
+                .unwrap()
+                .unwrap();
+            Some(chosen.folder_choice)
+        } else {
+            None
+        };
         let created = engine
             .create_partner_connection(CreatePartnerConnectionInput {
                 settings,
-                folder_choice: Some(chosen.folder_choice),
+                folder_choice,
                 processed_folder_choice: None,
                 failed_folder_choice: None,
                 password: None,

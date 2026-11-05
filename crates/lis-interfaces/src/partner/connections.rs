@@ -30,9 +30,11 @@ pub fn create_partner_connection(
     ctx.require(Capability::ManageConfiguration)?;
     let actor = person(ctx)?;
     let settings = valid_settings(input.settings)?;
-    let folder = match &settings.sftp {
-        Some(sftp) => sftp.remote_folder.clone(),
-        None => {
+    let folder = match (&settings.sftp, &settings.mllp) {
+        (Some(sftp), _) => sftp.remote_folder.clone(),
+        // An MLLP connection sends to its partner's address: it has no folder.
+        (None, Some(_)) => String::new(),
+        (None, None) => {
             valid_folder(&input.folder)?;
             input.folder
         }
@@ -83,11 +85,15 @@ pub fn update_partner_connection(
     unique_name(ctx, &settings.name, Some(current.id))?;
     let folder = match (&settings.sftp, input.folder) {
         (Some(sftp), _) => sftp.remote_folder.clone(),
+        (None, _) if settings.mllp.is_some() => String::new(),
         (None, Some(folder)) => {
             valid_folder(&folder)?;
             folder
         }
-        (None, None) if current.settings.sftp.is_none() => current.folder.clone(),
+        // The current folder is kept only while the connection writes to a folder.
+        (None, None) if current.settings.sftp.is_none() && current.settings.mllp.is_none() => {
+            current.folder.clone()
+        }
         (None, None) => return Err(invalid("folder", "required", "Choose the folder.")),
     };
     // A kept password is never sent to another server or account: those need it again.
