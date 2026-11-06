@@ -303,6 +303,7 @@ fn with_names(conn: &Connection, rows: Vec<OrderRow>) -> Result<Vec<OrderSummary
                 placer_order_id: row.placer_order_id,
                 client_name: client_name.clone(),
                 sample_barcodes: Vec::new(),
+                accessions: Vec::new(),
                 item_count: row.item_count,
                 status: row.status,
                 received_at: row.received_at,

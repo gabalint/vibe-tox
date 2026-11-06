@@ -7,7 +7,7 @@ import { engineError, mockCommands } from "@/lib/test/ipc";
 import { chooseWithKeyboard, WALKTHROUGH_TIMEOUT_MS } from "@/lib/test/keyboard";
 import { mockGridLayout } from "@/lib/test/layout";
 import { renderRoutes } from "@/lib/test/router";
-import { ORDER_ID, SUBJECT_ID, SUBJECT_VIEW, sessionWith } from "../testData";
+import { ACCESSION_ID, ORDER_ID, SUBJECT_ID, SUBJECT_VIEW, sessionWith } from "../testData";
 import { OrdersPage } from "./OrdersPage";
 
 const SUMMARY: OrderSummary = {
@@ -20,6 +20,10 @@ const SUMMARY: OrderSummary = {
   placerOrderId: "PO-SYN-1000",
   clientName: "Synthetic Family Clinic",
   sampleBarcodes: ["C00000002", "C00000003"],
+  accessions: [
+    { accessionId: ACCESSION_ID, accessionNumber: "A26000005" },
+    { accessionId: `${ACCESSION_ID.slice(0, -1)}2`, accessionNumber: "A26000006" },
+  ],
   itemCount: 2,
   status: "received",
   receivedAt: "2026-10-12T14:05:00Z",
@@ -35,6 +39,7 @@ function summary(index: number): OrderSummary {
     orderId: id,
     placerOrderId: `PO-SYN-${index}`,
     sampleBarcodes: [],
+    accessions: [],
     openHoldCount: 0,
   };
 }
@@ -80,12 +85,13 @@ describe("OrdersPage (REQ-ORD-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => 
     const headers = within(grid)
       .getAllByRole("columnheader")
       .map((header) => header.textContent);
-    expect(headers.slice(0, 7)).toEqual([
+    expect(headers.slice(0, 8)).toEqual([
       "Patient",
       "Birth date",
       "Patient identifiers",
       "Order number",
       "Sample barcode",
+      "Accession",
       "Client",
       "Tests",
     ]);
@@ -98,6 +104,8 @@ describe("OrdersPage (REQ-ORD-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => 
     expect(within(row).getByText("C00000002; C00000003")).toBeTruthy();
     expect(within(grid).getByText("Not supplied")).toBeTruthy();
     expect(within(grid).getByText("None received")).toBeTruthy();
+    expect(within(row).getByRole("gridcell", { name: "A26000005, A26000006" })).toBeTruthy();
+    expect(within(grid).getByText("Not received yet")).toBeTruthy();
     // Stable ID continuation reaches later orders even when timestamps tie.
     expect(list).toHaveBeenCalledWith({
       input: {
@@ -136,6 +144,12 @@ describe("OrdersPage (REQ-ORD-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => 
     await user.click(header);
     expect(header.getAttribute("aria-sort")).toBe("descending");
     expect(placers()).toEqual(["PO-SYN-1", "PO-SYN-2", "PO-SYN-3"]);
+  });
+
+  it("opens an accession from its link in the Accession column", async () => {
+    const { user } = renderPage(() => [SUMMARY]);
+    await user.click(await screen.findByRole("link", { name: "A26000005" }));
+    expect(await screen.findByText(`Navigated to /accessions/${ACCESSION_ID}`)).toBeTruthy();
   });
 
   it("opens an order with a single click, passing the list for the breadcrumb and Previous and Next", async () => {

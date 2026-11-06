@@ -68,8 +68,9 @@ pub use queues::{OrderQueueItem, orders_awaiting_decision, orders_with_open_hold
 pub use standing_authority::standing_collection_gate;
 pub use views::{
     AuthorityEvidenceView, BillingReviewItemView, CancellationView, ClarificationHoldView,
-    DiagnosisView, MedicationView, OrderComponentView, OrderDetail, OrderEvidenceView,
-    OrderItemView, OrderSummary, PointOfCareResultView, StandingOrderView, TriggerAssessmentView,
+    DiagnosisView, MedicationView, OrderAccessionRef, OrderComponentView, OrderDetail,
+    OrderEvidenceView, OrderItemView, OrderSummary, PointOfCareResultView, StandingOrderView,
+    TriggerAssessmentView,
 };
 
 /// Forward-only migrations, numbered from `0001` (coding standards).

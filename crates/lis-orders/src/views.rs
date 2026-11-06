@@ -253,6 +253,9 @@ pub struct OrderSummary {
     /// Label codes of the order's primary sample containers, in accession order;
     /// filled by the engine from the specimens module, empty before receipt.
     pub sample_barcodes: Vec<String>,
+    /// The order's accessions, in accession order; filled by the engine from the
+    /// specimens module, empty before receipt.
+    pub accessions: Vec<OrderAccessionRef>,
     /// Items on the order in any state: requested, add-on and reflex items included.
     #[ts(type = "number")]
     pub item_count: i64,
@@ -264,6 +267,15 @@ pub struct OrderSummary {
     pub revision: i64,
     #[ts(type = "number")]
     pub open_hold_count: i64,
+}
+
+/// An accession of a listed order: its number and the ID that opens it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct OrderAccessionRef {
+    pub accession_id: lis_core::AccessionId,
+    pub accession_number: String,
 }
 
 /// Patient-specific standing-order record.

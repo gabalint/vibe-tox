@@ -34,7 +34,8 @@ pub use comparator::Comparator;
 pub use decimal::DecimalText;
 pub use error::{CommandError, ErrorCode, FieldError, GateReason, ParseError};
 pub use id::{
-    CorrelationId, Id, InstallationId, InstrumentId, SessionId, UserId, WorkstationId, kinds,
+    AccessionId, CorrelationId, Id, InstallationId, InstrumentId, SessionId, UserId, WorkstationId,
+    kinds,
 };
 pub use migration::{Migration, ModuleSchema};
 pub use phi::Phi;

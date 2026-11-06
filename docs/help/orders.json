@@ -2,7 +2,7 @@
   "id": "orders",
   "title": "Orders and decisions",
   "summary": "Review the supplied request, its tests, evidence, holds and specimen progress.",
-  "reviewedOn": "2026-11-03",
+  "reviewedOn": "2026-11-06",
   "routes": ["/orders", "/orders/:orderId"],
   "sections": [
     {
@@ -73,7 +73,8 @@
     "crates/lis-orders/src/commands/evidence.rs",
     "crates/lis-orders/src/commands/cancellation.rs",
     "crates/lis-orders/src/queries.rs",
-    "crates/lis-specimens/src/queries.rs"
+    "crates/lis-specimens/src/queries.rs",
+    "crates/lis-engine/src/commands/orders.rs"
   ],
   "pages": [
     {
@@ -105,6 +106,12 @@
           "meaning": "Label codes of the primary containers received for the order, to find an order from the tube in hand.",
           "values": "One or more container label codes, separated by semicolons, in accession order; None received before any specimen is accessioned.",
           "rules": "Read-only. Aliquot labels are not listed; scan or search a label in the top bar to open its container. Select the column header to sort ascending, then descending; orders with no sample sort first in ascending order."
+        },
+        {
+          "name": "Accession",
+          "meaning": "The laboratory's accession numbers for the order, as used on reports, in Result review, runs and billing.",
+          "values": "One or more accession numbers, separated by commas, in accession order, such as A26000005, A26000006; Not received yet before any specimen is accessioned.",
+          "rules": "Read-only. Each number is a link that opens its accession page; clicking it does not open the order. Select the column header to sort ascending, then descending; orders not received yet sort first in ascending order."
         },
         {
           "name": "Birth date and patient identifiers",

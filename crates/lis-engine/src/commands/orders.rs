@@ -85,16 +85,19 @@ fn audit_standing_order_response(
     Ok(detail)
 }
 
-/// The order worklist with each order's sample barcodes from the specimens module.
-fn orders_with_barcodes(
+/// The order worklist with each order's accessions and sample barcodes from the
+/// specimens module.
+fn orders_with_receipts(
     conn: &rusqlite::Connection,
     input: &ListOrdersInput,
 ) -> Result<Vec<OrderSummary>, lis_specimens::SpecimenError> {
     let mut orders = lis_orders::list_orders(conn, input)?;
     let ids: Vec<_> = orders.iter().map(|order| order.order_id).collect();
-    let mut barcodes = lis_specimens::order_sample_barcodes(conn, &ids)?;
+    let mut receipts = lis_specimens::order_receipts(conn, &ids)?;
     for order in &mut orders {
-        order.sample_barcodes = barcodes.remove(&order.order_id).unwrap_or_default();
+        let receipt = receipts.remove(&order.order_id).unwrap_or_default();
+        order.accessions = receipt.accessions;
+        order.sample_barcodes = receipt.sample_barcodes;
     }
     Ok(orders)
 }
@@ -137,7 +140,7 @@ impl Engine {
         self.run(&LIST_ORDERS, |call| async move {
             self.audited_read(
                 &call,
-                move |conn| orders_with_barcodes(conn, &input),
+                move |conn| orders_with_receipts(conn, &input),
                 move |orders| {
                     access(LIST_ORDERS.action)
                         .detail("filter", AuditDetail::code(filter.as_str()))

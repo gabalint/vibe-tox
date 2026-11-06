@@ -78,34 +78,51 @@ pub fn order_item_accessioned(
     Ok(accessions::item_accessioned(conn, item_id)?)
 }
 
-/// Primary-container label codes (sample barcodes) for each listed order, in
-/// accession order, for the order worklist (REQ-ORD-001). Orders with no
+/// An order's receipt as the order worklist shows it (REQ-ORD-001).
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct OrderReceipt {
+    /// The order's accessions, in accession order.
+    pub accessions: Vec<lis_orders::OrderAccessionRef>,
+    /// Primary-container label codes (sample barcodes), in accession order.
+    pub sample_barcodes: Vec<String>,
+}
+
+/// The accessions and sample barcodes of each listed order, in one query. Orders with no
 /// received sample are absent from the map.
-pub fn order_sample_barcodes(
+pub fn order_receipts(
     conn: &Connection,
     order_ids: &[lis_orders::OrderId],
-) -> Result<BTreeMap<lis_orders::OrderId, Vec<String>>, SpecimenError> {
+) -> Result<BTreeMap<lis_orders::OrderId, OrderReceipt>, SpecimenError> {
     // Hyphenated UUIDs need no JSON escaping.
     let ids = order_ids
         .iter()
         .map(|id| format!("\"{id}\""))
         .collect::<Vec<_>>()
         .join(",");
-    let mut barcodes: BTreeMap<_, Vec<String>> = BTreeMap::new();
+    let mut receipts: BTreeMap<_, OrderReceipt> = BTreeMap::new();
     let mut statement = conn.prepare_cached(
-        "SELECT a.order_id, c.label_code FROM spc_accessions a \
-         JOIN spc_collections col ON col.accession_id = a.id \
-         JOIN spc_specimens s ON s.collection_id = col.id \
-         JOIN spc_containers c ON c.specimen_id = s.id AND c.kind = 'primary' \
+        "SELECT a.order_id, a.id, a.accession_number, c.label_code FROM spc_accessions a \
+         LEFT JOIN spc_collections col ON col.accession_id = a.id \
+         LEFT JOIN spc_specimens s ON s.collection_id = col.id \
+         LEFT JOIN spc_containers c ON c.specimen_id = s.id AND c.kind = 'primary' \
          WHERE a.order_id IN (SELECT value FROM json_each(?1)) \
          ORDER BY a.created_at, a.id, c.label_code",
     )?;
-    let rows = statement.query_map([format!("[{ids}]")], |row| Ok((row.get(0)?, row.get(1)?)))?;
+    let rows = statement.query_map([format!("[{ids}]")], |row| {
+        Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
+    })?;
     for row in rows {
-        let (order_id, label_code) = row?;
-        barcodes.entry(order_id).or_default().push(label_code);
+        let (order_id, accession_id, accession_number, label_code): (_, AccessionId, _, _) = row?;
+        let receipt = receipts.entry(order_id).or_default();
+        if receipt.accessions.last().map(|last| last.accession_id) != Some(accession_id) {
+            receipt.accessions.push(lis_orders::OrderAccessionRef {
+                accession_id,
+                accession_number,
+            });
+        }
+        receipt.sample_barcodes.extend(label_code);
     }
-    Ok(barcodes)
+    Ok(receipts)
 }
 
 /// Current accession number for an accession or specimen audit record. The

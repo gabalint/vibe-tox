@@ -85,6 +85,13 @@ async fn order_accession_context_is_audited_and_changes_no_clinical_state() {
         .collect();
     assert!(!barcodes.is_empty());
     assert_eq!(listed[0].sample_barcodes, barcodes);
+    assert_eq!(
+        listed[0].accessions,
+        [lis_orders::OrderAccessionRef {
+            accession_id: accession.accession_id,
+            accession_number: accession.accession_number.clone(),
+        }]
+    );
     staff.admin(&t).await;
     assert_eq!(
         t.engine
