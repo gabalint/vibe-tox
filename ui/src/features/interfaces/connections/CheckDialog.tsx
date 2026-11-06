@@ -1,19 +1,29 @@
 import { Alert } from "@/components/Alert";
 import { TextInput } from "@/components/FormFields";
 import type { PartnerConnection } from "@/generated/PartnerConnection";
+import type { PartnerProtocol } from "@/generated/PartnerProtocol";
 import type { RecordPartnerDestinationCheck } from "@/generated/RecordPartnerDestinationCheck";
 import { CommandDialog } from "@/lib/CommandDialog";
 import { CONNECTION_QUERIES, MESSAGE_QUERIES, RECORD_CHECK } from "../contract";
 import { destinationText } from "../labels";
+import { partnersText } from "./listenerForm";
 
 interface CheckValues {
   method: string;
 }
 
+/** What the check covers, by protocol; SFTP names its user and fingerprint too. */
+const DESTINATION_LABELS: Record<PartnerProtocol, string> = {
+  folder: "Folder",
+  sftp: "SFTP server",
+  mllp_connect: "MLLP partner",
+  mllp_listen: "MLLP listener",
+};
+
 /**
- * Records how the connection's current folder, or SFTP server with its user, folder and
- * fingerprint, was confirmed as the partner's (REQ-RPT-012), before any patient data is
- * written there. A second person records it, or the person who chose the destination where
+ * Records how the connection's current folder, SFTP server with its user, folder and
+ * fingerprint, MLLP partner, or MLLP listener with its allowed partners, was confirmed as the
+ * partner's (REQ-RPT-012), before any patient data is written there or received. A second person records it, or the person who chose the destination where
  * the laboratory's policy allows and they confirm it (ADR 0015).
  */
 export function CheckDialog({
@@ -23,7 +33,7 @@ export function CheckDialog({
   connection: PartnerConnection;
   onClose: () => void;
 }) {
-  const { sftp } = connection.settings;
+  const { sftp, mllpListener } = connection.settings;
   return (
     <CommandDialog<CheckValues, RecordPartnerDestinationCheck>
       title="Record destination check"
@@ -41,7 +51,13 @@ export function CheckDialog({
     >
       {sftp === null ? (
         <p>
-          Folder: <strong>{connection.folder}</strong>
+          {DESTINATION_LABELS[connection.settings.protocol]}:{" "}
+          <strong>{destinationText(connection)}</strong>
+          {mllpListener && (
+            <>
+              , from <strong>{partnersText(mllpListener.allowedPartners)}</strong>
+            </>
+          )}
         </p>
       ) : (
         <p>

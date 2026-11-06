@@ -132,6 +132,12 @@ describe("MLLP – LIS listens (ticket #4555 step 4b; REQ-INT-002, REQ-INT-006)"
     expect(screen.queryByText("Processed folder")).toBeNull();
     await user.click(screen.getByRole("button", { name: "Test listener" }));
     expect(await screen.findByText("✓ The LIS can listen on 192.168.1.20:6660.")).toBeTruthy();
+    // The check names what it covers: where the LIS listens and who may connect.
+    await user.click(screen.getByRole("button", { name: "Record destination check" }));
+    const check = await screen.findByRole("dialog", { name: "Record destination check" });
+    expect(check.textContent).toContain(
+      "MLLP listener: LAN 192.168.1.20:6660, from 192.168.1.50 (Hospital B interface engine)",
+    );
   });
 
   it("says why a listener does not listen, and lists it by its address", async () => {

@@ -406,7 +406,7 @@
         },
         {
           "name": "Record destination check",
-          "does": "Records how the current folder, SFTP server, MLLP partner or MLLP listener was confirmed. For SFTP the dialog names the server and remote folder, the username and the full fingerprint.",
+          "does": "Records how the current folder, SFTP server, MLLP partner or MLLP listener was confirmed. The dialog names what the check covers: the folder; for SFTP the server and remote folder, the username and the full fingerprint; for MLLP – LIS connects the partner's address and port; for MLLP – LIS listens the address and port, such as LAN 192.168.1.20:6660, and the allowed partner addresses.",
           "availableWhen": "No check covers the current destination. The person who chose it may record it only if the laboratory's separation-of-duties policy allows and they confirm it.",
           "result": "Destination check shows Verified; waiting messages are written if the connection is started, and a started MLLP – LIS listens connection starts listening at once."
         },
