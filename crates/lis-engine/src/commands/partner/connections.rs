@@ -6,6 +6,7 @@ use lis_interfaces::partner::{
     PartnerConnectionId, PartnerConnectionSettings, PartnerError, RecordPartnerDestinationCheck,
     SetPartnerConnectionActive, UpdatePartnerConnection,
 };
+use lis_store::CommandContext;
 use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 use ts_rs::TS;
@@ -131,7 +132,7 @@ impl Engine {
     }
 
     /// The connection with its listener's state; after a change, once the listeners follow
-    /// it, so a saved or started listener shows at once whether it listens.
+    /// it.
     async fn with_listener(
         &self,
         mut detail: PartnerConnectionDetail,
@@ -156,22 +157,19 @@ impl Engine {
             let chosen = self
                 .chosen(&call, &input.settings, folders, password)
                 .await?;
-            let detail = self
-                .write(&call, move |ctx| {
-                    let id = lis_interfaces::partner::create_partner_connection(
-                        ctx,
-                        CreatePartnerConnection {
-                            settings: input.settings,
-                            folder: chosen.folder.unwrap_or_default(),
-                            moved_to: chosen.moved_to,
-                            sealed_password: chosen.sealed_password,
-                            active: input.active,
-                        },
-                    )?;
-                    detail(ctx.tx(), id)
-                })
-                .await?;
-            Ok(self.with_listener(detail, true).await)
+            self.change(&call, move |ctx| {
+                lis_interfaces::partner::create_partner_connection(
+                    ctx,
+                    CreatePartnerConnection {
+                        settings: input.settings,
+                        folder: chosen.folder.unwrap_or_default(),
+                        moved_to: chosen.moved_to,
+                        sealed_password: chosen.sealed_password,
+                        active: input.active,
+                    },
+                )
+            })
+            .await
         })
         .await
     }
@@ -187,24 +185,21 @@ impl Engine {
             let chosen = self
                 .chosen(&call, &input.settings, folders, password)
                 .await?;
-            let detail = self
-                .write(&call, move |ctx| {
-                    let id = lis_interfaces::partner::update_partner_connection(
-                        ctx,
-                        UpdatePartnerConnection {
-                            connection_id: input.connection_id,
-                            expected_revision: input.expected_revision,
-                            settings: input.settings,
-                            folder: chosen.folder,
-                            moved_to: chosen.moved_to,
-                            sealed_password: chosen.sealed_password,
-                            reason: input.reason,
-                        },
-                    )?;
-                    detail(ctx.tx(), id)
-                })
-                .await?;
-            Ok(self.with_listener(detail, true).await)
+            self.change(&call, move |ctx| {
+                lis_interfaces::partner::update_partner_connection(
+                    ctx,
+                    UpdatePartnerConnection {
+                        connection_id: input.connection_id,
+                        expected_revision: input.expected_revision,
+                        settings: input.settings,
+                        folder: chosen.folder,
+                        moved_to: chosen.moved_to,
+                        sealed_password: chosen.sealed_password,
+                        reason: input.reason,
+                    },
+                )
+            })
+            .await
         })
         .await
     }
@@ -215,13 +210,10 @@ impl Engine {
         input: SetPartnerConnectionActive,
     ) -> Result<PartnerConnectionDetail, CommandError> {
         self.run(&SET_PARTNER_CONNECTION_ACTIVE, |call| async move {
-            let detail = self
-                .write(&call, move |ctx| {
-                    let id = lis_interfaces::partner::set_partner_connection_active(ctx, input)?;
-                    detail(ctx.tx(), id)
-                })
-                .await?;
-            Ok(self.with_listener(detail, true).await)
+            self.change(&call, move |ctx| {
+                lis_interfaces::partner::set_partner_connection_active(ctx, input)
+            })
+            .await
         })
         .await
     }
@@ -232,15 +224,30 @@ impl Engine {
         input: RecordPartnerDestinationCheck,
     ) -> Result<PartnerConnectionDetail, CommandError> {
         self.run(&RECORD_PARTNER_DESTINATION_CHECK, |call| async move {
-            let detail = self
-                .write(&call, move |ctx| {
-                    let id = lis_interfaces::partner::record_partner_destination_check(ctx, input)?;
-                    detail(ctx.tx(), id)
-                })
-                .await?;
-            Ok(self.with_listener(detail, true).await)
+            self.change(&call, move |ctx| {
+                lis_interfaces::partner::record_partner_destination_check(ctx, input)
+            })
+            .await
         })
         .await
+    }
+
+    /// Writes a change to a connection, then returns it once the listeners follow it, so a
+    /// saved or started listener shows at once whether it listens.
+    async fn change(
+        &self,
+        call: &Call,
+        change: impl FnOnce(&mut CommandContext<'_>) -> Result<PartnerConnectionId, PartnerError>
+        + Send
+        + 'static,
+    ) -> Result<PartnerConnectionDetail, Failure> {
+        let detail = self
+            .write(call, move |ctx| {
+                let id = change(ctx)?;
+                detail(ctx.tx(), id)
+            })
+            .await?;
+        Ok(self.with_listener(detail, true).await)
     }
 
     /// Authorizes a create or update, checks an incoming connection's client, and resolves

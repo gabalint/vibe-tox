@@ -78,7 +78,8 @@ pub fn valid_mllp_listener(listener: MllpListener) -> Result<MllpListener, Partn
     })
 }
 
-/// One to 20 distinct partner addresses on the lab network, each with a short note.
+/// One to 20 distinct partner addresses on the lab network, each with a short note. Every
+/// problem is reported on the list, which the dialog edits as one field.
 fn valid_partners(partners: Vec<AllowedPartner>) -> Result<Vec<AllowedPartner>, PartnerError> {
     let field = "settings.mllpListener.allowedPartners";
     if partners.is_empty() || partners.len() > PARTNERS_MAX {
@@ -89,9 +90,9 @@ fn valid_partners(partners: Vec<AllowedPartner>) -> Result<Vec<AllowedPartner>, 
         ));
     }
     let mut valid: Vec<AllowedPartner> = Vec::with_capacity(partners.len());
-    for (index, partner) in partners.into_iter().enumerate() {
+    for partner in partners {
         let address = lab_ip(
-            &format!("{field}.{index}.address"),
+            field,
             &partner.address,
             "Enter each partner's IP address, such as 192.168.1.50 (Hospital B interface engine).",
             "Allow only partner addresses on the lab network; a partner outside it connects \
@@ -108,7 +109,7 @@ fn valid_partners(partners: Vec<AllowedPartner>) -> Result<Vec<AllowedPartner>, 
         let note = partner.note.trim().to_owned();
         if !note.is_empty() && !valid_text(&note, NOTE_MAX) {
             return Err(invalid(
-                &format!("{field}.{index}.note"),
+                field,
                 "invalid_note",
                 "Keep each note to one line of up to 80 characters.",
             ));

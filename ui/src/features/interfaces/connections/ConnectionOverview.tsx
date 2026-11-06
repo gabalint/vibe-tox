@@ -13,8 +13,9 @@ import {
   scheduleText,
   shortFingerprint,
 } from "../labels";
-import { socketText } from "../mllpLabels";
+import { listeningText, socketText } from "../mllpLabels";
 import styles from "./ConnectionPage.module.css";
+import { partnersText } from "./listenerForm";
 import { CodeMappingsSection } from "./mappings/CodeMappingsSection";
 
 /** A titled card of label–value pairs. */
@@ -42,10 +43,25 @@ const code = (key: string, text: string) => (
 /**
  * Where it writes, as in the mockup: the protocol and folder; for SFTP the protocol with the
  * server, the remote folder and the sign-in with the server's fingerprint; for MLLP the
- * partner's address and the acknowledgement the LIS waits for.
+ * partner's address and the acknowledgement the LIS waits for, or where the LIS listens, for
+ * whom, and whether it listens now.
  */
-function destinationItems({ folder, settings }: PartnerConnection): [string, ReactNode][] {
-  const { sftp, mllp } = settings;
+function destinationItems(
+  { folder, settings, listener }: PartnerConnection,
+  formatTime: (at: string) => string,
+): [string, ReactNode][] {
+  const { sftp, mllp, mllpListener } = settings;
+  if (mllpListener) {
+    return [
+      ["Protocol", `${PROTOCOLS.mllp_listen} – ${socketText(mllpListener)}`],
+      ["Partners allowed", partnersText(mllpListener.allowedPartners)],
+      [
+        "Acknowledgement",
+        `Application ACK (AA / AE / AR), after the message is saved · idle timeout ${mllpListener.idleTimeoutSeconds} seconds`,
+      ],
+      ["Listener", listeningText(listener, formatTime)],
+    ];
+  }
   if (mllp) {
     return [
       ["Protocol", `${PROTOCOLS.mllp_connect} – ${socketText(mllp)}`],
@@ -78,12 +94,18 @@ function workingItems(connection: PartnerConnection): [string, ReactNode][] {
   const { settings } = connection;
   const { intake } = settings;
   if (intake) {
+    // A listener receives each message as it comes, with nothing to move.
+    const files: [string, ReactNode][] = settings.mllpListener
+      ? []
+      : [
+          ["Processed folder", code("processed", connection.processedFolder ?? "")],
+          ["Failed folder", code("failed", connection.failedFolder ?? "")],
+          ["Check every", `${intake.checkEverySeconds} seconds`],
+        ];
     return [
-      ["Processed folder", code("processed", connection.processedFolder ?? "")],
-      ["Failed folder", code("failed", connection.failedFolder ?? "")],
-      ["Check every", `${intake.checkEverySeconds} seconds`],
+      ...files,
       ["Accept messages from", `MSH-4 = ${intake.acceptFrom}`],
-      ["Unknown patient", UNKNOWN_PATIENT_TEXT[intake.unknownPatient]],
+      ["Unknown patient", unknownPatientText(connection)],
     ];
   }
   const type = settings.messageType;
@@ -97,10 +119,14 @@ function workingItems(connection: PartnerConnection): [string, ReactNode][] {
   ];
 }
 
-const UNKNOWN_PATIENT_TEXT = {
-  hold: "Held until the patient is registered",
-  reject: "Moved to Failed and logged",
-} as const;
+/** What a refused order becomes: its file moves to Failed; over MLLP the partner reads AE. */
+const refusedText = ({ settings }: PartnerConnection) =>
+  settings.mllpListener ? "Rejected with AE and logged" : "Moved to Failed and logged";
+
+const unknownPatientText = (connection: PartnerConnection) =>
+  connection.settings.intake?.unknownPatient === "hold"
+    ? "Held until the patient is registered"
+    : refusedText(connection);
 
 const rulesText = (connection: PartnerConnection) =>
   connection.settings.rules.length === 0
@@ -132,7 +158,7 @@ export function ConnectionOverview({ connection, lastReason }: OverviewProps) {
         items={[
           ["Partner", settings.partner],
           ["Message", messageText(type)],
-          ...destinationItems(connection),
+          ...destinationItems(connection, formatTime),
           ...workingItems(connection),
         ]}
       />
@@ -180,8 +206,8 @@ export function ConnectionRules({ connection }: { connection: PartnerConnection 
         title="What to accept"
         items={[
           ["Accept messages from", `MSH-4 = ${intake.acceptFrom}`],
-          ["Unknown patient", UNKNOWN_PATIENT_TEXT[intake.unknownPatient]],
-          ["Unknown test code", "Moved to Failed and logged"],
+          ["Unknown patient", unknownPatientText(connection)],
+          ["Unknown test code", refusedText(connection)],
           ["Replays", "An exact replay is ignored; the same ID with changed content is held"],
         ]}
       />

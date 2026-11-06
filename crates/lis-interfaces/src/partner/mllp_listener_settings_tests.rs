@@ -65,28 +65,20 @@ fn the_partners_must_be_on_the_lab_network_distinct_and_bounded() {
         })
         .map_err(field_of)
     };
+    // The dialog edits the list as one field: every problem lands on it.
     let field = "settings.mllpListener.allowedPartners";
-    assert_eq!(with(Vec::new()).unwrap_err(), field);
-    assert_eq!(
-        with(vec![partner("192.168.1.50", ""), partner("8.8.4.4", "")]).unwrap_err(),
-        format!("{field}.1.address")
-    );
-    assert_eq!(
-        with(vec![
-            partner("192.168.1.50", ""),
-            partner(" 192.168.1.50", "")
-        ])
-        .unwrap_err(),
-        field
-    );
-    assert_eq!(
-        with(vec![partner("192.168.1.50", &"x".repeat(81))]).unwrap_err(),
-        format!("{field}.0.note")
-    );
     let many = (1..=21)
         .map(|n| partner(&format!("10.0.0.{n}"), ""))
         .collect();
-    assert_eq!(with(many).unwrap_err(), field);
+    for partners in [
+        Vec::new(),
+        vec![partner("192.168.1.50", ""), partner("8.8.4.4", "")],
+        vec![partner("192.168.1.50", ""), partner(" 192.168.1.50", "")],
+        vec![partner("192.168.1.50", &"x".repeat(81))],
+        many,
+    ] {
+        assert_eq!(with(partners).unwrap_err(), field);
+    }
 }
 
 #[test]

@@ -4,9 +4,9 @@ import styles from "./ConnectionDialog.module.css";
 import type { ConnectionValues } from "./connectionForm";
 
 /**
- * The protocols of the Interfaces mockup and the message types each carries now: a folder and
- * SFTP carry every type; the LIS connects over MLLP to send HL7 results. Listening over MLLP
- * for orders is shown, not offered yet.
+ * The protocols of the Interfaces mockup and the message types each carries: a folder and SFTP
+ * carry every type; the LIS connects over MLLP to send HL7 results, and listens over MLLP to
+ * receive HL7 orders.
  */
 const PROTOCOLS = [
   { id: "folder", label: "Folder", hint: "Shared folder on the lab network", carries: () => true },
@@ -26,7 +26,7 @@ const PROTOCOLS = [
     id: "mllp_listen",
     label: "MLLP – LIS listens",
     hint: "Partner connects on the lab network only",
-    carries: () => false,
+    carries: (type: string) => type === "hl7_orders",
   },
 ] as const;
 
@@ -71,8 +71,7 @@ export function ProtocolCards() {
         )}
       />
       <p className={styles.hint}>
-        MLLP – LIS connects sends HL7 Results. MLLP – LIS listens, for HL7 Orders, is not available
-        yet.
+        MLLP – LIS connects sends HL7 Results. MLLP – LIS listens receives HL7 Orders.
       </p>
     </>
   );

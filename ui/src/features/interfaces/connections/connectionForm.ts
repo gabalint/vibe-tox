@@ -20,6 +20,7 @@ import {
   toIntakeValues,
   toMovedToValues,
 } from "./intakeForm";
+import { type ListenerValues, toListener, toListenerValues } from "./listenerForm";
 
 interface RuleValues {
   field: RuleField | "";
@@ -66,6 +67,7 @@ interface ConnectionFields {
   folderChoice: string;
   sftp: SftpValues;
   mllp: MllpValues;
+  mllpListener: ListenerValues;
   /** For incoming orders: how the input folder is read and what is accepted. */
   intake: IntakeValues;
   rules: RuleValues[];
@@ -123,6 +125,7 @@ export function toValues(connection: PartnerConnection | null): ConnectionValues
     ...toMovedToValues(connection),
     sftp: toSftpValues(settings?.sftp),
     mllp: toMllpValues(settings?.mllp),
+    mllpListener: toListenerValues(settings?.mllpListener),
     intake: toIntakeValues(settings?.intake),
     rules: settings?.rules.map((rule) => ({ ...rule })) ?? [],
     schedule: {
@@ -188,5 +191,6 @@ export function toSettings(values: ConnectionValues): PartnerConnectionSettings 
     sftp: values.protocol === "sftp" ? toSftp(values.sftp) : null,
     intake: incoming ? toIntake(values.intake, values.protocol) : null,
     mllp: mllp ? toMllp(values.mllp) : null,
+    mllpListener: values.protocol === "mllp_listen" ? toListener(values.mllpListener) : null,
   };
 }

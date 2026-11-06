@@ -14,11 +14,8 @@ import styles from "./ConnectionDialog.module.css";
 import { Box } from "./ConnectionSections";
 import type { ConnectionValues } from "./connectionForm";
 
-const UNKNOWN_PATIENT = [
-  { id: "hold", label: "Hold until the patient is registered" },
-  { id: "reject", label: "Move to Failed and log" },
-];
-const UNKNOWN_TEST = [{ id: "reject", label: "Move to Failed and log" }];
+/** What a refused message becomes: a file moves to Failed; over MLLP the partner reads AE. */
+const REFUSED = { file: "Move to Failed and log", mllp: "Reject with AE and log" } as const;
 
 const validSeconds = (value: string) =>
   /^\d+$/.test(value) && Number(value) >= 10 && Number(value) <= 3600
@@ -126,24 +123,38 @@ export function IntakeFolderFields({ connectionId }: { connectionId: string | nu
   );
 }
 
-/** Section 4 for incoming orders: which messages are accepted and what happens otherwise. */
+/**
+ * Section 4 for incoming orders: which messages are accepted and what happens otherwise. A
+ * file the LIS refuses moves to Failed; a message received over MLLP is answered AR or AE.
+ */
 export function AcceptSection() {
+  const { control } = useFormContext<ConnectionValues>();
+  const mllp = useWatch({ control, name: "protocol" }) === "mllp_listen";
+  const refused = mllp ? REFUSED.mllp : REFUSED.file;
+  const others = mllp ? "are refused with AR" : "move to Failed";
   return (
     <Box title="4. What to accept">
       <div className={styles.row}>
         <TextInput
           name="intake.acceptFrom"
           label="Accept messages from"
-          description="MSH-4, the sending facility, such as CLINIC-A. Other messages move to Failed and the reason is logged."
+          description={`MSH-4, the sending facility, such as CLINIC-A. Other messages ${others} and the reason is logged.`}
           isRequired
         />
         <ChoiceInput
           name="intake.unknownPatient"
           label="Unknown patient"
-          options={UNKNOWN_PATIENT}
+          options={[
+            { id: "hold", label: "Hold until the patient is registered" },
+            { id: "reject", label: refused },
+          ]}
           isRequired
         />
-        <ChoiceInput name="intake.unknownTest" label="Unknown test code" options={UNKNOWN_TEST} />
+        <ChoiceInput
+          name="intake.unknownTest"
+          label="Unknown test code"
+          options={[{ id: "reject", label: refused }]}
+        />
       </div>
       <p className={styles.hint}>
         Exact replays are ignored (no second order). Same ID with changed content is held for
