@@ -40,6 +40,7 @@ const FILE_ATTEMPT: ImportAttemptDetail = {
   rowsSetAside: 2,
   rowsRetained: 2,
   processedAt: "2026-10-13T10:00:02Z",
+  receivedAt: "2026-10-13T10:00:02Z",
   registrationId: FILE_SOURCE.registrationId,
   file: FILE,
   quarantine: [

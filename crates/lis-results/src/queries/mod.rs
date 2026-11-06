@@ -23,6 +23,7 @@ use crate::views::{
 
 pub(crate) mod awaiting;
 mod exception_queues;
+mod import_list;
 mod imports;
 mod invalidations;
 mod measured;
@@ -38,11 +39,9 @@ mod specimen;
 
 pub use awaiting::{AwaitingResultRow, awaiting_results};
 pub use exception_queues::{ResultExceptionQueueItem, open_quarantine_queue, out_of_scope_queue};
+pub use import_list::{ImportAttemptFilter, list_import_attempts, list_import_attempts_page};
 pub(crate) use imports::{ATTEMPT_SUMMARY_COLUMNS, attempt_summary, next_attempt_no};
-pub use imports::{
-    get_import_attempt, latest_import_attempt_for_receipt, list_import_attempts,
-    list_import_attempts_page,
-};
+pub use imports::{get_import_attempt, latest_import_attempt_for_receipt};
 pub use invalidations::{StaleReason, stale_reasons_after};
 pub(crate) use measured::measured_not_ordered;
 pub use measurements::result_revision_run_ids;

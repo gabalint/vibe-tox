@@ -31,6 +31,7 @@ const DETAIL: ImportAttemptDetail = {
   rowsSetAside: 0,
   rowsRetained: 0,
   processedAt: "2026-10-12T11:00:00Z",
+  receivedAt: "2026-10-12T10:58:00Z",
   registrationId: null,
   file: null,
   setAside: [],
@@ -84,6 +85,7 @@ const SECOND: ImportAttemptDetail = {
   outcome: "processed",
   rowsQuarantined: 0,
   processedAt: "2026-10-12T12:00:00Z",
+  receivedAt: "2026-10-12T11:58:00Z",
   quarantine: [],
 };
 
@@ -94,10 +96,19 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     const list = vi.fn(() => [DETAIL]);
     const { user, container } = renderPage("/review/imports", { list_import_attempts: list });
     await screen.findByRole("gridcell", { name: "Synthetic analyzer 1" });
-    expect(screen.getByText("Processed, some rows quarantined")).toBeTruthy();
+    expect(screen.getByRole("gridcell", { name: "Processed, some rows quarantined" })).toBeTruthy();
     // One more than shown, so the list knows whether more exist.
     expect(list).toHaveBeenCalledWith({
-      input: { instrumentId: null, limit: 200, before: null, afterImportAttemptId: undefined },
+      input: {
+        instrumentId: null,
+        outcome: null,
+        receivedFrom: null,
+        receivedBefore: null,
+        search: null,
+        limit: 200,
+        before: null,
+        afterImportAttemptId: undefined,
+      },
     });
     expect(screen.getByText(/^Updated /)).toBeTruthy();
     await expectNoA11yViolations(container, { wholePage: true });
@@ -157,7 +168,16 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     await user.click(screen.getByRole("button", { name: "Load older imports" }));
     await vi.waitFor(() => expect(grid.getAttribute("aria-rowcount")).toBe("202"));
     expect(list).toHaveBeenLastCalledWith({
-      input: { instrumentId: null, limit: 200, before: null, afterImportAttemptId: "attempt-199" },
+      input: {
+        instrumentId: null,
+        outcome: null,
+        receivedFrom: null,
+        receivedBefore: null,
+        search: null,
+        limit: 200,
+        before: null,
+        afterImportAttemptId: "attempt-199",
+      },
     });
     expect(screen.queryByRole("button", { name: "Load older imports" })).toBeNull();
   });
@@ -275,6 +295,10 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     expect(list).toHaveBeenCalledWith({
       input: {
         instrumentId: INSTRUMENT.instrumentId,
+        outcome: null,
+        receivedFrom: null,
+        receivedBefore: null,
+        search: null,
         limit: 200,
         before: null,
         afterImportAttemptId: undefined,

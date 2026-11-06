@@ -1,8 +1,10 @@
 //! Result import, quarantine and technical-review engine boundary
 //! (REQ-ANA-003, REQ-RES-001–005, REQ-ORD-003, REQ-INT-003).
 
+mod import_list;
 mod names;
 mod receipt;
+pub use import_list::ListImportAttemptsInput;
 pub(crate) use receipt::GET_RECEIPT_IMPORT_ATTEMPT;
 pub use receipt::GetReceiptImportAttemptInput;
 
@@ -104,18 +106,6 @@ pub struct ListReviewQueueInput {
     #[serde(default)]
     #[ts(optional = nullable)]
     pub after: Option<lis_results::ReviewQueueCursor>,
-}
-
-#[derive(Debug, Clone, Copy, Deserialize, TS)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-#[ts(export)]
-pub struct ListImportAttemptsInput {
-    pub instrument_id: Option<lis_core::InstrumentId>,
-    pub limit: u32,
-    pub before: Option<lis_core::UtcTimestamp>,
-    #[serde(default)]
-    #[ts(optional = nullable)]
-    pub after_import_attempt_id: Option<ImportAttemptId>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, TS)]
@@ -261,25 +251,6 @@ impl Engine {
                         .record("validity_assessment", detail.assessment_id),
                 )?;
                 Ok::<_, ResultError>(detail)
-            })
-            .await
-        })
-        .await
-    }
-
-    pub async fn list_import_attempts(
-        &self,
-        input: ListImportAttemptsInput,
-    ) -> Result<Vec<ImportAttemptSummary>, CommandError> {
-        self.run(&LIST_IMPORT_ATTEMPTS, |call| async move {
-            self.read(&call, move |conn| {
-                lis_results::list_import_attempts_page(
-                    conn,
-                    input.instrument_id,
-                    input.limit,
-                    input.before,
-                    input.after_import_attempt_id,
-                )
             })
             .await
         })

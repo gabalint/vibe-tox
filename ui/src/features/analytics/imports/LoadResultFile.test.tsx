@@ -50,6 +50,7 @@ const ATTEMPT: ImportAttemptSummary = {
   rowsSetAside: 0,
   rowsRetained: 0,
   processedAt: "2026-10-13T10:00:02Z",
+  receivedAt: "2026-10-13T10:00:02Z",
 };
 
 function renderPage(
