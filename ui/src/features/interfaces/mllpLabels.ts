@@ -78,7 +78,9 @@ export function listeningText(
   listener: ListenerView | null,
   formatTime: (at: string) => string,
 ): string {
-  if (listener === null) return "Not listening: the connection is stopped or not checked";
+  if (listener === null) {
+    return "Not listening: the connection is stopped, not checked, or its acceptance tests have not passed";
+  }
   if (listener.listening) return `Listening since ${formatTime(listener.since)}`;
   const why = listener.problem === null ? "" : `: ${listenerProblem(listener.problem)}`;
   return `Not listening${why} (since ${formatTime(listener.since)}); tried again every 5 seconds`;
