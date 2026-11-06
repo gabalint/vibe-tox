@@ -9,7 +9,7 @@
       "title": "How to use this page",
       "paragraphs": [
         "Result imports lists attempts to process received data. Narrow it by instrument, outcome and received days, or find the attempts that brought a sample label, accession, container label or file name; the filters combine and stay in the address. Load results file lets you choose a registered instrument and a file. Open an attempt to see its outcome, counts and refusal reasons; file attempts also show file provenance and the template version used.",
-        "Quarantined rows need investigation. Set aside lists rows kept outside patient results. Retry import processes the received message again as a new attempt and replaces earlier open quarantine outcomes with the retry’s outcome."
+        "Quarantined rows need investigation. Set aside lists rows kept outside patient results. Retry import processes the received message again as a new attempt and replaces earlier open quarantine outcomes with the retry’s outcome. After fixing a cause shared by many attempts, check them in the list, or use Select all quarantined, and use Retry selected to retry them together with one reason."
       ]
     },
     {
@@ -47,7 +47,10 @@
     "ui/src/features/analytics/imports/attemptColumns.tsx",
     "ui/src/components/DayFilter/DayFilter.tsx",
     "crates/lis-engine/src/commands/results/import_list.rs",
-    "crates/lis-results/src/queries/import_list.rs"
+    "crates/lis-results/src/queries/import_list.rs",
+    "ui/src/features/analytics/imports/RetryImportsDialog.tsx",
+    "ui/src/features/analytics/imports/retrySelection.ts",
+    "ui/src/components/DataGrid/SelectionBar.tsx"
   ],
   "pages": [
     {
@@ -79,6 +82,12 @@
           "meaning": "Show the attempts of messages or files received on these days.",
           "values": "Days as YYYY-MM-DD, typed or picked from the calendar, in the laboratory's time zone. Both days are included; either may be left empty. Days after today can't be picked.",
           "rules": "Optional. A day applies once it is a real day; until then the field says what is wrong. The end day can't be before the start day. Filters on when the message or file was received, not when it was processed: a retry keeps its receipt's received time. Kept in the address (?from=, ?to=); the applied days show under the toolbar while More filters is closed."
+        },
+        {
+          "name": "Check column",
+          "meaning": "Chooses attempts for Retry selected.",
+          "values": "Checked or not; the header checks or clears every attempt that can be checked.",
+          "rules": "Only attempts with something to retry can be checked: Quarantined, or Processed, some rows quarantined. A Processed attempt shows no check mark. A filter, search or refresh that removes a checked attempt from the list unchecks it and says so. Space toggles the focused row."
         },
         {
           "name": "Processed",
@@ -139,6 +148,12 @@
           "meaning": "Shows the manual-load receipt and eventual import status.",
           "values": "Filename, byte count, received time and import outcome.",
           "rules": "Read-only. Received does not mean imported; processing may still be pending."
+        },
+        {
+          "name": "Retry selected: Reason",
+          "meaning": "Why the selected received messages are processed again.",
+          "values": "Free text.",
+          "rules": "Required; the same reason is recorded with each retry in the audit trail."
         }
       ],
       "actions": [
@@ -167,6 +182,24 @@
           "result": "Shows every attempt, newest first, and removes the filters from the address."
         },
         {
+          "name": "Select all quarantined",
+          "does": "Checks every loaded attempt with something to retry in the current filter, such as one instrument's.",
+          "availableWhen": "At least one loaded attempt is Quarantined or Processed, some rows quarantined.",
+          "result": "The selection bar shows how many are checked, with Retry selected and Clear. Attempts on pages not yet loaded are not checked; use Load older imports first."
+        },
+        {
+          "name": "Retry selected",
+          "does": "Opens a dialog that retries the received message of each checked attempt with one reason.",
+          "availableWhen": "At least one attempt is checked; result-review authority.",
+          "result": "Queues one retry per received message, one after another; two checked attempts of the same message retry it once. Each retry is recorded in the audit trail on its own. The notice says how many retries were queued, such as “8 retries queued”, and the selection clears. Each retry appears as a new import attempt once it is processed; use Refresh to see it. If the engine refuses one, the dialog names the refusal and the count not queued; those queued stay queued, and Retry the rest goes on with the others."
+        },
+        {
+          "name": "Clear (selection bar)",
+          "does": "Unchecks every attempt.",
+          "availableWhen": "Any attempt is checked.",
+          "result": "Nothing is retried."
+        },
+        {
           "name": "Refresh",
           "does": "Reads recently processed attempts.",
           "availableWhen": "The page is open.",
@@ -188,12 +221,14 @@
       "restrictions": [
         "Identical bytes received again from the same instrument are deduplicated. To reprocess after a reviewed template change, use Retry import on the existing receipt.",
         "Files larger than 20 MiB are not read or imported; a receipt records the arrival. Export a supported smaller file.",
-        "The file receipt preserves transport evidence. Technical review and report release remain separate."
+        "The file receipt preserves transport evidence. Technical review and report release remain separate.",
+        "Retry selected retries only the attempts checked among the loaded rows. Fix and approve the shared cause first: a retry of an unchanged cause gives the same outcome."
       ],
       "workflow": [
         "Choose the actual exporting instrument before selecting a file.",
         "Wait for its processing outcome and open the import attempt.",
-        "Reconcile all counts, including QC, duplicates, set-aside and retained measurements."
+        "Reconcile all counts, including QC, duplicates, set-aside and retained measurements.",
+        "After fixing a cause shared by several attempts, such as approving an instrument's source, filter to that instrument and Quarantined, use Select all quarantined and Retry selected, then Refresh and check the new attempts."
       ],
       "troubleshooting": [
         {
