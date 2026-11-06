@@ -17,7 +17,7 @@ Never use one for another: logs are not an audit trail, and audit events are not
 **When to write.**
 
 - **State changes.** Every command that changes state appends at least one audit event through `ctx.audit(…)`, inside its `BEGIN IMMEDIATE` transaction. If the append fails, the whole command fails and nothing commits.
-- **Sensitive reads.** Opening a patient or report record, exporting, printing a report, viewing the audit trail and delivering a report each append an `access` event before data leaves the engine. If that event cannot be written, the read fails.
+- **Sensitive reads.** Opening a patient or report record, exporting, printing a report, viewing or searching the audit trail and delivering a report each append an `access` event before data leaves the engine. If that event cannot be written, the read fails. A search's event records what was searched (record type, stream) and how many records were found, never the typed text, which may be a patient name. The audit trail shows patient names, and finds patients by name, only for users who may read patients (`enter_orders` or `manage_quality`).
 - **Security events** use the `security` stream: sign-in success and failure, MFA failure, lockout, lock and unlock, user switch, enrolment, role or grant change, break-glass use, update approval, backup, restore and export. An authorization denial is recorded in its own transaction after the denied command rolls back.
 - **Clinical configuration** (catalog, methods, rules, mappings, templates) is recorded on the `clinical` stream, including drafts, approvals and retirements, because it determines results.
 - **Listener and worker actions** are attributed to the instrument, partner or worker principal, never to whoever is signed in.
@@ -38,6 +38,10 @@ Never use one for another: logs are not an audit trail, and audit events are not
 | `details` | Small JSON of non-PHI references: IDs, version numbers, codes, digests |
 
 **No PHI in `details` or `reason` templates.** Do not include names, birth dates, addresses, phone numbers, MRNs, result values or free-text comments. Reference the record by ID; the record and its revisions hold the content. A user-typed reason is stored as entered, because it is part of the record. Never echo it into logs.
+
+**Values behind an event.** The audit viewer shows a changed field's old and new value by reading the record's own immutable history when an event is opened (`get_audit_event_changes`, REQ-OPS-001), never from the event. Owner modules answer for their records (`audit_record_changes`). Patient values need `view_audit` plus the patient record's own read capability; without it only the changed field names are returned. Each opening appends an `access` event `audit.view_changes` with the event's stream and sequence number, naming the patient when patient values were returned.
+
+**Exporting the audit trail.** `export_audit_events` needs `view_audit` and `export`. It writes every event matching the viewer's filters, recorded up to the export instant, as CSV or PDF through the one export path (intent event, digest, no partial file; NFR-07), with each event's changes read as the viewer reads them: patient values only where the exporter holds the patient's read capability. The `audit.export_events` security event records the format, event and patient counts and every filter, never values. A CSV holds up to 50,000 events and a PDF up to 2,000; above that nothing is written.
 
 **Authority attribution.** For a command allowing either of two capabilities, record the capability actually granted to the actor. Audited reads establish that grant in the same transactional context as their access event. Session-only reads record session authority without inventing a clinical capability. Historical audit events are never rewritten to repair attribution.
 

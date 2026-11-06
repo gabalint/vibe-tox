@@ -6,6 +6,8 @@ import formStyles from "@/components/Form/Form.module.css";
 
 interface TextFieldProps {
   label: string;
+  /** Shown in the empty field, such as the format to type. */
+  placeholder?: string;
   /** Also the key for engine field errors shown by `Form`. */
   name: string;
   value: string;
@@ -29,6 +31,7 @@ interface TextFieldProps {
 
 export function TextField({
   label,
+  placeholder,
   description,
   errorMessage,
   inputRef,
@@ -43,6 +46,7 @@ export function TextField({
     <Input
       ref={inputRef}
       className={formStyles.control}
+      placeholder={placeholder}
       autoCapitalize={autoCapitalize}
       autoCorrect={autoCorrect}
       spellCheck={spellCheck}
