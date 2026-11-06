@@ -33,6 +33,12 @@ pub fn record_type_label(code: &str) -> String {
     code_label(code, false)
 }
 
+/// A plain label for an audit detail key, such as `identifier_count`.
+#[must_use]
+pub fn detail_label(key: &str) -> String {
+    code_label(key, false)
+}
+
 fn code_label(code: &str, dotted: bool) -> String {
     let text = if dotted {
         code.rsplit_once('.').map_or(code, |(_, action)| action)
@@ -48,12 +54,13 @@ fn code_label(code: &str, dotted: bool) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{action_label, record_type_label};
+    use super::{action_label, detail_label, record_type_label};
 
     #[test]
     fn closed_auth_actions_and_other_codes_are_plain() {
         assert_eq!(action_label("auth.sign_in"), "Sign-in");
         assert_eq!(action_label("report.record_delivery"), "Record delivery");
         assert_eq!(record_type_label("report_revision"), "Report revision");
+        assert_eq!(detail_label("identifier_count"), "Identifier count");
     }
 }

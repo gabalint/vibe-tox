@@ -25,35 +25,6 @@ use crate::views::{
     ReportSummary, RevisionDetail, RevisionSummary, WithdrawalView,
 };
 
-/// Current report number for an audit record, including the revision number
-/// when the record is a released revision (REQ-OPS-001).
-pub fn audit_record_label(
-    conn: &Connection,
-    record_type: &str,
-    record_id: &str,
-) -> Result<Option<String>, ReportingError> {
-    match record_type {
-        "report" => {
-            let Ok(id) = record_id.parse::<ReportId>() else {
-                return Ok(None);
-            };
-            Ok(reports::report(conn, id)?.map(|report| report.report_number))
-        }
-        "report_revision" => {
-            let Ok(id) = record_id.parse::<ReportRevisionId>() else {
-                return Ok(None);
-            };
-            let Some(revision) = reports::revision(conn, id)? else {
-                return Ok(None);
-            };
-            Ok(reports::report(conn, revision.report_id)?.map(|report| {
-                format!("{} revision {}", report.report_number, revision.revision_no)
-            }))
-        }
-        _ => Ok(None),
-    }
-}
-
 /// A revision as listed.
 pub(crate) fn revision_summary(
     conn: &Connection,

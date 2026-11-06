@@ -108,32 +108,6 @@ pub fn order_sample_barcodes(
     Ok(barcodes)
 }
 
-/// Current accession number for an accession or specimen audit record. The
-/// label is resolved from the owner table and never copied into audit storage.
-pub fn audit_record_label(
-    conn: &Connection,
-    record_type: &str,
-    record_id: &str,
-) -> Result<Option<String>, SpecimenError> {
-    let accession_id = match record_type {
-        "accession" => match record_id.parse::<AccessionId>() {
-            Ok(id) => id,
-            Err(_) => return Ok(None),
-        },
-        "specimen" => {
-            let Ok(id) = record_id.parse::<SpecimenId>() else {
-                return Ok(None);
-            };
-            match accessions::specimen_accession(conn, id)? {
-                Some(accession_id) => accession_id,
-                None => return Ok(None),
-            }
-        }
-        _ => return Ok(None),
-    };
-    Ok(accessions::accession(conn, accession_id)?.map(|accession| accession.number))
-}
-
 /// The accession a container belongs to.
 pub(crate) fn container_accession(
     conn: &Connection,

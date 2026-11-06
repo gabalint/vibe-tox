@@ -30,13 +30,10 @@ fn fields(error: &CommandError) -> String {
 /// Actions of the clinical events marked as self-approvals, newest first.
 async fn self_approvals(engine: &Engine) -> Vec<String> {
     let input = ListAuditEventsInput {
-        stream: AuditStream::Clinical,
-        before_seq: None,
+        stream: Some(AuditStream::Clinical),
         limit: 500,
-        action: None,
-        record_type: None,
-        record_id: None,
         self_approvals_only: Some(true),
+        ..ListAuditEventsInput::default()
     };
     let events = engine.list_audit_events(input).await.unwrap();
     events.into_iter().map(|event| event.action).collect()

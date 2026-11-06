@@ -1,3 +1,3 @@
-export type { ActionItem } from "./ActionMenu";
+export { type ActionItem, ActionMenu } from "./ActionMenu";
 export { RecordActions } from "./RecordActions";
 export { MoreActions, RowActions } from "./RowActions";
