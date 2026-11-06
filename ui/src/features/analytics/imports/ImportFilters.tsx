@@ -36,6 +36,7 @@ export function ImportFilters({
   return (
     <Toolbar
       variant="collection"
+      align="end"
       count={count}
       actions={
         <>
@@ -72,11 +73,11 @@ export function ImportFilters({
       <FindField
         label="Find imports by sample label, accession, container label or file name"
         placeholder="Sample label, accession, container or file name"
+        isLabelHidden
         value={filter.search ?? ""}
         onChange={(text) => onApply({ ...filter, search: text.trim() || undefined })}
       />
       <Select
-        layout="inline"
         label="Instrument"
         name="instrument"
         options={[
@@ -92,7 +93,6 @@ export function ImportFilters({
         }
       />
       <Select
-        layout="inline"
         label="Outcome"
         name="outcome"
         options={[{ id: ANY, label: "Any outcome" }, ...OUTCOME_FILTERS]}
