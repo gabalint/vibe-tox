@@ -5,6 +5,7 @@ import type { Tone } from "@/components/tones";
 import type { AcceptanceState } from "@/generated/AcceptanceState";
 import type { ContractEdge } from "@/generated/ContractEdge";
 import type { ContractSummary } from "@/generated/ContractSummary";
+import type { PartnerMessageType } from "@/generated/PartnerMessageType";
 import { INTAKE_REASONS } from "../../intakeLabels";
 
 export const ACCEPTANCE: Record<AcceptanceState, { label: string; tone: Tone }> = {
@@ -12,6 +13,14 @@ export const ACCEPTANCE: Record<AcceptanceState, { label: string; tone: Tone }> 
   failed: { label: "Acceptance tests failed", tone: "danger" },
   out_of_date: { label: "Acceptance tests out of date", tone: "warning" },
   not_run: { label: "Acceptance tests not run", tone: "warning" },
+};
+
+/** An example of the Message and profile term, for the connection's message type. */
+export const PROFILE_EXAMPLES: Record<PartnerMessageType, string> = {
+  hl7_orders: "Such as HL7 v2.5.1 OML^O21, LOI Edition 5 based",
+  hl7_oru: "Such as HL7 v2.5.1 ORU^R01, LRI Edition 5 based",
+  report_pdf: "Such as the issued report PDF, one file per revision",
+  billing_json: "Such as Billing JSON bil-handoff-v2",
 };
 
 export const EDGES: Record<ContractEdge, string> = {

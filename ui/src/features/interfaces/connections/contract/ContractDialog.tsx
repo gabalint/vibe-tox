@@ -93,7 +93,13 @@ export function ContractDialog({
   if (open === "draft") {
     const from = contract.draft?.contract ?? contract.current?.contract ?? null;
     return (
-      <DraftContractDialog connectionId={connection.id} from={from} next={next} onClose={back} />
+      <DraftContractDialog
+        connectionId={connection.id}
+        messageType={connection.settings.messageType}
+        from={from}
+        next={next}
+        onClose={back}
+      />
     );
   }
   if (open === "approve") {

@@ -4,9 +4,10 @@ import type { ContractEdge } from "@/generated/ContractEdge";
 import type { DraftPartnerContract } from "@/generated/DraftPartnerContract";
 import type { InterfaceContract } from "@/generated/InterfaceContract";
 import type { PartnerConnectionDetail } from "@/generated/PartnerConnectionDetail";
+import type { PartnerMessageType } from "@/generated/PartnerMessageType";
 import { CommandDialog } from "@/lib/CommandDialog";
 import { CONNECTION_QUERIES, DRAFT_CONTRACT } from "../../contract";
-import { EDGES } from "./contractLabels";
+import { EDGES, PROFILE_EXAMPLES } from "./contractLabels";
 
 interface ContractValues {
   profile: string;
@@ -64,11 +65,14 @@ function EngineInput() {
  */
 export function DraftContractDialog({
   connectionId,
+  messageType,
   from,
   next,
   onClose,
 }: {
   connectionId: string;
+  /** The connection's message type, for the profile's example. */
+  messageType?: PartnerMessageType;
   /** The terms to start from: the draft, or the version in force; `null` for none. */
   from: InterfaceContract | null;
   /** The version the draft becomes once approved. */
@@ -90,7 +94,7 @@ export function DraftContractDialog({
       <TextInput
         name="profile"
         label="Message and profile"
-        description="Such as HL7 v2.5.1 ORU^R01, LRI Edition 5 based"
+        description={PROFILE_EXAMPLES[messageType ?? "hl7_oru"]}
         isRequired
         autoFocus
       />
