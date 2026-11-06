@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 import { Section } from "@/components/Section";
 import type { PartnerConnection } from "@/generated/PartnerConnection";
+import type { PartnerConnectionDetail } from "@/generated/PartnerConnectionDetail";
 import { useFormatTime } from "@/lib/format";
 import { usePersonText } from "@/lib/person";
 import {
@@ -15,6 +16,7 @@ import {
 } from "../labels";
 import { listeningText, socketText } from "../mllpLabels";
 import styles from "./ConnectionPage.module.css";
+import { ContractLine } from "./contract/ContractLine";
 import { partnersText } from "./listenerForm";
 import { CodeMappingsSection } from "./mappings/CodeMappingsSection";
 
@@ -135,20 +137,16 @@ const rulesText = (connection: PartnerConnection) =>
         .map((rule) => ruleText(rule, connection.settings.messageType))
         .join("; ");
 
-interface OverviewProps {
-  connection: PartnerConnection;
-  /** The reason given for the latest change, if any. */
-  lastReason: string | null;
-}
-
 /**
  * Overview, as in the mockup: the connection's settings beside its checks — who verified the
- * destination and how, the last attempt and its result, what waits for an acknowledgement and
- * the last change with its reason.
+ * destination and how, its interface contract and acceptance tests, the last attempt and its
+ * result, what waits for an acknowledgement and the last change with its reason.
  */
-export function ConnectionOverview({ connection, lastReason }: OverviewProps) {
+export function ConnectionOverview({ detail }: { detail: PartnerConnectionDetail }) {
   const formatTime = useFormatTime();
   const person = usePersonText();
+  const { connection } = detail;
+  const lastReason = detail.history[0]?.reason ?? null;
   const { settings, verification, lastAttempt, lastChange } = connection;
   const type = settings.messageType;
   return (
@@ -171,6 +169,7 @@ export function ConnectionOverview({ connection, lastReason }: OverviewProps) {
               ? `Verified by ${person(verification.verified.by, verification.verified.byDisplay)}, ${formatTime(verification.verified.at)} (${verification.method})`
               : "Not recorded: no patient data is written until it is",
           ],
+          ["Interface contract", <ContractLine key="contract" detail={detail} />],
           [
             "Last connection",
             lastAttempt

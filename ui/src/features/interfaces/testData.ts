@@ -1,8 +1,10 @@
 // Synthetic Interfaces records for the feature's tests.
+import type { InterfaceContract } from "@/generated/InterfaceContract";
 import type { MllpListener } from "@/generated/MllpListener";
 import type { MllpPartner } from "@/generated/MllpPartner";
 import type { PartnerConnection } from "@/generated/PartnerConnection";
 import type { PartnerConnectionDetail } from "@/generated/PartnerConnectionDetail";
+import type { PartnerContract } from "@/generated/PartnerContract";
 import type { PartnerMappings } from "@/generated/PartnerMappings";
 import type { PartnerMessageRow } from "@/generated/PartnerMessageRow";
 import type { SessionInfo } from "@/generated/SessionInfo";
@@ -60,6 +62,7 @@ export const CONNECTION: PartnerConnection = {
   failing: 0,
   awaitingAck: 0,
   listener: null,
+  contract: { version: null, acceptance: "not_run", testedAt: null },
   lastChange: { by: ME, at: "2026-11-03T10:00:00.000000000Z" },
   allowedActions: [
     "update_partner_connection",
@@ -166,8 +169,29 @@ export const MAPPINGS: PartnerMappings = {
   allowedActions: ["draft_partner_mapping"],
 };
 
+/** No contract yet: only drafting applies. */
+export const NO_CONTRACT: PartnerContract = {
+  connectionId: CONNECTION_ID,
+  current: null,
+  draft: null,
+  acceptance: "not_run",
+  lastRun: null,
+  allowedActions: ["draft_partner_contract"],
+};
+
+/** Synthetic terms, as a partner's IT and the laboratory might agree them. */
+export const TERMS: InterfaceContract = {
+  profile: "HL7 v2.5.1 ORU^R01, LRI Edition 5 based",
+  acknowledgements: "AA accepted; AE error in content; AR not accepted",
+  corrections: "A corrected result replaces the earlier one",
+  edge: "lis",
+  owners: "Clinic interface analyst; laboratory manager",
+  deviations: "",
+};
+
 export const DETAIL: PartnerConnectionDetail = {
   connection: CONNECTION,
+  contract: NO_CONTRACT,
   history: [
     {
       revision: 1,

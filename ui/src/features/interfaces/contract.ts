@@ -36,6 +36,11 @@ export const LIST_MAPPINGS = "list_partner_mappings" satisfies CommandName;
 export const DRAFT_MAPPING = "draft_partner_mapping" satisfies CommandName;
 export const DISCARD_MAPPING_DRAFT = "discard_partner_mapping_draft" satisfies CommandName;
 export const APPROVE_MAPPINGS = "approve_partner_mappings" satisfies CommandName;
+/** Each `→ PartnerConnectionDetail`: the connection with its contract after the change. */
+export const DRAFT_CONTRACT = "draft_partner_contract" satisfies CommandName;
+export const APPROVE_CONTRACT = "approve_partner_contract" satisfies CommandName;
+/** Runs the synthetic acceptance tests; sends nothing and keeps nothing they make. */
+export const RUN_ACCEPTANCE = "run_partner_acceptance_tests" satisfies CommandName;
 
 /** `list_clients() → ClientView[]`: an incoming connection's partner is one of them. */
 export const LIST_CLIENTS = "list_clients" satisfies CommandName;

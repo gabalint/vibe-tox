@@ -9,10 +9,7 @@ use rusqlite::Connection;
 
 use super::contract_model::AcceptanceCase;
 use super::error::PartnerError;
-use super::hl7::{
-    Coded, Observation, ObservationGroup, ObservationValue, Order, Organization, Oru, Patient,
-    Specimen,
-};
+use super::hl7::{Coded, Observation, ObservationGroup, ObservationValue, Organization, Oru};
 use super::hl7_read::{Reader, Segment, find, message_text, segments, separators};
 use super::mapping_model::{ApprovedMappings, MappingKind, MappingValues};
 use super::mappings::approved_mappings;
@@ -138,56 +135,30 @@ impl Synthetic<'_> {
             name: "Vibe Tox LIS".to_owned(),
             id: String::new(),
         };
-        let at = "20260101120000+0000".to_owned();
-        Oru {
-            control_id: "ACCEPTANCE-1".to_owned(),
-            created_at: at.clone(),
-            processing_id: "T",
-            laboratory: lab.clone(),
-            receiving_facility: self.partner.to_owned(),
-            acknowledged: self.acknowledged,
-            patient: Patient {
-                identifiers: vec![(
-                    "TEST-00000".to_owned(),
-                    "VIBETOX".to_owned(),
-                    "MR".to_owned(),
-                )],
-                family_name: "TEST".to_owned(),
-                given_names: Some("SYNTHETIC".to_owned()),
-                birth_date: "19000101".to_owned(),
-                sex: None,
-            },
-            location: None,
-            order: Order {
-                placer_order: None,
-                provider: ("0000000000".to_owned(), "TEST".to_owned(), None),
-                facility: Organization {
-                    name: self.partner.to_owned(),
-                    id: String::new(),
-                },
-                collected_at: at.clone(),
-                released_at: at.clone(),
-            },
-            groups: vec![ObservationGroup {
-                filler_order: "TEST00001-U-1".to_owned(),
-                service: coded(self.test, "VIBETOX-TEST"),
-                status: group,
-                observations: vec![Observation {
-                    code: coded(self.analyte, "VIBETOX-ANALYTE"),
-                    sub_id: "1".to_owned(),
-                    value,
-                    unit: self.analyte.and_then(|values| values.ucum_unit.clone()),
-                    reference_range: None,
-                    status: observation,
-                    performer: lab,
-                }],
+        let group = ObservationGroup {
+            filler_order: "TEST-1".to_owned(),
+            service: coded(self.test, "VIBETOX-TEST"),
+            status: group,
+            observations: vec![Observation {
+                code: coded(self.analyte, "VIBETOX-ANALYTE"),
+                sub_id: "1".to_owned(),
+                value,
+                unit: self.analyte.and_then(|values| values.ucum_unit.clone()),
+                reference_range: None,
+                status: observation,
+                performer: lab.clone(),
             }],
-            specimen: Specimen {
-                id: "TEST00001-U".to_owned(),
-                kind: ("U".to_owned(), "Urine".to_owned()),
-                collected_at: at.clone(),
-                received_at: at,
-            },
+        };
+        let at = "20260101120000+0000";
+        Oru {
+            acknowledged: self.acknowledged,
+            ..Oru::synthetic(
+                "ACCEPTANCE-1".to_owned(),
+                at,
+                lab,
+                self.partner,
+                vec![group],
+            )
         }
     }
 
