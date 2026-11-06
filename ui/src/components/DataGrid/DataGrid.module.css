@@ -97,6 +97,15 @@
   vertical-align: middle;
 }
 
+/* A status badge (`StatusBadge`, marked by `data-tone`) alone in its cell takes the cell's
+   width, at most 16rem, its label centred, so a column of statuses lines up. Counts aligned to
+   the end keep their own width. It stays inline, so the cell still centres it on its line. */
+.cell:not([data-align="end"]) > [data-tone]:only-child {
+  width: 100%;
+  max-width: 16rem;
+  justify-content: center;
+}
+
 .cell[data-align="end"] {
   text-align: end;
 }

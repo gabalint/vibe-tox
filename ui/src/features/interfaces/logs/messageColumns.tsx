@@ -58,14 +58,12 @@ export function messageColumns(
       cell: (row) => {
         const application = applicationOf(row);
         return application ? (
-          <StatusBadge tone={application.tone} fill>
-            {application.label}
-          </StatusBadge>
+          <StatusBadge tone={application.tone}>{application.label}</StatusBadge>
         ) : (
           "—"
         );
       },
-      // Fits the longest outcome, Rejected – unknown test; every outcome fills it.
+      // Fits the longest outcome, Rejected – unknown test.
       width: 200,
     },
     {

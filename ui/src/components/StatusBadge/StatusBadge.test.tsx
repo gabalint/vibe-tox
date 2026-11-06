@@ -22,17 +22,4 @@ describe("StatusBadge", () => {
     expect(badge.querySelector("svg[aria-hidden='true']")).not.toBeNull();
     await expectNoA11yViolations(container);
   });
-
-  it("fills its cell only when asked, so a column of statuses lines up", () => {
-    renderWithProviders(
-      <>
-        <StatusBadge tone="danger" fill>
-          Rejected
-        </StatusBadge>
-        <StatusBadge tone="success">Order created</StatusBadge>
-      </>,
-    );
-    expect(screen.getByText("Rejected").hasAttribute("data-fill")).toBe(true);
-    expect(screen.getByText("Order created").hasAttribute("data-fill")).toBe(false);
-  });
 });

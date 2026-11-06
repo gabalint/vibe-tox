@@ -224,7 +224,7 @@ Each screen design and each feature test names which of these states apply, and 
 - an optional last column for `RowActions`;
 - text that does not fit ending in "…" with the full text on hover, or wrapping for status and summary columns;
 - in a row that wrapped text made taller, every other cell centred vertically;
-- a column of status badges at one width when its column sets `fill` on `StatusBadge`;
+- a `StatusBadge` alone in a cell at the cell's width (at most 16rem), its label centred, so a column of statuses lines up; a count aligned to the end keeps its own width, and a badge with text beside it in the cell keeps its own width too;
 - numbers aligned right with tabular digits;
 - virtualization above 100 rows.
 
