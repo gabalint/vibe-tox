@@ -23,11 +23,13 @@ fn order_pages_reach_all_equal_timestamp_and_rolled_back_records() {
             limit: 200,
             before_received_at: None,
             before_order_id,
+            search: None,
         };
-        let page =
-            f.t.db
-                .read_blocking(move |conn| lis_orders::list_orders(conn, &input))
-                .unwrap();
+        let page = f
+            .t
+            .db
+            .read_blocking(move |conn| lis_orders::list_orders(conn, &input, &Default::default()))
+            .unwrap();
         seen.extend(page.iter().map(|r| r.order_id));
         if page.len() < 200 {
             break;

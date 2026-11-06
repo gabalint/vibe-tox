@@ -14,6 +14,7 @@ mod commands;
 mod error;
 mod inputs;
 mod model;
+mod order_list;
 mod parties;
 pub mod queries;
 mod query_detail;
@@ -59,10 +60,11 @@ pub use model::{
     OrderItemId, OrderStatus, ReflexAuthorization, ResultRevisionId, SequenceRole, SourceKind,
     StandingOrderId, TriggerAssessmentId, TriggerSource,
 };
+pub use order_list::{OrderMatches, list_orders, order_search};
 pub use parties::{OrderParties, Party};
 pub use queries::{
     ComponentForTesting, ItemReadyForAccession, components_for_order, get_order,
-    items_ready_for_accession, list_orders, list_standing_orders, open_holds, testing_gate,
+    items_ready_for_accession, list_standing_orders, open_holds, testing_gate,
 };
 pub use queues::{OrderQueueItem, orders_awaiting_decision, orders_with_open_hold};
 pub use standing_authority::standing_collection_gate;

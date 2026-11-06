@@ -86,12 +86,21 @@ fn audit_standing_order_response(
 }
 
 /// The order worklist with each order's accessions and sample barcodes from the
-/// specimens module.
+/// specimens module. Find text is resolved through each owner's published query:
+/// patients and clients by identity, accession numbers and barcodes by specimens.
 fn orders_with_receipts(
     conn: &rusqlite::Connection,
     input: &ListOrdersInput,
 ) -> Result<Vec<OrderSummary>, lis_specimens::SpecimenError> {
-    let mut orders = lis_orders::list_orders(conn, input)?;
+    let matches = match lis_orders::order_search(input)? {
+        Some(text) => lis_orders::OrderMatches {
+            subject_ids: lis_identity::subjects_matching(conn, &text)?,
+            client_ids: lis_identity::clients_matching(conn, text.expose())?,
+            order_ids: lis_specimens::orders_with_code(conn, text.expose())?,
+        },
+        None => lis_orders::OrderMatches::default(),
+    };
+    let mut orders = lis_orders::list_orders(conn, input, &matches)?;
     let ids: Vec<_> = orders.iter().map(|order| order.order_id).collect();
     let mut receipts = lis_specimens::order_receipts(conn, &ids)?;
     for order in &mut orders {
@@ -131,12 +140,17 @@ impl Engine {
         .await
     }
 
-    /// `list_orders` (audited because it identifies patient orders).
+    /// `list_orders` (audited because it identifies patient orders). The find text may
+    /// name a patient, so only its use is audited.
     pub async fn list_orders(
         &self,
         input: ListOrdersInput,
     ) -> Result<Vec<OrderSummary>, CommandError> {
         let filter = input.filter;
+        let searched = input
+            .search
+            .as_ref()
+            .is_some_and(|text| !text.expose().trim().is_empty());
         self.run(&LIST_ORDERS, |call| async move {
             self.audited_read(
                 &call,
@@ -144,6 +158,7 @@ impl Engine {
                 move |orders| {
                     access(LIST_ORDERS.action)
                         .detail("filter", AuditDetail::code(filter.as_str()))
+                        .detail("searched", AuditDetail::boolean(searched))
                         .detail("returned", AuditDetail::count(orders.len()))
                 },
             )

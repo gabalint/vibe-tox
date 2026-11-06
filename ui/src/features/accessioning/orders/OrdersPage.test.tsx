@@ -72,6 +72,7 @@ describe("OrdersPage (REQ-ORD-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => 
           limit: 200,
           beforeReceivedAt: null,
           beforeOrderId: null,
+          search: null,
         },
       });
     },
@@ -114,6 +115,7 @@ describe("OrdersPage (REQ-ORD-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => 
         limit: 200,
         beforeReceivedAt: null,
         beforeOrderId: null,
+        search: null,
       },
     });
     expect(screen.queryByText(/Showing the newest/)).toBeNull();
@@ -187,6 +189,7 @@ describe("OrdersPage (REQ-ORD-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => 
           limit: 200,
           beforeReceivedAt: null,
           beforeOrderId: last.orderId,
+          search: null,
         },
       }),
     );
@@ -219,6 +222,7 @@ describe("OrdersPage (REQ-ORD-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => 
         limit: 200,
         beforeReceivedAt: null,
         beforeOrderId: null,
+        search: null,
       },
     });
     await user.click(screen.getByRole("button", { name: "Clear filter" }));
@@ -231,6 +235,7 @@ describe("OrdersPage (REQ-ORD-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => 
           limit: 200,
           beforeReceivedAt: null,
           beforeOrderId: null,
+          search: null,
         },
       }),
     );
@@ -272,6 +277,34 @@ describe("OrdersPage (REQ-ORD-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => 
     await user.click(screen.getByRole("button", { name: "Show all orders" }));
     expect(router.state.location.search).toBe("?filter=all");
     expect(await screen.findByText("No orders yet")).toBeTruthy();
+  });
+
+  it("finds orders by the text in the address, says when none match and clears the search", async () => {
+    const list = vi.fn((args: unknown) =>
+      (args as { input: { search: string | null } }).input.search === "C00000002" ? [SUMMARY] : [],
+    );
+    const { user, router } = renderPage(list, "/orders?filter=accepted&q=Nobody");
+    expect(await screen.findByText("No orders match 'Nobody'")).toBeTruthy();
+    expect(list).toHaveBeenLastCalledWith({
+      input: {
+        filter: "accepted",
+        subjectId: null,
+        limit: 200,
+        beforeReceivedAt: null,
+        beforeOrderId: null,
+        search: "Nobody",
+      },
+    });
+    // The second Clear search is the empty list's; the first is the field's own.
+    const clear = screen.getAllByRole("button", { name: "Clear search" }).at(-1);
+    if (!clear) throw new Error("no Clear search");
+    await user.click(clear);
+    expect(router.state.location.search).toBe("?filter=accepted");
+    // A scanner types the barcode and presses Enter, which applies it at once.
+    const find = screen.getByRole("searchbox", { name: /Find orders by patient/ });
+    await user.type(find, "C00000002{Enter}");
+    expect(await screen.findByText("1 order shown")).toBeTruthy();
+    expect(router.state.location.search).toBe("?filter=accepted&q=C00000002");
   });
 
   it("says who can help, without a retry, when the roles do not allow the list", async () => {

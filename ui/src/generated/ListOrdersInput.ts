@@ -8,4 +8,10 @@ export type ListOrdersInput = { filter: OrderFilter, subjectId: string | null, l
 /**
  * Stable continuation through equal timestamps; preferred over timestamp-only legacy input.
  */
-beforeOrderId?: string | null, };
+beforeOrderId?: string | null, 
+/**
+ * Find text: the start of a patient's name or identifier, a sample barcode, an
+ * accession number, the order number or the client's name. Names ignore case and
+ * Unicode composition; barcodes, accession and order numbers ignore case.
+ */
+search?: string | null, };

@@ -108,7 +108,7 @@ pub use queries::{
     list_open_identity_holds, list_practitioners, match_subjects, subject_summaries,
     subject_summary,
 };
-pub use search::{SubjectSearch, search_subjects};
+pub use search::{SubjectSearch, clients_matching, search_subjects, subjects_matching};
 pub use views::{
     AssertionView, ClientLocationView, ClientView, HoldKind, IdentifierView, IdentityHoldRecord,
     IdentityHoldView, LaboratoryProfileView, PractitionerView, SubjectCandidates, SubjectMatches,

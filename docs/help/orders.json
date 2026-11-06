@@ -74,7 +74,11 @@
     "crates/lis-orders/src/commands/cancellation.rs",
     "crates/lis-orders/src/queries.rs",
     "crates/lis-specimens/src/queries.rs",
-    "crates/lis-engine/src/commands/orders.rs"
+    "crates/lis-engine/src/commands/orders.rs",
+    "crates/lis-orders/src/order_list.rs",
+    "crates/lis-identity/src/search.rs",
+    "ui/src/components/FindField/FindField.tsx",
+    "ui/src/components/FindField/NoResults.tsx"
   ],
   "pages": [
     {
@@ -83,6 +87,12 @@
       "purpose": "Locate saved requests and see which need acceptance or clarification.",
       "access": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
       "fields": [
+        {
+          "name": "Find",
+          "meaning": "Finds orders by patient, sample barcode, accession, order number or client.",
+          "values": "The start of a patient's family name, given names or full name (Given Family, Family Given or Family, Given), or of an active patient identifier; the start of a sample barcode (primary container label, such as C00000005) or accession number (such as A26000005); the start of the clinic's order number; or the start of the client's name. Up to 200 characters.",
+          "rules": "Patient and client names, barcodes, accession and order numbers ignore case; patient identifiers match case as entered. The list updates after a short pause in typing, or at once on Enter, so scanning a tube's barcode lists its order. Works together with Show orders and the patient filter, and the count shows the orders found. The text stays in the address, so Back and the breadcrumb return to the same list. The search text is not stored in the audit trail; only that a search was used."
+        },
         {
           "name": "Show orders",
           "meaning": "Restricts the list to a request state or work category.",
@@ -128,6 +138,12 @@
           "result": "Uses the patient filter if present; otherwise starts with patient selection."
         },
         {
+          "name": "Clear search",
+          "does": "Removes the find text.",
+          "availableWhen": "Find has text: the × in the field, or the button when no order matches. Escape in the field does the same.",
+          "result": "Lists the orders under the current Show orders and patient filter again."
+        },
+        {
           "name": "Clear filter / Show all orders / Show orders for all patients",
           "does": "Broadens the list.",
           "availableWhen": "A state or patient filter is active.",
@@ -153,11 +169,11 @@
         }
       ],
       "restrictions": [
-        "This is a bounded list, not an exhaustive export. Use the patient’s Orders view to narrow a large list.",
+        "This is a bounded list, not an exhaustive export. Use Find or the patient’s Orders view to narrow a large list.",
         "Acceptance shown here does not prove that specimens were received or accepted."
       ],
       "workflow": [
-        "Choose the relevant state filter or open Orders from a patient.",
+        "Type or scan a patient name, sample barcode, accession or order number in Find, or choose the relevant state filter, or open Orders from a patient.",
         "Open the intended row and check identity and source details.",
         "Make the explicit decision offered on the order record."
       ],
@@ -165,6 +181,10 @@
         {
           "problem": "No orders under the selected filter.",
           "recovery": "Choose Show all orders or remove the patient restriction. An empty filtered list is not evidence that no orders exist."
+        },
+        {
+          "problem": "No orders match the find text.",
+          "recovery": "Check the spelling, type fewer characters, or search by another value such as the accession or order number. Find matches the start of each value, not text in the middle. Use Clear search, and choose Show all orders, to see the whole list. Aliquot labels are not searched; scan the primary container's label."
         },
         {
           "problem": "The list is limited.",
