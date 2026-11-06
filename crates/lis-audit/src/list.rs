@@ -211,13 +211,29 @@ pub fn actions(conn: &Connection, stream: Option<Stream>) -> Result<Vec<String>,
         .collect::<Result<_, _>>()?)
 }
 
-/// Distinct record types present in `stream` (`None`: every stream), in code order.
-pub fn record_types(conn: &Connection, stream: Option<Stream>) -> Result<Vec<String>, AuditError> {
+/// Distinct record types present in `stream` (`None`: every stream), in code order, each
+/// with the streams it occurs in, in [`Stream::ALL`] order.
+pub fn record_types(
+    conn: &Connection,
+    stream: Option<Stream>,
+) -> Result<Vec<(String, Vec<Stream>)>, AuditError> {
     Ok(conn
         .prepare_cached(
-            "SELECT DISTINCT record_type FROM audit_events \
-             WHERE (?1 IS NULL OR stream = ?1) AND record_type IS NOT NULL ORDER BY record_type",
+            "SELECT record_type, group_concat(DISTINCT stream) FROM audit_events \
+             WHERE (?1 IS NULL OR stream = ?1) AND record_type IS NOT NULL \
+             GROUP BY record_type ORDER BY record_type",
         )?
-        .query_map([stream.map(Stream::as_str)], |row| row.get(0))?
+        .query_map([stream.map(Stream::as_str)], |row| {
+            Ok((row.get(0)?, streams(&row.get::<_, String>(1)?)))
+        })?
         .collect::<Result<_, _>>()?)
+}
+
+/// The streams named in a `group_concat` of stream codes, in [`Stream::ALL`] order.
+pub(crate) fn streams(codes: &str) -> Vec<Stream> {
+    let codes: Vec<&str> = codes.split(',').collect();
+    Stream::ALL
+        .into_iter()
+        .filter(|stream| codes.contains(&stream.as_str()))
+        .collect()
 }

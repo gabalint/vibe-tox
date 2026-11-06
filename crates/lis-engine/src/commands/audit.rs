@@ -3,19 +3,34 @@
 
 use lis_audit::{AuditDetail, AuditEvent, Finding, Outcome, Stream};
 use lis_auth::AuthError;
-use lis_core::{CommandError, ErrorCode, FieldError, UtcTimestamp};
+use lis_core::{Capability, CommandError, ErrorCode, FieldError, UtcTimestamp};
 use lis_store::StoreError;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::engine::Engine;
 use crate::pipeline::{Failure, ModuleError};
-use crate::registry::{LIST_AUDIT_EVENTS, VERIFY_AUDIT_CHAIN};
+use crate::registry::{
+    FIND_AUDIT_RECORDS, GET_AUDIT_EVENT_CHANGES, LIST_AUDIT_EVENTS, VERIFY_AUDIT_CHAIN,
+};
 
+mod changes;
+mod export;
+mod export_rows;
+mod find;
 mod input;
+mod labels;
 mod read;
+pub use changes::{
+    AuditChangeStatus, AuditEventChanges, AuditFieldChange, AuditPatient, GetAuditEventChangesInput,
+};
+use changes::{changes_event, read_changes};
+pub use export::{AuditExportFormat, ExportAuditEventsInput, ExportedAuditFile};
+pub use find::{AuditDay, FindAuditRecordsInput, FoundAuditRecord, FoundAuditRecords};
+use find::{find_details, find_event, find_records};
 pub use input::{AuditActorKind, AuditCursor, AuditOutcome, AuditStream, ListAuditEventsInput};
 use input::{audit_filter_details, page_event};
+use labels::reads_patients;
 use read::read_page;
 
 /// Largest page of `list_audit_events`.
@@ -24,6 +39,10 @@ type FilterOptions = Vec<(String, String)>;
 
 #[derive(Debug, thiserror::Error)]
 enum AuditReadError {
+    #[error("audit event not found")]
+    EventNotFound,
+    #[error("more events match than one export holds")]
+    ExportTooLarge(usize),
     #[error(transparent)]
     Auth(#[from] AuthError),
     #[error(transparent)]
@@ -37,26 +56,47 @@ enum AuditReadError {
     #[error(transparent)]
     Billing(#[from] lis_billing::BillingError),
     #[error(transparent)]
+    Orders(#[from] lis_orders::OrderError),
+    #[error(transparent)]
+    Interfaces(#[from] lis_interfaces::InterfaceError),
+    #[error(transparent)]
+    Ops(#[from] lis_ops::RuntimeError),
+    #[error(transparent)]
     Store(#[from] StoreError),
 }
 
-impl ModuleError for AuditReadError {
-    fn denied(&self) -> Option<lis_core::Denied> {
+impl AuditReadError {
+    /// The store failure inside, whichever module returned it.
+    fn store(&self) -> Option<&StoreError> {
         match self {
-            Self::Store(error) => error.denied(),
-            Self::Auth(AuthError::Store(error)) => error.denied(),
-            Self::Catalog(lis_catalog::CatalogError::Store(error)) => error.denied(),
-            Self::Identity(lis_identity::IdentityError::Store(error)) => error.denied(),
-            Self::Reporting(lis_reporting::ReportingError::Store(error)) => error.denied(),
-            Self::Specimens(lis_specimens::SpecimenError::Store(error)) => error.denied(),
-            Self::Billing(lis_billing::BillingError::Store(error)) => error.denied(),
-            Self::Auth(_)
+            Self::Store(error)
+            | Self::Auth(AuthError::Store(error))
+            | Self::Catalog(lis_catalog::CatalogError::Store(error))
+            | Self::Identity(lis_identity::IdentityError::Store(error))
+            | Self::Reporting(lis_reporting::ReportingError::Store(error))
+            | Self::Specimens(lis_specimens::SpecimenError::Store(error))
+            | Self::Billing(lis_billing::BillingError::Store(error))
+            | Self::Orders(lis_orders::OrderError::Store(error))
+            | Self::Interfaces(lis_interfaces::InterfaceError::Store(error))
+            | Self::Ops(lis_ops::RuntimeError::Store(error)) => Some(error),
+            Self::EventNotFound
+            | Self::ExportTooLarge(_)
+            | Self::Auth(_)
             | Self::Catalog(_)
             | Self::Identity(_)
             | Self::Reporting(_)
             | Self::Specimens(_)
-            | Self::Billing(_) => None,
+            | Self::Billing(_)
+            | Self::Orders(_)
+            | Self::Interfaces(_)
+            | Self::Ops(_) => None,
         }
+    }
+}
+
+impl ModuleError for AuditReadError {
+    fn denied(&self) -> Option<lis_core::Denied> {
+        self.store().and_then(StoreError::denied)
     }
 }
 
@@ -69,8 +109,23 @@ impl From<AuditReadError> for Failure {
             | AuditReadError::Identity(lis_identity::IdentityError::Store(error))
             | AuditReadError::Reporting(lis_reporting::ReportingError::Store(error))
             | AuditReadError::Specimens(lis_specimens::SpecimenError::Store(error))
-            | AuditReadError::Billing(lis_billing::BillingError::Store(error)) => error.into(),
+            | AuditReadError::Billing(lis_billing::BillingError::Store(error))
+            | AuditReadError::Orders(lis_orders::OrderError::Store(error))
+            | AuditReadError::Interfaces(lis_interfaces::InterfaceError::Store(error))
+            | AuditReadError::Ops(lis_ops::RuntimeError::Store(error)) => error.into(),
             AuditReadError::Auth(error) => error.into(),
+            AuditReadError::EventNotFound => {
+                Failure::refused(ErrorCode::NotFound, "This audit event does not exist.")
+            }
+            AuditReadError::ExportTooLarge(limit) => Failure::Refused {
+                code: ErrorCode::Validation,
+                message: format!(
+                    "More than {limit} events match these filters, more than one file of this \
+                     format holds. Narrow the filters, for example to fewer days, and export again."
+                ),
+                field_errors: Vec::new(),
+                gate_reasons: Vec::new(),
+            },
             other => Failure::Internal(other.to_string()),
         }
     }
@@ -218,10 +273,62 @@ impl Engine {
             }
             let filter_details = audit_filter_details(&input)?;
             let stream = input.stream;
+            let patients = reads_patients(&call.principal);
             self.audited_read(
                 &call,
-                move |conn| read_page(conn, &input),
+                move |conn| read_page(conn, &input, patients),
                 move |page| page_event(stream, page.len(), filter_details),
+            )
+            .await
+        })
+        .await
+    }
+
+    /// `get_audit_event_changes`: the Changes section of one event. Patient
+    /// values need `view_audit` and the patient record's read capability; the
+    /// `access` event naming the patient is written before they are returned.
+    pub async fn get_audit_event_changes(
+        &self,
+        input: GetAuditEventChangesInput,
+    ) -> Result<AuditEventChanges, CommandError> {
+        self.run(&GET_AUDIT_EVENT_CHANGES, |call| async move {
+            let principal = call.principal.clone();
+            let viewed = self
+                .read(&call, move |conn| read_changes(conn, input, &principal))
+                .await?;
+            let event = changes_event(GET_AUDIT_EVENT_CHANGES.action, input, &viewed);
+            let patient_capability = viewed
+                .patient_read
+                .as_ref()
+                .map(|(_, capability)| *capability);
+            self.write(&call, move |ctx| {
+                ctx.require(Capability::ViewAudit)?;
+                patient_capability
+                    .into_iter()
+                    .try_for_each(|capability| ctx.require(capability))?;
+                ctx.audit(event).map(drop)
+            })
+            .await?;
+            Ok(viewed.changes)
+        })
+        .await
+    }
+
+    /// `find_audit_records`: the records whose readable values start with the typed text,
+    /// or whose record ID it is, to filter the trail by one of them. Patients are searched
+    /// only for users who may read them; the text is never recorded.
+    pub async fn find_audit_records(
+        &self,
+        input: FindAuditRecordsInput,
+    ) -> Result<FoundAuditRecords, CommandError> {
+        self.run(&FIND_AUDIT_RECORDS, |call| async move {
+            let patients = reads_patients(&call.principal);
+            let details = find_details(&input, patients)?;
+            let stream = input.stream;
+            self.audited_read(
+                &call,
+                move |conn| find_records(conn, &input, patients),
+                move |found| find_event(stream, found, details),
             )
             .await
         })

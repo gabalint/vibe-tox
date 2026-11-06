@@ -121,6 +121,7 @@ pub use error::ReportingError;
 pub use lis_report::RenderedPdf;
 pub use manifest::{ExpectedComponent, ExpectedTrigger, Manifest, manifest};
 pub use model::*;
+pub use queries::audit_records::{audit_record_label, audit_record_search};
 pub use queries::billing::{CurrentFinalRelease, ReportedLine, current_final_release};
 pub use queries::candidate::{candidate_artifact, get_candidate};
 pub use queries::delivery::{
@@ -144,7 +145,7 @@ pub use queries::queues::{
     partial_reports, release_queue, release_reconciliation, revisions_without_destination,
 };
 pub use queries::report::{
-    ListReportsInput, ReportListFilter, audit_record_label, get_report, get_revision, list_reports,
+    ListReportsInput, ReportListFilter, get_report, get_revision, list_reports,
 };
 pub use queries::workspace::report_workspace;
 pub use repo::quality::IncidentSubject;

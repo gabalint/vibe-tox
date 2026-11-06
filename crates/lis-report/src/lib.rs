@@ -36,6 +36,7 @@
 //! | `report-notice` v1 | Top of `templates/report-notice/v1.typ` | [`notice_v1::ReportNoticeData`] |
 //! | `catalog-preview` v1 | Top of `templates/catalog-preview/v1.typ` | [`catalog_preview_v1::CatalogPreviewDocument`] |
 //! | `catalog-preview` v2 | Same data contract; current-value comparison labels | [`catalog_preview_v1::CatalogPreviewDocument`] |
+//! | `audit-export` v1 | Top of `templates/audit-export/v1.typ` | [`audit_export_v1::AuditExportDocument`] |
 //!
 //! `tox-report` v2 shows: the report number and revision on every page; its
 //! completeness (partial or final) and its relationship (initial, supplement
@@ -70,9 +71,15 @@
 //! and drafts awaiting review. Every value shows its source label, and blank
 //! cutoffs and starter values are marked in words (proposed REQ-OPS-015).
 //!
+//! `audit-export` v1 prints the audit events an export's filters matched,
+//! with the filters, the export time and who exported, and each event's old
+//! and new values; a page header marks it confidential when it holds patient
+//! information (REQ-OPS-001).
+//!
 //! Each typed module offers `to_json`, whose output the engine stores, and
 //! `render_json`, which renders stored JSON with the module's template.
 
+pub mod audit_export_v1;
 pub mod catalog_preview_v1;
 mod data;
 mod error;
