@@ -54,6 +54,9 @@ const FILE_ATTEMPT: ImportAttemptDetail = {
       reason: "malformed_value",
       state: "open",
       revision: 1,
+      runId: null,
+      specimenId: null,
+      matchingRuns: [],
     },
   ],
   setAside: [

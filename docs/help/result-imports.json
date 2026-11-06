@@ -50,7 +50,11 @@
     "crates/lis-results/src/queries/import_list.rs",
     "ui/src/features/analytics/imports/RetryImportsDialog.tsx",
     "ui/src/features/analytics/imports/retrySelection.ts",
-    "ui/src/components/DataGrid/SelectionBar.tsx"
+    "ui/src/components/DataGrid/SelectionBar.tsx",
+    "ui/src/features/analytics/imports/fixLinks.tsx",
+    "ui/src/features/analytics/imports/RetryImportDialog.tsx",
+    "ui/src/features/analytics/paths.ts",
+    "crates/lis-results/src/queries/quarantine_items.rs"
   ],
   "pages": [
     {
@@ -272,6 +276,12 @@
           "rules": "Read-only; supplied by the current record."
         },
         {
+          "name": "Where to fix (failure)",
+          "meaning": "Links to the screen that fixes a whole-message or whole-file failure.",
+          "values": "No approved source or sender mismatch: Instrument in Bench setup. Unreadable encoding or header mismatch: File template (the template that read the file), or Instrument in Bench setup when none did. None for a malformed message or a file over the limits, which are fixed at the analyzer or in the export.",
+          "rules": "Shown only for a failure fixed in the LIS. Fix and approve the cause there, then come back and use Retry import."
+        },
+        {
           "name": "Rows / New results / Duplicates / Reprocessed / QC rows / Quarantined",
           "meaning": "Accounts for rows processed by category.",
           "values": "Nonnegative counts.",
@@ -308,6 +318,12 @@
           "rules": "Read-only; supplied by the current record."
         },
         {
+          "name": "Where to fix (row panel)",
+          "meaning": "Links from an open row's panel to the screen where its cause is fixed.",
+          "values": "No sample on a run has this label: Worklist, Open runs and Container lookup for the label. More than one sample matches this label: Container lookup for the label and each open run of the instrument that holds it now, by when it was created. Closed run, failed analysis attempt, sample-type or dilution mismatch: The run. Unmapped test code, different units, output-scale mismatch or unsupported dilution: File template for a result file, else Instrument in Bench setup, where the source's test codes are. A different value for the same row: Existing result in Result review. Analyte not ordered: Ordered tests in Result review. None for a value or row that could not be read, which is fixed at the analyzer.",
+          "rules": "Read-only links. Opening one leaves the attempt; Back returns to it. The matching runs are read when the attempt is opened, so they show the runs open now. That screen's own access rules still apply: without its authority, it shows the refusal instead of its records."
+        },
+        {
           "name": "Quarantine: State",
           "meaning": "Tracks the row’s decision history.",
           "values": "Needs a decision, Accepted as reprocessing, Rejected, Replaced by a retry.",
@@ -329,8 +345,8 @@
       "actions": [
         {
           "name": "Retry import",
-          "does": "Processes the original complete receipt again after a reasoned request.",
-          "availableWhen": "Result-review authority and a complete stored receipt.",
+          "does": "Processes the original complete receipt again after a reasoned request. From a row it still retries the whole received message, not that row alone.",
+          "availableWhen": "Result-review authority and a complete stored receipt. Offered in the page header and, once a row's cause is fixed, in each open quarantined row's menu and panel.",
           "result": "Queues a new attempt; earlier open quarantine outcomes are superseded by the retry’s outcome. Review the new attempt."
         },
         {
@@ -338,6 +354,12 @@
           "does": "Shows the full received evidence and refusal reason.",
           "availableWhen": "A quarantined row exists.",
           "result": "Opens a panel with Previous, Next and Close."
+        },
+        {
+          "name": "Where to fix links",
+          "does": "Open the worklist, runs, container lookup, Bench setup instrument or file template, or the sample's results in review, as the row's reason or the failure needs.",
+          "availableWhen": "The row's reason or the attempt's failure is fixed in the LIS.",
+          "result": "Opens that screen; nothing on the attempt changes until you use Retry import or record a row decision."
         },
         {
           "name": "Accept as reprocessing / Accept row",
@@ -385,7 +407,7 @@
       "workflow": [
         "Read the overall failure and reconcile all outcome counts.",
         "For each quarantined row, compare the original label, analyte, value and units with the responsible run and approved source.",
-        "Correct configuration or workflow causes through their owning screens; record justified conflicting-row decisions or retry the receipt.",
+        "Follow Where to fix to correct configuration or workflow causes in their owning screens; then use Retry import from the row or the page header, or record a justified decision on a conflicting row.",
         "Open the resulting attempt and verify the outcome rather than relying on the queued-retry confirmation."
       ],
       "troubleshooting": [
@@ -395,7 +417,7 @@
         },
         {
           "problem": "More than one sample matches the label.",
-          "recovery": "Investigate the active run placements and material identity; resolve ambiguity before retrying."
+          "recovery": "Open each run listed under Where to fix and the container in Container lookup. Remove or correct the wrong placement so only one open run of the instrument holds the label, then use Retry import."
         },
         {
           "problem": "The row is already resolved or replaced.",

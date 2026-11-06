@@ -138,11 +138,16 @@ async fn rows_outside_the_order_or_matching_two_positions_are_quarantined() {
         ]))
         .await;
     assert_eq!((scope.rows_new, scope.rows_quarantined), (1, 1));
-    let (reason, _, value, _) = quarantined(&lab.detail(&scope).await);
+    let scope_detail = lab.detail(&scope).await;
+    let (reason, _, value, _) = quarantined(&scope_detail);
     assert_eq!(
         (reason, value.as_str()),
         (QuarantineReason::NotInOrderedScope, "70.0")
     );
+    // Where to fix it: the run and the specimen the row matched.
+    let placed = &scope_detail.quarantine[0];
+    assert!(placed.run_id.is_some() && placed.specimen_id.is_some());
+    assert!(placed.matching_runs.is_empty());
 
     place_rerun_on_second_run(&lab, 1).await;
     let ambiguous = lab
@@ -153,11 +158,21 @@ async fn rows_outside_the_order_or_matching_two_positions_are_quarantined() {
         ]))
         .await;
     assert_eq!(ambiguous.outcome, ImportOutcome::Quarantined);
-    let (reason, label, _, _) = quarantined(&lab.detail(&ambiguous).await);
+    let ambiguous_detail = lab.detail(&ambiguous).await;
+    let (reason, label, _, _) = quarantined(&ambiguous_detail);
     assert_eq!(
         (reason, label.as_str()),
         (QuarantineReason::AmbiguousSample, "C00000002")
     );
+    // Where to fix it: both open runs that hold the label.
+    let runs: Vec<_> = ambiguous_detail.quarantine[0]
+        .matching_runs
+        .iter()
+        .map(|run| run.run_id)
+        .collect();
+    assert_eq!(runs.len(), 2, "{runs:?}");
+    assert!(runs.contains(&lab.run));
+    assert_eq!(ambiguous_detail.quarantine[0].run_id, None);
     assert!(lab.results(1).await.lines.is_empty());
 }
 

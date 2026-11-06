@@ -82,9 +82,9 @@ pub use queries::{
 pub use value::{MalformedValue, SourceValue, parse_value};
 pub use views::{
     AddOnComponentView, CurrentValidity, ImportAttemptDetail, ImportAttemptSummary, ImportFileView,
-    MeasuredNotOrderedView, MeasurementView, OutOfScopeDetection, ReleaseLine, ReleaseReviewStatus,
-    ReleaseRevision, ResultLineView, ResultRevisionView, ReviewQueueEntry, ReviewStatus,
-    ReviewView, SetAsideRowView, SpecimenResults, ValidityAssessmentView,
+    MatchingRunView, MeasuredNotOrderedView, MeasurementView, OutOfScopeDetection, ReleaseLine,
+    ReleaseReviewStatus, ReleaseRevision, ResultLineView, ResultRevisionView, ReviewQueueEntry,
+    ReviewStatus, ReviewView, SetAsideRowView, SpecimenResults, ValidityAssessmentView,
 };
 
 /// Forward-only migrations, numbered from `0001` (coding standards).

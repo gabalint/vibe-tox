@@ -30,26 +30,7 @@ pub fn get_import_attempt(
         )
         .optional()?
         .ok_or(ResultError::NotFound("import attempt"))?;
-    let quarantine = conn
-        .prepare_cached(
-            "SELECT id, record_path, sample_label, source_test_code, value_text, units_text, \
-             reason, state, revision FROM res_quarantine_items \
-             WHERE import_attempt_id = ?1 ORDER BY record_path, id",
-        )?
-        .query_map([id], |row| {
-            Ok(QuarantineItemView {
-                item_id: row.get(0)?,
-                record_path: row.get(1)?,
-                sample_label: row.get(2)?,
-                test_code: row.get(3)?,
-                value_text: row.get(4)?,
-                units_text: row.get(5)?,
-                reason: row.get(6)?,
-                state: row.get(7)?,
-                revision: row.get(8)?,
-            })
-        })?
-        .collect::<Result<_, _>>()?;
+    let quarantine = super::quarantine_items::quarantine_items(conn, id, summary.instrument_id)?;
     let set_aside = conn
         .prepare_cached(
             "SELECT id, record_path, sample_label, source_test_code, value_text, type_word, \

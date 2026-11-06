@@ -46,6 +46,9 @@ const DETAIL: ImportAttemptDetail = {
       reason: "conflicting_duplicate",
       state: "open",
       revision: 1,
+      runId: null,
+      specimenId: null,
+      matchingRuns: [],
     },
     {
       itemId: "item-2",
@@ -57,6 +60,9 @@ const DETAIL: ImportAttemptDetail = {
       reason: "unknown_sample",
       state: "rejected",
       revision: 2,
+      runId: null,
+      specimenId: null,
+      matchingRuns: [],
     },
   ],
 };
@@ -205,7 +211,11 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
       resolve_quarantine_item: resolve,
     });
     await screen.findByRole("grid", { name: "Quarantined rows" });
-    expect(await rowActionLabels(user, "R4")).toEqual(["Accept as reprocessing", "Reject row"]);
+    expect(await rowActionLabels(user, "R4")).toEqual([
+      "Retry import",
+      "Accept as reprocessing",
+      "Reject row",
+    ]);
     await openRowWithEnter(user, "R4");
     await user.click(
       within(panel("Row R4")).getByRole("button", { name: "Accept as reprocessing" }),
@@ -240,7 +250,7 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
       get_import_attempt: () => ({ ...DETAIL, quarantine: [...DETAIL.quarantine, unmapped] }),
     });
     await screen.findByRole("grid", { name: "Quarantined rows" });
-    expect(await rowActionLabels(user, "R6")).toEqual(["Reject row"]);
+    expect(await rowActionLabels(user, "R6")).toEqual(["Retry import", "Reject row"]);
     await openRow(user, "R6");
     const row = panel("Row R6");
     expect(within(row).queryByRole("button", { name: "Accept as reprocessing" })).toBeNull();

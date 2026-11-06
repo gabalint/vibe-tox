@@ -80,6 +80,22 @@ pub struct QuarantineItemView {
     pub state: QuarantineState,
     #[ts(type = "number")]
     pub revision: i64,
+    /// The run of the position the row matched; absent when it matched none.
+    pub run_id: Option<RunId>,
+    /// The specimen of the container the row matched, whose results are in review.
+    pub specimen_id: Option<SpecimenId>,
+    /// For a label more than one sample matches: the open runs of the instrument
+    /// that hold the label now. Empty for every other reason.
+    pub matching_runs: Vec<MatchingRunView>,
+}
+
+/// An open run whose position has a quarantined row's label.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct MatchingRunView {
+    pub run_id: RunId,
+    pub created_at: UtcTimestamp,
 }
 
 /// An import attempt with its quarantined and set-aside clinical rows.
