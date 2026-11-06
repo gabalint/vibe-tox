@@ -24,9 +24,9 @@ use lis_interfaces::partner::{
     IntakeSource, NewReceived, PartnerConnectionId, PartnerError, PartnerReceivedId,
     ReceivedOutcome,
 };
-use lis_store::ArtifactDigest;
+use lis_store::{ArtifactDigest, Database};
 
-use self::decide::ReadFile;
+pub(crate) use self::decide::ReadFile;
 use self::inbox::Inbox;
 pub(crate) use self::inbox::candidate;
 use crate::engine::Engine;
@@ -125,6 +125,11 @@ impl PartnerIntake {
     }
 
     fn read_source(&self, source: &IntakeSource) {
+        // A listener receives its messages as they come; only its waiting ones are read here.
+        if source.destination.mllp_listener.is_some() {
+            self.retry_waiting(source);
+            return;
+        }
         let connection_id = source.connection_id;
         let key = locked(&self.ops.key).usable().ok();
         let opened = Inbox::open(&self.ops.db, key.as_ref(), &source.destination);
@@ -172,56 +177,18 @@ impl PartnerIntake {
         let decided = match earlier {
             // Read before a crash interrupted its move: it is only moved now.
             Ok(Some(earlier)) if earlier.moved_to.is_none() => Some((earlier.id, earlier.rejected)),
-            _ => self.receive(
-                source,
-                ReadFile {
+            _ => {
+                let file = ReadFile {
                     name: name.to_owned(),
                     sha256,
                     bytes,
-                },
-            ),
+                    peer: None,
+                };
+                receive(db, source, file).map(|(id, outcome)| (id, outcome.failed()))
+            }
         };
         if let Some((id, failed)) = decided {
             self.move_file(inbox, id, name, failed);
-        }
-    }
-
-    /// Records what the message became; an order the order rules refuse is recorded as
-    /// refused, without an order. Returns the record and whether the file goes to Failed.
-    fn receive(&self, source: &IntakeSource, file: ReadFile) -> Option<(PartnerReceivedId, bool)> {
-        let db = &self.ops.db;
-        let (kept, read) = (source.clone(), source.clone());
-        let (name, sha256) = (file.name.clone(), file.sha256.clone());
-        let decided = db.write_blocking(worker(), CorrelationId::generate(), move |ctx| {
-            decide::receive(ctx, &read, &file)
-        });
-        let refused = match decided {
-            Ok((id, outcome)) => return Some((id, outcome.failed())),
-            Err(error) => error,
-        };
-        let connection_id = source.connection_id;
-        tracing::warn!(%connection_id, error = %refused, "incoming order refused");
-        let recorded = db.write_blocking(worker(), CorrelationId::generate(), move |ctx| {
-            lis_interfaces::partner::record_received(
-                ctx,
-                NewReceived {
-                    connection_id: kept.connection_id,
-                    file_name: name,
-                    artifact_sha256: sha256,
-                    control_id: None,
-                    placer_order: None,
-                    outcome: ReceivedOutcome::Rejected {
-                        reason: "order_refused",
-                    },
-                },
-            )
-        });
-        match recorded {
-            Ok(id) => Some((id, true)),
-            Err(error) => {
-                tracing::error!(%connection_id, error_code = error.code().as_str(), "incoming message not recorded");
-                None
-            }
         }
     }
 
@@ -270,6 +237,52 @@ impl PartnerIntake {
             if let Err(error) = retried {
                 tracing::warn!(%error, "waiting order not tried again");
             }
+        }
+    }
+}
+
+/// Records what a stored message became, with the order it made; an order the order rules
+/// refuse is recorded as refused, without an order. `None` when nothing could be recorded.
+/// Blocking.
+pub(crate) fn receive(
+    db: &Database,
+    source: &IntakeSource,
+    file: ReadFile,
+) -> Option<(PartnerReceivedId, ReceivedOutcome)> {
+    let (kept, read) = (source.clone(), source.clone());
+    let (name, sha256, peer) = (file.name.clone(), file.sha256.clone(), file.peer.clone());
+    let decided = db.write_blocking(worker(), CorrelationId::generate(), move |ctx| {
+        decide::receive(ctx, &read, &file)
+    });
+    let refused = match decided {
+        Ok(decided) => return Some(decided),
+        Err(error) => error,
+    };
+    let connection_id = source.connection_id;
+    tracing::warn!(%connection_id, error = %refused, "incoming order refused");
+    let outcome = ReceivedOutcome::Rejected {
+        reason: "order_refused",
+    };
+    let kept_outcome = outcome.clone();
+    let recorded = db.write_blocking(worker(), CorrelationId::generate(), move |ctx| {
+        lis_interfaces::partner::record_received(
+            ctx,
+            NewReceived {
+                connection_id: kept.connection_id,
+                file_name: name,
+                artifact_sha256: sha256,
+                control_id: None,
+                placer_order: None,
+                outcome: kept_outcome,
+                peer,
+            },
+        )
+    });
+    match recorded {
+        Ok(id) => Some((id, outcome)),
+        Err(error) => {
+            tracing::error!(%connection_id, error_code = error.code().as_str(), "incoming message not recorded");
+            None
         }
     }
 }

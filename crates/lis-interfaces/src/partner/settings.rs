@@ -6,6 +6,7 @@ use lis_core::required_text;
 
 use super::error::{PartnerError, invalid};
 use super::intake_settings::valid_intake;
+use super::mllp_listener_settings::valid_listener;
 use super::mllp_settings::valid_mllp;
 use super::model::{
     PartnerConnectionSettings, PartnerMessageType, RoutingRule, RuleCondition, Schedule,
@@ -62,6 +63,11 @@ pub(crate) fn valid_settings(
         .map_err(PartnerError::Invalid)?;
     let sftp = valid_sftp(settings.protocol, settings.sftp)?;
     let mllp = valid_mllp(settings.message_type, settings.protocol, settings.mllp)?;
+    let mllp_listener = valid_listener(
+        settings.message_type,
+        settings.protocol,
+        settings.mllp_listener,
+    )?;
     let intake = valid_intake(settings.message_type, settings.protocol, settings.intake)?;
     let Some(pattern) = pattern_rules(settings.message_type) else {
         return Ok(PartnerConnectionSettings {
@@ -73,6 +79,7 @@ pub(crate) fn valid_settings(
             sftp,
             intake,
             mllp,
+            mllp_listener,
             ..settings
         });
     };
@@ -93,6 +100,7 @@ pub(crate) fn valid_settings(
         sftp,
         intake,
         mllp,
+        mllp_listener,
         ..settings
     })
 }
@@ -281,6 +289,7 @@ mod tests {
             sftp: None,
             intake: None,
             mllp: None,
+            mllp_listener: None,
         }
     }
 

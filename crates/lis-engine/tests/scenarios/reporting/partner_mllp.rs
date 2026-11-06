@@ -76,6 +76,7 @@ fn settings(port: u16) -> PartnerConnectionSettings {
             acknowledgement: MllpAcknowledgement::Application,
             ack_timeout_seconds: 1,
         }),
+        mllp_listener: None,
     }
 }
 

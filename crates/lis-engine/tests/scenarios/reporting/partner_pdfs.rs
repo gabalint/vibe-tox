@@ -39,6 +39,7 @@ fn settings(rules: Vec<RoutingRule>) -> PartnerConnectionSettings {
         sftp: None,
         intake: None,
         mllp: None,
+        mllp_listener: None,
     }
 }
 

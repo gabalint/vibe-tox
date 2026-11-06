@@ -139,6 +139,9 @@ pub struct PartnerMessageRow {
     pub ack_text: Option<String>,
     /// Over MLLP: sent without an acknowledgement in time; it is sent again.
     pub awaiting_ack: bool,
+    /// An order received over MLLP: the partner's address it came from. Its `ack_code` is
+    /// the acknowledgement the LIS answered with.
+    pub peer: Option<String>,
     /// The message matched no connection.
     pub unrouted: bool,
     /// For an unrouted message, the decision; `None` while it waits.
@@ -284,6 +287,7 @@ fn delivery_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<PartnerMessageRow> 
         ack_code,
         ack_text: row.get(21)?,
         awaiting_ack,
+        peer: None,
         unrouted: false,
         resolution: None,
         allowed_actions: if resendable {
@@ -351,6 +355,7 @@ fn unrouted_rows(
             ack_code: None,
             ack_text: None,
             awaiting_ack: false,
+            peer: None,
             unrouted: true,
             resolution: row.get(6)?,
             allowed_actions: Vec::new(),

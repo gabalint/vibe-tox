@@ -60,6 +60,7 @@ pub use model::{
     RegisterInstrument, SetInstrumentEnabled, SetResultFolder, StopBits,
     UpdateInstrumentConnection, WatchedFolder,
 };
+pub use peer_rejections::{PeerRejections, RejectionTally};
 pub use queries::{
     get_instrument, get_receipt, instrument_au_profile, instrument_names, instrument_transport,
     list_instruments, list_receipt_frames, receipt_au_profile,
@@ -139,6 +140,11 @@ pub const MIGRATIONS: &[Migration] = &[
         version: 12,
         name: "mllp_connections",
         sql: include_str!("../migrations/0012_mllp_connections.sql"),
+    },
+    Migration {
+        version: 13,
+        name: "mllp_received",
+        sql: include_str!("../migrations/0013_mllp_received.sql"),
     },
 ];
 

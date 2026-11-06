@@ -175,6 +175,8 @@ fn connection_view(
         waiting,
         failing,
         awaiting_ack,
+        // The engine adds it: only it knows whether its listener listens.
+        listener: None,
         last_change: ChangeStamp {
             by,
             by_display: None,

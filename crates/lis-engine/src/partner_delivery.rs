@@ -235,6 +235,8 @@ pub(crate) fn send(
 pub(crate) enum ProbeProblem {
     Sftp(sftp::SftpProblem),
     Mllp(mllp::MllpProblem),
+    /// The LIS cannot listen there, such as `port_in_use`.
+    Listener(&'static str),
 }
 
 impl ProbeProblem {
@@ -243,6 +245,7 @@ impl ProbeProblem {
         match self {
             Self::Sftp(problem) => problem.code(),
             Self::Mllp(problem) => problem.code(),
+            Self::Listener(code) => code,
         }
     }
 }

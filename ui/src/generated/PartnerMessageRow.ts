@@ -47,6 +47,11 @@ ackCode: AckCode | null, ackText: string | null,
  */
 awaitingAck: boolean, 
 /**
+ * An order received over MLLP: the partner's address it came from. Its `ack_code` is
+ * the acknowledgement the LIS answered with.
+ */
+peer: string | null, 
+/**
  * The message matched no connection.
  */
 unrouted: boolean, 

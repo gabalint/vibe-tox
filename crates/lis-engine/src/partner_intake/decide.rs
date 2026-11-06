@@ -13,11 +13,13 @@ use lis_store::CommandContext;
 use super::IntakeError;
 use super::order_input::{Problem, order_input};
 
-/// One file as read, with its stored bytes' digest.
-pub(super) struct ReadFile {
-    pub(super) name: String,
-    pub(super) sha256: String,
-    pub(super) bytes: Vec<u8>,
+/// One message as read, with its stored bytes' digest: a file, or a message received over
+/// MLLP, which has no name and comes from a partner's address.
+pub(crate) struct ReadFile {
+    pub(crate) name: String,
+    pub(crate) sha256: String,
+    pub(crate) bytes: Vec<u8>,
+    pub(crate) peer: Option<String>,
 }
 
 /// The order's source document: the stored original message, by digest.
@@ -107,6 +109,7 @@ fn record(
             control_id,
             placer_order,
             outcome: outcome.clone(),
+            peer: file.peer.clone(),
         },
     )?;
     Ok((id, outcome))

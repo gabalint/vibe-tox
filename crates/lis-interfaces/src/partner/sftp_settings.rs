@@ -4,6 +4,7 @@
 use lis_core::required_text;
 
 use super::error::{PartnerError, invalid};
+use super::mllp_listener_settings::listener_destination;
 use super::mllp_settings::mllp_destination;
 use super::model::{PartnerConnectionSettings, PartnerProtocol, SftpSettings};
 use crate::validation::valid_text;
@@ -20,18 +21,18 @@ pub(crate) fn valid_sftp(
     sftp: Option<SftpSettings>,
 ) -> Result<Option<SftpSettings>, PartnerError> {
     match (protocol, sftp) {
-        (PartnerProtocol::Folder | PartnerProtocol::MllpConnect, None) => Ok(None),
-        (PartnerProtocol::Folder | PartnerProtocol::MllpConnect, Some(_)) => Err(invalid(
-            "settings.sftp",
-            "not_for_protocol",
-            "Only an SFTP connection has a server.",
-        )),
+        (PartnerProtocol::Sftp, Some(sftp)) => valid_sftp_server(sftp).map(Some),
         (PartnerProtocol::Sftp, None) => Err(invalid(
             "settings.sftp.host",
             "required",
             "Enter the SFTP server.",
         )),
-        (PartnerProtocol::Sftp, Some(sftp)) => valid_sftp_server(sftp).map(Some),
+        (_, None) => Ok(None),
+        (_, Some(_)) => Err(invalid(
+            "settings.sftp",
+            "not_for_protocol",
+            "Only an SFTP connection has a server.",
+        )),
     }
 }
 
@@ -107,6 +108,9 @@ fn is_fingerprint(text: &str) -> bool {
 pub(crate) fn destination_of(settings: &PartnerConnectionSettings, folder: &str) -> String {
     if let Some(partner) = &settings.mllp {
         return mllp_destination(partner);
+    }
+    if let Some(listener) = &settings.mllp_listener {
+        return listener_destination(listener);
     }
     match &settings.sftp {
         Some(sftp) => format!(

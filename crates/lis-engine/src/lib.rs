@@ -252,6 +252,7 @@ pub use lis_ops::anchors::{
 // partner: begin
 mod partner_delivery;
 mod partner_intake;
+mod partner_listener;
 mod poller;
 pub use commands::partner::{
     ChosenPartnerFolder, CreatePartnerConnectionInput, ExportedMessageLog, FolderTestResult,

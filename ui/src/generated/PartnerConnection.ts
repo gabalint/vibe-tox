@@ -2,6 +2,7 @@
 import type { ChangeStamp } from "./ChangeStamp";
 import type { ConnectionStatus } from "./ConnectionStatus";
 import type { LastAttempt } from "./LastAttempt";
+import type { ListenerView } from "./ListenerView";
 import type { PartnerConnectionSettings } from "./PartnerConnectionSettings";
 import type { PartnerVerification } from "./PartnerVerification";
 
@@ -38,7 +39,12 @@ failing: number,
 /**
  * Messages sent over MLLP without an acknowledgement yet; they are sent again.
  */
-awaitingAck: number, lastChange: ChangeStamp, 
+awaitingAck: number, 
+/**
+ * For MLLP – LIS listens: whether the listener listens now, as the engine sees it;
+ * `None` while it does not try (stopped, not checked) and for other connections.
+ */
+listener: ListenerView | null, lastChange: ChangeStamp, 
 /**
  * Commands that apply to the connection as it is now.
  */

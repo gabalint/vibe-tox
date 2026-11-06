@@ -1,4 +1,4 @@
-//! Bounded, in-memory aggregation of rejected analyzer-peer connections, so a
+//! Bounded, in-memory aggregation of rejected analyzer-peer and MLLP-partner connections, so a
 //! connection flood cannot amplify into one audit write per connection
 //! (REQ-INT-009, NFR-08). The TCP accept loop closes a rejected socket at once,
 //! records it here, and audits only the summaries [`RejectionTally::take_due`]
@@ -18,16 +18,16 @@ pub(crate) const MAX_TRACKED_PEERS: usize = 64;
 /// Rejected connections to audit for one peer, or for every untracked peer
 /// when `peer` is `None`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) struct PeerRejections {
-    pub(crate) peer: Option<IpAddr>,
-    pub(crate) rejected_connections: usize,
+pub struct PeerRejections {
+    pub peer: Option<IpAddr>,
+    pub rejected_connections: usize,
 }
 
 /// Unaudited rejection counts per peer, released at most once per
 /// [`REJECTION_WINDOW`] per tally. The first rejection of a quiet peer is due
 /// at once, so a misconfigured analyzer becomes visible promptly.
 #[derive(Debug, Default)]
-pub(crate) struct RejectionTally {
+pub struct RejectionTally {
     peers: BTreeMap<IpAddr, Counter>,
     untracked: Option<Counter>,
 }
@@ -40,7 +40,7 @@ struct Counter {
 
 impl RejectionTally {
     /// Counts one rejected connection; does no I/O.
-    pub(crate) fn record(&mut self, peer: IpAddr) {
+    pub fn record(&mut self, peer: IpAddr) {
         let counter = if self.peers.len() < MAX_TRACKED_PEERS || self.peers.contains_key(&peer) {
             self.peers.entry(peer).or_default()
         } else {
@@ -51,7 +51,7 @@ impl RejectionTally {
 
     /// Returns the counts whose audit is due at `now`, and forgets peers that
     /// stayed quiet for a whole window after their last audit.
-    pub(crate) fn take_due(&mut self, now: Instant) -> Vec<PeerRejections> {
+    pub fn take_due(&mut self, now: Instant) -> Vec<PeerRejections> {
         let mut due = Vec::new();
         self.peers
             .retain(|peer, counter| counter.settle(Some(*peer), now, &mut due));
@@ -66,7 +66,7 @@ impl RejectionTally {
     }
 
     /// Returns every unaudited count regardless of window, for listener stop.
-    pub(crate) fn take_remaining(self) -> Vec<PeerRejections> {
+    pub fn take_remaining(self) -> Vec<PeerRejections> {
         let tracked = self
             .peers
             .into_iter()

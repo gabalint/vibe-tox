@@ -7,9 +7,9 @@ use super::error::PartnerError;
 use super::model::{IntakeSettings, PartnerConnectionId, PartnerMessageType};
 use super::repo::{connections, verification};
 
-/// An HL7 Orders connection to read: started, with a destination check covering its
-/// current folder or server.
-#[derive(Debug, Clone)]
+/// An HL7 Orders connection to read, or to listen for: started, with a destination check
+/// covering its current folder, server or listener.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IntakeSource {
     pub connection_id: PartnerConnectionId,
     /// The laboratory's client the orders are for, by code.

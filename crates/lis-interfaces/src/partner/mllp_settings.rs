@@ -32,33 +32,43 @@ pub(crate) fn valid_mllp(
             "required",
             "Enter the partner's address.",
         )),
-        (PartnerProtocol::Folder | PartnerProtocol::Sftp, None) => Ok(None),
-        (PartnerProtocol::Folder | PartnerProtocol::Sftp, Some(_)) => Err(invalid(
+        (_, None) => Ok(None),
+        (_, Some(_)) => Err(invalid(
             "settings.mllp",
             "not_for_protocol",
-            "Only an MLLP connection has a partner address.",
+            "Only MLLP – LIS connects has a partner address.",
         )),
+    }
+}
+
+/// `text` as an IP address on the lab network, or a refusal of `field`: `invalid` when it
+/// is not an IP address, `not_lab` when it is not on the lab network.
+pub(crate) fn lab_ip(
+    field: &str,
+    text: &str,
+    invalid_message: &str,
+    not_lab: &str,
+) -> Result<IpAddr, PartnerError> {
+    let Ok(address) = text.trim().parse::<IpAddr>() else {
+        return Err(invalid(field, "invalid_address", invalid_message));
+    };
+    if is_lab_address(address) {
+        Ok(address)
+    } else {
+        Err(invalid(field, "not_lab_network", not_lab))
     }
 }
 
 /// The partner settings with the address written as the LIS reads it, or the first field
 /// that is wrong; a connection test checks them as saving does.
 pub fn valid_mllp_partner(partner: MllpPartner) -> Result<MllpPartner, PartnerError> {
-    let Ok(address) = partner.address.trim().parse::<IpAddr>() else {
-        return Err(invalid(
-            "settings.mllp.address",
-            "invalid_address",
-            "Enter the partner's IP address on the lab network, such as 10.20.0.15.",
-        ));
-    };
-    if !is_lab_address(address) {
-        return Err(invalid(
-            "settings.mllp.address",
-            "not_lab_network",
-            "Use an address on the lab network. MLLP is not encrypted: reach a partner outside \
-             it through the lab's VPN, or use SFTP.",
-        ));
-    }
+    let address = lab_ip(
+        "settings.mllp.address",
+        &partner.address,
+        "Enter the partner's IP address on the lab network, such as 10.20.0.15.",
+        "Use an address on the lab network. MLLP is not encrypted: reach a partner outside it \
+         through the lab's VPN, or use SFTP.",
+    )?;
     if partner.port == 0 {
         return Err(invalid(
             "settings.mllp.port",

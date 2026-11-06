@@ -55,12 +55,14 @@ pub(super) async fn partner_call(engine: &Engine, name: &str) -> Option<Result<(
             .map(drop),
         "test_partner_mllp" => engine
             .test_partner_mllp(TestPartnerMllpInput {
-                partner: MllpPartner {
+                partner: Some(MllpPartner {
                     address: "127.0.0.1".to_owned(),
                     port: 9,
                     acknowledgement: MllpAcknowledgement::Application,
                     ack_timeout_seconds: 1,
-                },
+                }),
+                listener: None,
+                connection_id: None,
             })
             .await
             .map(drop),
@@ -191,6 +193,7 @@ fn settings(name: &str, rules: Vec<RoutingRule>) -> PartnerConnectionSettings {
         sftp: None,
         intake: None,
         mllp: None,
+        mllp_listener: None,
     }
 }
 
