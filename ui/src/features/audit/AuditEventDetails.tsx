@@ -2,6 +2,8 @@ import { DetailPanel } from "@/components/DetailPanel";
 import { Facts } from "@/components/Facts";
 import { Timestamp } from "@/components/Timestamp";
 import type { AuditEventView } from "@/generated/AuditEventView";
+import { AuditChanges } from "./AuditChanges";
+import styles from "./audit.module.css";
 import { actionText, NONE, OutcomeBadge, principalText, recordText } from "./auditColumns";
 import { streamLabel } from "./streams";
 
@@ -14,8 +16,8 @@ interface AuditEventDetailsProps {
 
 /**
  * Every field of one event, in full, to reconstruct who did what, when and why (REQ-OPS-001),
- * in the side panel. The event comes from the list the engine returned for this view, which it
- * recorded as an access; opening one reads nothing more.
+ * in the side panel, with what it changed. The event comes from the list the engine returned for
+ * this view; its Changes are read on opening, and the engine records that read as an access.
  */
 export function AuditEventDetails({ event, ...navigation }: AuditEventDetailsProps) {
   return (
@@ -24,20 +26,23 @@ export function AuditEventDetails({ event, ...navigation }: AuditEventDetailsPro
       status={<OutcomeBadge outcome={event.outcome} />}
       {...navigation}
     >
-      <Facts
-        items={[
-          { label: "Occurred", value: <Timestamp value={event.occurredAt} seconds /> },
-          { label: "Recorded", value: <Timestamp value={event.recordedAt} seconds /> },
-          { label: "By", value: principalText(event) },
-          { label: "Principal ID", value: event.principalId },
-          { label: "Action", value: withCode(actionText(event), event.action) },
-          { label: "Record", value: recordText(event) },
-          { label: "Record ID", value: event.recordId ?? NONE },
-          { label: "Reason", value: event.reason ?? NONE },
-          { label: "Authority", value: event.authority ?? NONE },
-          { label: "Correlation ID", value: event.correlationId },
-        ]}
-      />
+      <div className={styles.eventDetails}>
+        <Facts
+          items={[
+            { label: "Occurred", value: <Timestamp value={event.occurredAt} seconds /> },
+            { label: "Recorded", value: <Timestamp value={event.recordedAt} seconds /> },
+            { label: "By", value: principalText(event) },
+            { label: "Principal ID", value: event.principalId },
+            { label: "Action", value: withCode(actionText(event), event.action) },
+            { label: "Record", value: recordText(event) },
+            { label: "Record ID", value: event.recordId ?? NONE },
+            { label: "Reason", value: event.reason ?? NONE },
+            { label: "Authority", value: event.authority ?? NONE },
+            { label: "Correlation ID", value: event.correlationId },
+          ]}
+        />
+        <AuditChanges event={event} />
+      </div>
     </DetailPanel>
   );
 }

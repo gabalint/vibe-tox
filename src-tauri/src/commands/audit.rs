@@ -3,9 +3,19 @@
 
 use lis_core::CommandError;
 use lis_engine::{
-    AuditEventView, ChainVerification, Engine, ListAuditEventsInput, VerifyAuditChainInput,
+    AuditEventChanges, AuditEventView, ChainVerification, Engine, ExportAuditEventsInput,
+    ExportedAuditFile, FindAuditRecordsInput, FoundAuditRecords, GetAuditEventChangesInput,
+    ListAuditEventsInput, VerifyAuditChainInput,
 };
-use tauri::State;
+use tauri::{AppHandle, Manager, Runtime, State};
+
+#[tauri::command]
+pub(crate) async fn find_audit_records(
+    engine: State<'_, Engine>,
+    input: FindAuditRecordsInput,
+) -> Result<FoundAuditRecords, CommandError> {
+    engine.find_audit_records(input).await
+}
 
 #[tauri::command]
 pub(crate) async fn list_audit_events(
@@ -13,6 +23,25 @@ pub(crate) async fn list_audit_events(
     input: ListAuditEventsInput,
 ) -> Result<Vec<AuditEventView>, CommandError> {
     engine.list_audit_events(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn get_audit_event_changes(
+    engine: State<'_, Engine>,
+    input: GetAuditEventChangesInput,
+) -> Result<AuditEventChanges, CommandError> {
+    engine.get_audit_event_changes(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn export_audit_events<R: Runtime>(
+    app: AppHandle<R>,
+    engine: State<'_, Engine>,
+    input: ExportAuditEventsInput,
+) -> Result<ExportedAuditFile, CommandError> {
+    engine
+        .export_audit_events(input, app.path().download_dir().ok())
+        .await
 }
 
 #[tauri::command]

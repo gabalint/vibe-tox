@@ -109,13 +109,10 @@ pub fn get_container_history(
     let depletion = lis_audit::list(
         conn,
         &lis_audit::EventFilter {
-            stream: lis_audit::Stream::Clinical,
-            before_seq: None,
-            limit: 1,
             action: Some(crate::actions::MARK_DEPLETED),
             record_type: Some("container"),
             record_id: Some(&container_id.to_string()),
-            self_approvals_only: false,
+            ..lis_audit::EventFilter::new(lis_audit::Stream::Clinical, 1)
         },
     )
     .map_err(lis_store::StoreError::from)?

@@ -21,6 +21,7 @@ use super::{
 use crate::engine::Engine;
 use crate::pipeline::Failure;
 use crate::report_rendering::ExportFile;
+use crate::report_rendering::csv::cell as csv_cell;
 
 const CSV_HEADER: &str = "time_utc,direction,connection,message,record,transport,\
      application,waiting,attempts,given_up,next_attempt_utc,error,file,unrouted,decision,\
@@ -245,31 +246,9 @@ fn csv(rows: &[PartnerMessageRow]) -> String {
                 .to_owned(),
             row.superseded.to_string(),
         ];
-        let line: Vec<String> = cells.iter().map(|cell| cell_text(cell)).collect();
+        let line: Vec<String> = cells.iter().map(|cell| csv_cell(cell)).collect();
         text.push_str(&line.join(","));
         text.push_str("\r\n");
     }
     text
-}
-
-/// One quoted CSV cell. A leading `=`, `+`, `-` or `@` is prefixed with `'` so a
-/// spreadsheet never runs it as a formula.
-fn cell_text(value: &str) -> String {
-    let guarded = if value.starts_with(['=', '+', '-', '@']) {
-        format!("'{value}")
-    } else {
-        value.to_owned()
-    };
-    format!("\"{}\"", guarded.replace('"', "\"\""))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn cells_are_quoted_and_formulas_disarmed() {
-        assert_eq!(cell_text("a\"b"), "\"a\"\"b\"");
-        assert_eq!(cell_text("=SUM(A1)"), "\"'=SUM(A1)\"");
-    }
 }

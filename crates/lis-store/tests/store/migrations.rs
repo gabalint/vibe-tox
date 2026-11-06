@@ -132,6 +132,7 @@ fn reopen_is_idempotent() {
             ("audit", 1),
             ("audit", 2),
             ("audit", 3),
+            ("audit", 4),
             ("demo", 1),
             ("demo", 2),
             ("store", 1)
