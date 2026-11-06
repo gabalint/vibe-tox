@@ -1,18 +1,15 @@
-import { CalendarDays, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { CalendarDays, Clock } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import {
   Button,
-  Calendar,
-  CalendarCell,
-  CalendarGrid,
   Dialog,
   DialogTrigger,
-  Heading,
   ListBox,
   ListBoxItem,
   Popover,
   type Selection,
 } from "react-aria-components";
+import { DateCalendar } from "./DateCalendar";
 import styles from "./FieldPicker.module.css";
 
 /** Called with the picked value in the field's own text format. */
@@ -59,29 +56,14 @@ export function DatePickerButton({
   return (
     <PickerTrigger label={label} icon={<CalendarDays aria-hidden="true" />}>
       {(close) => (
-        <Calendar
-          aria-label={label}
-          // ISO dates compare correctly as text.
-          isDateUnavailable={latest ? (date) => date.toString() > latest : undefined}
-          onChange={(date) => {
-            onPick(date.toString());
+        <DateCalendar
+          label={label}
+          latest={latest}
+          onPick={(value) => {
+            onPick(value);
             close();
           }}
-          className={styles.calendar}
-        >
-          <header className={styles.calendarHeader}>
-            <Button slot="previous" aria-label="Previous month" className={styles.trigger}>
-              <ChevronLeft aria-hidden="true" />
-            </Button>
-            <Heading className={styles.month} />
-            <Button slot="next" aria-label="Next month" className={styles.trigger}>
-              <ChevronRight aria-hidden="true" />
-            </Button>
-          </header>
-          <CalendarGrid className={styles.grid}>
-            {(date) => <CalendarCell date={date} className={styles.day} />}
-          </CalendarGrid>
-        </Calendar>
+        />
       )}
     </PickerTrigger>
   );
