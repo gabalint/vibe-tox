@@ -3,7 +3,7 @@ import { DatePickerButton } from "@/components/FieldPicker";
 import { TextField } from "@/components/TextField";
 import { calendarDayToday, isCalendarDate, LabTimeZoneContext } from "@/lib/format";
 
-interface AuditDateFilterProps {
+interface DayFilterProps {
   label: string;
   name: string;
   /** The applied day, `YYYY-MM-DD`. */
@@ -17,17 +17,11 @@ interface AuditDateFilterProps {
 }
 
 /**
- * A day typed as `YYYY-MM-DD` or picked from the calendar, applied once it is a real day
- * within the range; until then the field says what is wrong. Days are the laboratory's.
+ * One end of a list's day range: a day typed as `YYYY-MM-DD` or picked from the calendar,
+ * applied once it is a real day within the range; until then the field says what is wrong.
+ * Days are the laboratory's; days after today can't be picked.
  */
-export function AuditDateFilter({
-  label,
-  name,
-  value,
-  earliest,
-  latest,
-  onChange,
-}: AuditDateFilterProps) {
+export function DayFilter({ label, name, value, earliest, latest, onChange }: DayFilterProps) {
   const labTimeZone = useContext(LabTimeZoneContext);
   const [text, setText] = useState(value ?? "");
   const [applied, setApplied] = useState(value);
@@ -36,8 +30,7 @@ export function AuditDateFilter({
     setApplied(value);
     setText(value ?? "");
   }
-  const day = text.trim();
-  const error = dayError(day, earliest, latest);
+  const error = dayError(text.trim(), earliest, latest);
   const change = (next: string) => {
     setText(next);
     const trimmed = next.trim();

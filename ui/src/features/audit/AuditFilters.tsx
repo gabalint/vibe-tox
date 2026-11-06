@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import { Button } from "@/components/Button";
 import { Checkbox } from "@/components/Checkbox";
+import { DayFilter } from "@/components/DayFilter";
 import { Select } from "@/components/Select";
 import { Toolbar } from "@/components/Toolbar";
-import { AuditDateFilter } from "./AuditDateFilter";
 import { AuditFind, type PickedRecord } from "./AuditFind";
 import { type AuditFilter, hasFilters, isOutcome } from "./contract";
 import { ALL_STREAMS, isStream, STREAMS } from "./streams";
@@ -152,14 +152,14 @@ function MoreFilters({ filter, recordTypes, onApply }: MoreFiltersProps) {
           })
         }
       />
-      <AuditDateFilter
+      <DayFilter
         label="Recorded from"
         name="from"
         value={filter.from}
         latest={filter.to}
         onChange={(from) => onApply({ ...filter, from })}
       />
-      <AuditDateFilter
+      <DayFilter
         label="Recorded to"
         name="to"
         value={filter.to}

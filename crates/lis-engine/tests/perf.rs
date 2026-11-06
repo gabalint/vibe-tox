@@ -600,8 +600,7 @@ impl Perf {
         let attempts = ListImportAttemptsInput {
             instrument_id: Some(self.lab.instrument),
             limit: 50,
-            before: None,
-            after_import_attempt_id: None,
+            ..ListImportAttemptsInput::default()
         };
         l.time(
             "list_import_attempts",

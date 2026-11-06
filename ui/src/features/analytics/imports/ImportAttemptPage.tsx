@@ -4,22 +4,22 @@ import { Button } from "@/components/Button";
 import { Facts } from "@/components/Facts";
 import { Page, PageHeader } from "@/components/Page";
 import { QueryContent } from "@/components/QueryContent";
-import { ReasonConfirmDialog } from "@/components/ReasonConfirmDialog";
 import { RefreshControl } from "@/components/RefreshControl";
 import { Section } from "@/components/Section";
 import { Tabs } from "@/components/Tabs";
 import type { ImportAttemptDetail } from "@/generated/ImportAttemptDetail";
-import type { RetryImportInput } from "@/generated/RetryImportInput";
-import { useCommandMutation, useCommandQuery } from "@/lib/commands";
+import { useCommandQuery } from "@/lib/commands";
 import { useFormatTime } from "@/lib/format";
 import { useRecordSequence } from "@/lib/recordSequence";
 import { useRouteTabs } from "@/lib/routeTabs";
-import { GET_IMPORT_ATTEMPT, IMPORT_QUERIES } from "../contract";
+import { GET_IMPORT_ATTEMPT } from "../contract";
 import { IMPORTS_LIST, importAttemptPath } from "../paths";
 import { failureText } from "../resultLabels";
+import { failureFixFacts } from "./fixLinks";
 import { ImportFile } from "./ImportFile";
 import { ImportOutcomeBadge } from "./ImportOutcomeBadge";
 import { QuarantineItems } from "./QuarantineItems";
+import { RetryImportDialog } from "./RetryImportDialog";
 import { SetAsideRows } from "./SetAsideRows";
 
 /**
@@ -107,6 +107,7 @@ function outcomeFacts(attempt: ImportAttemptDetail) {
       label: attempt.file === null ? "Message failure" : "File failure",
       value: failureText(attempt.failureCode),
     },
+    ...failureFixFacts(attempt),
     { label: "Rows", value: String(attempt.rowsTotal) },
     { label: "New results", value: String(attempt.rowsNew) },
     { label: "Duplicates", value: String(attempt.rowsDuplicate) },
@@ -126,27 +127,11 @@ function outcomeFacts(attempt: ImportAttemptDetail) {
 /** Retries the whole received message; the attempt carries no `allowedActions` yet. */
 function RetryImport({ attempt }: { attempt: ImportAttemptDetail }) {
   const [isRetrying, setRetrying] = useState(false);
-  const retry = useCommandMutation<number, { input: RetryImportInput }>("retry_import", {
-    invalidates: IMPORT_QUERIES,
-  });
   return (
     <>
       <Button onPress={() => setRetrying(true)}>Retry import</Button>
       {isRetrying && (
-        <ReasonConfirmDialog<RetryImportInput>
-          title="Retry import"
-          confirmLabel="Retry import"
-          variant="primary"
-          command={retry}
-          input={(reason) => ({ receiptId: attempt.receiptId, reason })}
-          successTitle="Retry queued; it appears as a new import attempt"
-          onClose={() => setRetrying(false)}
-        >
-          <p>
-            The received message is processed again as a new attempt. Rows still open in quarantine
-            from earlier attempts are replaced by the outcome of the retry.
-          </p>
-        </ReasonConfirmDialog>
+        <RetryImportDialog receiptId={attempt.receiptId} onClose={() => setRetrying(false)} />
       )}
     </>
   );
