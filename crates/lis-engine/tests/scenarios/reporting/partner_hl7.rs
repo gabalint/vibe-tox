@@ -17,6 +17,7 @@ use super::partner_pdfs::{AMENDMENT, Pdfs};
 use crate::m2_lab::Role;
 use crate::m2_steps::gate_codes;
 use crate::m3_fixture::Staff;
+use crate::partner_contract::{assert_passed, run_tests};
 
 fn settings() -> PartnerConnectionSettings {
     PartnerConnectionSettings {
@@ -115,6 +116,9 @@ pub(super) async fn approve(hl7: &Pdfs) {
         .await
         .unwrap();
     assert_eq!(approved.version, Some(1));
+    // A new mapping version needs the acceptance tests again (REQ-INT-001).
+    let id = hl7.connection.connection.id;
+    assert_passed(&run_tests(hl7.bench.lab().engine(), id).await);
 }
 
 #[tokio::test]
@@ -122,9 +126,20 @@ async fn an_hl7_result_waits_for_approved_codes_and_its_correction_follows() {
     let hl7 = Pdfs::start_with(settings()).await;
     hl7.release(None).await;
     hl7.deliver().await;
-    // REQ-INT-004: no approved code, nothing written.
+    // REQ-INT-004, REQ-INT-001: no approved code, so the acceptance tests failed and
+    // nothing is written.
     assert!(hl7.files().is_empty());
-    assert_eq!(hl7.rows().await[0].waiting, Some(WaitReason::NotMapped));
+    assert_eq!(hl7.rows().await[0].waiting, Some(WaitReason::NotAccepted));
+    let contract = &hl7.connection.contract;
+    let problems: Vec<_> = contract
+        .last_run
+        .as_ref()
+        .unwrap()
+        .cases
+        .iter()
+        .filter_map(|case| case.problem.as_deref())
+        .collect();
+    assert_eq!(problems, ["no_approved_mappings", "no_approved_mappings"]);
 
     draft_held(&hl7).await;
     approve(&hl7).await;

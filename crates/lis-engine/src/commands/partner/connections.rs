@@ -11,6 +11,7 @@ use secrecy::{ExposeSecret, SecretString};
 use serde::Deserialize;
 use ts_rs::TS;
 
+use super::contracts::name_contract;
 use super::folder_choices::FolderChoiceId;
 use super::{
     CREATE_PARTNER_CONNECTION, GET_PARTNER_CONNECTION, LIST_PARTNER_CONNECTIONS,
@@ -123,12 +124,19 @@ impl Engine {
         input: PartnerConnectionInput,
     ) -> Result<PartnerConnectionDetail, CommandError> {
         self.run(&GET_PARTNER_CONNECTION, |call| async move {
-            let detail = self
-                .read(&call, move |conn| detail(conn, input.connection_id))
-                .await?;
-            Ok(self.with_listener(detail, false).await)
+            self.connection_detail(&call, input.connection_id).await
         })
         .await
+    }
+
+    /// The connection as it is now, with its listener's state.
+    pub(super) async fn connection_detail(
+        &self,
+        call: &Call,
+        id: PartnerConnectionId,
+    ) -> Result<PartnerConnectionDetail, Failure> {
+        let detail = self.read(call, move |conn| detail(conn, id)).await?;
+        Ok(self.with_listener(detail, false).await)
     }
 
     /// The connection with its listener's state; after a change, once the listeners follow
@@ -234,7 +242,7 @@ impl Engine {
 
     /// Writes a change to a connection, then returns it once the listeners follow it, so a
     /// saved or started listener shows at once whether it listens.
-    async fn change(
+    pub(super) async fn change(
         &self,
         call: &Call,
         change: impl FnOnce(&mut CommandContext<'_>) -> Result<PartnerConnectionId, PartnerError>
@@ -348,6 +356,7 @@ fn detail(
 ) -> Result<PartnerConnectionDetail, PartnerError> {
     let mut detail = lis_interfaces::partner::get_partner_connection(conn, id)?;
     name_connection(conn, &mut detail.connection)?;
+    name_contract(conn, &mut detail.contract)?;
     let names = display_names(
         conn,
         detail.history.iter().map(|entry| entry.changed.by.as_str()),

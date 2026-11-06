@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "partner",
-  "description": "Interfaces commands for the main window: connections to outside systems, their folder chosen in a native dialog, HL7 code mappings, the message log and Unrouted messages (REQ-INT-001-004, REQ-RPT-003, REQ-RPT-011-012; NFR-31).",
+  "description": "Interfaces commands for the main window: connections to outside systems, their folder chosen in a native dialog, HL7 code mappings, interface contracts and acceptance tests, the message log and Unrouted messages (REQ-INT-001-004, REQ-RPT-003, REQ-RPT-011-012; NFR-31).",
   "windows": ["main"],
   "permissions": [
     "allow-list-partner-connections",
@@ -24,6 +24,9 @@
     "allow-list-partner-mappings",
     "allow-draft-partner-mapping",
     "allow-discard-partner-mapping-draft",
-    "allow-approve-partner-mappings"
+    "allow-approve-partner-mappings",
+    "allow-draft-partner-contract",
+    "allow-approve-partner-contract",
+    "allow-run-partner-acceptance-tests"
   ]
 }

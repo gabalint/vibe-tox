@@ -13,16 +13,18 @@ use lis_engine::{
     TestPartnerMllpInput, TestPartnerSftpInput, UpdatePartnerConnectionInput,
 };
 use lis_interfaces::partner::{
-    ApprovePartnerMappings, DiscardPartnerMappingDraft, DraftPartnerMapping, MappingKind,
-    MessageView, MllpAcknowledgement, MllpPartner, PartnerConnectionId, PartnerConnectionSettings,
-    PartnerDeliveryId, PartnerMessageId, PartnerMessageRow, PartnerMessageType, PartnerProtocol,
-    RoutingRule, RuleCondition, RuleField, Schedule, SftpAuth, SftpSettings, TransportOutcome,
-    UnroutedDecision, WaitReason,
+    ApprovePartnerContract, ApprovePartnerMappings, DiscardPartnerMappingDraft,
+    DraftPartnerContract, DraftPartnerMapping, MappingKind, MessageView, MllpAcknowledgement,
+    MllpPartner, PartnerConnectionId, PartnerConnectionSettings, PartnerDeliveryId,
+    PartnerMessageId, PartnerMessageRow, PartnerMessageType, PartnerProtocol, RoutingRule,
+    RuleCondition, RuleField, Schedule, SftpAuth, SftpSettings, TransportOutcome, UnroutedDecision,
+    WaitReason,
 };
 use tempfile::TempDir;
 
 use super::paging::release_groups;
 use super::*;
+use crate::partner_contract::{approve_and_test, assert_passed, draft_contract, terms};
 
 const PATTERN: &str = "billing-{handoff}.json";
 
@@ -175,6 +177,36 @@ async fn mapping_call(
                 reason: "Synthetic authorization test".to_owned(),
                 self_approval: false,
             })
+            .await
+            .map(drop),
+        _ => return contract_call(engine, name, connection_id).await,
+    })
+}
+
+async fn contract_call(
+    engine: &Engine,
+    name: &str,
+    connection_id: PartnerConnectionId,
+) -> Option<Result<(), CommandError>> {
+    Some(match name {
+        "draft_partner_contract" => engine
+            .draft_partner_contract(DraftPartnerContract {
+                connection_id,
+                contract: terms(),
+            })
+            .await
+            .map(drop),
+        "approve_partner_contract" => engine
+            .approve_partner_contract(ApprovePartnerContract {
+                connection_id,
+                expected_revision: 1,
+                reason: "Synthetic authorization test".to_owned(),
+                self_approval: false,
+            })
+            .await
+            .map(drop),
+        "run_partner_acceptance_tests" => engine
+            .run_partner_acceptance_tests(PartnerConnectionInput { connection_id })
             .await
             .map(drop),
         _ => return None,
@@ -408,7 +440,8 @@ async fn a_routed_handoff_is_written_once_after_its_destination_check() {
 }
 
 /// The creator cannot check their own folder under the default policy; a second
-/// administrator can.
+/// administrator can. The creator then drafts the interface contract, which the second
+/// administrator approves before the acceptance tests run (REQ-INT-001).
 async fn verify(partners: &Partners, connection: &PartnerConnectionDetail) {
     let id = connection.connection.id;
     let revision = connection.connection.revision;
@@ -429,6 +462,9 @@ async fn verify(partners: &Partners, connection: &PartnerConnectionDetail) {
     partners.desk.resync().await;
     assert!(verified.connection.verification.is_some());
     assert_eq!(verified.connection.revision, revision + 1);
+    draft_contract(partners.admin().await, id).await;
+    assert_passed(&approve_and_test(partners.second_admin().await, id).await);
+    partners.desk.resync().await;
 }
 
 /// A handoff no rule matches waits in Unrouted messages; sent once to a folder that is

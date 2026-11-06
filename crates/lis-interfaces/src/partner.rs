@@ -10,12 +10,17 @@
 //! revisions and its withdrawal go first to the connections that had an earlier
 //! revision (REQ-RPT-013). The engine's delivery poller writes waiting deliveries
 //! to their folder once the connection is started, a destination check covers
-//! its folder and its schedule allows, and records each attempt here. Analyzers
-//! are configured separately, as instruments.
+//! its folder, its interface contract is approved with acceptance tests passed for
+//! it as it is now (REQ-INT-001), and its schedule allows, and records each attempt
+//! here. Analyzers are configured separately, as instruments.
 
+mod acceptance;
+mod acceptance_cases;
 mod connection_columns;
 mod connection_views;
 mod connections;
+mod contract_model;
+mod contracts;
 mod delivery;
 mod error;
 pub mod hl7;
@@ -48,6 +53,8 @@ mod sftp_identity;
 mod sftp_settings;
 mod unrouted_queries;
 
+pub use acceptance::{current_acceptance_key, record_acceptance_run};
+pub use acceptance_cases::outgoing_cases;
 pub use connection_views::{
     ConnectionChangeView, ConnectionStatus, LastAttempt, ListenerView, PartnerConnection,
     PartnerConnectionDetail, PartnerVerification,
@@ -56,13 +63,19 @@ pub use connections::{
     create_partner_connection, record_partner_destination_check, set_partner_connection_active,
     update_partner_connection,
 };
+pub use contract_model::{
+    AcceptanceCase, AcceptanceRun, AcceptanceState, ApprovePartnerContract, ContractDraft,
+    ContractEdge, ContractSummary, ContractVersion, DraftPartnerContract, InterfaceContract,
+    PartnerContract,
+};
+pub use contracts::{approve_partner_contract, draft_partner_contract, partner_contract};
 pub use delivery::{
     AttemptOutcome, ConnectionTarget, Destination, DueDelivery, MAX_ATTEMPTS,
     due_partner_deliveries, partner_connection_folder, record_delivery_attempt,
     record_delivery_payload, record_partner_test_message,
 };
 pub use error::PartnerError;
-pub use intake_sources::{IntakeSource, intake_sources};
+pub use intake_sources::{IntakeSource, intake_source, intake_sources};
 pub use mapping_model::{
     ApprovePartnerMappings, ApprovedMappings, CodeMapping, DiscardPartnerMappingDraft,
     DraftPartnerMapping, LisRecordId, MappingDraft, MappingKind, MappingRow, MappingValues,

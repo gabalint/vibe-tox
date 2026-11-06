@@ -9,6 +9,7 @@
 //! save and test commands take instead of a path.
 
 mod connections;
+mod contracts;
 mod folder_choices;
 mod folders;
 mod mappings;
@@ -117,6 +118,21 @@ pub(crate) const DISCARD_PARTNER_MAPPING_DRAFT: CommandSpec = spec(
 pub(crate) const APPROVE_PARTNER_MAPPINGS: CommandSpec = spec(
     "approve_partner_mappings",
     "interfaces.approve_mappings",
+    MANAGE,
+);
+pub(crate) const DRAFT_PARTNER_CONTRACT: CommandSpec = spec(
+    "draft_partner_contract",
+    "interfaces.draft_contract",
+    MANAGE,
+);
+pub(crate) const APPROVE_PARTNER_CONTRACT: CommandSpec = spec(
+    "approve_partner_contract",
+    "interfaces.approve_contract",
+    MANAGE,
+);
+pub(crate) const RUN_PARTNER_ACCEPTANCE_TESTS: CommandSpec = spec(
+    "run_partner_acceptance_tests",
+    "interfaces.run_acceptance_tests",
     MANAGE,
 );
 

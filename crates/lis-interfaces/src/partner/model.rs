@@ -202,6 +202,8 @@ text_enum! {
         Verified = "verified",
         /// A new version of its code mappings was approved.
         MappingsApproved = "mappings_approved",
+        /// A new version of its interface contract was approved.
+        ContractApproved = "contract_approved",
     }
 }
 

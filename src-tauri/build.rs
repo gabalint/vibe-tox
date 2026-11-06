@@ -150,6 +150,9 @@ const APP_COMMANDS: &[&str] = &[
     "draft_partner_mapping",
     "discard_partner_mapping_draft",
     "approve_partner_mappings",
+    "draft_partner_contract",
+    "approve_partner_contract",
+    "run_partner_acceptance_tests",
     // interfaces: end
     // orders: begin
     "register_order",

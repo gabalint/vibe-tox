@@ -10,6 +10,7 @@
 //! reading. Nothing is read while a recovery reconciliation is open. Logs carry IDs and
 //! codes, never file names, folders or content.
 
+pub(crate) mod acceptance;
 mod decide;
 mod inbox;
 mod order_input;

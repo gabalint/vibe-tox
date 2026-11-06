@@ -22,6 +22,7 @@ use tempfile::TempDir;
 
 use crate::m2_lab::Role;
 use crate::m3_fixture::{Bench, Staff, Variant};
+use crate::partner_contract::{approve_and_test, assert_passed, draft_contract};
 
 pub(super) const SENDER: &str = "SYN-EMR-FAC";
 
@@ -36,16 +37,24 @@ pub(super) fn oml(sender: &str, control_id: &str) -> String {
     .join("\r")
 }
 
-struct Orders {
-    bench: Bench,
-    input: TempDir,
+pub(super) struct Orders {
+    pub(super) bench: Bench,
+    pub(super) input: TempDir,
     processed: TempDir,
     failed: TempDir,
-    connection: PartnerConnectionDetail,
+    pub(super) connection: PartnerConnectionDetail,
 }
 
 impl Orders {
+    /// A connection that reads: checked, with its contract approved and tests passed.
     async fn start() -> Self {
+        let mut orders = Self::checked().await;
+        orders.connection = accept(&orders.bench, orders.connection.connection.id).await;
+        orders
+    }
+
+    /// A connection mapped and checked, without an interface contract yet.
+    pub(super) async fn checked() -> Self {
         let bench = Bench::ready(Variant::Panel).await;
         let (input, processed, failed) = (folder(), folder(), folder());
         bench.sign_in(Staff::Desk(Role::Admin)).await;
@@ -67,7 +76,7 @@ impl Orders {
             password: None,
             active: true,
         };
-        let connection = connect(&bench, create).await;
+        let connection = checked(&bench, create).await;
         Self {
             bench,
             input,
@@ -78,12 +87,12 @@ impl Orders {
     }
 
     /// Reads the folder once its `check every` has passed.
-    async fn read(&self) {
+    pub(super) async fn read(&self) {
         self.bench.lab().t().advance(30);
         self.bench.lab().engine().read_partner_orders().await;
     }
 
-    fn states(&self) -> Vec<(String, String, Option<String>)> {
+    pub(super) fn states(&self) -> Vec<(String, String, Option<String>)> {
         let conn = self.bench.lab().t().conn();
         let mut statement = conn
             .prepare(
@@ -99,10 +108,19 @@ impl Orders {
     }
 }
 
+/// A connection that reads: [`checked`], then [`accept`]ed.
+pub(super) async fn connect(
+    bench: &Bench,
+    create: CreatePartnerConnectionInput,
+) -> PartnerConnectionDetail {
+    let id = checked(bench, create).await.connection.id;
+    accept(bench, id).await
+}
+
 /// The administrator adds the connection and maps the clinic's `SYN-PANEL` to the panel,
 /// first line; a second administrator approves the mapping and records the destination
-/// check.
-pub(super) async fn connect(
+/// check. The second administrator stays signed in.
+pub(super) async fn checked(
     bench: &Bench,
     create: CreatePartnerConnectionInput,
 ) -> PartnerConnectionDetail {
@@ -147,6 +165,21 @@ pub(super) async fn connect(
             method: "Synthetic call-back to the clinic's IT".to_owned(),
             self_approval: false,
         })
+        .await
+        .unwrap()
+}
+
+/// The administrator drafts the interface contract; a second administrator approves it and
+/// runs the acceptance tests, which pass.
+pub(super) async fn accept(bench: &Bench, id: PartnerConnectionId) -> PartnerConnectionDetail {
+    bench.sign_in(Staff::Desk(Role::Admin)).await;
+    draft_contract(bench.lab().engine(), id).await;
+    bench.sign_in(Staff::Racer).await;
+    assert_passed(&approve_and_test(bench.lab().engine(), id).await);
+    bench
+        .lab()
+        .engine()
+        .get_partner_connection(lis_engine::PartnerConnectionInput { connection_id: id })
         .await
         .unwrap()
 }

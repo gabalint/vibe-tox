@@ -2,6 +2,7 @@
 
 use rusqlite::{Connection, OptionalExtension, Row, params};
 
+use super::acceptance::acceptance_key;
 use super::error::PartnerError;
 use super::model::{
     IntakeSettings, MovedTo, PartnerConnectionId, PartnerConnectionSettings, PartnerMessageType,
@@ -175,9 +176,9 @@ pub(crate) fn insert_connection(
     write_connection(
         conn,
         &format!(
-            "INSERT INTO ifc_partner_connections ({COLUMNS}) VALUES (?1, ?2, ?3, ?4, ?5, ?6, \
-             ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, \
-             ?24, ?25)"
+            "INSERT INTO ifc_partner_connections ({COLUMNS}, acceptance_key) VALUES (?1, ?2, \
+             ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, \
+             ?21, ?22, ?23, ?24, ?25, ?26)"
         ),
         row,
     )
@@ -195,12 +196,14 @@ pub(crate) fn update_connection(
          schedule_minutes = ?10, schedule_time = ?11, file_name_pattern = ?12, active = ?13, \
          revision = ?14, sftp_host = ?15, sftp_port = ?16, sftp_username = ?17, \
          sftp_auth = ?18, sftp_fingerprint = ?19, sftp_password = ?20, destination = ?21, \
-         intake = ?22, processed_folder = ?23, failed_folder = ?24, mllp = ?25 WHERE id = ?1",
+         intake = ?22, processed_folder = ?23, failed_folder = ?24, mllp = ?25, \
+         acceptance_key = ?26 WHERE id = ?1",
         row,
     )
 }
 
-/// Runs `sql` with the row's values as `?1`–`?25`, in [`COLUMNS`] order.
+/// Runs `sql` with the row's values as `?1`–`?25`, in [`COLUMNS`] order, and its acceptance
+/// key, from what is stored now, as `?26`.
 fn write_connection(conn: &Connection, sql: &str, row: &ConnectionRow) -> Result<(), PartnerError> {
     let (schedule, minutes, time) = schedule_columns(&row.settings.schedule);
     let (host, port, username, auth, fingerprint) = sftp_columns(&row.settings);
@@ -232,7 +235,8 @@ fn write_connection(conn: &Connection, sql: &str, row: &ConnectionRow) -> Result
             intake_column(&row.settings)?,
             moved_to.map(|moved_to| &moved_to.processed),
             moved_to.map(|moved_to| &moved_to.failed),
-            mllp_column(&row.settings)?
+            mllp_column(&row.settings)?,
+            acceptance_key(conn, row)?
         ],
     )?;
     Ok(())

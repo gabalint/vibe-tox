@@ -23,6 +23,7 @@ mod starter_catalog;
 // interfaces: begin
 mod au_protocol;
 mod interfaces;
+mod partner_contract;
 mod partner_listen;
 mod partner_orders;
 mod partner_sftp;

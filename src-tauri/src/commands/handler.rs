@@ -163,6 +163,9 @@ pub(crate) fn handler<R: Runtime>() -> impl Fn(Invoke<R>) -> bool + Send + Sync 
         partner::draft_partner_mapping,
         partner::discard_partner_mapping_draft,
         partner::approve_partner_mappings,
+        partner::draft_partner_contract,
+        partner::approve_partner_contract,
+        partner::run_partner_acceptance_tests,
         // interfaces: end
         // orders: begin
         orders::register_order,
