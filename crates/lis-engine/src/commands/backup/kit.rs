@@ -13,6 +13,7 @@ use super::{CONFIRM_RECOVERY_KIT_STORAGE, EXPORT_RECOVERY_KIT, GET_RECOVERY_KIT_
 use crate::commands::reporting::user_of;
 use crate::engine::Engine;
 use crate::ops_worker::locked;
+use crate::partner_delivery::{lab_zone, stamp};
 use crate::pipeline::accepted;
 
 #[derive(Debug, Deserialize, TS)]
@@ -112,6 +113,27 @@ impl Engine {
             .await
         })
         .await
+    }
+
+    /// The file name the save dialog proposes after [`Engine::preflight_dialog`]: today in
+    /// the laboratory's time zone, as other export files are named, and the next kit number,
+    /// so two kits exported on one day differ. The export records the name actually saved.
+    pub async fn recovery_kit_file_name(&self) -> String {
+        let db = Arc::clone(&self.db);
+        let now = self.clock.now();
+        let read = tokio::task::spawn_blocking(move || {
+            let (date, _) = stamp(now, lab_zone(&db).as_ref());
+            let kit_no = db
+                .read_blocking(|conn| {
+                    lis_ops::kit::next_kit_no(conn).map_err(lis_store::StoreError::from)
+                })
+                .ok();
+            (date, kit_no)
+        })
+        .await;
+        let (date, kit_no) = read.unwrap_or_else(|_| (stamp(now, None).0, None));
+        let date = format!("{}-{}-{}", &date[..4], &date[4..6], &date[6..]);
+        lis_ops::kit::default_file_name(&date, kit_no)
     }
 
     pub async fn export_recovery_kit(

@@ -321,12 +321,30 @@ fn a_mistyped_or_malformed_key_line_is_refused() {
 }
 
 #[test]
-fn the_default_file_name_carries_the_date() {
-    let now = lis_core::UtcTimestamp::parse("2026-10-13T08:00:00.000000000Z").unwrap();
+fn the_default_file_name_carries_the_date_and_the_kit_number() {
     assert_eq!(
-        kit::default_file_name(now),
+        kit::default_file_name("2026-10-13", Some(3)),
+        "vibe-tox-recovery-kit-2026-10-13-kit3.txt"
+    );
+    assert_eq!(
+        kit::default_file_name("2026-10-13", None),
         "vibe-tox-recovery-kit-2026-10-13.txt"
     );
+}
+
+#[test]
+fn the_proposed_kit_number_is_the_one_the_export_gets() {
+    let f = Fixture::new();
+    f.target("usb");
+    let next = || {
+        f.test
+            .db
+            .read_blocking(|conn| kit::next_kit_no(conn).map_err(StoreError::from))
+            .unwrap()
+    };
+    assert_eq!(next(), 1);
+    assert_eq!(f.export().kit_no, 1);
+    assert_eq!(next(), 2);
 }
 
 proptest! {

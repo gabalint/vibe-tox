@@ -119,7 +119,10 @@ codes and spare keys in protected custody as described in [account recovery](ins
 Open **Recovery kit** and choose **Export recovery kit**. In the dialog, fill in **Where the
 disk-encryption recovery key is kept** (describe the place; never type the recovery key itself),
 confirm with your password or security key, choose **Choose where to save** and pick a save location. If no file is
-chosen, nothing is saved.
+chosen, nothing is saved. The proposed name is `vibe-tox-recovery-kit-<YYYY-MM-DD>-kit<N>.txt`, with
+today's date in the laboratory's time zone and the number this kit will get, so two kits exported on
+one day have different names. You may rename it; **File name** under the last export shows the name
+you saved.
 
 The plain-text kit contains:
 

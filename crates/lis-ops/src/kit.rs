@@ -22,7 +22,7 @@ use std::path::{Path, PathBuf};
 
 use lis_audit::{AuditDetail, AuditEvent, Outcome, Stream};
 use lis_auth::DataKey;
-use lis_core::{Capability, Id, UtcTimestamp, required_text};
+use lis_core::{Capability, Id, required_text};
 use lis_store::CommandContext;
 use rusqlite::{Connection, OptionalExtension, params};
 use sha2::{Digest, Sha256};
@@ -109,11 +109,15 @@ impl std::fmt::Debug for PreparedKit {
     }
 }
 
-/// The default file name the save dialog proposes: `vibe-tox-recovery-kit-<YYYY-MM-DD>.txt`.
+/// The default file name the save dialog proposes for the laboratory's `date`
+/// (`YYYY-MM-DD`) and the number the kit will get: `vibe-tox-recovery-kit-<date>-kit<N>.txt`,
+/// or without `-kit<N>` when the number could not be read.
 #[must_use]
-pub fn default_file_name(now: UtcTimestamp) -> String {
-    let date: String = now.to_string().chars().take(10).collect();
-    format!("vibe-tox-recovery-kit-{date}.txt")
+pub fn default_file_name(date: &str, kit_no: Option<i64>) -> String {
+    match kit_no {
+        Some(kit_no) => format!("vibe-tox-recovery-kit-{date}-kit{kit_no}.txt"),
+        None => format!("vibe-tox-recovery-kit-{date}.txt"),
+    }
 }
 
 /// Authorizes and audits the intent to export a kit. Commit this transaction before
@@ -289,7 +293,8 @@ pub fn confirm_storage(
     Ok(())
 }
 
-fn next_kit_no(conn: &Connection) -> rusqlite::Result<i64> {
+/// The number the next exported kit gets.
+pub fn next_kit_no(conn: &Connection) -> rusqlite::Result<i64> {
     conn.prepare_cached("SELECT coalesce(max(kit_no), 0) + 1 FROM ops_recovery_kits")?
         .query_row([], |row| row.get(0))
 }

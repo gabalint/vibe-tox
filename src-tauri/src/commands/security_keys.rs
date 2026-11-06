@@ -112,7 +112,8 @@ pub(crate) async fn security_key_action<R: Runtime>(
             engine
                 .preflight_dialog(DialogCommand::ExportRecoveryKit)
                 .await?;
-            super::backup::save_file(app, "vibe-tox-recovery-kit.txt").await
+            let file_name = engine.recovery_kit_file_name().await;
+            super::backup::save_file(app, file_name).await
         }
         SecurityKeyAction::RequestExitExport(_) => {
             engine

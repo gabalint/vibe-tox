@@ -252,7 +252,7 @@
         {
           "name": "Kit number / Exported / Exported by / File name",
           "meaning": "Identify the last successful kit export and its author.",
-          "values": "Increasing kit number, time, person and filename.",
+          "values": "Increasing kit number, time, person and the name of the file actually saved.",
           "rules": "Read-only; no patient content or key should be copied into support messages."
         },
         {
@@ -291,7 +291,7 @@
           "name": "Export recovery kit / Choose where to save",
           "does": "Write the installation key, backup locations and restore instructions to the selected file.",
           "availableWhen": "Backup and restore authority, valid location reference, working installation key and fresh account confirmation.",
-          "result": "A completed export is recorded with kit number and filename; canceling file selection writes no kit."
+          "result": "The save dialog proposes vibe-tox-recovery-kit-<date>-kit<number>.txt, with today’s date in the laboratory’s time zone and the number this kit will get; you may change the name. A completed export is recorded with kit number and the name you saved; canceling file selection writes no kit."
         },
         {
           "name": "Confirm where the kit is stored / Confirm storage",
