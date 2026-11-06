@@ -175,10 +175,9 @@ impl Lab {
         self.sign_in(Role::Reviewer).await;
         self.engine()
             .list_import_attempts(ListImportAttemptsInput {
-                after_import_attempt_id: None,
                 instrument_id: Some(self.instrument),
                 limit: 100,
-                before: None,
+                ..ListImportAttemptsInput::default()
             })
             .await
             .unwrap()

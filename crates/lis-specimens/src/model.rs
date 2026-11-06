@@ -5,10 +5,8 @@ use lis_core::text_enum;
 
 use crate::error::SpecimenError;
 
-/// Marker for [`AccessionId`].
-pub enum Accession {}
 /// One receipt of material for a subject's order, under one accession number.
-pub type AccessionId = Id<Accession>;
+pub use lis_core::AccessionId;
 /// Marker for [`CollectionId`].
 pub enum Collection {}
 /// One collection event.

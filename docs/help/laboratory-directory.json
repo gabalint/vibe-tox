@@ -2,7 +2,7 @@
   "id": "laboratory-directory",
   "title": "Laboratory and ordering directories",
   "summary": "Set the laboratory profile and register the clients and practitioners referenced by orders.",
-  "reviewedOn": "2026-11-02",
+  "reviewedOn": "2026-11-06",
   "routes": [
     "/configuration/laboratory",
     "/configuration/clients",
@@ -38,6 +38,12 @@
       "purpose": "Maintain performing-laboratory details printed on reports and the time zone used throughout the app.",
       "access": "Any signed-in person may read the profile; Manage configuration is required to save a new version.",
       "fields": [
+        {
+          "name": "Billing is held",
+          "meaning": "Warning at the top of the page while Billing NPI or Tax ID is not set: “Billing derivations are held until Billing NPI and Tax ID are set.”",
+          "values": "Shown or absent; with a Change profile button for people with Manage configuration.",
+          "rules": "Read-only. It disappears once both are set. Setting them does not release held derivations by itself: in Billing work, open each held derivation and use Derive again."
+        },
         {
           "name": "Laboratory name / Name",
           "meaning": "Performing laboratory’s report name.",
@@ -84,13 +90,13 @@
           "name": "Billing NPI",
           "meaning": "Performing laboratory’s billing identifier.",
           "values": "Ten digits with a valid NPI check digit, or blank.",
-          "rules": "Optional in the profile; other billing workflows may flag missing billing identity. A value that is not exactly ten digits is refused with “The NPI must be exactly 10 digits.”; ten digits whose last (check) digit does not match the other nine is refused with “This NPI is not valid. Please check the number for a typo.”"
+          "rules": "Optional, so a laboratory that does not bill through the LIS can still save its profile. While Billing NPI or Tax ID is blank, every billing derivation is held with the blocking flag “Laboratory billing NPI or TIN missing”. A value that is not exactly ten digits is refused with “The NPI must be exactly 10 digits.”; ten digits whose last (check) digit does not match the other nine is refused with “This NPI is not valid. Please check the number for a typo.”"
         },
         {
           "name": "Tax ID",
           "meaning": "Tax identification number used for billing identity.",
           "values": "Nine digits, optionally entered as NN-NNNNNNN, or blank.",
-          "rules": "Optional; stored without the hyphen."
+          "rules": "Optional; stored without the hyphen. While it or Billing NPI is blank, billing derivations are held."
         },
         {
           "name": "Version and Set",
@@ -108,7 +114,7 @@
       "actions": [
         {
           "name": "Set laboratory profile / Change profile",
-          "does": "Open the form, prefilled from the current profile where present.",
+          "does": "Open the form, prefilled from the current profile where present. The Billing is held warning has its own Change profile button that opens the same form.",
           "availableWhen": "Manage configuration.",
           "result": "Save profile appends a new version; Cancel closes without saving."
         },
@@ -132,6 +138,10 @@
         {
           "problem": "Time zone or NPI is refused",
           "recovery": "Use a recognized IANA name or the supplied ten-digit NPI with correct check digit; do not substitute a guessed value. “This NPI is not valid” means the ten digits fail the check-digit test, usually a typo: compare each digit with the source."
+        },
+        {
+          "problem": "Billing is held",
+          "recovery": "Change profile, enter the laboratory’s supplied Billing NPI and Tax ID, give a reason and save. Then derive the held billing derivations again in Billing work. A laboratory that does not bill through the LIS can leave both blank and ignore the warning."
         },
         {
           "problem": "Another profile version was saved meanwhile",

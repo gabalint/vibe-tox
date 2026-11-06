@@ -7,7 +7,8 @@ use ts_rs::TS;
 
 use crate::error::{IdentityError, invalid};
 use crate::model::{
-    Identifier, IdentifierInput, MATCH_KEY_SEPARATOR, NAME_MAX, birth_date, name_key, optional_text,
+    ClientId, Identifier, IdentifierInput, MATCH_KEY_SEPARATOR, NAME_MAX, SubjectId, birth_date,
+    name_key, optional_text,
 };
 use crate::queries::subject_summaries;
 use crate::repo::{search::PatientSearch, subjects};
@@ -96,6 +97,36 @@ pub fn search_subjects(
     };
     let found = crate::repo::search::patients(conn, &criteria)?;
     subject_summaries(conn, &found)
+}
+
+/// Every patient whose current or former name, or an active identifier value, starts
+/// with `text`, as the `query` of [`search_subjects`] matches, for finding their orders
+/// (REQ-ORD-001). Unbounded: the caller bounds what it lists. PHI: audited by the engine.
+pub fn subjects_matching(
+    conn: &Connection,
+    text: &Phi<String>,
+) -> Result<Vec<SubjectId>, IdentityError> {
+    let criteria = PatientSearch {
+        identifier_owner: None,
+        has_identifier: false,
+        name_prefix: None,
+        query: Some(text.clone()),
+        birth_date: None,
+        limit: u32::MAX,
+        offset: 0,
+    };
+    Ok(crate::repo::search::patients(conn, &criteria)?)
+}
+
+/// Every client organization whose name starts with `text`, ignoring case and Unicode
+/// composition, for finding its orders (REQ-ORD-001).
+pub fn clients_matching(conn: &Connection, text: &str) -> Result<Vec<ClientId>, IdentityError> {
+    let key = name_key(text.trim());
+    Ok(crate::repo::organizations::clients(conn)?
+        .into_iter()
+        .filter(|client| name_key(&client.name).starts_with(&key))
+        .map(|client| client.id)
+        .collect())
 }
 
 /// The match-key prefix of a name search: the family name start, or the whole

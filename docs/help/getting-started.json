@@ -21,6 +21,7 @@
       "title": "Good practice",
       "paragraphs": [
         "Tab moves between controls; arrow keys move between grid cells. Space selects a row only in tables offering bulk actions. Escape closes the innermost open menu, dialog or panel.",
+        "Date fields take a typed YYYY-MM-DD date or a pick from the calendar button inside the field. The calendar opens on the days of a month; choose its heading (for example November 2006) to see the months of that year, then the year heading to see a decade (for example 2000 – 2009). ‹ and › move one month, one year or ten years. Choosing a year shows its months and choosing a month shows its days; arrow keys move between months or years, Enter chooses, and Escape returns to the days. Days the field does not accept, such as future birth dates, are crossed out, as are months and years that hold no acceptable day.",
         "Long dialogs open wider and group their fields under titled sections, with short fields side by side. The dialog title stays at the top and its Save and Cancel buttons stay at the bottom while the fields scroll. On a narrow window the fields fall back to one column.",
         "This help describes the software. Follow your laboratory’s approved procedures for laboratory decisions. A page guide does not supply clinical interpretations, assay settings or authorization to perform a task."
       ]
@@ -37,6 +38,8 @@
     "ui/src/components/DetailPanel/DetailLayout.tsx",
     "ui/src/components/DetailPanel/DetailPanel.tsx",
     "ui/src/components/DetailPanel/usePanelWidth.ts",
+    "ui/src/components/FieldPicker/DateCalendar.tsx",
+    "ui/src/components/FieldPicker/PeriodViews.tsx",
     "ui/src/app/help/PageHelp.tsx",
     "ui/src/app/help/HelpHeader.tsx",
     "ui/src/app/help/HelpTopics.tsx",

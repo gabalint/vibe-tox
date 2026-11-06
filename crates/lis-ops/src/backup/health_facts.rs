@@ -188,15 +188,7 @@ fn first_counted_event(
     }
     let events = lis_audit::list(
         conn,
-        &EventFilter {
-            stream,
-            before_seq: None,
-            limit: u32::try_from(head - since).unwrap_or(u32::MAX),
-            action: None,
-            record_type: None,
-            record_id: None,
-            self_approvals_only: false,
-        },
+        &EventFilter::new(stream, u32::try_from(head - since).unwrap_or(u32::MAX)),
     )?;
     Ok(events
         .iter()

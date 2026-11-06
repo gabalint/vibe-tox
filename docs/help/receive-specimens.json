@@ -46,6 +46,8 @@
     "ui/src/features/accessioning/specimens/AccessionForm.tsx",
     "ui/src/features/accessioning/specimens/CollectionFields.tsx",
     "ui/src/components/FieldPicker/FieldPicker.tsx",
+    "ui/src/components/FieldPicker/DateCalendar.tsx",
+    "ui/src/components/FieldPicker/PeriodViews.tsx",
     "ui/src/features/accessioning/specimens/SpecimenList.tsx",
     "ui/src/features/accessioning/specimens/AccessionTestSelection.tsx",
     "ui/src/features/accessioning/specimens/accessionValues.ts",
@@ -226,7 +228,7 @@
         },
         {
           "name": "Choose the collection date / Choose the collection time",
-          "does": "The calendar and clock buttons inside Collection date and Collection time open a calendar, or hour and minute lists (24-hour).",
+          "does": "The calendar and clock buttons inside Collection date and Collection time open a calendar, or hour and minute lists (24-hour). The calendar heading opens the months of the year, and the year heading a decade of years, to reach a distant date quickly.",
           "availableWhen": "The date or time field is shown for the chosen collection precision.",
           "result": "Fills the field as YYYY-MM-DD or HH:MM and closes; picking an hour keeps any minutes already entered. The value is checked like a typed one: a future collection instant is still refused on saving. Escape closes without a change."
         },
@@ -779,7 +781,7 @@
         },
         {
           "name": "Choose the collection date / Choose the collection time",
-          "does": "The calendar and clock buttons inside Collection date and Collection time open a calendar, or hour and minute lists (24-hour).",
+          "does": "The calendar and clock buttons inside Collection date and Collection time open a calendar, or hour and minute lists (24-hour). The calendar heading opens the months of the year, and the year heading a decade of years, to reach a distant date quickly.",
           "availableWhen": "The date or time field is shown for the chosen collection precision.",
           "result": "Fills the field as YYYY-MM-DD or HH:MM and closes; picking an hour keeps any minutes already entered. The value is checked like a typed one: a future collection instant is still refused on saving. Escape closes without a change."
         },

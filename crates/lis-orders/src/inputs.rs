@@ -2,6 +2,7 @@
 //! validation; no clinical evidence is inferred, normalized or defaulted.
 
 use lis_catalog::{OrderableId, OrderableVersionId};
+use lis_core::Phi;
 use lis_identity::{ClientId, ClientLocationId, PractitionerId, SubjectId};
 use serde::Deserialize;
 use ts_rs::TS;
@@ -147,6 +148,12 @@ pub struct ListOrdersInput {
     #[serde(default)]
     #[ts(optional = nullable)]
     pub before_order_id: Option<OrderId>,
+    /// Find text: the start of a patient's name or identifier, a sample barcode, an
+    /// accession number, the order number or the client's name. Names ignore case and
+    /// Unicode composition; barcodes, accession and order numbers ignore case.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub search: Option<Phi<String>>,
 }
 
 /// Adds and retires supplied evidence as a new order evidence version.

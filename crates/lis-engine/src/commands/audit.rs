@@ -1,18 +1,36 @@
 //! The audit trail viewer (capability `view_audit`; REQ-OPS-001). Every call
 //! is a sensitive read and records an `access` event first.
 
-use lis_audit::{AuditDetail, AuditEvent, Finding, MAX_MACHINE_TOKEN_BYTES, Outcome, Stream};
+use lis_audit::{AuditDetail, AuditEvent, Finding, Outcome, Stream};
 use lis_auth::AuthError;
-use lis_core::{CommandError, ErrorCode, FieldError, UtcTimestamp};
+use lis_core::{Capability, CommandError, ErrorCode, FieldError, UtcTimestamp};
 use lis_store::StoreError;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::engine::Engine;
 use crate::pipeline::{Failure, ModuleError};
-use crate::registry::{LIST_AUDIT_EVENTS, VERIFY_AUDIT_CHAIN};
+use crate::registry::{
+    FIND_AUDIT_RECORDS, GET_AUDIT_EVENT_CHANGES, LIST_AUDIT_EVENTS, VERIFY_AUDIT_CHAIN,
+};
 
+mod changes;
+mod export;
+mod export_rows;
+mod find;
+mod input;
+mod labels;
 mod read;
+pub use changes::{
+    AuditChangeStatus, AuditEventChanges, AuditFieldChange, AuditPatient, GetAuditEventChangesInput,
+};
+use changes::{changes_event, read_changes};
+pub use export::{AuditExportFormat, ExportAuditEventsInput, ExportedAuditFile};
+pub use find::{AuditDay, FindAuditRecordsInput, FoundAuditRecord, FoundAuditRecords};
+use find::{find_details, find_event, find_records};
+pub use input::{AuditActorKind, AuditCursor, AuditOutcome, AuditStream, ListAuditEventsInput};
+use input::{audit_filter_details, page_event};
+use labels::reads_patients;
 use read::read_page;
 
 /// Largest page of `list_audit_events`.
@@ -21,6 +39,10 @@ type FilterOptions = Vec<(String, String)>;
 
 #[derive(Debug, thiserror::Error)]
 enum AuditReadError {
+    #[error("audit event not found")]
+    EventNotFound,
+    #[error("more events match than one export holds")]
+    ExportTooLarge(usize),
     #[error(transparent)]
     Auth(#[from] AuthError),
     #[error(transparent)]
@@ -34,26 +56,47 @@ enum AuditReadError {
     #[error(transparent)]
     Billing(#[from] lis_billing::BillingError),
     #[error(transparent)]
+    Orders(#[from] lis_orders::OrderError),
+    #[error(transparent)]
+    Interfaces(#[from] lis_interfaces::InterfaceError),
+    #[error(transparent)]
+    Ops(#[from] lis_ops::RuntimeError),
+    #[error(transparent)]
     Store(#[from] StoreError),
 }
 
-impl ModuleError for AuditReadError {
-    fn denied(&self) -> Option<lis_core::Denied> {
+impl AuditReadError {
+    /// The store failure inside, whichever module returned it.
+    fn store(&self) -> Option<&StoreError> {
         match self {
-            Self::Store(error) => error.denied(),
-            Self::Auth(AuthError::Store(error)) => error.denied(),
-            Self::Catalog(lis_catalog::CatalogError::Store(error)) => error.denied(),
-            Self::Identity(lis_identity::IdentityError::Store(error)) => error.denied(),
-            Self::Reporting(lis_reporting::ReportingError::Store(error)) => error.denied(),
-            Self::Specimens(lis_specimens::SpecimenError::Store(error)) => error.denied(),
-            Self::Billing(lis_billing::BillingError::Store(error)) => error.denied(),
-            Self::Auth(_)
+            Self::Store(error)
+            | Self::Auth(AuthError::Store(error))
+            | Self::Catalog(lis_catalog::CatalogError::Store(error))
+            | Self::Identity(lis_identity::IdentityError::Store(error))
+            | Self::Reporting(lis_reporting::ReportingError::Store(error))
+            | Self::Specimens(lis_specimens::SpecimenError::Store(error))
+            | Self::Billing(lis_billing::BillingError::Store(error))
+            | Self::Orders(lis_orders::OrderError::Store(error))
+            | Self::Interfaces(lis_interfaces::InterfaceError::Store(error))
+            | Self::Ops(lis_ops::RuntimeError::Store(error)) => Some(error),
+            Self::EventNotFound
+            | Self::ExportTooLarge(_)
+            | Self::Auth(_)
             | Self::Catalog(_)
             | Self::Identity(_)
             | Self::Reporting(_)
             | Self::Specimens(_)
-            | Self::Billing(_) => None,
+            | Self::Billing(_)
+            | Self::Orders(_)
+            | Self::Interfaces(_)
+            | Self::Ops(_) => None,
         }
+    }
+}
+
+impl ModuleError for AuditReadError {
+    fn denied(&self) -> Option<lis_core::Denied> {
+        self.store().and_then(StoreError::denied)
     }
 }
 
@@ -66,62 +109,26 @@ impl From<AuditReadError> for Failure {
             | AuditReadError::Identity(lis_identity::IdentityError::Store(error))
             | AuditReadError::Reporting(lis_reporting::ReportingError::Store(error))
             | AuditReadError::Specimens(lis_specimens::SpecimenError::Store(error))
-            | AuditReadError::Billing(lis_billing::BillingError::Store(error)) => error.into(),
+            | AuditReadError::Billing(lis_billing::BillingError::Store(error))
+            | AuditReadError::Orders(lis_orders::OrderError::Store(error))
+            | AuditReadError::Interfaces(lis_interfaces::InterfaceError::Store(error))
+            | AuditReadError::Ops(lis_ops::RuntimeError::Store(error)) => error.into(),
             AuditReadError::Auth(error) => error.into(),
+            AuditReadError::EventNotFound => {
+                Failure::refused(ErrorCode::NotFound, "This audit event does not exist.")
+            }
+            AuditReadError::ExportTooLarge(limit) => Failure::Refused {
+                code: ErrorCode::Validation,
+                message: format!(
+                    "More than {limit} events match these filters, more than one file of this \
+                     format holds. Narrow the filters, for example to fewer days, and export again."
+                ),
+                field_errors: Vec::new(),
+                gate_reasons: Vec::new(),
+            },
             other => Failure::Internal(other.to_string()),
         }
     }
-}
-
-/// An audit stream.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[serde(rename_all = "lowercase")]
-#[ts(export)]
-pub enum AuditStream {
-    /// Clinical state changes and configuration.
-    Clinical,
-    /// Sign-in, sessions, users and other security events.
-    Security,
-    /// Sensitive reads.
-    Access,
-}
-
-impl AuditStream {
-    fn stream(self) -> Stream {
-        match self {
-            Self::Clinical => Stream::Clinical,
-            Self::Security => Stream::Security,
-            Self::Access => Stream::Access,
-        }
-    }
-}
-
-/// Input of `list_audit_events`.
-#[derive(Debug, Clone, Deserialize, TS)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-#[ts(export)]
-pub struct ListAuditEventsInput {
-    /// The stream to read.
-    pub stream: AuditStream,
-    /// Only events before this sequence number (the next page).
-    #[ts(optional, type = "number")]
-    pub before_seq: Option<i64>,
-    /// Page size, 1–500.
-    pub limit: u32,
-    /// Only this action.
-    #[ts(optional)]
-    pub action: Option<String>,
-    /// Only this record type.
-    #[ts(optional)]
-    pub record_type: Option<String>,
-    /// Only this record ID.
-    #[ts(optional)]
-    pub record_id: Option<String>,
-    /// Only self-approvals: steps done by the person who did the duty's first step,
-    /// under the laboratory's separation-of-duties policy (ADR 0015).
-    #[serde(default)]
-    #[ts(optional)]
-    pub self_approvals_only: Option<bool>,
 }
 
 /// One audit event as the viewer shows it.
@@ -169,14 +176,18 @@ pub struct AuditEventView {
     pub authority: Option<String>,
     /// Finds the diagnostic log line of the same command.
     pub correlation_id: String,
-    /// Every action code present in this stream, for the filter control.
+    /// Every action code present in the stream or streams read, for the filter control.
     #[ts(optional)]
     #[ts(type = "Array<[string, string]>")]
     pub available_actions: Option<Vec<(String, String)>>,
-    /// Every record type present in this stream, for the filter control.
+    /// Every record type present in the stream or streams read, for the filter control.
     #[ts(optional)]
     #[ts(type = "Array<[string, string]>")]
     pub available_record_types: Option<Vec<(String, String)>>,
+    /// Every user's ID and name, for the "By" filter control.
+    #[ts(optional)]
+    #[ts(type = "Array<[string, string]>")]
+    pub available_users: Option<Vec<(String, String)>>,
 }
 
 /// Input of `verify_audit_chain`.
@@ -233,64 +244,16 @@ impl From<&Finding> for ChainFinding {
     }
 }
 
-/// The `access` event for a read of `stream`.
-fn access_event(action: &'static str, stream: AuditStream) -> AuditEvent {
-    AuditEvent::new(Stream::Access, action, Outcome::Succeeded)
-        .record("audit_stream", stream.stream())
-}
-
-/// The `access` event of a page read: the stream, filters and count, no content.
-fn page_event(
-    stream: AuditStream,
-    before_seq: Option<i64>,
-    returned: usize,
-    filter_details: Vec<(&'static str, AuditDetail)>,
-) -> AuditEvent {
-    let mut event = access_event(LIST_AUDIT_EVENTS.action, stream)
-        .detail("returned", AuditDetail::count(returned));
-    if let Some(before_seq) = before_seq {
-        event = event.detail("before_seq", AuditDetail::integer(before_seq));
-    }
-    for (key, value) in filter_details {
-        event = event.detail(key, value);
-    }
-    event
-}
-
-fn audit_filter_details(
-    input: &ListAuditEventsInput,
-) -> Result<Vec<(&'static str, AuditDetail)>, Failure> {
-    let filters = [
-        ("action", "action", input.action.as_deref()),
-        ("record_type", "recordType", input.record_type.as_deref()),
-        ("record_id", "recordId", input.record_id.as_deref()),
-    ];
-    let mut details = Vec::new();
-    if input.self_approvals_only == Some(true) {
-        details.push(("self_approvals_only", AuditDetail::boolean(true)));
-    }
-    for (detail_key, field, value) in filters {
-        if let Some(value) = value {
-            let detail = AuditDetail::machine_token(value).map_err(|_| Failure::Refused {
-                code: ErrorCode::Validation,
-                message: "Check the highlighted fields.".to_owned(),
-                field_errors: vec![FieldError {
-                    field: field.to_owned(),
-                    code: "invalid_machine_token".to_owned(),
-                    message: format!(
-                        "Use up to {MAX_MACHINE_TOKEN_BYTES} lowercase letters, digits, dots, colons, dashes or underscores."
-                    ),
-                }],
-                gate_reasons: Vec::new(),
-            })?;
-            details.push((detail_key, detail));
-        }
-    }
-    Ok(details)
+/// The `access` event for a read of `stream`, or of every stream (record ID `all`).
+fn access_event(action: &'static str, stream: Option<AuditStream>) -> AuditEvent {
+    AuditEvent::new(Stream::Access, action, Outcome::Succeeded).record(
+        "audit_stream",
+        stream.map_or("all", |stream| stream.stream().as_str()),
+    )
 }
 
 impl Engine {
-    /// `list_audit_events`: one page, newest first.
+    /// `list_audit_events`: one page of one stream or of every stream, newest first.
     pub async fn list_audit_events(
         &self,
         input: ListAuditEventsInput,
@@ -310,11 +273,62 @@ impl Engine {
             }
             let filter_details = audit_filter_details(&input)?;
             let stream = input.stream;
-            let before_seq = input.before_seq;
+            let patients = reads_patients(&call.principal);
             self.audited_read(
                 &call,
-                move |conn| read_page(conn, &input),
-                move |page| page_event(stream, before_seq, page.len(), filter_details),
+                move |conn| read_page(conn, &input, patients),
+                move |page| page_event(stream, page.len(), filter_details),
+            )
+            .await
+        })
+        .await
+    }
+
+    /// `get_audit_event_changes`: the Changes section of one event. Patient
+    /// values need `view_audit` and the patient record's read capability; the
+    /// `access` event naming the patient is written before they are returned.
+    pub async fn get_audit_event_changes(
+        &self,
+        input: GetAuditEventChangesInput,
+    ) -> Result<AuditEventChanges, CommandError> {
+        self.run(&GET_AUDIT_EVENT_CHANGES, |call| async move {
+            let principal = call.principal.clone();
+            let viewed = self
+                .read(&call, move |conn| read_changes(conn, input, &principal))
+                .await?;
+            let event = changes_event(GET_AUDIT_EVENT_CHANGES.action, input, &viewed);
+            let patient_capability = viewed
+                .patient_read
+                .as_ref()
+                .map(|(_, capability)| *capability);
+            self.write(&call, move |ctx| {
+                ctx.require(Capability::ViewAudit)?;
+                patient_capability
+                    .into_iter()
+                    .try_for_each(|capability| ctx.require(capability))?;
+                ctx.audit(event).map(drop)
+            })
+            .await?;
+            Ok(viewed.changes)
+        })
+        .await
+    }
+
+    /// `find_audit_records`: the records whose readable values start with the typed text,
+    /// or whose record ID it is, to filter the trail by one of them. Patients are searched
+    /// only for users who may read them; the text is never recorded.
+    pub async fn find_audit_records(
+        &self,
+        input: FindAuditRecordsInput,
+    ) -> Result<FoundAuditRecords, CommandError> {
+        self.run(&FIND_AUDIT_RECORDS, |call| async move {
+            let patients = reads_patients(&call.principal);
+            let details = find_details(&input, patients)?;
+            let stream = input.stream;
+            self.audited_read(
+                &call,
+                move |conn| find_records(conn, &input, patients),
+                move |found| find_event(stream, found, details),
             )
             .await
         })
@@ -341,39 +355,12 @@ impl Engine {
                     })
                 },
                 move |result| {
-                    access_event(VERIFY_AUDIT_CHAIN.action, stream)
+                    access_event(VERIFY_AUDIT_CHAIN.action, Some(stream))
                         .detail("intact", AuditDetail::boolean(result.intact))
                 },
             )
             .await
         })
         .await
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn audit_filter_details_reject_free_text() {
-        let input = ListAuditEventsInput {
-            stream: AuditStream::Security,
-            before_seq: None,
-            limit: 10,
-            action: None,
-            record_type: None,
-            record_id: Some("Patient Name".to_owned()),
-            self_approvals_only: None,
-        };
-        let error = audit_filter_details(&input).unwrap_err();
-        let Failure::Refused {
-            code, field_errors, ..
-        } = error
-        else {
-            panic!("free-text filter was not a validation refusal");
-        };
-        assert_eq!(code, ErrorCode::Validation);
-        assert_eq!(field_errors[0].field, "recordId");
     }
 }

@@ -199,6 +199,11 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "qc_scope_lookup",
         sql: include_str!("../migrations/0008_qc_scope_lookup.sql"),
     },
+    Migration {
+        version: 9,
+        name: "qc_receipt_positions",
+        sql: include_str!("../migrations/0009_qc_receipt_positions.sql"),
+    },
 ];
 
 /// This module's schema; the engine applies it in crate-map order.

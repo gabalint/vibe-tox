@@ -59,6 +59,7 @@
 #![warn(clippy::wildcard_enum_match_arm)]
 
 pub mod actions;
+mod audit_records;
 mod collection_history;
 mod commands;
 mod error;
@@ -77,6 +78,7 @@ mod views;
 
 use lis_core::{Migration, ModuleSchema};
 
+pub use audit_records::{audit_record_label, audit_record_search};
 pub use collection_history::{
     CollectionCorrectionId, CollectionCorrectionView, CollectionHistory, CollectionReviewQueueItem,
     collection_corrections_for_specimen, get_collection_history, pending_collection_reviews,
@@ -131,8 +133,8 @@ pub use order_accession_context::{
     OrderAccessionContext, OrderAccessionItem, OrderAccessionSummary, get_order_accession_context,
 };
 pub use queries::{
-    audit_record_label, container_hold_history, excursion, find_container, get_accession,
-    list_locations, list_printers, order_item_accessioned, order_sample_barcodes, release_gate,
+    OrderReceipt, container_hold_history, excursion, find_container, get_accession, list_locations,
+    list_printers, order_item_accessioned, order_receipts, orders_with_code, release_gate,
     specimen_accession, specimens_for_subject, testing_gate,
 };
 pub use queues::{
@@ -167,6 +169,11 @@ pub const MIGRATIONS: &[Migration] = &[
         version: 4,
         name: "causal_order",
         sql: include_str!("../migrations/0004_causal_order.sql"),
+    },
+    Migration {
+        version: 5,
+        name: "order_accessions_index",
+        sql: include_str!("../migrations/0005_order_accessions_index.sql"),
     },
 ];
 

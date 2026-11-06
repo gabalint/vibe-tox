@@ -134,25 +134,8 @@ pub(super) fn insert_attempt(
             counts.reprocessed, counts.qc, counts.quarantined, counts.not_result,
             counts.set_aside, counts.retained, attempt.parser_version, ctx.now()],
     )?;
-    Ok(ImportAttemptSummary {
-        import_attempt_id: id,
-        receipt_id: attempt.receipt_id,
-        attempt_no: attempt.attempt_no,
-        instrument_id: attempt.instrument_id,
-        outcome,
-        failure_code: failure,
-        rows_total: counts.total,
-        rows_new: counts.new,
-        rows_duplicate: counts.duplicate,
-        rows_reprocessed: counts.reprocessed,
-        rows_qc: counts.qc,
-        rows_quarantined: counts.quarantined,
-        rows_not_result: counts.not_result,
-        rows_set_aside: counts.set_aside,
-        rows_retained: counts.retained,
-        processed_at: ctx.now(),
-        origin: lis_interfaces::receipt_file(ctx.tx(), attempt.receipt_id)?.map(|file| file.origin),
-    })
+    attempt_by_key(ctx.tx(), attempt.receipt_id, attempt.attempt_no)?
+        .ok_or(ResultError::NotFound("import attempt"))
 }
 
 pub(super) fn audit_attempt(

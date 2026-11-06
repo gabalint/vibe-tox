@@ -318,10 +318,9 @@ impl FileLab {
             let found = self
                 .engine()
                 .list_import_attempts(ListImportAttemptsInput {
-                    after_import_attempt_id: None,
                     instrument_id: None,
                     limit: 100,
-                    before: None,
+                    ..ListImportAttemptsInput::default()
                 })
                 .await
                 .unwrap()

@@ -37,6 +37,13 @@ function renderPage(
   return renderWithProviders(<LaboratoryPage />);
 }
 
+/** A button in the page header, not the one in the billing warning. */
+function headerButton(name: string) {
+  const header = screen.getByRole("heading", { level: 1 }).closest("header");
+  if (!header) throw new Error("No page header");
+  return within(header).getByRole("button", { name });
+}
+
 async function fillFirstProfile(user: ReturnType<typeof renderPage>["user"]) {
   await user.keyboard("Synthetic Toxicology Laboratory");
   await typeInto(user, /^Address line 1/, "100 Test Street");
@@ -86,7 +93,7 @@ describe("LaboratoryPage (REQ-RPT-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     expect(screen.queryByText(/000000000e09/)).toBeNull();
     expect(screen.getByText("None (first version)")).toBeTruthy();
     await expectNoA11yViolations(container, { wholePage: true });
-    await user.click(screen.getByRole("button", { name: "Change profile" }));
+    await user.click(headerButton("Change profile"));
     const dialog = await screen.findByRole("dialog", { name: "Change laboratory profile" });
     await user.click(within(dialog).getByRole("button", { name: "Save profile" }));
     expect(await within(dialog).findByText("Enter the reason for this change.")).toBeTruthy();
@@ -109,6 +116,24 @@ describe("LaboratoryPage (REQ-RPT-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
         reason: "Billing NPI assigned",
       },
     });
+  });
+
+  it("warns that billing is held while Billing NPI or Tax ID is missing", async () => {
+    const { user, container } = renderPage(() => ({ ...PROFILE, billingNpi: "1234567893" }));
+    const warning = await screen.findByRole("alert");
+    expect(warning.textContent).toContain(
+      "Billing derivations are held until Billing NPI and Tax ID are set.",
+    );
+    await expectNoA11yViolations(container, { wholePage: true });
+    await user.click(within(warning).getByRole("button", { name: "Change profile" }));
+    expect(await screen.findByRole("dialog", { name: "Change laboratory profile" })).toBeTruthy();
+  });
+
+  it("does not warn once Billing NPI and Tax ID are set", async () => {
+    renderPage(() => ({ ...PROFILE, billingNpi: "1234567893", taxId: "00-0000000" }));
+    expect(await screen.findByText("Synthetic Toxicology Laboratory")).toBeTruthy();
+    expect(screen.queryByText("Billing is held")).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Change profile" })).toHaveLength(1);
   });
 
   it("shows the engine's field errors on the matching fields", async () => {
@@ -141,7 +166,8 @@ describe("LaboratoryPage (REQ-RPT-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
       ),
     );
     const { user } = renderPage(() => PROFILE, { set_laboratory_profile: set });
-    await user.click(await screen.findByRole("button", { name: "Change profile" }));
+    await screen.findByText("Synthetic Toxicology Laboratory");
+    await user.click(headerButton("Change profile"));
     const dialog = await screen.findByRole("dialog", { name: "Change laboratory profile" });
     await typeInto(user, /^Reason/, "Phone changed");
     await user.click(within(dialog).getByRole("button", { name: "Save profile" }));
@@ -157,6 +183,8 @@ describe("LaboratoryPage (REQ-RPT-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     });
     renderWithProviders(<LaboratoryPage />);
     expect(await screen.findByText("Synthetic Toxicology Laboratory")).toBeTruthy();
+    // The billing warning still shows, without the button.
+    expect(screen.getByText("Billing is held")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Change profile" })).toBeNull();
   });
 

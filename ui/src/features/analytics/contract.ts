@@ -38,7 +38,10 @@ export const GET_RUN_QC = "get_run_qc";
 export const LIST_REVIEW_QUEUE = "list_review_queue";
 /** `get_specimen_results({input:{specimenId}}) → SpecimenResults` (audited read). */
 export const GET_SPECIMEN_RESULTS = "get_specimen_results";
-/** `list_import_attempts({input:{instrumentId, limit, before}}) → ImportAttemptSummary[]`. */
+/**
+ * `list_import_attempts({input:{instrumentId, limit, before, outcome?, receivedFrom?,
+ * receivedBefore?, search?}}) → ImportAttemptSummary[]`; a search is an audited read.
+ */
 export const LIST_IMPORT_ATTEMPTS = "list_import_attempts";
 /** `get_import_attempt({input:{importAttemptId}}) → ImportAttemptDetail` (audited read). */
 export const GET_IMPORT_ATTEMPT = "get_import_attempt";

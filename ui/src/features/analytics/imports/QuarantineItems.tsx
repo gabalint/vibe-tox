@@ -13,6 +13,7 @@ import { receivedValueText } from "../labels";
 import { quarantineReasonText, quarantineStatus } from "../resultLabels";
 import { QuarantinePanel } from "./QuarantinePanel";
 import { ResolveQuarantineDialog } from "./ResolveQuarantineDialog";
+import { RetryImportDialog } from "./RetryImportDialog";
 
 /** Source text is shown as plain text, exactly as received. */
 const COLUMNS: readonly DataGridColumn<QuarantineItemView>[] = [
@@ -40,16 +41,20 @@ const COLUMNS: readonly DataGridColumn<QuarantineItemView>[] = [
 
 const getRowId = (row: QuarantineItemView) => row.itemId;
 
-const ACTIONS: readonly OfferedAction<QuarantineResolution>[] = [
+/** A decision on the row, or a retry of the whole received message once its cause is fixed. */
+type RowAction = QuarantineResolution | "retry_import";
+
+const ACTIONS: readonly OfferedAction<RowAction>[] = [
+  { id: "retry_import", label: "Retry import" },
   { id: "accept_as_reprocessing", label: "Accept as reprocessing" },
   { id: "reject", label: "Reject row", variant: "danger" },
 ];
 
 /** Interim, until the engine sends `allowedActions` on `QuarantineItemView`. */
-function allowed(item: QuarantineItemView): QuarantineResolution[] {
+function allowed(item: QuarantineItemView): RowAction[] {
   if (item.state !== "open") return [];
-  if (item.reason !== "conflicting_duplicate") return ["reject"];
-  return ["accept_as_reprocessing", "reject"];
+  if (item.reason !== "conflicting_duplicate") return ["retry_import", "reject"];
+  return ["retry_import", "accept_as_reprocessing", "reject"];
 }
 
 interface Deciding {
@@ -59,9 +64,11 @@ interface Deciding {
 
 /**
  * Rows held back from import, each needing a decision with a reason (REQ-ANA-003), opening
- * in a panel. Interim until the engine sends `allowedActions` on `QuarantineItemView`: an open
- * row offers Reject, and "Accept as reprocessing" only on the kind of row that command is for,
- * a conflicting duplicate (named by the row's `reason`). The engine still decides both.
+ * in a panel that links to where its cause is fixed. Interim until the engine sends
+ * `allowedActions` on `QuarantineItemView`: an open row offers Retry import (of the whole
+ * received message, once the cause is fixed) and Reject, and "Accept as reprocessing" only on
+ * the kind of row that command is for, a conflicting duplicate (named by the row's `reason`).
+ * The engine still decides each.
  * When the whole message or file was refused, its rows count as quarantined without a row
  * each, so the section points to the failure instead of saying none were held.
  */
@@ -69,12 +76,14 @@ export function QuarantineItems({ attempt }: { attempt: ImportAttemptDetail }) {
   const items = attempt.quarantine;
   const record = useOpenRecord();
   const [deciding, setDeciding] = useState<Deciding | null>(null);
+  const [isRetrying, setRetrying] = useState(false);
+  const act = (action: RowAction, item: QuarantineItemView) =>
+    action === "retry_import" ? setRetrying(true) : setDeciding({ item, resolution: action });
   const panel = openRecordPanel(record, items, getRowId, (open) => (
     <QuarantinePanel
       item={open}
-      actions={allowedActionItems(ACTIONS, allowed(open), (resolution) =>
-        setDeciding({ item: open, resolution }),
-      )}
+      attempt={attempt}
+      actions={allowedActionItems(ACTIONS, allowed(open), (action) => act(action, open))}
       onClose={record.close}
       onPrevious={record.previous}
       onNext={record.next}
@@ -83,7 +92,7 @@ export function QuarantineItems({ attempt }: { attempt: ImportAttemptDetail }) {
   const rowActions = allowedRowActions(ACTIONS, {
     label: (item: QuarantineItemView) => item.recordPath,
     allowed,
-    onAction: (resolution, item) => setDeciding({ item, resolution }),
+    onAction: act,
   });
   return (
     <>
@@ -105,6 +114,9 @@ export function QuarantineItems({ attempt }: { attempt: ImportAttemptDetail }) {
           />
         )}
       </DetailLayout>
+      {isRetrying && (
+        <RetryImportDialog receiptId={attempt.receiptId} onClose={() => setRetrying(false)} />
+      )}
       {deciding && (
         <ResolveQuarantineDialog
           item={deciding.item}

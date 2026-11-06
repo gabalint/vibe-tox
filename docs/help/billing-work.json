@@ -2,7 +2,7 @@
   "id": "billing-work",
   "title": "Billing work and handoffs",
   "summary": "Review performed-service derivations, hand them off and reconcile the partner\u2019s outcomes.",
-  "reviewedOn": "2026-10-29",
+  "reviewedOn": "2026-11-06",
   "routes": [
     "/billing/work",
     "/billing/derivations/:derivationId",
@@ -44,6 +44,8 @@
     "ui/src/features/billing/derivations/DerivationPage.tsx",
     "ui/src/features/billing/derivations/SpecimenSection.tsx",
     "ui/src/features/billing/derivations/FlagsSection.tsx",
+    "ui/src/features/billing/derivations/flagFixes.ts",
+    "crates/lis-billing/src/derivation_view.rs",
     "ui/src/features/billing/derivations/ContextResolutionDialog.tsx",
     "ui/src/features/billing/handoffs/HandoffPage.tsx",
     "ui/src/features/billing/handoffs/HandoffItems.tsx",
@@ -283,10 +285,10 @@
           "rules": "Derive again and review the new result before approval."
         },
         {
-          "name": "Flags: Flag / Reference / Effect",
-          "meaning": "Reasons for review and the affected record.",
-          "values": "Flag labels: Order billing selection missing; Order billing selection incomplete; Same-day order billing contexts need reconciliation; Financial follow-up remains open; Collection correction awaits quality review; No billing class for an analyte; Date of service unknown; Report not final; Laboratory billing NPI or TIN missing; Ordered but not performed; Presumptive and definitive testing on the same specimen; More than one presumptive test that day; Performed but not ordered (not counted); Only failed attempts (not counted); Performed but not reported. Effect is Blocking: holds the derivation, or For information.",
-          "rules": "Read-only. Blocking flags must be resolved at their source and services derived again. Informational flags still require reviewer attention."
+          "name": "Flags: Held / Flag / Reference / Effect / Fix in",
+          "meaning": "Reasons for review, the affected record, and where a blocking flag is fixed.",
+          "values": "Flag labels: Order billing selection missing; Order billing selection incomplete; Same-day order billing contexts need reconciliation; Financial follow-up remains open; Collection correction awaits quality review; No billing class for an analyte; Date of service unknown; Report not final; Laboratory billing NPI or TIN missing; Ordered but not performed; Presumptive and definitive testing on the same specimen; More than one presumptive test that day; Performed but not ordered (not counted); Only failed attempts (not counted); Performed but not reported. Effect is Blocking: holds the derivation, or For information. Fix in links a blocking flag to its screen: Laboratory billing NPI or TIN missing \u2192 Laboratory profile; Report not final \u2192 Report for the accession (its report workspace); Order billing selection missing or incomplete \u2192 Order billing for the accession; Financial follow-up remains open \u2192 Billing follow-up; No billing class for an analyte \u2192 Billing class mappings. Date of service unknown, Collection correction awaits quality review and Same-day order billing contexts need reconciliation have no link: correct the collection on its accession, or use Resolve billing context conflict on this page. The Held message counts the blocking flags and names what to do when they share one fix, for example \u201cSet Billing NPI and Tax ID in the laboratory profile, then derive again.\u201d; with several causes it asks you to fix each flag, using its Fix in link where there is one.",
+          "rules": "Read-only. Blocking flags must be resolved at their source and services derived again; fixing the source does not change this derivation until you derive again. Informational flags still require reviewer attention and have no Fix in link."
         },
         {
           "name": "Order / Order version",
@@ -386,7 +388,7 @@
         },
         {
           "problem": "Held.",
-          "recovery": "Read the flag\u2019s reference and effect. Correct the underlying billing, collection, mapping or report issue; derive again after the source change."
+          "recovery": "Follow the Held message. Open each blocking flag\u2019s Fix in link where there is one (for example Laboratory profile to set Billing NPI and Tax ID, or Report for the accession to release its final report). Otherwise correct the underlying collection or billing context issue. Then return here and use Derive again."
         },
         {
           "problem": "No billing classes for a specimen.",

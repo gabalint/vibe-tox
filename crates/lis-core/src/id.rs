@@ -47,6 +47,8 @@ pub mod kinds {
     pub enum Correlation {}
     /// Marker for [`InstallationId`](crate::InstallationId).
     pub enum Installation {}
+    /// Marker for [`AccessionId`](crate::AccessionId).
+    pub enum Accession {}
 }
 
 /// A local application user account.
@@ -62,6 +64,9 @@ pub type CorrelationId = Id<kinds::Correlation>;
 /// One installation of the application: one laboratory database and its lineage. Audit
 /// anchors, backup sets and exit exports name it.
 pub type InstallationId = Id<kinds::Installation>;
+/// One receipt of material for a subject's order, under one accession number. Owned by the
+/// specimens module; declared here so the order worklist can link an order to its accessions.
+pub type AccessionId = Id<kinds::Accession>;
 
 /// A UUIDv7 identifier of the entity named by the marker `K`.
 pub struct Id<K> {
