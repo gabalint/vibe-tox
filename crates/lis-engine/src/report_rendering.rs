@@ -14,6 +14,7 @@
 //!   intent, then the export is recorded ([`export_file`]). Bytes are never
 //!   regenerated.
 
+pub(crate) mod csv;
 mod export_file;
 
 use std::path::PathBuf;

@@ -85,6 +85,7 @@ const ATTEMPT = {
   instrumentId: AU_SERIAL.id,
   outcome: "processed_with_quarantine",
   processedAt: "2026-10-29T10:00:00Z",
+  receivedAt: "2026-10-29T10:00:00Z",
 } as ImportAttemptSummary;
 
 function renderPage(capabilities: string[], commands: Record<string, () => unknown> = {}) {

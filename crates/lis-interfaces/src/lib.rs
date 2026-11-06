@@ -26,6 +26,7 @@ mod artifact_references;
 mod au_dedup_tests;
 mod au_evidence;
 mod au_session;
+mod audit_records;
 mod commands;
 mod error;
 mod instrument_commands;
@@ -48,6 +49,7 @@ pub use lis_core::InstrumentId;
 use lis_core::{Migration, ModuleSchema};
 
 pub use artifact_references::{ARTIFACT_COLUMNS, referenced_artifacts};
+pub use audit_records::{audit_record_label, audit_record_search};
 pub use error::{InterfaceError, ListenerErrorCode};
 pub use instrument_commands::{
     register_instrument, set_instrument_enabled, set_result_folder, update_instrument_connection,
@@ -143,8 +145,13 @@ pub const MIGRATIONS: &[Migration] = &[
     },
     Migration {
         version: 13,
+        name: "receipt_arrivals",
+        sql: include_str!("../migrations/0013_receipt_arrivals.sql"),
+    },
+    Migration {
+        version: 14,
         name: "mllp_received",
-        sql: include_str!("../migrations/0013_mllp_received.sql"),
+        sql: include_str!("../migrations/0014_mllp_received.sql"),
     },
 ];
 

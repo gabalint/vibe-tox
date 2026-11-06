@@ -53,6 +53,65 @@
   font-weight: var(--font-weight-semibold);
 }
 
+/* The month or year heading that opens the next level up. */
+.heading {
+  min-height: var(--space-8);
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.heading[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.heading[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+}
+
+/* Months of a year or years of a decade, three to a row. */
+.periods {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-1);
+  outline: none;
+}
+
+.period {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(var(--space-8) * 2);
+  height: var(--space-8);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  outline: none;
+}
+
+.period[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.period[data-selected] {
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+
+.period[data-disabled] {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.period[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+}
+
 .grid {
   border-collapse: collapse;
 }

@@ -43,7 +43,10 @@ pub use commands::security_keys::{
 };
 
 pub use commands::audit::{
-    AuditEventView, AuditStream, ChainFinding, ChainVerification, ListAuditEventsInput,
+    AuditActorKind, AuditChangeStatus, AuditCursor, AuditDay, AuditEventChanges, AuditEventView,
+    AuditExportFormat, AuditFieldChange, AuditOutcome, AuditPatient, AuditStream, ChainFinding,
+    ChainVerification, ExportAuditEventsInput, ExportedAuditFile, FindAuditRecordsInput,
+    FoundAuditRecord, FoundAuditRecords, GetAuditEventChangesInput, ListAuditEventsInput,
     VerifyAuditChainInput,
 };
 pub use commands::listeners::ListenerStatusView;

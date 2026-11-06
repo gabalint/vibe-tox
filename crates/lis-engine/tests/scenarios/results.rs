@@ -101,10 +101,9 @@ async fn import_and_reflex_call(
     Some(match name {
         "list_import_attempts" => engine
             .list_import_attempts(ListImportAttemptsInput {
-                after_import_attempt_id: None,
                 instrument_id: None,
                 limit: 10,
-                before: None,
+                ..ListImportAttemptsInput::default()
             })
             .await
             .map(drop),

@@ -2,6 +2,7 @@
 //! caller's transaction) and perform no authorization: the engine checks
 //! the capability, and audits the read where the result holds PHI.
 
+pub(crate) mod audit_records;
 pub(crate) mod billing;
 pub(crate) mod candidate;
 pub(crate) mod delivery;

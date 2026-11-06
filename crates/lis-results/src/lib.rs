@@ -71,20 +71,20 @@ pub use model::{
 };
 pub use queries::{AwaitingResultRow, awaiting_results};
 pub use queries::{
-    ResultExceptionQueueItem, ResultReviewQueueItem, ReviewQueueCursor, ReviewQueuePage,
-    ReviewWorkQueuePage, StaleReason, current_validity, get_import_attempt, get_specimen_results,
-    latest_import_attempt_for_receipt, list_import_attempts, list_import_attempts_page,
-    open_quarantine_queue, out_of_scope_detections, out_of_scope_queue, result_revision_run_ids,
-    review_blocked_queue, review_gates, review_queue, review_queue_page, review_ready_queue,
-    review_stale_queue, review_status, review_work_queue_page, scan_review_queue,
-    scan_review_work_queue, specimen_release_lines, stale_reasons_after,
+    ImportAttemptFilter, ResultExceptionQueueItem, ResultReviewQueueItem, ReviewQueueCursor,
+    ReviewQueuePage, ReviewWorkQueuePage, StaleReason, current_validity, get_import_attempt,
+    get_specimen_results, latest_import_attempt_for_receipt, list_import_attempts,
+    list_import_attempts_page, open_quarantine_queue, out_of_scope_detections, out_of_scope_queue,
+    result_revision_run_ids, review_blocked_queue, review_gates, review_queue, review_queue_page,
+    review_ready_queue, review_stale_queue, review_status, review_work_queue_page,
+    scan_review_queue, scan_review_work_queue, specimen_release_lines, stale_reasons_after,
 };
 pub use value::{MalformedValue, SourceValue, parse_value};
 pub use views::{
     AddOnComponentView, CurrentValidity, ImportAttemptDetail, ImportAttemptSummary, ImportFileView,
-    MeasuredNotOrderedView, MeasurementView, OutOfScopeDetection, ReleaseLine, ReleaseReviewStatus,
-    ReleaseRevision, ResultLineView, ResultRevisionView, ReviewQueueEntry, ReviewStatus,
-    ReviewView, SetAsideRowView, SpecimenResults, ValidityAssessmentView,
+    MatchingRunView, MeasuredNotOrderedView, MeasurementView, OutOfScopeDetection, ReleaseLine,
+    ReleaseReviewStatus, ReleaseRevision, ResultLineView, ResultRevisionView, ReviewQueueEntry,
+    ReviewStatus, ReviewView, SetAsideRowView, SpecimenResults, ValidityAssessmentView,
 };
 
 /// Forward-only migrations, numbered from `0001` (coding standards).

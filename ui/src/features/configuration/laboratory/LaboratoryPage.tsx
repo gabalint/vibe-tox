@@ -1,3 +1,4 @@
+import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { Facts } from "@/components/Facts";
@@ -8,6 +9,7 @@ import { Timestamp } from "@/components/Timestamp";
 import type { LaboratoryProfileView } from "@/generated/LaboratoryProfileView";
 import { GET_LABORATORY_PROFILE, useCommandQuery, useHasCapability } from "@/lib/commands";
 import { usePersonText } from "@/lib/person";
+import styles from "@/styles/layout.module.css";
 import { MANAGE_CONFIGURATION } from "../contract";
 import { useDialog } from "../useDialog";
 import { ProfileDialog } from "./ProfileDialog";
@@ -16,6 +18,7 @@ import { ProfileDialog } from "./ProfileDialog";
  * The performing laboratory's profile (REQ-RPT-001): what reports print about the
  * laboratory, and the time zone every screen shows times in. Any session reads it; people
  * with `manage_configuration` set a new version, with a reason after the first (L15).
+ * Billing NPI and Tax ID are optional, but billing derivations are held without them.
  */
 export function LaboratoryPage() {
   const query = useCommandQuery<LaboratoryProfileView | null>(GET_LABORATORY_PROFILE);
@@ -38,7 +41,15 @@ export function LaboratoryPage() {
       <QueryContent query={query} what="laboratory profile">
         {(profile) =>
           profile ? (
-            <ProfileSection profile={profile} />
+            <div className={styles.stack}>
+              {(!profile.billingNpi || !profile.taxId) && (
+                <Alert tone="warning" title="Billing is held">
+                  Billing derivations are held until Billing NPI and Tax ID are set.{" "}
+                  {canManage && <Button onPress={dialog.open}>Change profile</Button>}
+                </Alert>
+              )}
+              <ProfileSection profile={profile} />
+            </div>
           ) : (
             <EmptyState
               title="No laboratory profile"

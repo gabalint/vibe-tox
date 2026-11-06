@@ -5,6 +5,7 @@
 mod billing_context;
 mod billing_reviews;
 mod historical_labels;
+mod order_find;
 mod paging;
 
 use std::sync::Arc;
@@ -587,7 +588,9 @@ fn list_orders(
                 limit,
                 before_received_at: None,
                 before_order_id: None,
+                search: None,
             },
+            &lis_orders::OrderMatches::default(),
         )
     })
 }

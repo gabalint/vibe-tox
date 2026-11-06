@@ -18,3 +18,9 @@ export const fileTemplatePath = (instrumentId: string) =>
 /** One file source's template, where it is checked and approved. */
 export const fileSourcePath = (instrumentId: string, registrationId: string) =>
   `${BENCH_INSTRUMENTS.href}/${instrumentId}/sources/${registrationId}`;
+
+/** Bench › Worklist, where accepted containers wait to be put on a run. */
+export const WORKLIST_PATH = "/bench/worklist";
+/** Container lookup with `labelCode` looked up at once. */
+export const containerLookupPath = (labelCode: string) =>
+  `/containers?${new URLSearchParams({ labelCode })}`;
