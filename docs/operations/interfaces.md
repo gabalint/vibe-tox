@@ -1,6 +1,6 @@
 # Interfaces
 
-Status: **implemented on synthetic data; fourth delivery step, first part**. The Interfaces menu receives HL7 orders from a clinic's EMR and sends HL7 results, issued report PDFs and billing handoff files to outside systems, through a folder or the partner's SFTP server, and HL7 results over MLLP to a partner on the lab network (REQ-INT-001–004, REQ-INT-006, REQ-ORD-001, REQ-RPT-003, REQ-RPT-011–013, REQ-BIL-002). The built-in help, Interfaces topic, describes every field and action; this guide covers setup, behavior and recovery. Analyzers are configured separately, under Laboratory setup › Instruments.
+Status: **implemented on synthetic data; fourth delivery step**. The Interfaces menu receives HL7 orders from a clinic's EMR and sends HL7 results, issued report PDFs and billing handoff files to outside systems, through a folder or the partner's SFTP server, and HL7 over MLLP with a partner on the lab network: results sent, orders received (REQ-INT-001–004, REQ-INT-006, REQ-ORD-001, REQ-RPT-003, REQ-RPT-011–013, REQ-BIL-002). The built-in help, Interfaces topic, describes every field and action; this guide covers setup, behavior and recovery. Analyzers are configured separately, under Laboratory setup › Instruments.
 
 ## What is available
 
@@ -12,13 +12,13 @@ Status: **implemented on synthetic data; fourth delivery step, first part**. The
 
 In a report's file name, `{accession}` is the report number (the accession number and the specimen type code, so two specimens of one accession never share a name) and `{revision}` the revision number; a withdrawal's revision reads `<n>-withdrawn`.
 
-| HL7 Orders (OML^O21, or ORM^O01, v2.5.1) | The clinic's EMR writes a file | In | Folder, or the clinic's SFTP server | — (read, not named) |
+| HL7 Orders (OML^O21, or ORM^O01, v2.5.1) | The clinic's EMR writes a file, or sends a message | In | Folder, the clinic's SFTP server, or MLLP – LIS listens | — (read, not named) |
 
-A folder is on this computer or on the lab network. MLLP – LIS listens (orders received over MLLP), HL7 acknowledgement files back to the clinic and per-partner interface contracts with acceptance tests are later steps. They are not available and no setting enables them.
+A folder is on this computer or on the lab network. HL7 acknowledgement files back to the clinic and per-partner interface contracts with acceptance tests are later steps. They are not available and no setting enables them.
 
 ## HL7 Orders (incoming)
 
-An HL7 Orders connection reads the order messages a clinic's EMR leaves in an input folder, local or on the clinic's SFTP server, every *Check every* seconds (10–3600) while the app is open, at the sign-in screen too. Its partner is one of the laboratory's clients: every order it receives is for that client. It reads only once started with a destination check that covers its input folder or server, and never while a recovery reconciliation is open.
+An HL7 Orders connection reads the order messages a clinic's EMR leaves in an input folder, local or on the clinic's SFTP server, every *Check every* seconds (10–3600) while the app is open, at the sign-in screen too; or it listens for the EMR to send them over MLLP ([below](#mllp--lis-listens)). Its partner is one of the laboratory's clients: every order it receives is for that client. It reads or listens only once started with a destination check that covers its input folder, server or listener, and never while a recovery reconciliation is open.
 
 - **Reading.** Only complete files are read: `*.hl7` (any case), not hidden, never `*.tmp`; at most 20 per reading. The bytes are stored first; then one transaction records what the message became, with the order it made; then the file moves to Processed or Failed › year › month (such as `Processed/2026/11/clinicA_000124.hl7`), never replacing a file. A file read again after a crash before its move is only moved.
 - **Reader.** The LIS's own narrow reader ([ADR 0007](../architecture/decisions/0007-integration-edge-and-interface-engines.md) §7) reads MSH, PID, PV1, ORC, OBR and DG1, as supplied. Only new orders (ORC-1 `NW`) are read. The placer group number (ORC-4) names the requisition, else the first ORC-2. It claims no profile conformance.
@@ -26,7 +26,7 @@ An HL7 Orders connection reads the order messages a clinic's EMR leaves in an in
 - **Patient.** The patient is found only by a PID-3 identifier, by assigning authority (else the sending facility) and type; the LIS never creates a patient from a message. With no match the message waits (or is refused, per *Unknown patient*) and becomes an order at the first reading after the patient is registered with that identifier. Two matching patients, or a registered patient whose family name or birth date differs, hold it for review.
 - **Order.** The order is registered in Received status with source `HL7 interface (EMR)`, the placer number and authority, the stored message as its source document, and evidence as supplied: no signature evidence (the laboratory's order policy decides at acceptance, REQ-ORD-005), billing responsibility not supplied, no medications. The laboratory accepts or rejects it in Orders as any order.
 - **Replays (REQ-INT-003).** An exact replay (the same bytes) is a duplicate with no effect. The same MSH-10 with other content is held for review. A placer number that already has an order is refused.
-- **Logs.** Each message shows Dir. In, transport Received, and what it became: Order created, Waiting for patient, Held for review, Duplicate – ignored or Rejected with its reason, and where its file moved. The LIS writes no acknowledgement file back; the clinic learns the outcome by the laboratory's agreed route.
+- **Logs.** Each message shows Dir. In, transport Received, and what it became: Order created, Waiting for patient, Held for review, Duplicate – ignored or Rejected with its reason, and where its file moved, or over MLLP the acknowledgement the EMR got and its address. The LIS writes no acknowledgement file back; for files, the clinic learns the outcome by the laboratory's agreed route.
 
 ## SFTP
 
@@ -50,6 +50,19 @@ An HL7 Results connection can send over MLLP: the LIS opens a TCP connection to 
 - **Tests.** **Test connection** connects to the address and port and closes, sending nothing. **Send test message** sends the synthetic ORU^R01 (processing ID `T`) and shows the partner's answer.
 - **Destination check.** It covers the partner's address and port. Changing either needs a new check; changing the ACK timeout does not.
 - **Problems** in Logs and on Overview: `not_lab_network`, `partner_unreachable` (no answer or refused within 10 seconds), `connection_lost` (closed before the ACK), `no_ack`, `ack_unreadable`, `ack_other_message`.
+
+## MLLP – LIS listens
+
+An HL7 Orders connection can receive over MLLP: the LIS listens on an address of this computer on the lab network, the clinic's EMR interface connects and sends framed order messages, and the LIS answers each with an HL7 acknowledgement on the same connection ([integrations](../architecture/integrations.md)). This is the only inbound network listener for partners; the framing and the acknowledgement are the LIS's own narrow code ([ADR 0007](../architecture/decisions/0007-integration-edge-and-interface-engines.md) §7).
+
+- **Lab network only (REQ-INT-006).** The listen address must be one of this computer's IP addresses on the lab network (the same ranges as for MLLP – LIS connects); an internet address and `0.0.0.0` (every address) are refused. Only the *Partner addresses allowed to connect* (1–20, each a lab-network address) are let in. A connection from another address is closed at once, without reading or answering; refusals are counted in memory and audited as `interfaces.reject_partner_connection` summaries on the security stream, at most once a minute per address (NFR-08). A partner outside the lab network connects through the laboratory's VPN, or uses SFTP. MLLP over TLS is not available.
+- **Listening.** From engine start, whoever is signed in (also nobody), the LIS compares its listeners with the started HL7 Orders connections whose destination check covers their listener, every 5 seconds and at once after a connection is saved, started, stopped or checked. It starts each missing listener, stops one whose connection stopped, and restarts one whose settings changed. Nothing listens while a recovery reconciliation is open. A port another program holds, an address this computer does not have, or a port the system reserves (often below 1024) shows on the connection as **Not listening** with the reason and status **Error**; it is tried again every 5 seconds.
+- **Limits per listener.** At most 4 partner connections at once (a fifth is closed); a message up to 1 MiB; bytes that are not MLLP frames, or a larger message, close the connection without an answer. A connection idle longer than *Idle timeout* (10–3600 seconds, default 300) is closed; the partner connects again.
+- **Receiving.** Each message is stored, then recorded with what it became in one transaction with the order it makes, by the same rules as a file ([above](#hl7-orders-incoming)), with the partner's address. Only then is it answered. A message that could not be saved gets no answer and the connection closes, so the partner sends it again.
+- **Acknowledgement.** Original acknowledgement mode: MSH addressed back to the sender (MSH-5/6 from its MSH-3/4), message type `ACK^<trigger>^ACK`, control ID `ACK-<its control ID>`, its processing ID, version 2.5.1; MSA-1 the code and MSA-2 the message's control ID. **AA** when the message is kept: an order made, waiting for its patient, or held for review. **AE** when its content is refused: an unknown test code, ordering provider or location, an unknown patient set to reject, a missing patient, order or test, or the order rules refusing it. **AR** when it comes from another sending facility, is not UTF-8 text or HL7, is not an OML^O21 or ORM^O01, has no control ID or is not a new order (ORC-1 `NW`). AE and AR carry the reason in words in MSA-3. An exact replay is answered with the code and reason the first one got and makes nothing. Enhanced mode (commit acknowledgements) is not supported; MSH-15/16 are ignored.
+- **Tests.** **Test listener** opens the address and port for a moment and closes them; it passes when the connection's own listener already listens there. It contacts no partner. There is no test message: the EMR sends a synthetic order, which Logs show as Received with **ACK AA returned to <address>**.
+- **Destination check.** It covers the listen address, the port and the allowed partner addresses. Changing any of them needs a new check, and the listener stops until it is recorded; changing a partner's note or the idle timeout does not, and restarts the listener with the new setting.
+- **Problems** on Overview and Test listener: `port_in_use`, `address_not_on_this_computer`, `port_not_allowed`, `listener_failed`, `not_lab_network`.
 
 ## HL7 Results messages
 
@@ -75,12 +88,13 @@ Everything needs Manage configuration.
    - **Folder:** **Choose folder…**: the folder comes from the system dialog and cannot be typed. **Test folder** writes and removes a probe file.
    - **SFTP:** enter the server, port, username, server fingerprint and remote folder. With SSH key sign-in, **Copy LIS public key** and send it to the partner's IT; with password sign-in, type the password. **Test connection** connects, checks the fingerprint and sign-in, and writes and removes a probe file. Nothing is saved by either.
    - **MLLP – LIS connects** (HL7 Results): enter the partner's address on the lab network, its port and the ACK timeout. **Test connection** connects and sends nothing.
+   - **MLLP – LIS listens** (HL7 Orders): enter this computer's lab-network address, the port agreed with the EMR's IT, and the EMR interface's address, such as `192.168.1.50 (Hospital B interface engine)`. **Test listener** checks the port is free there. Allow the port through this computer's firewall for that address only.
 2. Add **routing rules** when only some reports or handoffs belong to this partner. Choose the **schedule** and, except for MLLP, the **file name** (the message type's required placeholders and extension). **Save as stopped**.
 3. On the connection's page, **Send test message** writes a synthetic file with no patient data: an ORU^R01 with processing ID `T` for HL7 Results, a one-page PDF for Report PDF, a JSON file for Billing JSON. Ask the partner to confirm it. For HL7 Results, add the partner's codes under **Code mappings** and have a second person approve them.
 4. A second person uses **Record destination check** and records how the folder or server was confirmed. The laboratory's separation-of-duties policy decides whether the person who chose the folder may record it ([ADR 0015](../architecture/decisions/0015-separation-of-duties-policy.md)). The partner must be covered by a business associate agreement; that is the laboratory's responsibility.
 5. **Start** the connection, with a reason.
 
-Choosing another folder later, another SFTP server, port, username, remote folder or fingerprint, or another MLLP partner address or port, needs a new destination check before patient data goes there.
+Choosing another folder later, another SFTP server, port, username, remote folder or fingerprint, another MLLP partner address or port, or another listen address, port or allowed partner address, needs a new destination check before patient data goes there or is received.
 
 ## How messages travel
 
@@ -115,10 +129,13 @@ A message that matched no connection waits in **Interfaces › Unrouted messages
 | MLLP **partner unreachable** | Check the address and port with the partner's IT, that its interface runs, and that the lab network or VPN lets this computer connect out to that port; then **Test connection** |
 | MLLP messages stay **Awaiting application ACK** | The partner's interface takes the message but does not answer with an application ACK in time. Ask the partner's IT to check its acknowledgement mode, or raise the ACK timeout; the LIS resends the same message until the fifth attempt |
 | MLLP **Rejected (AE/AR)** | Read the partner's reason in Details; fix the cause with the partner (a mapping, a provider, the partner's own setup). A corrected result goes as a correction |
+| MLLP listener **Not listening** | Overview gives the reason. Free the port or choose another, or use this computer's current lab-network address, then **Test listener**; the LIS tries again every 5 seconds. A new address or port needs a new destination check and the EMR's IT to send there |
+| The EMR gets **no answer** or a closed connection | Check the connection is started, verified and **Listening**, and that the EMR connects from an allowed address: refusals appear in the audit trail as `interfaces.reject_partner_connection`, not in Logs. A message over 1 MiB or not framed as MLLP closes the connection; a message the LIS could not save gets no answer and is sent again |
+| An order received over MLLP was answered **AE or AR** | Logs give the reason. Fix the mapping, provider or settings, then ask the clinic to send it as a new message: an exact resend is a replay and gets the same answer |
 | Messages stay **Not sent** | The row's details say why: connection stopped, destination check not recorded, waiting for the schedule, paused for the report's impact review, held for a code mapping, or written at the next pass |
 | An HL7 message is **held** | Map the rows marked Not mapped – held on the connection's Code mappings tab, with the result's unit as the UCUM unit, and have a second person approve them |
 | A report revision shows **Replaced by a newer revision** | Nothing to do: the newer revision went to the connection instead |
-| The app was closed | Nothing is written while it is closed. Waiting messages are written after it starts again |
+| The app was closed | Nothing is written, read or received while it is closed. Waiting messages are written after it starts again; an MLLP partner sends again what was not acknowledged |
 | A restore was applied | Writing is held until the recovery reconciliation closes |
 
 ## Limits
@@ -128,3 +145,4 @@ A message that matched no connection waits in **Interfaces › Unrouted messages
 - The folder's network share, permissions and the partner's process for reading files are the laboratory's to qualify. Passing tests on synthetic data is not qualification.
 - The SFTP transport is tested against an in-process server on synthetic files, not against a partner's server. Each partner's server, network path and account are the laboratory's to qualify.
 - The MLLP transport is tested against an in-process partner on localhost with synthetic messages. Each partner's interface, its acknowledgement behavior, the network path or VPN, and what AA, AE and AR mean for it are the laboratory's to qualify in the partner's contract.
+- The MLLP listener is tested with an in-process EMR client on localhost and synthetic orders. The EMR's resend behavior after no answer or a closed connection, this computer's firewall and its lab-network address are the laboratory's to qualify. While the app is closed, or updating, nothing listens.

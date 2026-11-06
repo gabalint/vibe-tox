@@ -151,7 +151,7 @@ function ActiveDialog({
 function activeText({ settings }: PartnerConnection, stopping: boolean): string {
   if (settings.mllpListener) {
     return stopping
-      ? "The LIS stops listening and closes the port. The partner keeps its messages and sends them again after it starts."
+      ? "The LIS stops listening and closes the port. A partner's interface normally keeps the messages it could not send and sends them again after Start."
       : "The LIS listens once the destination check is recorded.";
   }
   if (settings.intake) {
