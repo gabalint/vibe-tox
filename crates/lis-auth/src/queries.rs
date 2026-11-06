@@ -171,3 +171,11 @@ pub fn display_names(
     }
     Ok(names)
 }
+
+/// Every account's ID and display name, by name: the audit viewer's "By" choices.
+pub fn user_names(conn: &Connection) -> Result<Vec<(UserId, String)>, AuthError> {
+    Ok(conn
+        .prepare_cached("SELECT id, display_name FROM auth_users ORDER BY display_name, id")?
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+        .collect::<rusqlite::Result<_>>()?)
+}

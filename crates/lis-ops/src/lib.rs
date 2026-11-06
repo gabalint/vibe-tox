@@ -13,6 +13,7 @@
 //! - **Local.** Safety, backup, restore and exit run in the application; nothing here calls
 //!   a network service.
 
+pub mod audit_records;
 mod installation;
 pub mod policy;
 

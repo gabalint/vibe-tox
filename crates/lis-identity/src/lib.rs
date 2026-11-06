@@ -58,6 +58,7 @@
 
 #![warn(clippy::wildcard_enum_match_arm)]
 
+mod audit_changes;
 mod billing;
 mod billing_model;
 mod billing_validation;
@@ -73,6 +74,7 @@ mod views;
 
 use lis_core::{Migration, ModuleSchema};
 
+pub use audit_changes::audit_record_changes;
 pub use billing::{get_patient_billing_profile, patient_billing_view, set_patient_billing_profile};
 pub use billing_model::{
     BillingContact, BillingNoticeEvidence, BillingParty, BillingRelationship, FinancialEvidence,
@@ -102,8 +104,8 @@ pub use model::{
     SubjectIdentifier, SubjectIdentifierId,
 };
 pub use queries::{
-    SubjectMatchQuery, audit_record_label, current_laboratory_profile, find_subject_matches,
-    get_client, get_laboratory_profile_by_id, get_practitioner, get_subject,
+    SubjectMatchQuery, audit_record_label, audit_record_search, current_laboratory_profile,
+    find_subject_matches, get_client, get_laboratory_profile_by_id, get_practitioner, get_subject,
     identity_holds_touching, list_all_open_identity_holds, list_clients, list_laboratory_profiles,
     list_open_identity_holds, list_practitioners, match_subjects, subject_summaries,
     subject_summary,

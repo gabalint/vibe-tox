@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
 import { Button } from "@/components/Button";
 import { DataGrid } from "@/components/DataGrid";
 import { DetailLayout } from "@/components/DetailPanel";
@@ -6,30 +6,59 @@ import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 import { Toolbar } from "@/components/Toolbar";
+import type { AuditCursor } from "@/generated/AuditCursor";
 import type { AuditEventView } from "@/generated/AuditEventView";
 import type { ListAuditEventsInput } from "@/generated/ListAuditEventsInput";
 import { useCommandPages } from "@/lib/commands";
+import { LabTimeZoneContext, labDayStart } from "@/lib/format";
 import { useOpenRecord } from "@/lib/openRecord";
 import { openRecordPanel } from "@/lib/openRecordPanel";
 import { AuditEventDetails } from "./AuditEventDetails";
 import { AUDIT_COLUMNS } from "./auditColumns";
-import type { AuditFilter } from "./contract";
+import { type AuditFilter, hasFilters } from "./contract";
 import { streamLabel } from "./streams";
 
 /** Events per page; the engine accepts 1 to 500. */
 const PAGE_SIZE = 100;
 
-const getRowId = (event: AuditEventView) => String(event.seq);
+/** Sequence numbers are per stream, so a row is its stream and sequence number. */
+const getRowId = (event: AuditEventView) => `${event.stream}-${event.seq}`;
+
+/** Where the page after `event` starts. */
+const cursorAfter = ({ recordedAt, stream, seq }: AuditEventView): AuditCursor => ({
+  recordedAt,
+  stream,
+  seq,
+});
+
+/**
+ * The engine's filters for `filter`: the days as the instants they begin and end in the
+ * laboratory's time zone, and "By" as a kind of principal or a user.
+ */
+export function auditInput({ from, to, by, ...rest }: AuditFilter, timeZone: string | null) {
+  const kind = by === "people" || by === "system" ? by : undefined;
+  return {
+    ...rest,
+    recordedFrom: from === undefined ? undefined : (labDayStart(from, timeZone) ?? undefined),
+    recordedBefore: to === undefined ? undefined : (labDayStart(to, timeZone, 1) ?? undefined),
+    byKind: kind,
+    byUser: kind === undefined ? by : undefined,
+  } satisfies Omit<ListAuditEventsInput, "limit">;
+}
 
 /** Events matching `filter`, newest first, with older pages loaded on request. */
 export function useAuditEvents(filter: AuditFilter) {
-  return useCommandPages<AuditEventView>("list_audit_events", {
-    key: { input: filter },
-    pageArgs: (beforeSeq): { input: ListAuditEventsInput } => ({
-      input: { ...filter, beforeSeq, limit: PAGE_SIZE },
+  const input = auditInput(filter, useContext(LabTimeZoneContext));
+  return useCommandPages<AuditEventView, AuditCursor>("list_audit_events", {
+    key: { input },
+    pageArgs: (before): { input: ListAuditEventsInput } => ({
+      input: { ...input, before, limit: PAGE_SIZE },
     }),
-    // A short page is the oldest one; otherwise the next page starts before its last event.
-    nextCursor: (page) => (page.length < PAGE_SIZE ? undefined : page.at(-1)?.seq),
+    // A short page is the oldest one; otherwise the next page starts after its last event.
+    nextCursor: (page) => {
+      const last = page.at(-1);
+      return page.length < PAGE_SIZE || last === undefined ? undefined : cursorAfter(last);
+    },
   });
 }
 
@@ -42,16 +71,13 @@ interface AuditEventsProps {
 
 /**
  * The events, then "Load older events". An event opens in the side panel with all its fields
- * (`?open=<seq>`), from the rows already read.
+ * (`?open=<stream>-<seq>`), from the rows already read.
  */
 export function AuditEvents({ filter, events, onShowAll }: AuditEventsProps) {
   const rows = useMemo(() => events.data?.pages.flat() ?? [], [events.data]);
   const record = useOpenRecord();
-  const filtered =
-    filter.action !== undefined ||
-    filter.recordType !== undefined ||
-    filter.recordId !== undefined ||
-    filter.selfApprovalsOnly === true;
+  const shown = filter.stream ? "this stream" : "any stream";
+  const filtered = hasFilters(filter);
 
   if (events.isPending) return <LoadingState label="Loading audit events…" rows={8} />;
   if (events.isError && !events.isFetchNextPageError) {
@@ -67,11 +93,11 @@ export function AuditEvents({ filter, events, onShowAll }: AuditEventsProps) {
     return filtered ? (
       <EmptyState
         title="No event matches"
-        description="No event in this stream matches these filters."
+        description={`No event in ${shown} matches these filters.`}
         action={<Button onPress={onShowAll}>Show all events</Button>}
       />
     ) : (
-      <EmptyState title="No audit events" description="Nothing is recorded in this stream yet." />
+      <EmptyState title="No audit events" description={`Nothing is recorded in ${shown} yet.`} />
     );
   }
   return (
@@ -86,7 +112,7 @@ export function AuditEvents({ filter, events, onShowAll }: AuditEventsProps) {
       ))}
     >
       <DataGrid
-        label={`${streamLabel(filter.stream)} audit events`}
+        label={filter.stream ? `${streamLabel(filter.stream)} audit events` : "Audit events"}
         columns={AUDIT_COLUMNS}
         rows={rows}
         getRowId={getRowId}

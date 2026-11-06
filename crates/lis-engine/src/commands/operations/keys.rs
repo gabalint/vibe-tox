@@ -213,12 +213,9 @@ pub(crate) async fn reconcile_key_restores(
 /// The key-restore events of `action`, optionally of one attempt, newest first.
 fn key_restore_filter<'a>(action: &'a str, attempt: Option<&'a str>) -> EventFilter<'a> {
     EventFilter {
-        stream: Stream::Security,
-        before_seq: None,
-        limit: u32::MAX,
         action: Some(action),
         record_type: Some(KEY_RESTORE_RECORD),
         record_id: attempt,
-        self_approvals_only: false,
+        ..EventFilter::new(Stream::Security, u32::MAX)
     }
 }
