@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
 import { Button } from "@/components/Button";
 import { Checkbox } from "@/components/Checkbox";
-import { FindField } from "@/components/FindField";
 import { Select } from "@/components/Select";
 import { Toolbar } from "@/components/Toolbar";
-import { optionalText } from "@/lib/choices";
 import { AuditDateFilter } from "./AuditDateFilter";
+import { AuditFind, type PickedRecord } from "./AuditFind";
 import { type AuditFilter, hasFilters, isOutcome } from "./contract";
 import { ALL_STREAMS, isStream, STREAMS } from "./streams";
 
@@ -39,15 +38,17 @@ interface AuditFiltersProps {
   recordTypes: CodeLabels;
   /** Every user, by ID and name, from the engine. */
   users: CodeLabels;
+  /** The label of the record found, as the trail shows it. */
+  pickedLabel?: string;
   onApply: (filter: AuditFilter) => void;
-  /** The record ID to find, after a pause in typing or on Enter; empty finds every record. */
-  onFind: (recordId: string | undefined) => void;
+  /** The record picked in Find; nothing shows every record. */
+  onFind: (record: PickedRecord | undefined) => void;
 }
 
 /**
- * Each filter applies when chosen, the record ID as a find after a pause in typing, and the
- * engine applies them all in its query. Actions and record types belong to a stream, so changing the stream clears
- * them. "Self-approvals only" lists the steps one person did alone under the laboratory's
+ * Each filter applies when chosen, Find's record when picked, and the engine applies them all
+ * in its query. Actions and record types belong to a stream, so changing the stream clears
+ * them, and a record of another type than the one chosen is no longer found. "Self-approvals only" lists the steps one person did alone under the laboratory's
  * separation-of-duties policy (ADR 0015), for the laboratory's review of them.
  */
 export function AuditFilters({
@@ -56,6 +57,7 @@ export function AuditFilters({
   actions,
   recordTypes,
   users,
+  pickedLabel,
   onApply,
   onFind,
 }: AuditFiltersProps) {
@@ -76,13 +78,7 @@ export function AuditFilters({
         applied: moreApplied(filter, recordTypes),
       }}
     >
-      <FindField
-        label="Find by record ID"
-        placeholder="Record ID"
-        isLabelHidden
-        value={filter.recordId ?? ""}
-        onChange={(text) => onFind(optionalText(text) ?? undefined)}
-      />
+      <AuditFind filter={filter} pickedLabel={pickedLabel} onPick={onFind} />
       <Select
         label="Stream"
         name="stream"
@@ -94,6 +90,7 @@ export function AuditFilters({
             stream: isStream(stream) ? stream : undefined,
             action: undefined,
             recordType: undefined,
+            recordId: undefined,
           })
         }
       />
@@ -146,7 +143,14 @@ function MoreFilters({ filter, recordTypes, onApply }: MoreFiltersProps) {
         any="Any record type"
         codes={recordTypes}
         value={filter.recordType}
-        onChange={(recordType) => onApply({ ...filter, recordType })}
+        onChange={(recordType) =>
+          onApply({
+            ...filter,
+            recordType,
+            // A record found as another type is not one of this type.
+            recordId: recordType === filter.recordType ? filter.recordId : undefined,
+          })
+        }
       />
       <AuditDateFilter
         label="Recorded from"

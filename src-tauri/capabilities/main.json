@@ -46,6 +46,7 @@
     "allow-list-audit-events",
     "allow-get-audit-event-changes",
     "allow-export-audit-events",
+    "allow-find-audit-records",
     "allow-verify-audit-chain",
     "allow-list-listener-status",
     "allow-get-listener-restart"

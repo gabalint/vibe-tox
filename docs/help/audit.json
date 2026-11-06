@@ -38,13 +38,13 @@
           "name": "Stream",
           "meaning": "Category of activity under review; the page description under the title says what the chosen stream holds.",
           "values": "All streams (default): every event, newest first by the time it was recorded. Security: sign-ins, users, roles and security settings; backups, restores, updates and exports; instrument and partner connections. Clinical: patients, orders, specimens, results, QC, reports and billing, and laboratory setup such as the catalog and the laboratory profile. Access: who opened patient records, orders, specimens, runs, results, reports or billing, and who viewed this audit trail or checked its chain or anchors.",
-          "rules": "Changing stream clears Action and Record type because their choices belong to the stream; Record ID and Self-approvals only stay. With All streams, Action and Record type offer the choices of every stream."
+          "rules": "Changing stream clears Action, Record type and the record found with Find, because they belong to the stream; Self-approvals only, By, Outcome and the days stay. With All streams, Action and Record type offer the choices of every stream."
         },
         {
-          "name": "Find by record ID",
-          "meaning": "Find events concerning one internal record identifier.",
-          "values": "Exact record ID supplied by the relevant record/evidence, or blank for all.",
-          "rules": "Optional; this is not a patient-name search. Use up to 128 lowercase letters, digits, periods, colons, hyphens or underscores. Applies after a typing pause or Enter."
+          "name": "Find",
+          "meaning": "Find one record by a value shown elsewhere in the LIS, pick it, and list only the events about it. The field's placeholder (and its name for screen readers) says what it searches for the chosen Record type.",
+          "values": "With Any record type: every value below together, and record IDs. By record type: Instrument: code or name (for example AU-SER); App version and Update approval: version (for example 0.1.2-nightly.20261031.22); User and Session: username or name, with each of that user's sessions listed separately, newest first; Backup target: target name; Backup run: the day it was requested, as YYYY-MM-DD in the laboratory's time zone; Billing handoff: handoff number, or the accession number of work it holds; Report, Report revision and Report export: report number (for example A26000005-UR); Order: accession number or placer order number; Accession and Specimen: accession number; Container: container label (for example C00000005) or accession number; Practitioner: family name, given names, \"Family, Given\" or NPI; Client: name or code; Specimen type, Analyte, Method and Orderable: code or name; Patient: name or identifier, only for people who may read patients (Enter orders or Manage quality). Every type is also found by its whole record ID; other record types are found by record ID only. Each choice shows the record's label, its record type, the streams that hold its events and when its latest event was recorded.",
+          "rules": "Optional. Matches the start of a value, ignoring case; type at least two characters, or one digit for a handoff number. Searches after a pause in typing and lists only records that have events in the chosen stream (any stream with All streams), at most 20 of each type and 50 in total; when more match, a line under the field says so: type more of the value. Nothing applies until a record is picked; picking one also chooses its Record type. The X in the field, or Clear filters, removes the picked record: the trail shows every record again and keeps the Record type. Each option shows the record's label, and under it its type, streams and latest event. Without patient access, patients are not searched by name and their names are not shown; a patient's record ID still finds their events. The search is recorded as an access event with the record type and stream searched and the number of records found, never the text typed."
         },
         {
           "name": "Action",
@@ -67,8 +67,8 @@
         {
           "name": "Record type (More filters)",
           "meaning": "Narrow events by the kind of affected record.",
-          "values": "Any record type or the recorded types of the chosen stream, or of every stream with All streams.",
-          "rules": "Optional."
+          "values": "Any record type or the recorded types of the chosen stream. With All streams, every stream's types, each followed by the streams that hold its events, such as \"Order — Clinical, Access\" or \"Instrument — Security\".",
+          "rules": "Optional. Also sets what Find searches. Choosing another type clears a record found as a different type."
         },
         {
           "name": "Recorded from / Recorded to (More filters)",
@@ -103,8 +103,8 @@
         {
           "name": "Action / Record / Record ID",
           "meaning": "Operation and affected record identity.",
-          "values": "Display labels plus recorded action code and record identifier where available.",
-          "rules": "Read-only; a dash means no value was recorded."
+          "values": "Display labels plus recorded action code and record identifier where available. The record's label is its current readable value, such as an accession number, report number, instrument code and name, username, backup target or version; the workstation shows as This computer.",
+          "rules": "Read-only; a dash means no value was recorded. A patient's name is shown only to people who may read patients (Enter orders or Manage quality); others see the record type and ID."
         },
         {
           "name": "Reason / Authority / Correlation ID",
@@ -152,7 +152,7 @@
         },
         {
           "name": "Clear filters / Show all events",
-          "does": "Remove every filter at once (record ID, action, By, Outcome, self-approvals, record type and days) except Stream.",
+          "does": "Remove every filter at once (the record found, action, By, Outcome, self-approvals, record type and days) except Stream.",
           "availableWhen": "A filter is applied or no matching events are found.",
           "result": "Reloads events for the selected stream, or for every stream."
         },
@@ -170,7 +170,7 @@
         "An exported file leaves the application's protections: keep, send and dispose of it under the laboratory's procedure for records, especially when it contains patient information."
       ],
       "workflow": [
-        "Start from All streams, or choose a stream, and narrow the review by record ID, action, who acted, outcome, record type and the days recorded.",
+        "Start from All streams, or choose a stream, and narrow the review by a record found with Find, action, who acted, outcome, record type and the days recorded.",
         "Open relevant events and retain their sequence, actor, time and correlation identifiers.",
         "Verify chain, then use Audit anchors when independent retained evidence is needed.",
         "Investigate findings through the laboratory’s documented review process."
@@ -179,6 +179,10 @@
         {
           "problem": "No event matches",
           "recovery": "Clear filters, choose All streams in case the event is in another stream, and verify the internal record identifier; load older events where available."
+        },
+        {
+          "problem": "Find lists no record",
+          "recovery": "Type the start of the value as the LIS shows it (at least two characters), set Record type to Any record type, and choose All streams: Find lists only records with events in the chosen stream. Records of types without a readable value are found by their whole record ID. Patients are found by name only by people who may read patients."
         },
         {
           "problem": "Older events could not be loaded",
@@ -333,6 +337,8 @@
   "reviewSources": [
     "ui/src/features/audit/AuditTrailPage.tsx",
     "ui/src/features/audit/AuditFilters.tsx",
+    "ui/src/features/audit/AuditFind.tsx",
+    "ui/src/features/audit/findHints.ts",
     "ui/src/features/audit/AuditEvents.tsx",
     "ui/src/features/audit/AuditEventDetails.tsx",
     "ui/src/features/audit/ChainCheck.tsx",
@@ -353,6 +359,10 @@
     "ui/src/features/audit/AuditExport.tsx",
     "crates/lis-engine/src/commands/audit/export.rs",
     "crates/lis-engine/src/commands/audit/export_rows.rs",
-    "crates/lis-report/templates/audit-export/v1.typ"
+    "crates/lis-report/templates/audit-export/v1.typ",
+    "crates/lis-engine/src/commands/audit/find.rs",
+    "crates/lis-engine/src/commands/audit/labels.rs",
+    "crates/lis-engine/src/commands/audit/read.rs",
+    "crates/lis-audit/src/search.rs"
   ]
 }

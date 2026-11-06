@@ -130,7 +130,14 @@ fn list_reads_every_stream_by_append_time_with_a_stable_cursor() {
     );
     assert_eq!(
         crate::record_types(&conn, Some(Stream::Access)).unwrap(),
-        ["specimen".to_owned()]
+        [("specimen".to_owned(), vec![Stream::Access])]
+    );
+    assert_eq!(
+        crate::record_types(&conn, None).unwrap(),
+        [(
+            "specimen".to_owned(),
+            vec![Stream::Clinical, Stream::Security, Stream::Access]
+        )]
     );
 }
 

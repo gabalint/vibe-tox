@@ -21,6 +21,7 @@ use ts_rs::TS;
 use super::changes::{GetAuditEventChangesInput, read_changes};
 use super::export_rows::{self, ExportRow, Laboratory, Provenance, lab_time};
 use super::input::audit_filter_details;
+use super::labels::reads_patients;
 use super::read::read_page;
 use super::{
     AuditActorKind, AuditCursor, AuditOutcome, AuditReadError, AuditStream, ListAuditEventsInput,
@@ -257,7 +258,7 @@ fn read_export(
     let mut patients = BTreeSet::new();
     let mut page_filter = filter.clone();
     loop {
-        let page = read_page(conn, &page_filter)?;
+        let page = read_page(conn, &page_filter, reads_patients(principal))?;
         if rows.len() + page.len() > max_events {
             return Err(AuditReadError::ExportTooLarge(max_events));
         }
