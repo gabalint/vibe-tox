@@ -15,9 +15,11 @@ const PRACTITIONERS: RecordOption[] = [
 function Static({
   onChange,
   options = PRACTITIONERS,
+  isClearable,
 }: {
   onChange: (value: string | null) => void;
   options?: readonly RecordOption[];
+  isClearable?: boolean;
 }) {
   const [value, setValue] = useState<string | null>(null);
   return (
@@ -25,6 +27,7 @@ function Static({
       label="Practitioner"
       name="practitionerId"
       options={options}
+      isClearable={isClearable}
       value={value}
       onChange={(next) => {
         setValue(next);
@@ -70,6 +73,18 @@ describe("RecordPicker with a static list", () => {
     // Typing after the click still narrows the list.
     await user.keyboard("blake");
     expect(optionTexts()).toEqual(["Example, BlakeNPI 0000000037"]);
+  });
+
+  it("offers a clear button only when asked and while a record is chosen", async () => {
+    const onChange = vi.fn();
+    const { user } = renderWithProviders(<Static onChange={onChange} isClearable />);
+    expect(screen.queryByRole("button", { name: "Clear Practitioner" })).toBeNull();
+    await user.click(field());
+    await user.click(await screen.findByRole("option", { name: /Example, Blake/ }));
+    expect(onChange).toHaveBeenLastCalledWith("p3");
+    await user.click(screen.getByRole("button", { name: "Clear Practitioner" }));
+    expect(onChange).toHaveBeenLastCalledWith(null);
+    expect(screen.queryByRole("button", { name: "Clear Practitioner" })).toBeNull();
   });
 
   it("says when nothing matches and keeps no free text", async () => {

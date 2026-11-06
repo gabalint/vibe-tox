@@ -73,6 +73,12 @@ impl AuditDetail {
         Self(Value::Bool(value))
     }
 
+    /// An instant, in its canonical UTC text form.
+    #[must_use]
+    pub fn timestamp(value: UtcTimestamp) -> Self {
+        Self(Value::String(value.to_string()))
+    }
+
     /// A validated lowercase hexadecimal SHA-256 digest.
     pub fn sha256(value: &str) -> Result<Self, AuditError> {
         if is_sha256_hex(value) {

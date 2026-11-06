@@ -1,0 +1,45 @@
+{
+  "laboratoryName": "Synthetic Toxicology Laboratory",
+  "export": {
+    "exportedAt": "2026-11-05 10:15:00 CST",
+    "exportedBy": "Test Auditor (00000000-0000-7000-8000-000000000301)",
+    "recordedBefore": "2026-11-05 10:15:00 CST",
+    "eventCount": "2",
+    "patientData": "yes"
+  },
+  "filters": [{ "name": "Stream", "value": "Clinical" }],
+  "events": [
+    {
+      "stream": "Clinical",
+      "seq": "42",
+      "occurred": "2026-11-05 10:00:00 CST",
+      "recorded": "2026-11-05 10:00:00 CST",
+      "by": "Test Quality Manager (00000000-0000-7000-8000-000000000101)",
+      "action": "Assert demographics (identity.assert_demographics)",
+      "outcome": "Succeeded",
+      "record": "Subject Doe, Test (00000000-0000-7000-8000-000000000201)",
+      "reason": "Typo in the family name",
+      "authority": "manage_quality",
+      "revision": "1 → 2",
+      "changes": "Family name: Dae → Doe",
+      "details": "Assertion sequence: 2",
+      "correlationId": "00000000-0000-7000-8000-000000000401"
+    },
+    {
+      "stream": "Security",
+      "seq": "7",
+      "occurred": "2026-11-05 09:00:00 CST",
+      "recorded": "2026-11-05 09:00:00 CST",
+      "by": "sign-in-screen (system)",
+      "action": "Sign-in (auth.sign_in)",
+      "outcome": "Succeeded",
+      "record": "",
+      "reason": "",
+      "authority": "",
+      "revision": "",
+      "changes": "No data changed.",
+      "details": "",
+      "correlationId": "00000000-0000-7000-8000-000000000402"
+    }
+  ]
+}

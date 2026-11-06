@@ -34,6 +34,22 @@ pub fn optional_text(
     }
 }
 
+/// A SQL `LIKE` pattern for values that start with `text`, with `\` as the escape
+/// character (`LIKE ?1 ESCAPE '\'`): `%`, `_` and `\` in `text` match themselves.
+/// SQLite's `LIKE` ignores ASCII case.
+#[must_use]
+pub fn like_prefix(text: &str) -> String {
+    let mut pattern = String::with_capacity(text.len() + 1);
+    for character in text.chars() {
+        if matches!(character, '%' | '_' | '\\') {
+            pattern.push('\\');
+        }
+        pattern.push(character);
+    }
+    pattern.push('%');
+    pattern
+}
+
 fn field_error(field: &str, code: &str, message: &str) -> FieldError {
     FieldError {
         field: field.to_owned(),
@@ -45,6 +61,12 @@ fn field_error(field: &str, code: &str, message: &str) -> FieldError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn like_prefix_escapes_wildcards() {
+        assert_eq!(like_prefix("A26"), "A26%");
+        assert_eq!(like_prefix("50%_a\\b"), "50\\%\\_a\\\\b%");
+    }
 
     #[test]
     fn trims_and_keeps_inner_text() {

@@ -39,7 +39,7 @@ pub use id::{
 pub use migration::{Migration, ModuleSchema};
 pub use phi::Phi;
 pub use principal::{Actor, Capability, Denied, Principal};
-pub use text::{optional_text, required_text};
+pub use text::{like_prefix, optional_text, required_text};
 pub use time::{Clock, FixedClock, SystemClock, UtcTimestamp};
 
 /// Re-exported so dependent crates name the same decimal type.
