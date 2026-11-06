@@ -568,6 +568,7 @@ impl Perf {
             limit: 50,
             before_received_at: None,
             before_order_id: None,
+            search: None,
         };
         l.time("list_orders", Kind::Read, e.list_orders(orders))
             .await;

@@ -133,9 +133,9 @@ pub use order_accession_context::{
     OrderAccessionContext, OrderAccessionItem, OrderAccessionSummary, get_order_accession_context,
 };
 pub use queries::{
-    container_hold_history, excursion, find_container, get_accession, list_locations,
-    list_printers, order_item_accessioned, order_sample_barcodes, release_gate, specimen_accession,
-    specimens_for_subject, testing_gate,
+    OrderReceipt, container_hold_history, excursion, find_container, get_accession, list_locations,
+    list_printers, order_item_accessioned, order_receipts, orders_with_code, release_gate,
+    specimen_accession, specimens_for_subject, testing_gate,
 };
 pub use queues::{
     FailedLabelJob, SpecimenAwaitingDecision, accepted_specimens_between, failed_label_jobs,
@@ -169,6 +169,11 @@ pub const MIGRATIONS: &[Migration] = &[
         version: 4,
         name: "causal_order",
         sql: include_str!("../migrations/0004_causal_order.sql"),
+    },
+    Migration {
+        version: 5,
+        name: "order_accessions_index",
+        sql: include_str!("../migrations/0005_order_accessions_index.sql"),
     },
 ];
 
