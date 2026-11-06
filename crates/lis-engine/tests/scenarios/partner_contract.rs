@@ -6,7 +6,7 @@
 use std::fs;
 
 use lis_core::ErrorCode;
-use lis_engine::{Engine, PartnerConnectionInput};
+use lis_engine::{Engine, PartnerConnectionInput, UpdatePractitioner};
 use lis_interfaces::partner::{
     AcceptanceState, ApprovePartnerContract, ApprovePartnerMappings, ContractEdge,
     DraftPartnerContract, DraftPartnerMapping, InterfaceContract, MappingKind, MappingValues,
@@ -145,6 +145,41 @@ async fn an_order_connection_reads_nothing_until_its_contract_is_approved_and_te
     orders.read().await;
     assert_eq!(orders.states().len(), 1);
     out_of_date_after_a_mapping_change(&orders).await;
+}
+
+/// Where no practitioner has the tests' synthetic NPI, they register one as the person who
+/// runs them, and keep nothing.
+#[tokio::test]
+async fn order_tests_pass_where_their_synthetic_provider_is_not_registered() {
+    let orders = Orders::checked().await;
+    let id = orders.connection.connection.id;
+    let engine = orders.bench.lab().engine();
+    orders.bench.sign_in(Staff::Desk(Role::Admin)).await;
+    let practitioner = engine.list_practitioners().await.unwrap().remove(0);
+    engine
+        .update_practitioner(UpdatePractitioner {
+            practitioner_id: practitioner.id,
+            expected_revision: practitioner.revision,
+            npi: "1000000004".to_owned(),
+            family_name: practitioner.family_name,
+            given_names: practitioner.given_names,
+            active: true,
+            reason: "Synthetic: NPI corrected".to_owned(),
+        })
+        .await
+        .unwrap();
+    draft_contract(engine, id).await;
+    orders.bench.sign_in(Staff::Racer).await;
+    assert_passed(&approve_and_test(engine, id).await);
+    orders.bench.sign_in(Staff::Desk(Role::Admin)).await;
+    let npis: Vec<String> = engine
+        .list_practitioners()
+        .await
+        .unwrap()
+        .iter()
+        .map(|practitioner| practitioner.npi.as_str().to_owned())
+        .collect();
+    assert_eq!(npis, ["1000000004"]);
 }
 
 /// A new mapping version makes the tests out of date: nothing more is read until they pass

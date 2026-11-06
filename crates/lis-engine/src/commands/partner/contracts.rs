@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use lis_core::{CommandError, ErrorCode};
+use lis_core::{Actor, CommandError, ErrorCode};
 use lis_interfaces::partner::{
     AcceptanceCase, ApprovePartnerContract, DraftPartnerContract, PartnerConnectionDetail,
     PartnerContract, PartnerError,
@@ -74,7 +74,10 @@ impl Engine {
                 })
                 .await?;
             let cases = match source {
-                Some(source) => self.order_cases(source).await?,
+                Some(source) => {
+                    self.order_cases(call.principal.actor().clone(), source)
+                        .await?
+                }
                 None => outgoing,
             };
             self.change(&call, move |ctx| {
@@ -85,13 +88,14 @@ impl Engine {
         .await
     }
 
-    /// The HL7 Orders cases, in a transaction that is rolled back.
+    /// The HL7 Orders cases, run as `caller` in a transaction that is rolled back.
     async fn order_cases(
         &self,
+        caller: Actor,
         source: lis_interfaces::partner::IntakeSource,
     ) -> Result<Vec<AcceptanceCase>, Failure> {
         let db = Arc::clone(&self.db);
-        blocking(move || crate::partner_intake::acceptance::order_cases(&db, source))
+        blocking(move || crate::partner_intake::acceptance::order_cases(&db, &caller, source))
             .await?
             .map_err(|error: IntakeError| {
                 tracing::warn!(%error, "order acceptance tests not run");

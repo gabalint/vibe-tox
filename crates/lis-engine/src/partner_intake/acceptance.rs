@@ -2,12 +2,12 @@
 //! Synthetic order messages go through the same receiving rules as real ones, with the
 //! connection's settings and approved code mappings, inside one transaction that is rolled
 //! back: nothing they make is kept, and none of it is audited. A synthetic patient and
-//! ordering provider are registered there first. Each case expects one outcome: an order
+//! ordering provider are registered there first, as the person who runs the tests. Each case expects one outcome: an order
 //! made, a replay ignored, changed content held, an unknown test or another sender refused,
 //! and an unknown patient waiting or refused as the connection says; over MLLP, each with
 //! the acknowledgement it gets (AA, AE or AR).
 
-use lis_core::{Capability, CorrelationId, Phi, Principal};
+use lis_core::{Actor, Capability, CorrelationId, Phi, Principal};
 use lis_identity::{DemographicsInput, IdentifierInput, RegisterPractitioner, RegisterSubject};
 use lis_interfaces::partner::{
     AcceptanceCase, AckCode, IntakeSource, MappingKind, ReceivedOutcome, UnknownPatient,
@@ -35,13 +35,26 @@ impl From<StoreError> for DryRun {
     }
 }
 
-/// Runs the cases and rolls everything back. Blocking.
+/// Runs the cases as `caller`, who asked for them, and rolls everything back. Blocking.
+/// Registering the synthetic provider needs a signed-in person; the cases hold only the
+/// capabilities the receiving rules and the fixtures need.
 pub(crate) fn order_cases(
     db: &Database,
+    caller: &Actor,
     source: IntakeSource,
 ) -> Result<Vec<AcceptanceCase>, IntakeError> {
-    let principal = Principal::system(
-        "partner-acceptance",
+    let &Actor::User {
+        user_id,
+        session_id,
+        workstation_id,
+    } = caller
+    else {
+        return Err(lis_identity::IdentityError::UserRequired.into());
+    };
+    let principal = Principal::user(
+        user_id,
+        session_id,
+        workstation_id,
         [Capability::EnterOrders, Capability::ManageConfiguration],
     );
     let ran = db.write_blocking(principal, CorrelationId::generate(), move |ctx| {
