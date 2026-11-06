@@ -213,6 +213,7 @@ export const CHANGES: Record<ConnectionChange, string> = {
   stopped: "Stopped",
   verified: "Destination check recorded",
   mappings_approved: "Code mappings approved",
+  contract_approved: "Interface contract approved",
 };
 
 /** The engine's PHI-free write problems. */
@@ -249,6 +250,7 @@ export function sftpTestText({ problem, presentedFingerprint }: FolderTestResult
 const WAITING: Record<WaitReason, string> = {
   stopped: "Connection stopped",
   unverified: "Destination check not recorded",
+  not_accepted: "Interface contract not approved, or its acceptance tests not passed",
   scheduled: "Waiting for the connection's schedule",
   queued: "Written at the next pass",
   impact_review: "Paused while the report's impact review is open",

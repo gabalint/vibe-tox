@@ -174,6 +174,9 @@ pub const COMMANDS: &[CommandSpec] = &[
     crate::commands::partner::DRAFT_PARTNER_MAPPING,
     crate::commands::partner::DISCARD_PARTNER_MAPPING_DRAFT,
     crate::commands::partner::APPROVE_PARTNER_MAPPINGS,
+    crate::commands::partner::DRAFT_PARTNER_CONTRACT,
+    crate::commands::partner::APPROVE_PARTNER_CONTRACT,
+    crate::commands::partner::RUN_PARTNER_ACCEPTANCE_TESTS,
     // interfaces: end
     // orders: begin
     crate::commands::orders::REGISTER_ORDER,

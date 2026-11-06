@@ -57,12 +57,7 @@ export function ConnectionPage() {
           <>
             <ConnectionActions connection={loaded.connection} />
             <Tabs label="Connection" tabs={tabs} selectedId={tab}>
-              {tab === "overview" && (
-                <ConnectionOverview
-                  connection={loaded.connection}
-                  lastReason={loaded.history[0]?.reason ?? null}
-                />
-              )}
+              {tab === "overview" && <ConnectionOverview detail={loaded} />}
               {tab === "rules" && <ConnectionRules connection={loaded.connection} />}
               {tab === "mappings" && <CodeMappings connection={loaded.connection} />}
               {tab === "logs" && <ConnectionMessages connectionId={loaded.connection.id} />}

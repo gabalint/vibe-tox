@@ -15,6 +15,7 @@ use lis_core::{Capability, UtcTimestamp};
 use lis_store::CommandContext;
 use rusqlite::{Connection, params};
 
+use super::acceptance::ACCEPTED;
 use super::error::PartnerError;
 use super::message_repo::{self as repo, MessageRow};
 use super::model::{
@@ -151,15 +152,15 @@ impl AttemptOutcome {
     }
 }
 
-/// Deliveries waiting on started, checked connections whose retry time has
-/// come: a report's later revisions and withdrawal notices first, then oldest
-/// first. Synthetic test messages are never queued.
+/// Deliveries waiting on started, checked and accepted connections whose retry time has
+/// come: a report's later revisions and withdrawal notices first, then oldest first.
+/// Synthetic test messages are never queued.
 pub fn due_partner_deliveries(
     conn: &Connection,
     now: UtcTimestamp,
 ) -> Result<Vec<DueDelivery>, PartnerError> {
     let rows = conn
-        .prepare_cached(
+        .prepare_cached(&format!(
             "SELECT d.id, d.message_id, d.connection_id, d.attempts, d.created_at, \
              m.artifact_sha256, m.source_kind, m.source_id, m.source_number, m.source_label, \
              m.message_type, d.payload_sha256 \
@@ -170,8 +171,9 @@ pub fn due_partner_deliveries(
              AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= ?1) \
              AND EXISTS (SELECT 1 FROM ifc_partner_verifications v \
                          WHERE v.connection_id = c.id AND v.folder = c.destination) \
-             ORDER BY d.reason = 'follow_up' DESC, d.created_at LIMIT ?2",
-        )?
+             AND {ACCEPTED} \
+             ORDER BY d.reason = 'follow_up' DESC, d.created_at LIMIT ?2"
+        ))?
         .query_map(params![now, BATCH], |row| {
             Ok(DueDelivery {
                 delivery_id: row.get(0)?,
