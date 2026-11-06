@@ -112,7 +112,12 @@ pub fn order_receipts(
         Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
     })?;
     for row in rows {
-        let (order_id, accession_id, accession_number, label_code): (_, AccessionId, _, _) = row?;
+        let (order_id, accession_id, accession_number, label_code): (
+            _,
+            AccessionId,
+            _,
+            Option<String>,
+        ) = row?;
         let receipt = receipts.entry(order_id).or_default();
         if receipt.accessions.last().map(|last| last.accession_id) != Some(accession_id) {
             receipt.accessions.push(lis_orders::OrderAccessionRef {
