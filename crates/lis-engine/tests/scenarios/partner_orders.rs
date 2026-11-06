@@ -14,18 +14,19 @@ use lis_engine::{
 use lis_identity::{DemographicsInput, IdentifierInput, RegisterSubject};
 use lis_interfaces::partner::{
     ApprovePartnerMappings, DraftPartnerMapping, IntakeSettings, ListPartnerMessages, MappingKind,
-    MappingValues, MessageView, PartnerConnectionSettings, PartnerMessageType, PartnerProtocol,
-    ReceivedState, RecordPartnerDestinationCheck, Schedule, TransportOutcome, UnknownPatient,
+    MappingValues, MessageView, PartnerConnectionId, PartnerConnectionSettings, PartnerMessageType,
+    PartnerProtocol, ReceivedState, RecordPartnerDestinationCheck, Schedule, TransportOutcome,
+    UnknownPatient,
 };
 use tempfile::TempDir;
 
 use crate::m2_lab::Role;
 use crate::m3_fixture::{Bench, Staff, Variant};
 
-const SENDER: &str = "SYN-EMR-FAC";
+pub(super) const SENDER: &str = "SYN-EMR-FAC";
 
 /// A synthetic OML^O21 for the fixture's practitioner and the panel's partner code.
-fn oml(sender: &str, control_id: &str) -> String {
+pub(super) fn oml(sender: &str, control_id: &str) -> String {
     [
         format!("MSH|^~\\&|SYN-EMR|{sender}|VIBETOX LIS|LAB|20261104093000||OML^O21|{control_id}|P|2.5.1"),
         format!("PID|1||MRN-00042^^^{SENDER}^MR||Doe^Jane||19800101|F"),
@@ -58,88 +59,22 @@ impl Orders {
                 .unwrap();
             handles.push(picked.folder_choice);
         }
-        let created = engine
-            .create_partner_connection(CreatePartnerConnectionInput {
-                settings: settings(),
-                folder_choice: Some(handles[0]),
-                processed_folder_choice: Some(handles[1]),
-                failed_folder_choice: Some(handles[2]),
-                password: None,
-                active: true,
-            })
-            .await
-            .unwrap();
-        let orders = Self {
+        let create = CreatePartnerConnectionInput {
+            settings: settings(),
+            folder_choice: Some(handles[0]),
+            processed_folder_choice: Some(handles[1]),
+            failed_folder_choice: Some(handles[2]),
+            password: None,
+            active: true,
+        };
+        let connection = connect(&bench, create).await;
+        Self {
             bench,
             input,
             processed,
             failed,
-            connection: created,
-        };
-        orders.map_panel().await;
-        orders.bench.sign_in(Staff::Racer).await;
-        let id = orders.connection.connection.id;
-        let revision = orders.revision().await;
-        orders
-            .bench
-            .lab()
-            .engine()
-            .record_partner_destination_check(RecordPartnerDestinationCheck {
-                connection_id: id,
-                expected_revision: revision,
-                method: "Synthetic call-back to the clinic's IT".to_owned(),
-                self_approval: false,
-            })
-            .await
-            .unwrap();
-        orders
-    }
-
-    async fn revision(&self) -> i64 {
-        let input = lis_engine::PartnerConnectionInput {
-            connection_id: self.connection.connection.id,
-        };
-        let engine = self.bench.lab().engine();
-        engine
-            .get_partner_connection(input)
-            .await
-            .unwrap()
-            .connection
-            .revision
-    }
-
-    /// The administrator maps the clinic's `SYN-PANEL` to the panel, first line; a second
-    /// administrator approves.
-    async fn map_panel(&self) {
-        let id = self.connection.connection.id;
-        let engine = self.bench.lab().engine();
-        engine
-            .draft_partner_mapping(DraftPartnerMapping {
-                connection_id: id,
-                kind: MappingKind::Test,
-                lis_id: self.bench.lab().orderables.panel.0.cast(),
-                mapping: Some(MappingValues {
-                    partner_code: "SYN-PANEL".to_owned(),
-                    loinc: None,
-                    ucum_unit: None,
-                    sequence_role: Some("first_line".to_owned()),
-                }),
-            })
-            .await
-            .unwrap();
-        let revision = self.revision().await;
-        self.bench.sign_in(Staff::Racer).await;
-        self.bench
-            .lab()
-            .engine()
-            .approve_partner_mappings(ApprovePartnerMappings {
-                connection_id: id,
-                expected_revision: revision,
-                reason: "Synthetic: order codes confirmed with the clinic".to_owned(),
-                self_approval: false,
-            })
-            .await
-            .unwrap();
+            connection,
+        }
     }
 
     /// Reads the folder once its `check every` has passed.
@@ -164,11 +99,74 @@ impl Orders {
     }
 }
 
+/// The administrator adds the connection and maps the clinic's `SYN-PANEL` to the panel,
+/// first line; a second administrator approves the mapping and records the destination
+/// check.
+pub(super) async fn connect(
+    bench: &Bench,
+    create: CreatePartnerConnectionInput,
+) -> PartnerConnectionDetail {
+    let created = bench
+        .lab()
+        .engine()
+        .create_partner_connection(create)
+        .await
+        .unwrap();
+    let id = created.connection.id;
+    bench
+        .lab()
+        .engine()
+        .draft_partner_mapping(DraftPartnerMapping {
+            connection_id: id,
+            kind: MappingKind::Test,
+            lis_id: bench.lab().orderables.panel.0.cast(),
+            mapping: Some(MappingValues {
+                partner_code: "SYN-PANEL".to_owned(),
+                loinc: None,
+                ucum_unit: None,
+                sequence_role: Some("first_line".to_owned()),
+            }),
+        })
+        .await
+        .unwrap();
+    bench.sign_in(Staff::Racer).await;
+    let engine = bench.lab().engine();
+    engine
+        .approve_partner_mappings(ApprovePartnerMappings {
+            connection_id: id,
+            expected_revision: revision(bench, id).await,
+            reason: "Synthetic: order codes confirmed with the clinic".to_owned(),
+            self_approval: false,
+        })
+        .await
+        .unwrap();
+    engine
+        .record_partner_destination_check(RecordPartnerDestinationCheck {
+            connection_id: id,
+            expected_revision: revision(bench, id).await,
+            method: "Synthetic call-back to the clinic's IT".to_owned(),
+            self_approval: false,
+        })
+        .await
+        .unwrap()
+}
+
+pub(super) async fn revision(bench: &Bench, connection_id: PartnerConnectionId) -> i64 {
+    let input = lis_engine::PartnerConnectionInput { connection_id };
+    let engine = bench.lab().engine();
+    engine
+        .get_partner_connection(input)
+        .await
+        .unwrap()
+        .connection
+        .revision
+}
+
 fn folder() -> TempDir {
     tempfile::tempdir().unwrap()
 }
 
-fn settings() -> PartnerConnectionSettings {
+pub(super) fn settings() -> PartnerConnectionSettings {
     PartnerConnectionSettings {
         name: "HL7 Orders - Synthetic clinic".to_owned(),
         partner: "SYN-CLIENT".to_owned(),
@@ -186,6 +184,7 @@ fn settings() -> PartnerConnectionSettings {
             remote_failed_folder: None,
         }),
         mllp: None,
+        mllp_listener: None,
     }
 }
 

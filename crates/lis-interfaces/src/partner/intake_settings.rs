@@ -57,9 +57,12 @@ fn valid_reading(
     let remote = |field: &str, folder: Option<&String>| {
         valid_remote_folder(field, folder.map_or("", String::as_str)).map(Some)
     };
-    // MLLP – LIS connects sends results; its settings check refuses it for orders.
+    // MLLP – LIS connects sends results; its settings check refuses it for orders. Orders
+    // received over MLLP are answered, not moved, so a listener has no folders.
     let (processed, failed) = match protocol {
-        PartnerProtocol::Folder | PartnerProtocol::MllpConnect => (None, None),
+        PartnerProtocol::Folder | PartnerProtocol::MllpConnect | PartnerProtocol::MllpListen => {
+            (None, None)
+        }
         PartnerProtocol::Sftp => (
             remote(
                 "settings.intake.remoteProcessedFolder",
@@ -81,13 +84,18 @@ fn valid_reading(
 
 /// Where an incoming connection's read files move to: over SFTP its server folders, over a
 /// folder the newly chosen local folders, else `current` (the connection's local ones, if
-/// it already read from a folder). `None` for an outgoing connection.
+/// it already read from a folder). `None` for an outgoing connection, or one that listens
+/// over MLLP and moves no file.
 pub(crate) fn moved_to(
     settings: &PartnerConnectionSettings,
     chosen: MovedToChoice,
     current: Option<&MovedTo>,
 ) -> Result<Option<MovedTo>, PartnerError> {
-    let Some(intake) = &settings.intake else {
+    let Some(intake) = settings
+        .intake
+        .as_ref()
+        .filter(|_| settings.mllp_listener.is_none())
+    else {
         return Ok(None);
     };
     if settings.sftp.is_some() {

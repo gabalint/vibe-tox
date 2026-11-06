@@ -7,7 +7,7 @@ export function ExecutionState({ execution }: { execution: ExecutionView | null 
   if (execution.state === "active") return <StatusBadge tone="neutral">Active</StatusBadge>;
   return (
     <>
-      <StatusBadge tone="danger">Failed</StatusBadge> {execution.stateReason ?? ""}
+      <StatusBadge tone="danger">Failed</StatusBadge> <span>{execution.stateReason ?? ""}</span>
     </>
   );
 }

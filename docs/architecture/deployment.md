@@ -51,7 +51,7 @@ The onboarding checklist records OS version and support status, ESU status if an
 - **Startup reconciliation.** Every start reconciles interrupted imports and expected results and records the listening gap before normal work.
 - **Data directory** (database, WAL, artifacts, raw payloads, staging snapshots) in a per-machine location whose OS permissions admit only the app's OS account and administrators.
 - **No UI port.** The UI is the app's own window; UI-to-engine calls are in-process Tauri commands. Controls are in [security](security-and-privacy.md#desktop-application-controls) (NFR-31). A LAN workstation listener remains proposed (Q-28).
-- **Analyzer listeners** run on serial ports and lab-LAN TCP only. Future MLLP partner listeners require separate implementation and qualification and must stay on the LAN or a VPN.
+- **Analyzer listeners** run on serial ports and lab-LAN TCP only. **MLLP partner listeners** (HL7 Orders over MLLP – LIS listens) bind only to a lab-LAN address of the host, admit only their allowed partner addresses, and are reached from outside the LAN only through a VPN ([interfaces](../operations/interfaces.md#mllp--lis-listens)). The host firewall should admit each listener's port for its partner addresses only; each partner route still needs qualification.
 - **Printing.** Labels use raw ZPL over TCP 9100 or a CUPS raw queue. Windows RAW-spooler support remains unimplemented. Report-window printing and actual printer/stock behavior need native-host qualification.
 - **Cloud connector (proposed).** No connector is implemented. A future service link would run inside the application and connect outbound with its device identity ([technology research §6](../research/single-pc-technology.md#6-local-to-cloud-connectivity)).
 

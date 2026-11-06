@@ -46,14 +46,20 @@ export function receivedOutcome(state: ReceivedState, reason: string | null) {
     : outcome;
 }
 
-/** Where the file went and, when it waits, is held or was refused, why. An order made
- * after its patient was registered keeps only that it waited. */
+/** Why a received message stands where it does; `null` for a new order. An order made after
+ * its patient was registered keeps only that it waited. */
+function receivedReason(row: PartnerMessageRow): string | null {
+  if (row.received === "duplicate") return "Exact replay; no second order";
+  if (row.errorCode === null) return null;
+  return row.received === "order_created"
+    ? "Waited until the patient was registered"
+    : (INTAKE_REASONS[row.errorCode] ?? row.errorCode);
+}
+
+/** Why, and where the file went, or over MLLP the acknowledgement the partner got. */
 export function receivedDetail(row: PartnerMessageRow): string {
-  const why = row.errorCode === null ? null : (INTAKE_REASONS[row.errorCode] ?? row.errorCode);
-  const reason =
-    row.received === "order_created" && why !== null
-      ? "Waited until the patient was registered"
-      : why;
+  const answered =
+    row.peer !== null && row.ackCode !== null ? `ACK ${row.ackCode} returned to ${row.peer}` : null;
   const moved = row.writtenPath === null ? null : `Moved to ${row.writtenPath}`;
-  return [reason, moved].filter(Boolean).join(" · ");
+  return [receivedReason(row), answered ?? moved].filter(Boolean).join(" · ");
 }

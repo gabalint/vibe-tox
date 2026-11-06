@@ -40,6 +40,7 @@ fn settings(sftp: SftpSettings) -> PartnerConnectionSettings {
         sftp: Some(sftp),
         intake: None,
         mllp: None,
+        mllp_listener: None,
     }
 }
 

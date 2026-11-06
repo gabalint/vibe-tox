@@ -18,8 +18,9 @@ pub(crate) fn received_rows(
     limit: u32,
 ) -> Result<Vec<PartnerMessageRow>, PartnerError> {
     conn.prepare_cached(
-        "SELECT r.id, r.received_at, r.order_id, COALESCE(r.placer_order, r.file_name), \
-         c.id, c.name, c.protocol, r.state, r.reason_code, r.moved_to \
+        "SELECT r.id, r.received_at, r.order_id, \
+         COALESCE(r.placer_order, NULLIF(r.file_name, '')), \
+         c.id, c.name, c.protocol, r.state, r.reason_code, r.moved_to, r.ack_code, r.peer \
          FROM ifc_partner_received r JOIN ifc_partner_connections c ON c.id = r.connection_id \
          WHERE (?1 IS NULL OR r.received_at >= ?1) AND (?2 IS NULL OR c.id = ?2) \
          ORDER BY r.received_at DESC LIMIT ?3",
@@ -50,9 +51,10 @@ pub(crate) fn received_rows(
             next_attempt_at: None,
             error_code: row.get(8)?,
             written_path: row.get(9)?,
-            ack_code: None,
+            ack_code: row.get(10)?,
             ack_text: None,
             awaiting_ack: false,
+            peer: row.get(11)?,
             unrouted: false,
             resolution: None,
             allowed_actions: Vec::new(),

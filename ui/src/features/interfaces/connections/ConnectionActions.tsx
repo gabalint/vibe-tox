@@ -16,7 +16,7 @@ import {
   UPDATE_CONNECTION,
 } from "../contract";
 import { problemText } from "../labels";
-import { testAnswerText } from "../mllpLabels";
+import { socketText, testAnswerText } from "../mllpLabels";
 import { CheckDialog } from "./CheckDialog";
 import { ConnectionDialog } from "./ConnectionDialog";
 import { type TestOutcome, TestStatus } from "./TestStatus";
@@ -34,6 +34,7 @@ export function ConnectionActions({ connection }: { connection: PartnerConnectio
   const [result, setResult] = useState<TestOutcome | null>(null);
   const allowed = (action: string) => connection.allowedActions.includes(action);
   const mllp = connection.settings.protocol === "mllp_connect";
+  const listener = connection.settings.mllpListener;
   // An MLLP partner that answers AE or AR has the message, but did not accept it.
   const tested = (done: (outcome: FolderTestResult) => string) => (outcome: FolderTestResult) => {
     if (outcome.problem !== null) {
@@ -67,16 +68,17 @@ export function ConnectionActions({ connection }: { connection: PartnerConnectio
               test.mutate(
                 { input },
                 {
-                  onSuccess: tested(() =>
-                    mllp
+                  onSuccess: tested(() => {
+                    if (listener) return `The LIS can listen on ${socketText(listener)}.`;
+                    return mllp
                       ? "The partner's interface takes a connection; nothing was sent."
-                      : "The LIS can create, write and remove files here.",
-                  ),
+                      : "The LIS can create, write and remove files here.";
+                  }),
                 },
               )
             }
           >
-            Test connection
+            {listener ? "Test listener" : "Test connection"}
           </Button>
         )}
         {allowed(SEND_TEST_MESSAGE) && (
@@ -140,9 +142,24 @@ function ActiveDialog({
       successTitle={stopping ? "Connection stopped" : "Connection started"}
       onClose={onClose}
     >
-      {stopping
-        ? "A stopped connection writes nothing. Its messages wait and are written after it starts."
-        : "Waiting messages are written once the destination check is recorded."}
+      {activeText(connection, stopping)}
     </ReasonConfirmDialog>
   );
+}
+
+/** What stopping or starting changes: what it writes, reads, or listens for. */
+function activeText({ settings }: PartnerConnection, stopping: boolean): string {
+  if (settings.mllpListener) {
+    return stopping
+      ? "The LIS stops listening and closes the port. A partner's interface normally keeps the messages it could not send and sends them again after Start."
+      : "The LIS listens once the destination check is recorded.";
+  }
+  if (settings.intake) {
+    return stopping
+      ? "A stopped connection reads nothing. Its files wait in the folder and are read after it starts."
+      : "Files are read once the destination check is recorded.";
+  }
+  return stopping
+    ? "A stopped connection writes nothing. Its messages wait and are written after it starts."
+    : "Waiting messages are written once the destination check is recorded.";
 }

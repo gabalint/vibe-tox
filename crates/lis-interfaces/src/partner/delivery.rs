@@ -18,7 +18,7 @@ use rusqlite::{Connection, params};
 use super::error::PartnerError;
 use super::message_repo::{self as repo, MessageRow};
 use super::model::{
-    AckCode, DeliveryReason, DeliveryState, MessageSource, MllpPartner, MovedTo,
+    AckCode, DeliveryReason, DeliveryState, MessageSource, MllpListener, MllpPartner, MovedTo,
     PartnerConnectionId, PartnerDeliveryId, PartnerMessageId, PartnerMessageType, RoutingFacts,
     Schedule, SftpSettings,
 };
@@ -41,6 +41,8 @@ pub struct Destination {
     /// For incoming orders: where read files move to.
     pub moved_to: Option<MovedTo>,
     pub mllp: Option<MllpPartner>,
+    /// For orders received over MLLP: where the LIS listens and who may connect.
+    pub mllp_listener: Option<MllpListener>,
 }
 
 impl Destination {
@@ -51,6 +53,7 @@ impl Destination {
             sealed_password: connection.sealed_password.clone(),
             moved_to: connection.moved_to.clone(),
             mllp: connection.settings.mllp.clone(),
+            mllp_listener: connection.settings.mllp_listener.clone(),
         }
     }
 }

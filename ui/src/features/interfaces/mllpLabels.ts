@@ -1,9 +1,12 @@
 // Laboratory wording for MLLP connections (ticket #4555 step 4): the partner's address, its
-// acknowledgements and the transport's problems. Codes come from the engine and carry no
-// patient data; an acknowledgement is the partner's answer, never proof a clinician saw it.
+// acknowledgements, the LIS's listener and the transport's problems. Codes come from the
+// engine and carry no patient data; an acknowledgement is the partner's answer, never proof a
+// clinician saw it.
 import type { Tone } from "@/components/tones";
 import type { AckCode } from "@/generated/AckCode";
 import type { FolderTestResult } from "@/generated/FolderTestResult";
+import type { ListenerView } from "@/generated/ListenerView";
+import type { MllpListener } from "@/generated/MllpListener";
 import type { MllpPartner } from "@/generated/MllpPartner";
 import type { PartnerMessageRow } from "@/generated/PartnerMessageRow";
 
@@ -51,4 +54,32 @@ export function testAnswerText(result: FolderTestResult): string {
 export function mllpTestText({ problem }: FolderTestResult, partner: MllpPartner): string {
   if (problem === null) return `✓ ${socketText(partner)} takes a connection; nothing was sent.`;
   return `✗ Not reachable: ${MLLP_PROBLEMS[problem] ?? problem.replaceAll("_", " ")}.`;
+}
+
+/** Why the LIS cannot listen on an address and port. */
+export const LISTENER_PROBLEMS: Record<string, string> = {
+  port_in_use: "The port is in use by another program or connection",
+  address_not_on_this_computer: "The address is not one of this computer's addresses",
+  port_not_allowed: "This computer does not let the LIS listen on this port; use one above 1023",
+  listener_failed: "The LIS could not listen there",
+};
+
+const listenerProblem = (code: string) =>
+  LISTENER_PROBLEMS[code] ?? MLLP_PROBLEMS[code] ?? code.replaceAll("_", " ");
+
+/** The line after Test listener in the dialog, as in mockup 2. */
+export function listenerTestText({ problem }: FolderTestResult, listener: MllpListener): string {
+  if (problem === null) return `✓ Port ${listener.port} free on ${listener.address}.`;
+  return `✗ Cannot listen: ${listenerProblem(problem)}.`;
+}
+
+/** Whether the listener listens now, as the connection page shows it. */
+export function listeningText(
+  listener: ListenerView | null,
+  formatTime: (at: string) => string,
+): string {
+  if (listener === null) return "Not listening: the connection is stopped or not checked";
+  if (listener.listening) return `Listening since ${formatTime(listener.since)}`;
+  const why = listener.problem === null ? "" : `: ${listenerProblem(listener.problem)}`;
+  return `Not listening${why} (since ${formatTime(listener.since)}); tried again every 5 seconds`;
 }

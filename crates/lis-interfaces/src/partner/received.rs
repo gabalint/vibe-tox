@@ -10,7 +10,7 @@ use lis_store::CommandContext;
 use rusqlite::{Connection, OptionalExtension, params};
 
 use super::error::PartnerError;
-use super::model::PartnerConnectionId;
+use super::model::{AckCode, PartnerConnectionId};
 
 /// Marker for one message read from an HL7 Orders connection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -57,7 +57,9 @@ impl ReceivedOutcome {
         }
     }
 
-    const fn reason(&self) -> Option<&'static str> {
+    /// Why it waits, is held or was refused: a PHI-free code.
+    #[must_use]
+    pub const fn reason(&self) -> Option<&'static str> {
         match self {
             Self::WaitingPatient { reason } | Self::Held { reason } | Self::Rejected { reason } => {
                 Some(reason)
@@ -77,11 +79,69 @@ impl ReceivedOutcome {
 #[derive(Debug, Clone)]
 pub struct NewReceived {
     pub connection_id: PartnerConnectionId,
+    /// The file's name; empty for a message received over MLLP.
     pub file_name: String,
     pub artifact_sha256: String,
     pub control_id: Option<String>,
     pub placer_order: Option<String>,
     pub outcome: ReceivedOutcome,
+    /// Over MLLP: the partner's address it came from; it is answered with an ACK.
+    pub peer: Option<String>,
+}
+
+/// Messages rejected as a whole, answered AR: they, their type or their sender are not
+/// accepted. Any other rejection is about the content, answered AE.
+const REJECTED_MESSAGES: [&str; 6] = [
+    "not_accepted_sender",
+    "not_text",
+    "not_hl7",
+    "unsupported_message",
+    "no_control_id",
+    "unsupported_control",
+];
+
+/// The application acknowledgement for a message in `state` for `reason`: AA once it is
+/// kept for an order (made, waiting or held); AR or AE when it is rejected.
+fn ack_for(state: ReceivedState, reason: Option<&str>) -> AckCode {
+    match (state, reason) {
+        (ReceivedState::Rejected, Some(reason)) if REJECTED_MESSAGES.contains(&reason) => {
+            AckCode::Rejected
+        }
+        (ReceivedState::Rejected, _) => AckCode::Error,
+        _ => AckCode::Accepted,
+    }
+}
+
+/// The acknowledgement a message received over MLLP gets: a replay gets the earlier
+/// message's, so a partner never reads AA for a message the LIS refused.
+fn acknowledgement(conn: &Connection, outcome: &ReceivedOutcome) -> Result<AckCode, PartnerError> {
+    let ReceivedOutcome::Duplicate { of } = outcome else {
+        return Ok(ack_for(outcome.state(), outcome.reason()));
+    };
+    let (state, reason): (ReceivedState, Option<String>) = conn.query_row(
+        "SELECT state, reason_code FROM ifc_partner_received WHERE id = ?1",
+        [of],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    )?;
+    Ok(ack_for(state, reason.as_deref()))
+}
+
+/// The acknowledgement a message received over MLLP is answered with, and its refusal code:
+/// for a replay, the earlier message's. `None` for a file.
+pub fn received_ack(
+    conn: &Connection,
+    id: PartnerReceivedId,
+) -> Result<Option<(AckCode, Option<String>)>, PartnerError> {
+    let row: Option<(Option<AckCode>, Option<String>)> = conn
+        .query_row(
+            "SELECT r.ack_code, COALESCE(r.reason_code, e.reason_code) \
+             FROM ifc_partner_received r \
+             LEFT JOIN ifc_partner_received e ON e.id = r.duplicate_of WHERE r.id = ?1",
+            [id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .optional()?;
+    Ok(row.and_then(|(code, reason)| code.map(|code| (code, reason))))
 }
 
 /// An earlier read of the same bytes on the connection, and where its file moved.
@@ -144,10 +204,14 @@ pub fn record_received(
         | ReceivedOutcome::Held { .. }
         | ReceivedOutcome::Rejected { .. } => (None, None),
     };
+    let ack = match new.peer {
+        Some(_) => Some(acknowledgement(ctx.tx(), &new.outcome)?),
+        None => None,
+    };
     ctx.tx().execute(
         "INSERT INTO ifc_partner_received (id, connection_id, file_name, artifact_sha256, \
-         received_at, control_id, placer_order, state, reason_code, order_id, duplicate_of) \
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+         received_at, control_id, placer_order, state, reason_code, order_id, duplicate_of, \
+         peer, ack_code) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
         params![
             id,
             new.connection_id,
@@ -159,7 +223,9 @@ pub fn record_received(
             state,
             new.outcome.reason(),
             order_id,
-            duplicate_of
+            duplicate_of,
+            new.peer,
+            ack
         ],
     )?;
     audit(

@@ -5,7 +5,9 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 pub use super::intake_model::{IntakeSettings, MovedTo, MovedToChoice, UnknownPatient};
-pub use super::mllp_model::{AckCode, MllpAcknowledgement, MllpPartner};
+pub use super::mllp_model::{
+    AckCode, AllowedPartner, CharacterSet, MllpAcknowledgement, MllpListener, MllpPartner,
+};
 
 /// Marker for one connection to an outside system.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -61,6 +63,8 @@ text_enum! {
         Sftp = "sftp",
         /// HL7 over MLLP to the partner's interface on the lab network; the LIS connects.
         MllpConnect = "mllp_connect",
+        /// HL7 over MLLP from the partner, on the lab network only; the LIS listens.
+        MllpListen = "mllp_listen",
     }
 }
 
@@ -247,9 +251,20 @@ pub struct PartnerConnectionSettings {
     /// How incoming orders are read and accepted; `None` for an outgoing type.
     #[serde(default)]
     pub intake: Option<IntakeSettings>,
-    /// The partner's interface, for MLLP; `None` for a folder or SFTP.
+    /// The partner's interface, for MLLP – LIS connects; `None` otherwise.
     #[serde(default)]
     pub mllp: Option<MllpPartner>,
+    /// Where the LIS listens, for MLLP – LIS listens; `None` otherwise.
+    #[serde(default)]
+    pub mllp_listener: Option<MllpListener>,
+}
+
+impl PartnerConnectionSettings {
+    /// Whether messages travel over MLLP, either way: such a connection has no folder.
+    #[must_use]
+    pub const fn over_mllp(&self) -> bool {
+        self.mllp.is_some() || self.mllp_listener.is_some()
+    }
 }
 
 /// Input of [`create_partner_connection`](crate::create_partner_connection).

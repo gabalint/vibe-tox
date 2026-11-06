@@ -5,7 +5,7 @@ use rusqlite::{Connection, OptionalExtension, Row, params};
 use super::error::PartnerError;
 use super::model::{
     IntakeSettings, MovedTo, PartnerConnectionId, PartnerConnectionSettings, PartnerMessageType,
-    Schedule, SftpAuth, SftpSettings,
+    PartnerProtocol, Schedule, SftpAuth, SftpSettings,
 };
 use super::repo::ConnectionRow;
 
@@ -60,6 +60,7 @@ fn connection_row(row: &Row<'_>) -> rusqlite::Result<Stored> {
                 sftp,
                 intake: None,
                 mllp: None,
+                mllp_listener: None,
             },
             folder,
             moved_to,
@@ -85,7 +86,14 @@ fn decoded(stored: Stored) -> Result<ConnectionRow, PartnerError> {
         mllp,
     } = stored;
     row.settings.rules = serde_json::from_str(&rules)?;
-    row.settings.mllp = mllp.as_deref().map(serde_json::from_str).transpose()?;
+    // The MLLP column holds the partner the LIS connects to, or where it listens.
+    if let Some(mllp) = mllp.as_deref() {
+        if row.settings.protocol == PartnerProtocol::MllpListen {
+            row.settings.mllp_listener = Some(serde_json::from_str(mllp)?);
+        } else {
+            row.settings.mllp = Some(serde_json::from_str(mllp)?);
+        }
+    }
     if let Some(intake) = intake {
         let intake: IntakeSettings = serde_json::from_str(&intake)?;
         let remote = |folder: fn(&MovedTo) -> &String| {
@@ -102,6 +110,16 @@ fn decoded(stored: Stored) -> Result<ConnectionRow, PartnerError> {
         });
     }
     Ok(row)
+}
+
+/// The MLLP partner or listener as stored, as JSON; `None` without MLLP.
+fn mllp_column(settings: &PartnerConnectionSettings) -> Result<Option<String>, PartnerError> {
+    let json = match (&settings.mllp, &settings.mllp_listener) {
+        (Some(partner), _) => Some(serde_json::to_string(partner)?),
+        (None, Some(listener)) => Some(serde_json::to_string(listener)?),
+        (None, None) => None,
+    };
+    Ok(json)
 }
 
 /// The SFTP columns, all `None` for a folder.
@@ -214,11 +232,7 @@ fn write_connection(conn: &Connection, sql: &str, row: &ConnectionRow) -> Result
             intake_column(&row.settings)?,
             moved_to.map(|moved_to| &moved_to.processed),
             moved_to.map(|moved_to| &moved_to.failed),
-            row.settings
-                .mllp
-                .as_ref()
-                .map(serde_json::to_string)
-                .transpose()?
+            mllp_column(&row.settings)?
         ],
     )?;
     Ok(())

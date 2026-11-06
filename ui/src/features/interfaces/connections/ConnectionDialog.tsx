@@ -22,6 +22,7 @@ import {
 } from "./connectionForm";
 import { FolderFields } from "./FolderFields";
 import { AcceptSection, IntakeFolderFields } from "./IntakeSections";
+import { ListenerFields } from "./ListenerFields";
 import { MllpFields } from "./MllpFields";
 import { ProtocolCards } from "./ProtocolCards";
 import { RuleFields } from "./RuleFields";
@@ -154,7 +155,10 @@ interface ProtocolSectionProps {
   connection: PartnerConnection | null;
 }
 
-/** Section 3, which changes with the protocol: the folder, the SFTP server or the MLLP partner. */
+/**
+ * Section 3, which changes with the protocol: the folder, the SFTP server, the MLLP partner or
+ * the LIS's MLLP listener.
+ */
 function ProtocolSection({ protocol, incoming, connection }: ProtocolSectionProps) {
   switch (protocol) {
     case "sftp":
@@ -167,6 +171,12 @@ function ProtocolSection({ protocol, incoming, connection }: ProtocolSectionProp
       return (
         <Box title="3. MLLP partner">
           <MllpFields />
+        </Box>
+      );
+    case "mllp_listen":
+      return (
+        <Box title="3. MLLP listener">
+          <ListenerFields connectionId={connection?.id ?? null} />
         </Box>
       );
     case "folder":

@@ -22,6 +22,7 @@ use crate::keys::KeyProvider;
 use crate::ops_worker::startup::{self, start_listeners};
 use crate::ops_worker::{Loops, Operations, locked};
 use crate::outbox_worker::{Dispatcher, TopicHandler};
+use crate::partner_listener::PartnerListeners;
 use crate::pipeline::Failure;
 use crate::poller::Poller;
 use crate::result_folders::ResultFolders;
@@ -99,7 +100,10 @@ pub struct Engine {
     pub(crate) listeners: Arc<ListenerSupervisor>,
     /// The watched-folder poller of result-file instruments, beside the listeners (F13).
     pub(crate) result_folders: Arc<ResultFolders>,
-    /// The watched-folder poller, the partner delivery poller and the incoming-order reader.
+    /// The MLLP listeners of HL7 Orders connections, whose state shows on each connection.
+    pub(crate) partner_listeners: Arc<PartnerListeners>,
+    /// The watched-folder poller, the partner delivery poller, the incoming-order reader and
+    /// the partner listener supervisor.
     pollers: Mutex<Vec<Poller>>,
     /// Set from `stop_listeners_for_update` until a failed installation restarts them.
     pub(crate) listeners_stopped_for_update: AtomicBool,
@@ -129,7 +133,8 @@ impl Engine {
     /// 9. record the app run (`ops.app_start`: unclean previous stop, gap, version and
     ///    web-engine change) and mark interrupted backups, restore tests and exports;
     /// 10. reconcile analyzer receipts, start the listeners, the watched-folder poller, the
-    ///     partner delivery poller and the incoming-order reader, whose first passes run now;
+    ///     partner delivery poller, the incoming-order reader and the partner listener
+    ///     supervisor, whose first passes run now;
     /// 11. start the outbox dispatcher, which holds label printing while a recovery
     ///     reconciliation is open.
     ///
@@ -178,9 +183,7 @@ impl Engine {
             config.webview.clone(),
             key,
         ));
-        // The partner poller opens SFTP sign-ins with the installation key the operations hold.
-        let partner_poller = crate::partner_delivery::start(&ops);
-        let intake_poller = crate::partner_intake::start(&ops);
+        let (partner_listeners, partner_pollers) = start_partner_workers(&ops);
         let dispatcher = start_dispatcher(
             &db,
             config.outbox_handlers,
@@ -207,7 +210,8 @@ impl Engine {
             loops: Mutex::new(None),
             listeners,
             result_folders,
-            pollers: Mutex::new(vec![folder_poller, partner_poller, intake_poller]),
+            partner_listeners,
+            pollers: Mutex::new([folder_poller].into_iter().chain(partner_pollers).collect()),
             listeners_stopped_for_update: AtomicBool::new(false),
             listeners_after_update,
             runtime: tokio::runtime::Handle::current(),
@@ -333,6 +337,18 @@ pub(crate) fn artifact_columns() -> Vec<(&'static str, &'static str)> {
         lis_billing::ARTIFACT_COLUMNS,
     ]
     .concat()
+}
+
+/// Starts the partner delivery poller, which opens SFTP sign-ins with the installation key
+/// the operations hold, the incoming-order reader and the partner listener supervisor.
+fn start_partner_workers(ops: &Arc<Operations>) -> (Arc<PartnerListeners>, [Poller; 3]) {
+    let listeners = Arc::new(PartnerListeners::new(ops));
+    let pollers = [
+        crate::partner_delivery::start(ops),
+        crate::partner_intake::start(ops),
+        crate::partner_listener::start(&listeners),
+    ];
+    (listeners, pollers)
 }
 
 /// Starts the outbox dispatcher with the built-in handlers; labels go only to

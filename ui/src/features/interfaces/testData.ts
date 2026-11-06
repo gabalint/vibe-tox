@@ -1,4 +1,5 @@
 // Synthetic Interfaces records for the feature's tests.
+import type { MllpListener } from "@/generated/MllpListener";
 import type { MllpPartner } from "@/generated/MllpPartner";
 import type { PartnerConnection } from "@/generated/PartnerConnection";
 import type { PartnerConnectionDetail } from "@/generated/PartnerConnectionDetail";
@@ -44,6 +45,7 @@ export const CONNECTION: PartnerConnection = {
     sftp: null,
     intake: null,
     mllp: null,
+    mllpListener: null,
   },
   folder: "/srv/billing/out",
   processedFolder: null,
@@ -57,6 +59,7 @@ export const CONNECTION: PartnerConnection = {
   waiting: 1,
   failing: 0,
   awaitingAck: 0,
+  listener: null,
   lastChange: { by: ME, at: "2026-11-03T10:00:00.000000000Z" },
   allowedActions: [
     "update_partner_connection",
@@ -100,6 +103,36 @@ export const HL7_MLLP: PartnerConnection = {
     fileNamePattern: "",
     mllp: MLLP,
   },
+};
+
+/** Where the LIS listens for the clinic's EMR, as mockup 2 fills it. */
+export const LISTENER: MllpListener = {
+  address: "192.168.1.20",
+  port: 6660,
+  allowedPartners: [{ address: "192.168.1.50", note: "Hospital B interface engine" }],
+  acknowledgement: "application",
+  characterSet: "utf-8",
+  idleTimeoutSeconds: 300,
+};
+
+/** An HL7 Orders connection the LIS listens for over MLLP, listening and checked. */
+export const ORDERS_LISTEN: PartnerConnection = {
+  ...CONNECTION,
+  active: true,
+  status: "active",
+  listener: { listening: true, problem: null, since: "2026-11-06T09:00:00.000000000Z" },
+  settings: {
+    ...CONNECTION.settings,
+    name: "HL7 Orders - Hospital B",
+    partner: "CLINIC-B",
+    messageType: "hl7_orders",
+    protocol: "mllp_listen",
+    rules: [],
+    fileNamePattern: "",
+    intake: { checkEverySeconds: 30, acceptFrom: "HOSP-B", unknownPatient: "hold" },
+    mllpListener: LISTENER,
+  },
+  folder: "",
 };
 
 const AMPHETAMINE = "01a1a000-0000-7000-8000-000000000051";
@@ -169,6 +202,7 @@ export const WRITTEN: PartnerMessageRow = {
   ackCode: null,
   ackText: null,
   awaitingAck: false,
+  peer: null,
   unrouted: false,
   resolution: null,
   allowedActions: [],

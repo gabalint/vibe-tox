@@ -41,6 +41,19 @@ pub struct LastAttempt {
     pub error_code: Option<String>,
 }
 
+/// An MLLP listener as it is now.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ListenerView {
+    /// It listens; otherwise `problem` says why not.
+    pub listening: bool,
+    /// Such as `port_in_use` or `address_not_on_this_computer`; PHI-free.
+    pub problem: Option<String>,
+    /// Since when it listens, or since the problem.
+    pub since: UtcTimestamp,
+}
+
 /// A connection as configured, with its check and how it is working.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -70,6 +83,9 @@ pub struct PartnerConnection {
     pub failing: u32,
     /// Messages sent over MLLP without an acknowledgement yet; they are sent again.
     pub awaiting_ack: u32,
+    /// For MLLP – LIS listens: whether the listener listens now, as the engine sees it;
+    /// `None` while it does not try (stopped, not checked) and for other connections.
+    pub listener: Option<ListenerView>,
     pub last_change: ChangeStamp,
     /// Commands that apply to the connection as it is now.
     pub allowed_actions: Vec<String>,

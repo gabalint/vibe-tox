@@ -17,7 +17,7 @@ import type { Schedule } from "@/generated/Schedule";
 import type { UnroutedResolution } from "@/generated/UnroutedResolution";
 import type { WaitReason } from "@/generated/WaitReason";
 import { INTAKE_REASONS, receivedDetail, receivedOutcome } from "./intakeLabels";
-import { ackOutcome, MLLP_PROBLEMS, sentText, socketText } from "./mllpLabels";
+import { ackOutcome, LISTENER_PROBLEMS, MLLP_PROBLEMS, sentText, socketText } from "./mllpLabels";
 
 export interface Labelled {
   label: string;
@@ -83,7 +83,11 @@ export function connectionDescription({
   partner,
   protocol,
   intake,
+  mllpListener,
 }: PartnerConnectionSettings): string {
+  if (mllpListener) {
+    return `Receives HL7 order messages from ${partner} over MLLP on ${socketText(mllpListener)}.`;
+  }
   const where = protocol === "sftp" ? "SFTP server" : "folder";
   if (intake) {
     return `Reads HL7 order messages from ${partner}'s ${where} every ${intake.checkEverySeconds} seconds.`;
@@ -94,7 +98,7 @@ export function connectionDescription({
       return `Uploads ${file} to ${partner}'s SFTP server when ${when}.`;
     case "mllp_connect":
       return `Sends ${file} to ${partner}'s interface over MLLP when ${when}.`;
-    case "folder":
+    default:
       return `Writes ${file} to ${partner}'s folder when ${when}.`;
   }
 }
@@ -128,6 +132,7 @@ export const PROTOCOLS: Record<PartnerProtocol, string> = {
   folder: "Folder",
   sftp: "SFTP",
   mllp_connect: "MLLP – LIS connects",
+  mllp_listen: "MLLP – LIS listens",
 };
 
 /** How a message that left shows in Logs: what each transport can say. */
@@ -135,14 +140,17 @@ const LEFT_AS: Record<PartnerProtocol, string> = {
   folder: "Written",
   sftp: "Uploaded",
   mllp_connect: "Sent",
+  // A listener only receives; nothing leaves it.
+  mllp_listen: "Sent",
 };
 
 /**
- * Where a connection writes, as the Connections table shows it: a folder, `host:folder`, or
- * the MLLP partner's `address:port`.
+ * Where a connection writes or reads, as the Connections table shows it: a folder,
+ * `host:folder`, the MLLP partner's `address:port`, or `LAN address:port` the LIS listens on.
  */
 export function destinationText({ folder, settings }: PartnerConnection): string {
   if (settings.mllp) return socketText(settings.mllp);
+  if (settings.mllpListener) return `LAN ${socketText(settings.mllpListener)}`;
   const sftp = settings.sftp;
   if (sftp === null) return folder;
   const port = sftp.port === 22 ? "" : `:${sftp.port}`;
@@ -223,7 +231,11 @@ const PROBLEMS: Record<string, string> = {
 };
 
 export const problemText = (code: string) =>
-  PROBLEMS[code] ?? MLLP_PROBLEMS[code] ?? INTAKE_REASONS[code] ?? code.replaceAll("_", " ");
+  PROBLEMS[code] ??
+  MLLP_PROBLEMS[code] ??
+  LISTENER_PROBLEMS[code] ??
+  INTAKE_REASONS[code] ??
+  code.replaceAll("_", " ");
 
 /** The line after Test connection, as in mockup 6. */
 export function sftpTestText({ problem, presentedFingerprint }: FolderTestResult): string {

@@ -21,6 +21,14 @@
   align-items: start;
 }
 
+/* MLLP listener: address and port, then the partner addresses at double width, as in mockup 2. */
+.listen {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(8rem, 1fr)) minmax(16rem, 2fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+
 /* Protocol: one card per choice. */
 .cards {
   display: flex;

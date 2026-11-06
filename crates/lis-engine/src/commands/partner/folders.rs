@@ -134,8 +134,8 @@ impl Engine {
 
     /// `test_partner_folder`: whether the LIS can create, write and remove a file in the
     /// folder, or in a connection's folder or SFTP server. For incoming orders, whether it
-    /// can read the input folder and write in the Processed and Failed folders. Writes no
-    /// message and changes nothing.
+    /// can read the input folder and write in the Processed and Failed folders, or listen
+    /// on the connection's address and port. Writes no message and changes nothing.
     pub async fn test_partner_folder(
         &self,
         input: TestPartnerFolderInput,
@@ -166,6 +166,10 @@ impl Engine {
             let destination = destination.ok_or_else(|| {
                 Failure::refused(ErrorCode::Validation, "Choose a folder or a connection.")
             })?;
+            if let Some(listener) = &destination.mllp_listener {
+                let tested = self.listener_test(input.connection_id, listener);
+                return Ok(FolderTestResult::probed(tested));
+            }
             let key = self.data_key().await.ok();
             let db = Arc::clone(&self.db);
             let tested =
