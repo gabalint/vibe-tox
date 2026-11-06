@@ -223,6 +223,8 @@ Each screen design and each feature test names which of these states apply, and 
 - a check column only when the screen has bulk actions;
 - an optional last column for `RowActions`;
 - text that does not fit ending in "…" with the full text on hover, or wrapping for status and summary columns;
+- in a row that wrapped text made taller, every other cell centred vertically;
+- a column of status badges at one width when its column sets `fill` on `StatusBadge`;
 - numbers aligned right with tabular digits;
 - virtualization above 100 rows.
 

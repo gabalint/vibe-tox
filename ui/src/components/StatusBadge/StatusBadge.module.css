@@ -14,6 +14,13 @@
   white-space: nowrap;
 }
 
+/* One width down a column: the cell's, with the label centered. It stays inline, so a grid
+   cell still centres it on its line like the other cells' text. */
+.badge[data-fill] {
+  width: 100%;
+  justify-content: center;
+}
+
 .icon {
   width: var(--font-size-sm);
   height: var(--font-size-sm);

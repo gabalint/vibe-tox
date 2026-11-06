@@ -81,8 +81,10 @@
   justify-content: flex-end;
 }
 
-/* `text-overflow` needs a block box, so data cells are blocks, centred by line height. */
+/* `text-overflow` needs a block box, so data cells are blocks, centred by line height. In a
+   row another cell's wrapped text made taller, every other cell sits in its middle. */
 .cell {
+  align-self: center;
   min-width: 0;
   padding: 0 var(--space-2);
   overflow: hidden;
