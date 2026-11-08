@@ -10,27 +10,18 @@ import { HealthBadge, keepAwakeState, NONE } from "./healthLabels";
 
 /**
  * What the engine reports about this computer and whether it is kept awake (REQ-OPS-013),
- * in even columns, with the overall state beside the title. It sits above the checks, which
- * take the remaining height.
+ * in short columns with room between them. It sits above the checks, which take the
+ * remaining height.
  */
 export function HostSection({ health }: { health: HostHealthView }) {
   const { host, keepAwake } = health;
   return (
-    <Section
-      title={
-        <span className={styles.title}>
-          This computer
-          <span className={styles.overall}>
-            <span className={styles.overallLabel}>Overall</span>
-            <HealthBadge state={health.overall} />
-          </span>
-        </span>
-      }
-    >
+    <Section title="This computer">
       <div className={styles.facts}>
         <Facts
           layout="compact"
           items={[
+            { label: "Overall", value: <HealthBadge state={health.overall} /> },
             { label: "Operating system", value: host.os },
             { label: "Version", value: host.osVersion },
             // Only Windows has an edition; elsewhere the fact does not apply.

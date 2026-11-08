@@ -1,31 +1,4 @@
-/* The overall state beside the section title, at the title's height. */
-.title {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.overall {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--font-size-md);
-}
-
-/* Names the badge: the worst state of the checks below. */
-.overallLabel {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-regular);
-}
-
-/* Even columns with room between them; the long data folder takes two. */
+/* Room between the short facts, so each label and value reads as one. */
 .facts > dl[data-layout="compact"] {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
-  gap: var(--space-4) var(--space-8);
-}
-
-.facts > dl[data-layout="compact"] > div:nth-last-child(2) {
-  grid-column: span 2;
+  gap: var(--space-3) var(--space-8);
 }

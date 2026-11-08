@@ -50,9 +50,7 @@ describe("HealthPage (REQ-OPS-008, REQ-OPS-013)", () => {
       attest_health_check: attest,
     });
     expect(await screen.findByRole("gridcell", { name: "UPS" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: /^This computer/ }).textContent).toMatch(
-      /Overall\s*Warning/,
-    );
+    expect(screen.getByText("Overall").parentElement?.textContent).toContain("Warning");
     // The limit shows beneath the value; the detail code is a machine code, kept in the history.
     expect(screen.getByText("Warning at 2 h, alert at 4 h")).toBeTruthy();
     expect(screen.getByRole("gridcell", { name: "Check the UPS and attest it." })).toBeTruthy();
@@ -77,7 +75,7 @@ describe("HealthPage (REQ-OPS-008, REQ-OPS-013)", () => {
   it("puts this computer's facts above the checks, which take the remaining height", async () => {
     renderPage([]);
     const grid = await screen.findByRole("grid", { name: "Health checks" });
-    const facts = screen.getByRole("heading", { level: 2, name: /^This computer/ });
+    const facts = screen.getByRole("heading", { level: 2, name: "This computer" });
     expect(facts.compareDocumentPosition(grid) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
