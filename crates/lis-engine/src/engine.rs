@@ -22,6 +22,7 @@ use crate::keys::KeyProvider;
 use crate::ops_worker::startup::{self, start_listeners};
 use crate::ops_worker::{Loops, Operations, locked};
 use crate::outbox_worker::{Dispatcher, TopicHandler};
+use crate::partner_intake::PartnerReadings;
 use crate::partner_listener::PartnerListeners;
 use crate::pipeline::Failure;
 use crate::poller::Poller;
@@ -102,6 +103,8 @@ pub struct Engine {
     pub(crate) result_folders: Arc<ResultFolders>,
     /// The MLLP listeners of HL7 Orders connections, whose state shows on each connection.
     pub(crate) partner_listeners: Arc<PartnerListeners>,
+    /// What the incoming-order reader's latest reading of each folder or server found.
+    pub(crate) partner_readings: Arc<PartnerReadings>,
     /// The watched-folder poller, the partner delivery poller, the incoming-order reader and
     /// the partner listener supervisor.
     pollers: Mutex<Vec<Poller>>,
@@ -183,7 +186,7 @@ impl Engine {
             config.webview.clone(),
             key,
         ));
-        let (partner_listeners, partner_pollers) = start_partner_workers(&ops);
+        let (partner_listeners, partner_readings, partner_pollers) = start_partner_workers(&ops);
         let dispatcher = start_dispatcher(
             &db,
             config.outbox_handlers,
@@ -211,6 +214,7 @@ impl Engine {
             listeners,
             result_folders,
             partner_listeners,
+            partner_readings,
             pollers: Mutex::new([folder_poller].into_iter().chain(partner_pollers).collect()),
             listeners_stopped_for_update: AtomicBool::new(false),
             listeners_after_update,
@@ -341,14 +345,17 @@ pub(crate) fn artifact_columns() -> Vec<(&'static str, &'static str)> {
 
 /// Starts the partner delivery poller, which opens SFTP sign-ins with the installation key
 /// the operations hold, the incoming-order reader and the partner listener supervisor.
-fn start_partner_workers(ops: &Arc<Operations>) -> (Arc<PartnerListeners>, [Poller; 3]) {
+fn start_partner_workers(
+    ops: &Arc<Operations>,
+) -> (Arc<PartnerListeners>, Arc<PartnerReadings>, [Poller; 3]) {
     let listeners = Arc::new(PartnerListeners::new(ops));
+    let readings = Arc::new(PartnerReadings::default());
     let pollers = [
         crate::partner_delivery::start(ops),
-        crate::partner_intake::start(ops),
+        crate::partner_intake::start(ops, &readings),
         crate::partner_listener::start(&listeners),
     ];
-    (listeners, pollers)
+    (listeners, readings, pollers)
 }
 
 /// Starts the outbox dispatcher with the built-in handlers; labels go only to

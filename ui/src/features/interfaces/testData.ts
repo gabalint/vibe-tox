@@ -229,6 +229,7 @@ export const WRITTEN: PartnerMessageRow = {
   peer: null,
   unrouted: false,
   resolution: null,
+  rejectionResolved: null,
   allowedActions: [],
   received: null,
 };

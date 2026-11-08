@@ -9,24 +9,9 @@ pub(crate) use authentication::*;
 mod access;
 pub use access::Access;
 
-/// One IPC command.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct CommandSpec {
-    /// The Tauri command name.
-    pub name: &'static str,
-    /// `<module>.<verb>`, for log lines and denial events.
-    pub action: &'static str,
-    /// Who may call it.
-    pub access: Access,
-}
-
-pub(crate) const fn spec(name: &'static str, action: &'static str, access: Access) -> CommandSpec {
-    CommandSpec {
-        name,
-        action,
-        access,
-    }
-}
+mod spec;
+pub use spec::CommandSpec;
+pub(crate) use spec::spec;
 
 /// Every IPC command the window may call.
 pub const COMMANDS: &[CommandSpec] = &[
@@ -170,6 +155,8 @@ pub const COMMANDS: &[CommandSpec] = &[
     crate::commands::partner::LIST_UNROUTED_PARTNER_MESSAGES,
     crate::commands::partner::RESOLVE_UNROUTED_MESSAGE,
     crate::commands::partner::RESEND_PARTNER_DELIVERY,
+    crate::commands::partner::REJECT_RECEIVED_MESSAGE,
+    crate::commands::partner::RESOLVE_PARTNER_REJECTION,
     crate::commands::partner::LIST_PARTNER_MAPPINGS,
     crate::commands::partner::DRAFT_PARTNER_MAPPING,
     crate::commands::partner::DISCARD_PARTNER_MAPPING_DRAFT,

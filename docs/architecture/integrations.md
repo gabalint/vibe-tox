@@ -150,7 +150,7 @@ The requisition printed at the clinic is self-sufficient (REQ-ORD-009). It carri
 
 The proposed first EHR pathway uses a partner-negotiated HL7 v2 profile, commonly based on 2.5.1 where the counterpart supports it. The following are actual standard messages, not a promise that all partners support all of them. Base-standard ordering defines OML^O21 with ORL^O22 response; ORM^O01/ORR^O02 remain compatibility forms. ORU^R01 carries observation reporting. [DOM-007](https://www.hl7.eu/HL7v2x/v251/std251/ch04.html), [DOM-008](https://www.hl7.eu/HL7v2x/v251/std251/ch07.html)
 
-Implemented on synthetic data: incoming OML^O21 (or ORM^O01) new orders read from a clinic's folder or SFTP server, each registered as an order in Received status for the laboratory to accept, with the patient matched only by identifier ([interfaces](../operations/interfaces.md#hl7-orders-incoming)). No ORL^O22 or acknowledgement file is returned yet; order changes, cancellations and the elements the table below lists beyond test codes, provider, location and diagnoses are not read.
+Implemented on synthetic data: incoming OML^O21 (or ORM^O01) new orders read from a clinic's folder or SFTP server, each registered as an order in Received status for the laboratory to accept, with the patient matched only by identifier ([interfaces](../operations/interfaces.md#hl7-orders-incoming)). No ORL^O22 and no acknowledgement file is returned (over MLLP the EMR gets an HL7 ACK); a person can reject a message that waits for its patient or is held for review. Order changes, cancellations and the elements the table below lists beyond test codes, provider, location and diagnoses are not read.
 
 | Exchange | Candidate negotiated message | Contract must resolve |
 | --- | --- | --- |

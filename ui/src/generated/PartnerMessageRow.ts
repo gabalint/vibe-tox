@@ -5,6 +5,7 @@ import type { DeliveryReason } from "./DeliveryReason";
 import type { MessageSource } from "./MessageSource";
 import type { PartnerMessageType } from "./PartnerMessageType";
 import type { ReceivedState } from "./ReceivedState";
+import type { RejectionResolution } from "./RejectionResolution";
 import type { TransportOutcome } from "./TransportOutcome";
 import type { UnroutedResolution } from "./UnroutedResolution";
 import type { WaitReason } from "./WaitReason";
@@ -60,7 +61,14 @@ unrouted: boolean,
  */
 resolution: UnroutedResolution | null, 
 /**
- * `resend_partner_delivery` once every attempt failed.
+ * For a rejected one, refused by the LIS or by the partner (AE, AR): how a person
+ * resolved it; `None` while it stays under Rejected.
+ */
+rejectionResolved: RejectionResolution | null, 
+/**
+ * `resend_partner_delivery` once every attempt failed; `reject_received_message` for a
+ * message waiting for its patient or held; `resolve_partner_rejection` for a rejection
+ * not resolved yet.
  */
 allowedActions: Array<string>, 
 /**

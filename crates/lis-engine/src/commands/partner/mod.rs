@@ -106,6 +106,16 @@ pub(crate) const RESEND_PARTNER_DELIVERY: CommandSpec = spec(
     "interfaces.resend_delivery",
     MANAGE,
 );
+pub(crate) const REJECT_RECEIVED_MESSAGE: CommandSpec = spec(
+    "reject_received_message",
+    "interfaces.reject_received",
+    MANAGE,
+);
+pub(crate) const RESOLVE_PARTNER_REJECTION: CommandSpec = spec(
+    "resolve_partner_rejection",
+    "interfaces.resolve_rejection",
+    MANAGE,
+);
 pub(crate) const LIST_PARTNER_MAPPINGS: CommandSpec =
     spec("list_partner_mappings", "interfaces.list_mappings", MANAGE);
 pub(crate) const DRAFT_PARTNER_MAPPING: CommandSpec =

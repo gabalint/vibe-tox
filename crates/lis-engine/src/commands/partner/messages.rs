@@ -1,4 +1,5 @@
-//! The message log, its CSV export, Unrouted messages and sending a failed message again.
+//! The message log, its CSV export, Unrouted messages, sending a failed message again, and
+//! a person's follow-up of rejected messages.
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -7,7 +8,8 @@ use lis_audit::{AuditDetail, AuditEvent, Outcome, Stream};
 use lis_core::{CommandError, ErrorCode};
 use lis_interfaces::partner::{
     ListPartnerMessages, MessageSource, PartnerMessagePage, PartnerMessageRow,
-    ResendPartnerDelivery, ResolveUnroutedMessage, UnroutedMessage, WaitReason,
+    RejectReceivedMessage, ResendPartnerDelivery, ResolvePartnerRejection, ResolveUnroutedMessage,
+    UnroutedMessage, WaitReason,
 };
 use lis_reporting::{ReportRevisionId, ReportingError};
 use serde::Serialize;
@@ -16,8 +18,10 @@ use ts_rs::TS;
 
 use super::{
     EXPORT_PARTNER_MESSAGES, LIST_PARTNER_MESSAGES, LIST_UNROUTED_PARTNER_MESSAGES,
-    RESEND_PARTNER_DELIVERY, RESOLVE_UNROUTED_MESSAGE, ReportRoutingError,
+    REJECT_RECEIVED_MESSAGE, RESEND_PARTNER_DELIVERY, RESOLVE_PARTNER_REJECTION,
+    RESOLVE_UNROUTED_MESSAGE, ReportRoutingError,
 };
+use crate::commands::people::{display_names, name_of};
 use crate::engine::Engine;
 use crate::pipeline::Failure;
 use crate::report_rendering::ExportFile;
@@ -143,6 +147,35 @@ impl Engine {
         })
         .await
     }
+
+    /// `reject_received_message`: a message waiting for its patient or held for review makes
+    /// no order; the person's reason resolves it.
+    pub async fn reject_received_message(
+        &self,
+        input: RejectReceivedMessage,
+    ) -> Result<(), CommandError> {
+        self.run(&REJECT_RECEIVED_MESSAGE, |call| async move {
+            self.write(&call, move |ctx| {
+                lis_interfaces::partner::reject_received_message(ctx, input).map(drop)
+            })
+            .await
+        })
+        .await
+    }
+
+    /// `resolve_partner_rejection`: a rejected message leaves Rejected, with the note.
+    pub async fn resolve_partner_rejection(
+        &self,
+        input: ResolvePartnerRejection,
+    ) -> Result<(), CommandError> {
+        self.run(&RESOLVE_PARTNER_REJECTION, |call| async move {
+            self.write(&call, move |ctx| {
+                lis_interfaces::partner::resolve_partner_rejection(ctx, input)
+            })
+            .await
+        })
+        .await
+    }
 }
 
 /// The log page, with report revisions that wait on their impact review saying so (L13):
@@ -166,6 +199,18 @@ fn log_page(
         } else if !super::mappings::missing_for(conn, row)?.is_empty() {
             row.waiting = Some(WaitReason::NotMapped);
         }
+    }
+    let resolved = page
+        .rows
+        .iter()
+        .filter_map(|row| row.rejection_resolved.as_ref());
+    let names = display_names(conn, resolved.map(|done| done.resolved.by.as_str()))?;
+    for done in page
+        .rows
+        .iter_mut()
+        .filter_map(|row| row.rejection_resolved.as_mut())
+    {
+        done.resolved.by_display = name_of(&names, &done.resolved.by);
     }
     Ok(page)
 }

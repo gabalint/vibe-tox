@@ -194,7 +194,7 @@ Each screen design and each feature test names which of these states apply, and 
 | --- | --- |
 | `default` | Typical data, typical role |
 | `loading` | First load, nothing cached: skeleton rows, with the page header already in place |
-| `refreshing` | Data shown, newer data loading: rows stay, "Updated hh:mm" changes |
+| `refreshing` | Data shown, newer data loading: rows stay; on Refresh, its arrows turn and "Refreshing…" shows for at least 0.7 seconds, then "Updated hh:mm:ss" changes |
 | `empty` | Nothing exists yet: say so and offer the first action |
 | `no-results` | The find or a filter excludes everything: offer to clear it |
 | `error` | The screen's main data failed: the reason and Retry, or, for `forbidden`, what to ask for |

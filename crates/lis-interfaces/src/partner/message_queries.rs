@@ -16,6 +16,7 @@ use super::model::{
 };
 use super::received::ReceivedState;
 use super::received_queries::received_rows;
+use super::rejections::{RESOLUTION_COLUMNS, RejectionResolution, resolution_at};
 
 /// Rows the log returns at most, newest first.
 const LOG_LIMIT: usize = 500;
@@ -150,7 +151,12 @@ pub struct PartnerMessageRow {
     pub unrouted: bool,
     /// For an unrouted message, the decision; `None` while it waits.
     pub resolution: Option<UnroutedResolution>,
-    /// `resend_partner_delivery` once every attempt failed.
+    /// For a rejected one, refused by the LIS or by the partner (AE, AR): how a person
+    /// resolved it; `None` while it stays under Rejected.
+    pub rejection_resolved: Option<RejectionResolution>,
+    /// `resend_partner_delivery` once every attempt failed; `reject_received_message` for a
+    /// message waiting for its patient or held; `resolve_partner_rejection` for a rejection
+    /// not resolved yet.
     pub allowed_actions: Vec<String>,
     /// For an incoming message: what it became. `None` for an outgoing one.
     pub received: Option<ReceivedState>,
@@ -225,10 +231,11 @@ fn delivery_rows(
          d.state, d.attempts, d.next_attempt_at, d.last_error_code, d.written_path, c.active, \
          EXISTS (SELECT 1 FROM ifc_partner_verifications v \
                  WHERE v.connection_id = c.id AND v.folder = c.destination), c.schedule, \
-         m.source_label, c.protocol, d.ack_code, d.ack_text, {ACCEPTED} \
+         m.source_label, c.protocol, d.ack_code, d.ack_text, {ACCEPTED}, {RESOLUTION_COLUMNS} \
          FROM ifc_partner_deliveries d \
          JOIN ifc_partner_messages m ON m.id = d.message_id \
          JOIN ifc_partner_connections c ON c.id = d.connection_id \
+         LEFT JOIN ifc_partner_rejection_resolutions x ON x.delivery_id = d.id \
          WHERE (?1 IS NULL OR COALESCE(d.written_at, d.last_attempt_at, d.created_at) >= ?1) \
          AND (?2 IS NULL OR c.id = ?2) \
          ORDER BY at DESC LIMIT ?3"
@@ -259,6 +266,15 @@ fn delivery_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<PartnerMessageRow> 
     let error_code: Option<String> = row.get(13)?;
     let ack_code: Option<AckCode> = row.get(20)?;
     let awaiting_ack = state == DeliveryState::Waiting && error_code.as_deref() == Some(NO_ACK);
+    let rejection_resolved = resolution_at(row, 23)?;
+    let rejected = matches!(ack_code, Some(AckCode::Error | AckCode::Rejected));
+    let actions = [
+        (resendable, "resend_partner_delivery"),
+        (
+            rejected && rejection_resolved.is_none(),
+            "resolve_partner_rejection",
+        ),
+    ];
     Ok(PartnerMessageRow {
         delivery_id: Some(row.get(0)?),
         message_id: row.get(1)?,
@@ -294,13 +310,19 @@ fn delivery_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<PartnerMessageRow> 
         peer: None,
         unrouted: false,
         resolution: None,
-        allowed_actions: if resendable {
-            vec!["resend_partner_delivery".to_owned()]
-        } else {
-            Vec::new()
-        },
+        rejection_resolved,
+        allowed_actions: allowed(&actions),
         received: None,
     })
+}
+
+/// The actions whose condition holds.
+pub(crate) fn allowed(actions: &[(bool, &str)]) -> Vec<String> {
+    actions
+        .iter()
+        .filter(|(holds, _)| *holds)
+        .map(|(_, action)| (*action).to_owned())
+        .collect()
 }
 
 fn wait_reason(active: bool, (verified, accepted): (bool, bool), schedule: &str) -> WaitReason {
@@ -364,6 +386,7 @@ fn unrouted_rows(
             peer: None,
             unrouted: true,
             resolution: row.get(6)?,
+            rejection_resolved: None,
             allowed_actions: Vec::new(),
             received: None,
         })

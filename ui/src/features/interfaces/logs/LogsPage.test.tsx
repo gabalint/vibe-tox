@@ -151,6 +151,53 @@ describe("Logs (ticket #4555; REQ-INT-002, REQ-RPT-011)", () => {
     );
   });
 
+  it("rejects a waiting order with a reason; a resolved rejection leaves Rejected", async () => {
+    const order = {
+      ...WRITTEN,
+      deliveryId: null,
+      messageType: "hl7_orders" as const,
+      source: "order" as const,
+      sourceNumber: null,
+      transport: "received" as const,
+      outcomeUnknown: false,
+      writtenPath: null,
+    };
+    const waiting = {
+      ...order,
+      sourceLabel: "ORD-000126",
+      errorCode: "patient_unknown",
+      received: "waiting_patient" as const,
+      allowedActions: ["reject_received_message"],
+    };
+    const rejected = {
+      ...order,
+      messageId: "01a1a000-0000-7000-8000-000000000030",
+      sourceLabel: "ORD-000127",
+      errorCode: "rejected_by_person",
+      received: "rejected" as const,
+      rejectionResolved: {
+        note: "The clinic cancelled it by phone",
+        resolved: { by: ADMIN.userId, at: "2026-11-03T11:00:00.000000000Z" },
+      },
+    };
+    const reject = vi.fn(() => null);
+    const { user } = renderPage(() => ({ rows: [waiting, rejected], more: false }), {
+      reject_received_message: reject,
+    });
+    expect(await screen.findByRole("tab", { name: "Rejected (0)" })).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", { name: /^Rejected by .+: The clinic cancelled it by phone$/ }),
+    ).toBeTruthy();
+    await openRowActions(user, "ORD-000126");
+    await user.click(await screen.findByRole("menuitem", { name: "Reject…" }));
+    const reason = "Sent by mistake; the clinic confirmed by phone";
+    await user.type(await screen.findByRole("textbox", { name: "Reason" }), reason);
+    await user.click(screen.getByRole("button", { name: "Reject message" }));
+    await waitFor(() =>
+      expect(reject).toHaveBeenCalledWith({ input: { receivedId: waiting.messageId, reason } }),
+    );
+  });
+
   it("counts every tab of the mockup and narrows by outcome", async () => {
     const { user } = renderPage(() => ({ rows: [WRITTEN, FAILED], more: false }));
     expect(await screen.findByRole("tab", { name: "All (2)" })).toBeTruthy();
