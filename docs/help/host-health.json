@@ -2,7 +2,7 @@
   "id": "host-health",
   "title": "Host health and history",
   "summary": "Inspect the host’s current checks and investigate changes, stops and listening gaps.",
-  "reviewedOn": "2026-10-30",
+  "reviewedOn": "2026-11-08",
   "routes": ["/operations/health", "/operations/health/history/:tab?"],
   "sections": [
     {
@@ -59,9 +59,9 @@
           "rules": "Read-only; this page does not relocate data."
         },
         {
-          "name": "Keep awake / Since / Problem code",
-          "meaning": "Sleep-prevention status and when it began.",
-          "values": "Keeping the computer awake; Not needed: no analyzer listener is active; Unavailable. Timestamp and problem code when supplied.",
+          "name": "Keep awake",
+          "meaning": "Sleep-prevention status, when it began and, when unavailable, why. It describes keep awake only, not Overall.",
+          "values": "Keeping the computer awake; Not needed: no analyzer listener is active; Unavailable. Followed by “since” and the time of the last change, and by “problem code” and a code when the app reports one; a part that is not reported is left out.",
           "rules": "Read-only. Investigate Unavailable before depending on unattended analyzer intake."
         },
         {

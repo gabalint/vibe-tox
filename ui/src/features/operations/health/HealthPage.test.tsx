@@ -79,6 +79,23 @@ describe("HealthPage (REQ-OPS-008, REQ-OPS-013)", () => {
     expect(facts.compareDocumentPosition(grid) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it("shows when keep awake began and its problem code within Keep awake, and omits them when absent", async () => {
+    const { unmount } = renderPage([]);
+    const keepAwake = (await screen.findByText("Keep awake")).parentElement;
+    expect(keepAwake?.textContent).toMatch(/^Keep awakeKeeping the computer awake since /);
+    expect(keepAwake?.textContent).not.toContain("problem code");
+    expect(screen.queryByText("Since")).toBeNull();
+    expect(screen.queryByText("Problem code")).toBeNull();
+    unmount();
+
+    renderPage([], {
+      get_host_health: () =>
+        hostHealth({ keepAwake: { state: "unavailable", since: null, code: "inhibit_failed" } }),
+    });
+    const unavailable = (await screen.findByText("Keep awake")).parentElement;
+    expect(unavailable?.textContent).toBe("Keep awakeUnavailable, problem code inhibit_failed");
+  });
+
   it("opens a check by click and by Enter, and Escape closes the panel with focus on the row", async () => {
     const { user, router, container } = renderPage(["manage_configuration"]);
     await openRow(user, "Backup age");
