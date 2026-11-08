@@ -40,6 +40,8 @@ interface MessagesGridProps {
   query: UseQueryResult<PartnerMessagePage, CommandError>;
   /** The rows to show: the query's rows, narrowed by the screen's filters. */
   rows: readonly PartnerMessageRow[];
+  /** Whether a row opens its connection; not on the connection's own Logs tab. */
+  opensConnection?: boolean;
 }
 
 /**
@@ -50,7 +52,7 @@ interface MessagesGridProps {
  * received message waiting for its patient or held can be rejected with a reason, and a
  * rejection resolved with a note.
  */
-export function MessagesGrid({ query, rows }: MessagesGridProps) {
+export function MessagesGrid({ query, rows, opensConnection = true }: MessagesGridProps) {
   const navigate = useNavigate();
   const toast = useToast();
   const formatTime = useFormatTime();
@@ -105,7 +107,7 @@ export function MessagesGrid({ query, rows }: MessagesGridProps) {
             columns={messageColumns(formatTime, person)}
             rows={rows}
             getRowId={(row) => row.deliveryId ?? row.messageId}
-            onRowAction={open}
+            onRowAction={opensConnection ? open : undefined}
             rowActions={rowActions}
             fill
           />
@@ -139,7 +141,8 @@ export function ConnectionMessages({ connectionId }: { connectionId: string }) {
       >
         <RefreshControl query={messages} />
       </Toolbar>
-      <MessagesGrid query={messages} rows={rows} />
+      {/* Already on the connection: a row has nothing more to open. */}
+      <MessagesGrid query={messages} rows={rows} opensConnection={false} />
     </>
   );
 }

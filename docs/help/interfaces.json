@@ -359,7 +359,7 @@
           "name": "Rules, Code mappings, Logs, History",
           "meaning": "The routing rules; code mappings to a partner's codes; this connection's messages; every change with who, when, the settings changed and the reason or method.",
           "values": "As recorded, newest first. Code mappings is empty for Report PDF and Billing JSON, whose files carry the LIS's own codes. History also lists each approved code mapping version and each approved interface contract version, with its reason.",
-          "rules": "Read-only, except Code mappings of an HL7 Results connection. History is never edited."
+          "rules": "Read-only, except Code mappings of an HL7 Results connection, and on Logs a row's ⋯ menu (Send again, Reject…, Mark resolved…, as on the Logs page); a row there opens nothing, as its connection is already open. History is never edited."
         },
         {
           "name": "Code mappings of an HL7 Orders connection: LIS test, Partner code, Sequence role, Status",
