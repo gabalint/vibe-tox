@@ -96,6 +96,31 @@ describe("HealthPage (REQ-OPS-008, REQ-OPS-013)", () => {
     expect(unavailable?.textContent).toBe("Keep awakeUnavailable, problem code inhibit_failed");
   });
 
+  it("names the operating system as the support check does, with the edition only when reported", async () => {
+    const { unmount } = renderPage([]);
+    expect((await screen.findByText("Operating system")).parentElement?.textContent).toBe(
+      "Operating systemSynthetic OS",
+    );
+    expect(screen.queryByText("Edition")).toBeNull();
+    unmount();
+
+    renderPage([], {
+      get_host_health: () =>
+        hostHealth({
+          host: {
+            ...hostHealth().host,
+            os: "Windows 10",
+            osVersion: "22H2 (build 19045)",
+            edition: "Enterprise",
+          },
+        }),
+    });
+    expect((await screen.findByText("Version")).parentElement?.textContent).toBe(
+      "Version22H2 (build 19045)",
+    );
+    expect(screen.getByText("Edition").parentElement?.textContent).toBe("EditionEnterprise");
+  });
+
   it("opens a check by click and by Enter, and Escape closes the panel with focus on the row", async () => {
     const { user, router, container } = renderPage(["manage_configuration"]);
     await openRow(user, "Backup age");

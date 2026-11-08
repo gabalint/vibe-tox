@@ -21,7 +21,8 @@ export function HostSection({ health }: { health: HostHealthView }) {
           { label: "Overall", value: <HealthBadge state={health.overall} /> },
           { label: "Operating system", value: host.os },
           { label: "Version", value: host.osVersion },
-          { label: "Edition", value: host.edition ?? NONE },
+          // Only Windows has an edition; elsewhere the fact does not apply.
+          ...(host.edition ? [{ label: "Edition", value: host.edition }] : []),
           { label: "Architecture", value: host.arch },
           { label: "Web engine", value: host.webview ?? NONE },
           { label: "App version", value: host.appVersion },

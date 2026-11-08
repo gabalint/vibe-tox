@@ -13,7 +13,7 @@ use lis_ops::format::KeyId;
 use lis_ops::health::{
     CheckResult, ClockFacts, DiskFacts, HealthInputs, HealthState, ListenerFacts, OutboxFacts,
 };
-use lis_ops::host::{HostFacts, OsIdentity};
+use lis_ops::host::{HostFacts, OsName};
 use lis_ops::policy::OperationsSettings;
 use lis_store::DATABASE_FILE;
 use rusqlite::Connection;
@@ -59,11 +59,12 @@ pub struct HostHealthView {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct HostView {
-    /// `windows`, `macos` or `linux`.
+    /// The product, such as "Windows 11", "macOS" or "Ubuntu"; `windows`, `macos` or
+    /// `linux` when it could not be read.
     pub os: String,
-    /// The OS version; `unknown` when it could not be read.
+    /// The release, such as "24H2 (build 26100)"; `unknown` when it could not be read.
     pub os_version: String,
-    /// The Windows edition.
+    /// The Windows edition, such as "Professional".
     pub edition: Option<String>,
     /// The CPU architecture.
     pub arch: String,
@@ -277,26 +278,17 @@ fn database_bytes(data_dir: &Path) -> u64 {
 }
 
 fn host_view(host: &HostFacts, ops: &Operations) -> HostView {
-    let (os_version, edition) = match &host.os {
-        Some(OsIdentity::Windows(windows)) => (
-            windows
-                .display_version
-                .clone()
-                .unwrap_or_else(|| windows.build.to_string()),
-            Some(windows.edition_id.clone()),
-        ),
-        Some(OsIdentity::Macos(macos)) => (macos.product_version.clone(), None),
-        Some(OsIdentity::Linux(linux)) => (
-            linux
-                .pretty_name
-                .clone()
-                .unwrap_or_else(|| format!("{} {}", linux.id, linux.version_id)),
-            None,
-        ),
-        None => ("unknown".to_owned(), None),
+    // The same parts as the operating-system support check's product text.
+    let (os, os_version, edition) = match host.os.as_ref().map(lis_ops::host::describe) {
+        Some(OsName {
+            name,
+            version,
+            edition,
+        }) => (name, version, edition),
+        None => (std::env::consts::OS.to_owned(), "unknown".to_owned(), None),
     };
     HostView {
-        os: std::env::consts::OS.to_owned(),
+        os,
         os_version,
         edition,
         arch: std::env::consts::ARCH.to_owned(),
