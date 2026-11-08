@@ -36,7 +36,7 @@
       "fields": [
         {
           "name": "Overall",
-          "meaning": "Worst current evaluated health state, shown as a badge beside the This computer title.",
+          "meaning": "Worst current evaluated health state, shown beside the This computer title as Overall and a badge.",
           "values": "OK, Warning or Alert. Unknown individual checks count toward Warning.",
           "rules": "Read-only; an overall state summarizes checks, not clinical readiness."
         },

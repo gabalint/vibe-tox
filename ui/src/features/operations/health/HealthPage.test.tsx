@@ -50,8 +50,8 @@ describe("HealthPage (REQ-OPS-008, REQ-OPS-013)", () => {
       attest_health_check: attest,
     });
     expect(await screen.findByRole("gridcell", { name: "UPS" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: /^This computer/ }).textContent).toContain(
-      "Overall: Warning",
+    expect(screen.getByRole("heading", { name: /^This computer/ }).textContent).toMatch(
+      /Overall\s*Warning/,
     );
     // The limit shows beneath the value; the detail code is a machine code, kept in the history.
     expect(screen.getByText("Warning at 2 h, alert at 4 h")).toBeTruthy();

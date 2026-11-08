@@ -21,7 +21,7 @@ export function HostSection({ health }: { health: HostHealthView }) {
         <span className={styles.title}>
           This computer
           <span className={styles.overall}>
-            <span className={styles.hidden}>Overall: </span>
+            <span className={styles.overallLabel}>Overall</span>
             <HealthBadge state={health.overall} />
           </span>
         </span>
