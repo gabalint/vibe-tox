@@ -61,7 +61,7 @@ struct StoredSettings {
 const COLUMNS: &str = "backup_interval_minutes, keep_recent, keep_daily, keep_weekly, \
     backup_warn_minutes, backup_alert_minutes, offhost_warn_hours, offline_warn_days, \
     restore_test_warn_days, kit_confirm_warn_days, anchor_warn_minutes, anchor_incident_hours, \
-    disk_free_warn_gib, os_support_warn_days, clock_jump_seconds";
+    disk_free_warn_gib, os_support_warn_days, clock_jump_seconds, lot_expiry_warn_days";
 
 fn stored_settings(row: &Row<'_>) -> rusqlite::Result<StoredSettings> {
     Ok(StoredSettings {
@@ -81,10 +81,11 @@ fn stored_settings(row: &Row<'_>) -> rusqlite::Result<StoredSettings> {
             disk_free_warn_gib: row.get(12)?,
             os_support_warn_days: row.get(13)?,
             clock_jump_seconds: row.get(14)?,
+            lot_expiry_warn_days: row.get(15)?,
         },
-        version: row.get(15)?,
-        set_by: row.get(16)?,
-        set_at: row.get(17)?,
+        version: row.get(16)?,
+        set_by: row.get(17)?,
+        set_at: row.get(18)?,
     })
 }
 
@@ -187,7 +188,7 @@ fn insert(
     let sql = format!(
         "INSERT INTO ops_settings_versions ({COLUMNS}, version, reason, set_by, set_at) \
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, \
-         ?18, ?19)"
+         ?18, ?19, ?20)"
     );
     ctx.tx().prepare_cached(&sql)?.execute(params![
         values.backup_interval_minutes,
@@ -205,6 +206,7 @@ fn insert(
         values.disk_free_warn_gib,
         values.os_support_warn_days,
         values.clock_jump_seconds,
+        values.lot_expiry_warn_days,
         version,
         reason,
         ctx.principal().actor().id_text(),

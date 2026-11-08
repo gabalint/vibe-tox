@@ -44,6 +44,8 @@ pub struct OperationsSettings {
     pub os_support_warn_days: u32,
     /// A wall-clock jump larger than this is recorded.
     pub clock_jump_seconds: u32,
+    /// Days before a lot's expiry date from which the lot is listed as expiring soon.
+    pub lot_expiry_warn_days: u32,
 }
 
 /// The defaults that apply until the laboratory sets its own values. Since 2026-10-13 the
@@ -66,6 +68,7 @@ pub const DEFAULT_SETTINGS: OperationsSettings = OperationsSettings {
     disk_free_warn_gib: 10,
     os_support_warn_days: 90,
     clock_jump_seconds: 60,
+    lot_expiry_warn_days: 14,
 };
 
 /// Allowed backup intervals, in minutes.
@@ -99,6 +102,8 @@ pub const DISK_FREE_WARN_GIB: RangeInclusive<u32> = 1..=1024;
 pub const OS_SUPPORT_WARN_DAYS: RangeInclusive<u32> = 7..=365;
 /// Allowed clock-jump recording thresholds, in seconds.
 pub const CLOCK_JUMP_SECONDS: RangeInclusive<u32> = 10..=3600;
+/// Allowed warning periods before a lot's expiry date, in days.
+pub const LOT_EXPIRY_WARN_DAYS: RangeInclusive<u32> = 1..=365;
 
 /// One setting: its input field name, its audit code, its value and its allowed range.
 pub(crate) struct SettingField {
@@ -151,7 +156,7 @@ impl OperationsSettings {
     }
 
     /// Every setting with its names and range, in declaration order.
-    pub(crate) fn fields(&self) -> [SettingField; 15] {
+    pub(crate) fn fields(&self) -> [SettingField; 16] {
         SETTING_FIELDS.map(|(field, code, value, range)| SettingField {
             field,
             code,
@@ -164,7 +169,7 @@ impl OperationsSettings {
 type Getter = fn(&OperationsSettings) -> u32;
 
 /// Input field name, audit code, value and range of every setting.
-const SETTING_FIELDS: [(&str, &str, Getter, RangeInclusive<u32>); 15] = [
+const SETTING_FIELDS: [(&str, &str, Getter, RangeInclusive<u32>); 16] = [
     (
         "backupIntervalMinutes",
         "backup_interval_minutes",
@@ -254,6 +259,12 @@ const SETTING_FIELDS: [(&str, &str, Getter, RangeInclusive<u32>); 15] = [
         "clock_jump_seconds",
         |settings| settings.clock_jump_seconds,
         CLOCK_JUMP_SECONDS,
+    ),
+    (
+        "lotExpiryWarnDays",
+        "lot_expiry_warn_days",
+        |settings| settings.lot_expiry_warn_days,
+        LOT_EXPIRY_WARN_DAYS,
     ),
 ];
 
@@ -362,7 +373,7 @@ mod tests {
         );
     }
 
-    fn from_values(v: [u32; 15]) -> OperationsSettings {
+    fn from_values(v: [u32; 16]) -> OperationsSettings {
         OperationsSettings {
             backup_interval_minutes: v[0],
             keep_recent: v[1],
@@ -379,6 +390,7 @@ mod tests {
             disk_free_warn_gib: v[12],
             os_support_warn_days: v[13],
             clock_jump_seconds: v[14],
+            lot_expiry_warn_days: v[15],
         }
     }
 }

@@ -27,6 +27,7 @@ const DEFAULTS: OperationsSettings = {
   diskFreeWarnGib: 10,
   osSupportWarnDays: 90,
   clockJumpSeconds: 60,
+  lotExpiryWarnDays: 14,
 };
 
 const UNSET: OperationsSettingsView = {

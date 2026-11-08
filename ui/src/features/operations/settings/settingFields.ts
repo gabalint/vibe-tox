@@ -121,6 +121,13 @@ export const OPERATIONS_FIELDS: readonly SettingField<keyof OperationsSettings>[
     unit: "seconds",
     section: "This computer",
   },
+  {
+    key: "lotExpiryWarnDays",
+    label: "Warning before a lot expires",
+    unit: "days",
+    range: "1 to 365",
+    section: "Lots",
+  },
 ];
 
 export type NumericSecurityPolicy = Pick<
