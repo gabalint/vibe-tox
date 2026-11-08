@@ -9,10 +9,12 @@ import { useHasCapability } from "@/lib/commands";
 import { useOpenRecord } from "@/lib/openRecord";
 import { openRecordPanel } from "@/lib/openRecordPanel";
 import { ATTEST_HEALTH_CHECK, HEALTH_QUERIES, MANAGE_CONFIGURATION } from "../contract";
+import { CheckFilters } from "./CheckFilters";
 import { CheckPanel } from "./CheckPanel";
 import { CHECK_COLUMNS } from "./checkColumns";
 import { severityRank } from "./healthLabels";
 import { NoteDialog } from "./NoteDialog";
+import { checksIn, useStateFilter } from "./stateFilter";
 
 const checkId = (check: HealthCheckView) => check.check;
 const ACTIONS = [{ id: ATTEST_HEALTH_CHECK, label: "Attest" }];
@@ -21,7 +23,8 @@ const ACTIONS = [{ id: ATTEST_HEALTH_CHECK, label: "Attest" }];
  * The checks with the overall state (REQ-OPS-008), most urgent first, so an alert is never
  * below the fold while the top bar reports it. A check opens in a side panel (`?open=` takes
  * its code). Checks the engine marks attestable, such as a UPS it cannot read, can be attested
- * by people with `manage_configuration`, from the panel or the row's menu.
+ * by people with `manage_configuration`, from the panel or the row's menu. The State filter
+ * (`?state=`) narrows the loaded checks; a check opened outside it stays open.
  */
 export function ChecksSection({ health }: { health: HostHealthView }) {
   const canAttest = useHasCapability(MANAGE_CONFIGURATION);
@@ -32,6 +35,8 @@ export function ChecksSection({ health }: { health: HostHealthView }) {
     () => health.checks.toSorted((a, b) => severityRank(a.state) - severityRank(b.state)),
     [health.checks],
   );
+  const [filter, setFilter] = useStateFilter();
+  const shown = checksIn(checks, filter);
   // Engine request: `allowedActions` on `HealthCheckView` would replace this condition.
   const allowed = (check: HealthCheckView) =>
     canAttest && check.attestable ? [ATTEST_HEALTH_CHECK] : [];
@@ -60,16 +65,22 @@ export function ChecksSection({ health }: { health: HostHealthView }) {
   return (
     <>
       <DetailLayout panel={panel}>
+        {checks.length > 0 && <CheckFilters checks={checks} filter={filter} onApply={setFilter} />}
         {checks.length === 0 ? (
           <EmptyState
             title="No checks reported"
             description="The app has not reported any check."
           />
+        ) : shown.length === 0 ? (
+          <EmptyState
+            title="No checks in this state"
+            description="Choose All to show every check."
+          />
         ) : (
           <DataGrid
             label="Health checks"
             columns={CHECK_COLUMNS}
-            rows={checks}
+            rows={shown}
             getRowId={checkId}
             openRowId={record.openId}
             onOrderChange={record.followOrder}

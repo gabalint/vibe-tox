@@ -4,6 +4,7 @@ import type { HealthCheckView } from "@/generated/HealthCheckView";
 import styles from "@/styles/layout.module.css";
 import { Person } from "../Person";
 import { HealthBadge, NONE, severityRank } from "./healthLabels";
+import { NextAction } from "./NextAction";
 
 /** The engine's sentence, then who attested the check by hand and until when, if anyone did. */
 function Summary({ check }: { check: HealthCheckView }) {
@@ -35,8 +36,8 @@ function Value({ check }: { check: HealthCheckView }) {
 /**
  * The engine's health checks, as it evaluated them. Sorting by state puts the most urgent
  * first. The summary and next action share the free width and wrap, so they are read in full;
- * the other columns have fixed widths, so the grid fits a 1280-pixel window. The detail code is
- * a machine code; the health history keeps it.
+ * the next action links to where it is done in the app. The other columns have fixed widths,
+ * so the grid fits a 1280-pixel window. The detail code is a machine code; the history keeps it.
  */
 export const CHECK_COLUMNS: readonly DataGridColumn<HealthCheckView>[] = [
   {
@@ -70,5 +71,5 @@ export const CHECK_COLUMNS: readonly DataGridColumn<HealthCheckView>[] = [
     sortValue: (row) => row.observedAt,
     width: 190,
   },
-  { id: "next", header: "Next action", cell: (row) => row.nextAction ?? NONE, wrap: true },
+  { id: "next", header: "Next action", cell: (row) => <NextAction check={row} />, wrap: true },
 ];

@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { ErrorState } from "@/components/ErrorState";
@@ -25,6 +25,7 @@ import { HostSection } from "./HostSection";
  */
 export function HealthPage() {
   const toast = useToast();
+  const navigate = useNavigate();
   const health = useCommandQuery<HostHealthView>(GET_HOST_HEALTH);
   const refresh = useCommandMutation<HostHealthView>(REFRESH_HOST_HEALTH, {
     invalidates: HEALTH_QUERIES,
@@ -41,7 +42,7 @@ export function HealthPage() {
         description="Backups, audit anchors, disk, operating system and listeners, as the app last checked them."
         actions={
           <>
-            <Link to="/operations/health/history">Health history</Link>
+            <Button onPress={() => navigate("/operations/health/history")}>Health history</Button>
             <Button isPending={refresh.isPending} onPress={checkNow}>
               Check now
             </Button>

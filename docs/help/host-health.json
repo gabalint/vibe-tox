@@ -2,7 +2,7 @@
   "id": "host-health",
   "title": "Host health and history",
   "summary": "Inspect the host’s current checks and investigate changes, stops and listening gaps.",
-  "reviewedOn": "2026-10-30",
+  "reviewedOn": "2026-11-08",
   "routes": ["/operations/health", "/operations/health/history/:tab?"],
   "sections": [
     {
@@ -71,6 +71,12 @@
           "rules": "Read-only; checks appear with the most urgent first."
         },
         {
+          "name": "State (filter) / state counts",
+          "meaning": "Show only the checks in one state, and how many checks are in each.",
+          "values": "All (default), Alert, Warning or OK. The counts above the table read, for example, 6 Alert, 2 Warning, 5 OK. Warning includes Unknown checks and OK includes Attested checks, as Overall counts them.",
+          "rules": "Optional; filters the checks already loaded and is kept in the address, so reload and Back keep it. Pressing a count applies the same filter; a count of 0 cannot be pressed. A check opened in the panel stays open when the filter hides its row."
+        },
+        {
           "name": "Summary / Value / Limit",
           "meaning": "Explain the observed condition and threshold used.",
           "values": "Engine-provided explanation, measurement and configured threshold; dash where unavailable.",
@@ -79,8 +85,8 @@
         {
           "name": "Observed / Next action",
           "meaning": "When the check was evaluated and its suggested operational follow-up.",
-          "values": "Timestamp and provided action text.",
-          "rules": "Read-only. A recent page load is not necessarily a new probe."
+          "values": "Timestamp and provided action text; a dash when the check needs no action. When the action is done in the app, an Open link follows the text, in the table and in the details panel: Backup target and Audit anchors open Backup targets (an anchor target is added there with a purpose that includes audit anchors); Backup age, Off-host copy and Offline copy open Backups, where Back up now is; Backup failures and Stored files open Backup runs; Restore test opens Restore tests; Recovery kit opens Recovery kit; Audit trail integrity opens Audit anchors; Analyzer listeners opens Instruments; Listening gaps opens Health history; App version opens Versions and updates; Recovery reconciliation opens Recovery reconciliation.",
+          "rules": "Read-only. A recent page load is not necessarily a new probe. The link shows only to people with the capability that page’s action needs (Backup and restore for the backup pages and Recovery kit, View audit for Audit anchors, Manage configuration for Instruments, Perform analysis for Health history, Approve configuration for Versions and updates, Manage quality for Recovery reconciliation). Actions done outside the app or by procedure stay text: Database integrity, Free disk space, Disk encryption, Operating system support, Web engine, Sleep prevention, Unclean shutdowns, Clock, Power protection and Cloud services; Pending work has no screen yet. Attestable checks keep Attest in the row’s menu and the panel."
         },
         {
           "name": "Attested",
@@ -259,6 +265,18 @@
           "result": "Read-only details panel opens."
         },
         {
+          "name": "State filter / state count",
+          "does": "Show only the checks in Alert, Warning or OK; All shows every check again.",
+          "availableWhen": "At least one check is reported; a count can be pressed when it is above 0.",
+          "result": "The table lists the matching checks, most urgent first, or No checks in this state."
+        },
+        {
+          "name": "Open (Next action link)",
+          "does": "Open the screen where the check’s next action is done, such as Backup targets or Restore tests.",
+          "availableWhen": "The check needs action, its action is done in the app, and you hold the capability that screen’s action needs.",
+          "result": "Navigates to that screen; nothing is changed until you act there. Use Check now afterwards to see the new state."
+        },
+        {
           "name": "Attest",
           "does": "Record manual verification of a supported check.",
           "availableWhen": "Manage configuration and a check that offers Attest; required note.",
@@ -295,9 +313,9 @@
         "Closing the App version notice does not acknowledge, approve or accept the version. Recovery reconciliation continues to show its notice and enforce its release, delivery and billing restrictions."
       ],
       "workflow": [
-        "Inspect Overall and the most urgent individual checks.",
+        "Inspect Overall and the state counts; press Alert or Warning to list only those checks.",
         "Open a check and read its value, limit, time and next action.",
-        "Resolve the specific cause, or manually verify an attestable condition and record the evidence.",
+        "Resolve the specific cause, using the Open link under Next action when there is one, or manually verify an attestable condition and record the evidence.",
         "Use Check now after correction, respecting the one-minute interval."
       ],
       "troubleshooting": [
@@ -455,6 +473,10 @@
     "ui/src/features/operations/health/HealthPage.tsx",
     "ui/src/features/operations/health/HostSection.tsx",
     "ui/src/features/operations/health/ChecksSection.tsx",
+    "ui/src/features/operations/health/CheckFilters.tsx",
+    "ui/src/features/operations/health/stateFilter.ts",
+    "ui/src/features/operations/health/NextAction.tsx",
+    "ui/src/features/operations/health/checkFixes.ts",
     "ui/src/features/operations/health/CheckPanel.tsx",
     "ui/src/features/operations/health/NoteDialog.tsx",
     "ui/src/features/operations/health/HealthHistoryPage.tsx",
