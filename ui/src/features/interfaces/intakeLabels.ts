@@ -28,6 +28,7 @@ export const INTAKE_REASONS: Record<string, string> = {
   no_test: "An OBR without a test code",
   no_placer_order: "No placer order number",
   unsupported_control: "Only new orders (ORC-1 NW) are read",
+  rejected_by_person: "Rejected by a person",
 };
 
 const OUTCOMES: Record<ReceivedState, { label: string; tone: Tone }> = {
@@ -50,7 +51,8 @@ export function receivedOutcome(state: ReceivedState, reason: string | null) {
  * its patient was registered keeps only that it waited. */
 function receivedReason(row: PartnerMessageRow): string | null {
   if (row.received === "duplicate") return "Exact replay; no second order";
-  if (row.errorCode === null) return null;
+  // The Logs say who rejected it and why, from its resolution.
+  if (row.errorCode === null || row.errorCode === "rejected_by_person") return null;
   return row.received === "order_created"
     ? "Waited until the patient was registered"
     : (INTAKE_REASONS[row.errorCode] ?? row.errorCode);

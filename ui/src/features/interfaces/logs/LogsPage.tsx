@@ -27,8 +27,9 @@ type Row = PartnerMessageRow;
 
 /**
  * The tabs of the mockup. Only an MLLP partner answers: what it rejected (AE, AR) shows under
- * Rejected, with received orders the LIS refused, and what it has not acknowledged yet under
- * Awaiting ACK; a folder or SFTP server never answers. Duplicates hold orders read before.
+ * Rejected, with received orders the LIS refused, until a person resolves it; what it has not
+ * acknowledged yet shows under Awaiting ACK; a folder or SFTP server never answers. Duplicates
+ * hold orders read before.
  */
 const TABS = [
   { id: "all", label: "All" },
@@ -43,7 +44,9 @@ type TabId = (typeof TABS)[number]["id"];
 const IN_TAB: Record<TabId, (row: Row) => boolean> = {
   all: () => true,
   failed: (row) => row.transport === "failed",
-  rejected: (row) => row.received === "rejected" || row.ackCode === "AE" || row.ackCode === "AR",
+  rejected: (row) =>
+    row.rejectionResolved === null &&
+    (row.received === "rejected" || row.ackCode === "AE" || row.ackCode === "AR"),
   awaiting_ack: (row) => row.awaitingAck,
   outcome_unknown: (row) => row.outcomeUnknown,
   duplicates: (row) => row.received === "duplicate",

@@ -216,9 +216,13 @@ export const CHANGES: Record<ConnectionChange, string> = {
   contract_approved: "Interface contract approved",
 };
 
-/** The engine's PHI-free write problems. */
+/** The engine's PHI-free write and read problems. */
 const PROBLEMS: Record<string, string> = {
   folder_missing: "Folder not found or not reachable",
+  read_failed: "A file could not be read; it stays in the input folder",
+  store_failed: "A file could not be saved in the LIS; it stays in the input folder",
+  not_recorded: "A message could not be recorded; it is read again",
+  move_failed: "A read file could not be moved to Processed or Failed",
   access_denied: "This computer may not write there",
   disk_full: "The disk is full",
   name_taken: "No free file name",

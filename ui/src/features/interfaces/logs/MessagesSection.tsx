@@ -1,4 +1,5 @@
 import type { UseQueryResult } from "@tanstack/react-query";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { DataGrid } from "@/components/DataGrid";
 import { ErrorState } from "@/components/ErrorState";
@@ -14,13 +15,25 @@ import type { ResendPartnerDelivery } from "@/generated/ResendPartnerDelivery";
 import { allowedRowActions } from "@/lib/allowedActions";
 import { useCommandMutation, useCommandQuery } from "@/lib/commands";
 import { useFormatTime } from "@/lib/format";
+import { usePersonText } from "@/lib/person";
 import styles from "@/styles/layout.module.css";
-import { LIST_MESSAGES, MESSAGE_QUERIES, RESEND_DELIVERY } from "../contract";
+import {
+  LIST_MESSAGES,
+  MESSAGE_QUERIES,
+  REJECT_RECEIVED,
+  RESEND_DELIVERY,
+  RESOLVE_REJECTION,
+} from "../contract";
 import { recordText } from "../labels";
 import { connectionPath, UNROUTED_PATH } from "../paths";
+import { type FollowUp, FollowUpDialog } from "./FollowUpDialog";
 import { messageColumns } from "./messageColumns";
 
-const ACTIONS = [{ id: RESEND_DELIVERY, label: "Send again" }];
+const ACTIONS = [
+  { id: RESEND_DELIVERY, label: "Send again" },
+  { id: REJECT_RECEIVED, label: "Reject…" },
+  { id: RESOLVE_REJECTION, label: "Mark resolved…" },
+];
 
 interface MessagesGridProps {
   /** The log query, for its loading, error and limit states. */
@@ -30,22 +43,30 @@ interface MessagesGridProps {
 }
 
 /**
- * Messages to outside systems, newest first, at most 500 (REQ-INT-002, REQ-RPT-011): what the
- * transport can prove and what the partner's system confirmed, never a bare delivery claim. A
- * row opens its connection, or Unrouted messages for one that matched none. A message whose
- * attempts all failed can be sent again; that never makes a new message or report.
+ * Messages to and from outside systems, newest first, at most 500 (REQ-INT-002, REQ-RPT-011):
+ * what the transport can prove and what the other system confirmed, never a bare delivery
+ * claim. A row opens its connection, or Unrouted messages for one that matched none. A message
+ * whose attempts all failed can be sent again; that never makes a new message or report. A
+ * received message waiting for its patient or held can be rejected with a reason, and a
+ * rejection resolved with a note.
  */
 export function MessagesGrid({ query, rows }: MessagesGridProps) {
   const navigate = useNavigate();
   const toast = useToast();
   const formatTime = useFormatTime();
+  const person = usePersonText();
+  const [followUp, setFollowUp] = useState<FollowUp | null>(null);
   const resend = useCommandMutation<unknown, { input: ResendPartnerDelivery }>(RESEND_DELIVERY, {
     invalidates: MESSAGE_QUERIES,
   });
   const rowActions = allowedRowActions(ACTIONS, {
     label: (row: PartnerMessageRow) => recordText(row),
     allowed: (row) => row.allowedActions,
-    onAction: (_, row) => {
+    onAction: (action, row) => {
+      if (action === REJECT_RECEIVED || action === RESOLVE_REJECTION) {
+        setFollowUp({ action, row });
+        return;
+      }
       if (row.deliveryId === null) return;
       resend.mutate(
         { input: { deliveryId: row.deliveryId } },
@@ -81,7 +102,7 @@ export function MessagesGrid({ query, rows }: MessagesGridProps) {
         {() => (
           <DataGrid
             label="Messages"
-            columns={messageColumns(formatTime)}
+            columns={messageColumns(formatTime, person)}
             rows={rows}
             getRowId={(row) => row.deliveryId ?? row.messageId}
             onRowAction={open}
@@ -90,6 +111,7 @@ export function MessagesGrid({ query, rows }: MessagesGridProps) {
           />
         )}
       </QueryContent>
+      {followUp && <FollowUpDialog followUp={followUp} onClose={() => setFollowUp(null)} />}
     </>
   );
 }

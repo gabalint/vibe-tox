@@ -30,6 +30,10 @@ export const EXPORT_MESSAGES = "export_partner_messages" satisfies CommandName;
 export const LIST_UNROUTED = "list_unrouted_partner_messages" satisfies CommandName;
 export const RESOLVE_UNROUTED = "resolve_unrouted_message" satisfies CommandName;
 export const RESEND_DELIVERY = "resend_partner_delivery" satisfies CommandName;
+/** `reject_received_message({input:RejectReceivedMessage})`: a waiting or held order message. */
+export const REJECT_RECEIVED = "reject_received_message" satisfies CommandName;
+/** `resolve_partner_rejection({input:ResolvePartnerRejection})`: it leaves Rejected. */
+export const RESOLVE_REJECTION = "resolve_partner_rejection" satisfies CommandName;
 /** `list_partner_mappings({input:{connectionId}}) → PartnerMappings` (HL7 connections). */
 export const LIST_MAPPINGS = "list_partner_mappings" satisfies CommandName;
 /** Each `→ PartnerMappings`, the list after the change. */

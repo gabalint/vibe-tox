@@ -4,9 +4,22 @@ import { Timestamp } from "@/components/Timestamp";
 import type { PartnerMessageRow } from "@/generated/PartnerMessageRow";
 import { applicationOf, detailText, MESSAGE_TYPES, recordText, transportOf } from "../labels";
 
+type FormatTime = (at: string) => string;
+type PersonText = (userId: string, display?: string) => string;
+
+/** How a person followed up a rejection: rejected a waiting message, or resolved it. */
+function resolvedText(row: PartnerMessageRow, formatTime: FormatTime, person: PersonText) {
+  const done = row.rejectionResolved;
+  if (done === null) return null;
+  const verb = row.errorCode === "rejected_by_person" ? "Rejected" : "Resolved";
+  const who = person(done.resolved.by, done.resolved.byDisplay);
+  return `${verb} by ${who}, ${formatTime(done.resolved.at)}: ${done.note}`;
+}
+
 /** One row of the message log: never a bare delivery claim (REQ-RPT-011). */
 export function messageColumns(
-  formatTime: (at: string) => string,
+  formatTime: FormatTime,
+  person: PersonText,
 ): readonly DataGridColumn<PartnerMessageRow>[] {
   return [
     {
@@ -69,7 +82,10 @@ export function messageColumns(
     {
       id: "details",
       header: "Details",
-      cell: (row) => detailText(row, formatTime),
+      cell: (row) =>
+        [detailText(row, formatTime), resolvedText(row, formatTime, person)]
+          .filter(Boolean)
+          .join(" · "),
       wrap: true,
     },
   ];
