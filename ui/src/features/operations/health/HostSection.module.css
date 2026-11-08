@@ -1,0 +1,32 @@
+/* The overall state beside the section title, at the title's height. */
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.overall {
+  display: inline-flex;
+  font-size: var(--font-size-md);
+}
+
+/* Even columns with room between them; the long data folder takes two. */
+.facts > dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: var(--space-4) var(--space-8);
+}
+
+.facts > dl > div:nth-last-child(2) {
+  grid-column: span 2;
+}
+
+/* Read by screen readers only: names the badge in the heading. */
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
