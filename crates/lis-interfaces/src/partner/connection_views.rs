@@ -5,6 +5,7 @@ use lis_core::UtcTimestamp;
 use serde::Serialize;
 use ts_rs::TS;
 
+use super::contract_model::{ContractSummary, PartnerContract};
 use super::model::{ConnectionChange, PartnerConnectionId, PartnerConnectionSettings};
 use crate::model::ChangeStamp;
 
@@ -86,6 +87,9 @@ pub struct PartnerConnection {
     /// For MLLP – LIS listens: whether the listener listens now, as the engine sees it;
     /// `None` while it does not try (stopped, not checked) and for other connections.
     pub listener: Option<ListenerView>,
+    /// Its interface contract version and whether its acceptance tests pass for it as it is
+    /// now; patient data waits until both hold.
+    pub contract: ContractSummary,
     pub last_change: ChangeStamp,
     /// Commands that apply to the connection as it is now.
     pub allowed_actions: Vec<String>,
@@ -106,11 +110,12 @@ pub struct ConnectionChangeView {
     pub fields: Vec<String>,
 }
 
-/// A connection with its history, newest first.
+/// A connection with its interface contract and its history, newest first.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct PartnerConnectionDetail {
     pub connection: PartnerConnection,
+    pub contract: PartnerContract,
     pub history: Vec<ConnectionChangeView>,
 }

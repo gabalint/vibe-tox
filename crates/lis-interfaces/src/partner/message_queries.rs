@@ -6,6 +6,7 @@ use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+use super::acceptance::ACCEPTED;
 use super::error::PartnerError;
 use super::message_repo::NOT_REPLACED;
 use super::mllp::NO_ACK;
@@ -59,6 +60,9 @@ text_enum! {
         Stopped = "stopped",
         /// No destination check covers the connection's folder.
         Unverified = "unverified",
+        /// The connection has no approved interface contract, or its acceptance tests did
+        /// not pass for it as it is now (REQ-INT-001).
+        NotAccepted = "not_accepted",
         /// The connection writes at set times.
         Scheduled = "scheduled",
         /// It is written at the next pass.
@@ -215,20 +219,20 @@ fn delivery_rows(
     conn: &Connection,
     input: &ListPartnerMessages,
 ) -> Result<Vec<PartnerMessageRow>, PartnerError> {
-    conn.prepare_cached(
+    conn.prepare_cached(&format!(
         "SELECT d.id, d.message_id, COALESCE(d.written_at, d.last_attempt_at, d.created_at) AS at, \
          m.message_type, m.source_kind, m.source_id, m.source_number, c.id, c.name, d.reason, \
          d.state, d.attempts, d.next_attempt_at, d.last_error_code, d.written_path, c.active, \
          EXISTS (SELECT 1 FROM ifc_partner_verifications v \
                  WHERE v.connection_id = c.id AND v.folder = c.destination), c.schedule, \
-         m.source_label, c.protocol, d.ack_code, d.ack_text \
+         m.source_label, c.protocol, d.ack_code, d.ack_text, {ACCEPTED} \
          FROM ifc_partner_deliveries d \
          JOIN ifc_partner_messages m ON m.id = d.message_id \
          JOIN ifc_partner_connections c ON c.id = d.connection_id \
          WHERE (?1 IS NULL OR COALESCE(d.written_at, d.last_attempt_at, d.created_at) >= ?1) \
          AND (?2 IS NULL OR c.id = ?2) \
-         ORDER BY at DESC LIMIT ?3",
-    )?
+         ORDER BY at DESC LIMIT ?3"
+    ))?
     .query_map(
         params![input.since, input.connection_id, SCAN_LIMIT],
         delivery_row,
@@ -246,7 +250,7 @@ fn delivery_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<PartnerMessageRow> 
     let waiting = if state == DeliveryState::Waiting && attempts == 0 {
         Some(wait_reason(
             row.get(15)?,
-            row.get(16)?,
+            (row.get(16)?, row.get(22)?),
             &row.get::<_, String>(17)?,
         ))
     } else {
@@ -299,11 +303,13 @@ fn delivery_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<PartnerMessageRow> 
     })
 }
 
-fn wait_reason(active: bool, verified: bool, schedule: &str) -> WaitReason {
+fn wait_reason(active: bool, (verified, accepted): (bool, bool), schedule: &str) -> WaitReason {
     if !active {
         WaitReason::Stopped
     } else if !verified {
         WaitReason::Unverified
+    } else if !accepted {
+        WaitReason::NotAccepted
     } else if schedule == "immediately" {
         WaitReason::Queued
     } else {

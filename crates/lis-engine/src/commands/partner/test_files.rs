@@ -5,8 +5,7 @@ use jiff::tz::TimeZone;
 use lis_core::UtcTimestamp;
 use lis_identity::LaboratoryProfileView;
 use lis_interfaces::partner::hl7::{
-    Coded, Observation, ObservationGroup, ObservationValue, Order, Organization, Oru, Patient,
-    Specimen,
+    Coded, Observation, ObservationGroup, ObservationValue, Organization, Oru,
 };
 use lis_interfaces::partner::{ConnectionTarget, PartnerConnectionId, PartnerMessageType};
 
@@ -114,60 +113,31 @@ fn test_oru(
             .map(|profile| profile.clia_id.clone())
             .unwrap_or_default(),
     };
-    let now = dtm(sent_at, &zone);
     let test = |code: &str, text: &str| Coded {
         code: code.to_owned(),
         text: text.to_owned(),
         loinc: None,
     };
-    Oru {
-        control_id: format!("TEST-{connection_id}"),
-        created_at: now.clone(),
-        processing_id: "T",
-        laboratory: lab.clone(),
-        receiving_facility: partner.to_owned(),
-        acknowledged: false,
-        patient: Patient {
-            identifiers: vec![(
-                "TEST-00000".to_owned(),
-                "VIBETOX".to_owned(),
-                "MR".to_owned(),
-            )],
-            family_name: "TEST".to_owned(),
-            given_names: Some("SYNTHETIC".to_owned()),
-            birth_date: "19000101".to_owned(),
-            sex: None,
-        },
-        location: None,
-        order: Order {
-            placer_order: None,
-            provider: ("0000000000".to_owned(), "TEST".to_owned(), None),
-            facility: Organization {
-                name: partner.to_owned(),
-                id: String::new(),
-            },
-            collected_at: now.clone(),
-            released_at: now.clone(),
-        },
-        groups: vec![ObservationGroup {
-            filler_order: "TEST-1".to_owned(),
-            service: test("VIBETOX-TEST", "Synthetic test message"),
+    let group = ObservationGroup {
+        filler_order: "TEST-1".to_owned(),
+        service: test("VIBETOX-TEST", "Synthetic test message"),
+        status: "F",
+        observations: vec![Observation {
+            code: test("VIBETOX-NOTE", "Note"),
+            sub_id: "1".to_owned(),
+            value: ObservationValue::Text(NOTE.to_owned()),
+            unit: None,
+            reference_range: None,
             status: "F",
-            observations: vec![Observation {
-                code: test("VIBETOX-NOTE", "Note"),
-                sub_id: "1".to_owned(),
-                value: ObservationValue::Text(NOTE.to_owned()),
-                unit: None,
-                reference_range: None,
-                status: "F",
-                performer: lab,
-            }],
+            performer: lab.clone(),
         }],
-        specimen: Specimen {
-            id: "TEST-1".to_owned(),
-            kind: ("TEST".to_owned(), "Synthetic".to_owned()),
-            collected_at: now.clone(),
-            received_at: now,
-        },
-    }
+    };
+    let now = dtm(sent_at, &zone);
+    Oru::synthetic(
+        format!("TEST-{connection_id}"),
+        &now,
+        lab,
+        partner,
+        vec![group],
+    )
 }

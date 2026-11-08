@@ -4,10 +4,11 @@
 
 use lis_core::CommandError;
 use lis_engine::{
-    ApprovePartnerMappings, ChosenPartnerFolder, CreatePartnerConnectionInput, DialogCommand,
-    DiscardPartnerMappingDraft, DraftPartnerMapping, Engine, ExportedMessageLog, FolderTestResult,
-    ListPartnerMessages, PartnerConnection, PartnerConnectionDetail, PartnerConnectionInput,
-    PartnerMappings, PartnerMessagePage, RecordPartnerDestinationCheck, ResendPartnerDelivery,
+    ApprovePartnerContract, ApprovePartnerMappings, ChosenPartnerFolder,
+    CreatePartnerConnectionInput, DialogCommand, DiscardPartnerMappingDraft, DraftPartnerContract,
+    DraftPartnerMapping, Engine, ExportedMessageLog, FolderTestResult, ListPartnerMessages,
+    PartnerConnection, PartnerConnectionDetail, PartnerConnectionInput, PartnerMappings,
+    PartnerMessagePage, RecordPartnerDestinationCheck, ResendPartnerDelivery,
     ResolveUnroutedMessage, SetPartnerConnectionActive, TestPartnerFolderInput,
     TestPartnerMllpInput, TestPartnerSftpInput, UnroutedMessage, UpdatePartnerConnectionInput,
 };
@@ -191,4 +192,28 @@ pub(crate) async fn approve_partner_mappings(
     input: ApprovePartnerMappings,
 ) -> Result<PartnerMappings, CommandError> {
     engine.approve_partner_mappings(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn draft_partner_contract(
+    engine: State<'_, Engine>,
+    input: DraftPartnerContract,
+) -> Result<PartnerConnectionDetail, CommandError> {
+    engine.draft_partner_contract(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn approve_partner_contract(
+    engine: State<'_, Engine>,
+    input: ApprovePartnerContract,
+) -> Result<PartnerConnectionDetail, CommandError> {
+    engine.approve_partner_contract(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn run_partner_acceptance_tests(
+    engine: State<'_, Engine>,
+    input: PartnerConnectionInput,
+) -> Result<PartnerConnectionDetail, CommandError> {
+    engine.run_partner_acceptance_tests(input).await
 }

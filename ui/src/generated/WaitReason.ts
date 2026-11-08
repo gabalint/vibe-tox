@@ -3,4 +3,4 @@
 /**
  * Why a message without a failed attempt is not written yet.
  */
-export type WaitReason = "stopped" | "unverified" | "scheduled" | "queued" | "impact_review" | "not_mapped";
+export type WaitReason = "stopped" | "unverified" | "not_accepted" | "scheduled" | "queued" | "impact_review" | "not_mapped";

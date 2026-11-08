@@ -23,6 +23,7 @@ use crate::m2_lab::Role;
 use crate::m3_changes::Change;
 use crate::m3_fixture::{Bench, Staff, Variant};
 use crate::m3_release_races::verified_artifact;
+use crate::partner_contract::{approve_and_test, draft_contract};
 
 const PATTERN: &str = "{accession}_r{revision}.pdf";
 pub(super) const AMENDMENT: &str = "Synthetic correction: integration error";
@@ -84,15 +85,27 @@ impl Pdfs {
             .await
             .unwrap();
         bench.sign_in(Staff::Racer).await;
-        let connection = bench
+        let id = created.connection.id;
+        bench
             .lab()
             .engine()
             .record_partner_destination_check(RecordPartnerDestinationCheck {
-                connection_id: created.connection.id,
+                connection_id: id,
                 expected_revision: created.connection.revision,
                 method: "Synthetic call-back to the clinic's IT".to_owned(),
                 self_approval: false,
             })
+            .await
+            .unwrap();
+        // An HL7 connection's tests pass only once its code mappings are approved.
+        bench.sign_in(Staff::Desk(Role::Admin)).await;
+        draft_contract(bench.lab().engine(), id).await;
+        bench.sign_in(Staff::Racer).await;
+        approve_and_test(bench.lab().engine(), id).await;
+        let connection = bench
+            .lab()
+            .engine()
+            .get_partner_connection(PartnerConnectionInput { connection_id: id })
             .await
             .unwrap();
         Self {

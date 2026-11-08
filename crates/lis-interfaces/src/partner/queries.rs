@@ -5,10 +5,12 @@ use std::collections::BTreeSet;
 use rusqlite::{Connection, OptionalExtension, params};
 use serde_json::Value;
 
+use super::acceptance::contract_summary;
 use super::connection_views::{
     ConnectionChangeView, ConnectionStatus, LastAttempt, PartnerConnection,
     PartnerConnectionDetail, PartnerVerification,
 };
+use super::contracts::partner_contract;
 use super::error::PartnerError;
 use super::mllp::NO_ACK;
 use super::model::{PartnerConnectionId, PartnerMessageType};
@@ -63,6 +65,7 @@ pub fn get_partner_connection(
         })
         .collect();
     Ok(PartnerConnectionDetail {
+        contract: partner_contract(conn, row.id)?,
         connection: connection_view(conn, row)?,
         history,
     })
@@ -177,6 +180,7 @@ fn connection_view(
         awaiting_ack,
         // The engine adds it: only it knows whether its listener listens.
         listener: None,
+        contract: contract_summary(conn, row.id)?,
         last_change: ChangeStamp {
             by,
             by_display: None,
