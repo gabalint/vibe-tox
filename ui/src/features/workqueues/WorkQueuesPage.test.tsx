@@ -83,7 +83,7 @@ describe("WorkQueuesPage (REQ-OPS-004)", () => {
   it("refreshes on request and says when the queues were read", async () => {
     const list = vi.fn(() => [REVIEW_QUEUE]);
     const { user } = renderPage(list);
-    expect(await screen.findByText("Updated 12:00 UTC")).toBeTruthy();
+    expect(await screen.findByText("Updated 12:00:00 UTC")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Refresh" }));
     await vi.waitFor(() => expect(list).toHaveBeenCalledTimes(2));
   });

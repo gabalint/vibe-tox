@@ -10,3 +10,20 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+/* While a refresh runs, the arrows turn; with reduced motion, the text alone says so. */
+[data-pending] > .icon {
+  animation: turn 0.8s linear infinite;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-pending] > .icon {
+    animation: none;
+  }
+}
