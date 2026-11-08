@@ -46,6 +46,7 @@ mod queries;
 mod queue;
 mod received;
 mod received_queries;
+mod rejections;
 mod repo;
 mod rules;
 mod settings;
@@ -111,6 +112,10 @@ pub use received::{
     EarlierRead, NewReceived, PartnerReceivedId, ReceivedOutcome, ReceivedState, WaitingMessage,
     control_id_seen, earlier_read, received_ack, record_moved, record_received, resolve_waiting,
     waiting_messages,
+};
+pub use rejections::{
+    RejectReceivedMessage, RejectionResolution, ResolvePartnerRejection, reject_received_message,
+    resolve_partner_rejection,
 };
 pub use rules::{rules_match, schedule_due};
 pub use sftp_identity::{create_sftp_identity, sealed_sftp_key, sftp_public_key};

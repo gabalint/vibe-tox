@@ -8,9 +8,10 @@ use lis_engine::{
     CreatePartnerConnectionInput, DialogCommand, DiscardPartnerMappingDraft, DraftPartnerContract,
     DraftPartnerMapping, Engine, ExportedMessageLog, FolderTestResult, ListPartnerMessages,
     PartnerConnection, PartnerConnectionDetail, PartnerConnectionInput, PartnerMappings,
-    PartnerMessagePage, RecordPartnerDestinationCheck, ResendPartnerDelivery,
-    ResolveUnroutedMessage, SetPartnerConnectionActive, TestPartnerFolderInput,
-    TestPartnerMllpInput, TestPartnerSftpInput, UnroutedMessage, UpdatePartnerConnectionInput,
+    PartnerMessagePage, RecordPartnerDestinationCheck, RejectReceivedMessage,
+    ResendPartnerDelivery, ResolvePartnerRejection, ResolveUnroutedMessage,
+    SetPartnerConnectionActive, TestPartnerFolderInput, TestPartnerMllpInput, TestPartnerSftpInput,
+    UnroutedMessage, UpdatePartnerConnectionInput,
 };
 use tauri::{AppHandle, Manager, Runtime, State};
 use tauri_plugin_dialog::DialogExt;
@@ -160,6 +161,22 @@ pub(crate) async fn resend_partner_delivery(
     input: ResendPartnerDelivery,
 ) -> Result<(), CommandError> {
     engine.resend_partner_delivery(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn reject_received_message(
+    engine: State<'_, Engine>,
+    input: RejectReceivedMessage,
+) -> Result<(), CommandError> {
+    engine.reject_received_message(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn resolve_partner_rejection(
+    engine: State<'_, Engine>,
+    input: ResolvePartnerRejection,
+) -> Result<(), CommandError> {
+    engine.resolve_partner_rejection(input).await
 }
 
 #[tauri::command]

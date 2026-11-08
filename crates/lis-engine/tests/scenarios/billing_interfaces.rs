@@ -209,7 +209,7 @@ async fn contract_call(
             .run_partner_acceptance_tests(PartnerConnectionInput { connection_id })
             .await
             .map(drop),
-        _ => return None,
+        _ => return crate::partner_follow_up::follow_up_call(engine, name).await,
     })
 }
 

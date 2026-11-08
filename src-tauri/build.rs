@@ -149,6 +149,8 @@ const APP_COMMANDS: &[&str] = &[
     "list_unrouted_partner_messages",
     "resolve_unrouted_message",
     "resend_partner_delivery",
+    "reject_received_message",
+    "resolve_partner_rejection",
     "list_partner_mappings",
     "draft_partner_mapping",
     "discard_partner_mapping_draft",

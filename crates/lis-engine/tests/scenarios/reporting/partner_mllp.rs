@@ -2,14 +2,16 @@
 //! partner's interface on the lab network (here, localhost). Without an ACK in time it waits
 //! as awaiting its acknowledgement and is sent again, the same message, until the partner
 //! accepts it (AA); its correction is not accepted (AE) and the partner's reason shows in
-//! Logs (REQ-INT-002, REQ-INT-006, REQ-RPT-012). Synthetic data only.
+//! Logs until a person resolves it (REQ-INT-002, REQ-INT-006, REQ-RPT-012). Synthetic data
+//! only.
 
 use std::sync::{Arc, Mutex};
 
+use lis_engine::ResolvePartnerRejection;
 use lis_interfaces::partner::mllp::{control_id, frame, unframe};
 use lis_interfaces::partner::{
-    AckCode, MllpAcknowledgement, MllpPartner, PartnerConnectionSettings, PartnerMessageType,
-    PartnerProtocol, Schedule, TransportOutcome,
+    AckCode, MllpAcknowledgement, MllpPartner, PartnerConnectionSettings, PartnerDeliveryId,
+    PartnerMessageRow, PartnerMessageType, PartnerProtocol, Schedule, TransportOutcome,
 };
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
@@ -130,4 +132,31 @@ async fn an_hl7_result_over_mllp_is_sent_again_until_acknowledged_and_shows_the_
         Some("Unknown provider NPI 1234567893")
     );
     assert_eq!(received.lock().unwrap().len(), 3);
+    resolve_the_rejection(&hl7, correction.delivery_id).await;
+}
+
+/// The partner's AE stays under Rejected until a person resolves it with a note.
+async fn resolve_the_rejection(hl7: &Pdfs, delivery_id: Option<PartnerDeliveryId>) {
+    let correction = |rows: Vec<PartnerMessageRow>| {
+        rows.into_iter()
+            .find(|row| row.delivery_id == delivery_id)
+            .unwrap()
+    };
+    let rejected = correction(hl7.rows().await);
+    assert_eq!(rejected.allowed_actions, ["resolve_partner_rejection"]);
+    let note = "Synthetic: the partner registered the provider; correction confirmed by phone";
+    hl7.bench
+        .lab()
+        .engine()
+        .resolve_partner_rejection(ResolvePartnerRejection {
+            received_id: None,
+            delivery_id,
+            note: note.to_owned(),
+        })
+        .await
+        .unwrap();
+    let resolved = correction(hl7.rows().await);
+    let done = resolved.rejection_resolved.unwrap();
+    assert_eq!(done.note, note);
+    assert!(resolved.allowed_actions.is_empty());
 }

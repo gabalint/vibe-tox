@@ -7,13 +7,15 @@
 //! message became, with the order it made ([`decide`]); then the file moves to Processed or
 //! Failed › year › month and the move is recorded. A file read again after a crash before
 //! its move is only moved. Messages waiting for their patient are tried again at each
-//! reading. Nothing is read while a recovery reconciliation is open. Logs carry IDs and
-//! codes, never file names, folders or content.
+//! reading. Nothing is read while a recovery reconciliation is open. Each reading's first
+//! problem, or none, is kept for the connection views ([`PartnerReadings`]). Logs carry IDs
+//! and codes, never file names, folders or content.
 
 pub(crate) mod acceptance;
 mod decide;
 mod inbox;
 mod order_input;
+mod readings;
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -30,6 +32,7 @@ use lis_store::{ArtifactDigest, Database};
 pub(crate) use self::decide::ReadFile;
 use self::inbox::Inbox;
 pub(crate) use self::inbox::candidate;
+pub(crate) use self::readings::PartnerReadings;
 use crate::engine::Engine;
 use crate::ops_worker::{Operations, locked};
 use crate::partner_delivery::{held_by_recovery, lab_zone, stamp};
@@ -62,11 +65,13 @@ pub(crate) struct PartnerIntake {
     cancel: AtomicBool,
     /// When each connection was last read.
     last_read: Mutex<HashMap<PartnerConnectionId, UtcTimestamp>>,
+    /// What each reading found, shared with the connection views.
+    readings: Arc<PartnerReadings>,
 }
 
 /// Starts the reader, whose first pass runs now. Must run inside a tokio runtime.
-pub(crate) fn start(ops: &Arc<Operations>) -> Poller {
-    Poller::start(Arc::new(PartnerIntake::new(ops)), PASS_INTERVAL)
+pub(crate) fn start(ops: &Arc<Operations>, readings: &Arc<PartnerReadings>) -> Poller {
+    Poller::start(Arc::new(PartnerIntake::new(ops, readings)), PASS_INTERVAL)
 }
 
 impl Scan for PartnerIntake {
@@ -86,11 +91,12 @@ fn worker() -> Principal {
 }
 
 impl PartnerIntake {
-    fn new(ops: &Arc<Operations>) -> Self {
+    fn new(ops: &Arc<Operations>, readings: &Arc<PartnerReadings>) -> Self {
         Self {
             ops: Arc::clone(ops),
             cancel: AtomicBool::new(false),
             last_read: Mutex::new(HashMap::new()),
+            readings: Arc::clone(readings),
         }
     }
 
@@ -135,40 +141,57 @@ impl PartnerIntake {
         let key = locked(&self.ops.key).usable().ok();
         let opened = Inbox::open(&self.ops.db, key.as_ref(), &source.destination);
         let names = opened.and_then(|mut inbox| inbox.list().map(|names| (inbox, names)));
-        match names {
+        let problem = match names {
             Ok((mut inbox, names)) => self.read_files(&mut inbox, source, &names),
             Err(code) => {
                 tracing::warn!(%connection_id, error_code = code, "incoming orders not read");
+                Some(code)
             }
-        }
+        };
+        let now = self.ops.clock.now();
+        self.readings.record(connection_id, now, problem);
         self.retry_waiting(source);
     }
 
-    fn read_files(&self, inbox: &mut Inbox, source: &IntakeSource, names: &[String]) {
+    /// Reads the files in order; the first problem, if any.
+    fn read_files(
+        &self,
+        inbox: &mut Inbox,
+        source: &IntakeSource,
+        names: &[String],
+    ) -> Option<&'static str> {
+        let mut problem = None;
         for name in names {
             if self.cancel.load(Ordering::Acquire) {
-                return;
+                break;
             }
-            self.read_file(inbox, source, name);
+            problem = problem.or(self.read_file(inbox, source, name));
         }
+        problem
     }
 
-    /// Stores, decides and moves one file.
-    fn read_file(&self, inbox: &mut Inbox, source: &IntakeSource, name: &str) {
+    /// Stores, decides and moves one file; what stopped it, if anything. A file not read,
+    /// stored or recorded stays in the input folder and is read again at the next reading.
+    fn read_file(
+        &self,
+        inbox: &mut Inbox,
+        source: &IntakeSource,
+        name: &str,
+    ) -> Option<&'static str> {
         let connection_id = source.connection_id;
         let db = &self.ops.db;
         let bytes = match inbox.read(name) {
             Ok(bytes) => bytes,
             Err(code) => {
                 tracing::warn!(%connection_id, error_code = code, "incoming file not read");
-                return;
+                return Some(code);
             }
         };
         let sha256 = match db.artifacts().put(&bytes) {
             Ok(stored) => stored.digest.to_string(),
             Err(error) => {
                 tracing::warn!(%connection_id, %error, "incoming file not stored");
-                return;
+                return Some("store_failed");
             }
         };
         let digest = sha256.clone();
@@ -188,13 +211,21 @@ impl PartnerIntake {
                 receive(db, source, file).map(|(id, outcome)| (id, outcome.failed()))
             }
         };
-        if let Some((id, failed)) = decided {
-            self.move_file(inbox, id, name, failed);
+        match decided {
+            Some((id, failed)) => self.move_file(inbox, id, name, failed),
+            None => Some("not_recorded"),
         }
     }
 
-    /// Moves the file to Processed or Failed › year › month and records where it went.
-    fn move_file(&self, inbox: &mut Inbox, id: PartnerReceivedId, name: &str, failed: bool) {
+    /// Moves the file to Processed or Failed › year › month and records where it went; the
+    /// move's problem, if it failed.
+    fn move_file(
+        &self,
+        inbox: &mut Inbox,
+        id: PartnerReceivedId,
+        name: &str,
+        failed: bool,
+    ) -> Option<&'static str> {
         let db = &self.ops.db;
         let (date, _) = stamp(self.ops.clock.now(), lab_zone(db).as_ref());
         let moved = inbox.move_out(name, failed, (&date[..4], &date[4..6]));
@@ -202,14 +233,18 @@ impl PartnerIntake {
             Ok(path) => path,
             Err(code) => {
                 tracing::warn!(received_id = %id, error_code = code, "incoming file not moved");
-                return;
+                return Some(code);
             }
         };
         let recorded = db.write_blocking(worker(), CorrelationId::generate(), move |ctx| {
             lis_interfaces::partner::record_moved(ctx, id, &path)
         });
-        if let Err(error) = recorded {
-            tracing::error!(received_id = %id, error_code = error.code().as_str(), "file move not recorded");
+        match recorded {
+            Ok(()) => None,
+            Err(error) => {
+                tracing::error!(received_id = %id, error_code = error.code().as_str(), "file move not recorded");
+                Some("not_recorded")
+            }
         }
     }
 
@@ -292,6 +327,7 @@ impl Engine {
     /// One reading of every connection due now, as the reader does every 5 seconds from
     /// start. Scenario tests drive the reader with it and the clock.
     pub async fn read_partner_orders(&self) {
-        scan_off_runtime(Arc::new(PartnerIntake::new(&self.ops))).await;
+        let intake = PartnerIntake::new(&self.ops, &self.partner_readings);
+        scan_off_runtime(Arc::new(intake)).await;
     }
 }

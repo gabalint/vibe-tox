@@ -32,7 +32,7 @@ pub enum ConnectionStatus {
     Error,
 }
 
-/// The latest attempt to write on a connection.
+/// The latest attempt to write on a connection, or to read an incoming one's folder or server.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]

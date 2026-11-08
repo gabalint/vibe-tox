@@ -266,7 +266,8 @@ pub use lis_interfaces::partner::{
     ApprovePartnerContract, ApprovePartnerMappings, DiscardPartnerMappingDraft,
     DraftPartnerContract, DraftPartnerMapping, ListPartnerMessages, PartnerConnection,
     PartnerConnectionDetail, PartnerMappings, PartnerMessagePage, RecordPartnerDestinationCheck,
-    ResendPartnerDelivery, ResolveUnroutedMessage, SetPartnerConnectionActive, UnroutedMessage,
+    RejectReceivedMessage, ResendPartnerDelivery, ResolvePartnerRejection, ResolveUnroutedMessage,
+    SetPartnerConnectionActive, UnroutedMessage,
 };
 // partner: end
 // result_files: begin

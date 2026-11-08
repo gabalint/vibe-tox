@@ -21,6 +21,8 @@
     "allow-list-unrouted-partner-messages",
     "allow-resolve-unrouted-message",
     "allow-resend-partner-delivery",
+    "allow-reject-received-message",
+    "allow-resolve-partner-rejection",
     "allow-list-partner-mappings",
     "allow-draft-partner-mapping",
     "allow-discard-partner-mapping-draft",

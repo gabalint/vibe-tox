@@ -112,6 +112,7 @@ impl Engine {
             let mut connections = self.read(&call, named_connections).await?;
             for connection in &mut connections {
                 self.partner_listeners.add_view(connection);
+                self.partner_readings.add_view(connection);
             }
             Ok(connections)
         })
@@ -139,8 +140,8 @@ impl Engine {
         Ok(self.with_listener(detail, false).await)
     }
 
-    /// The connection with its listener's state; after a change, once the listeners follow
-    /// it.
+    /// The connection with its listener's state and its latest reading; after a change, once
+    /// the listeners follow it.
     async fn with_listener(
         &self,
         mut detail: PartnerConnectionDetail,
@@ -150,6 +151,7 @@ impl Engine {
             self.listen_for_partners().await;
         }
         self.partner_listeners.add_view(&mut detail.connection);
+        self.partner_readings.add_view(&mut detail.connection);
         detail
     }
 

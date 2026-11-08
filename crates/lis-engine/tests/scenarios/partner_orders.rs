@@ -47,7 +47,7 @@ pub(super) struct Orders {
 
 impl Orders {
     /// A connection that reads: checked, with its contract approved and tests passed.
-    async fn start() -> Self {
+    pub(super) async fn start() -> Self {
         let mut orders = Self::checked().await;
         orders.connection = accept(&orders.bench, orders.connection.connection.id).await;
         orders
@@ -320,7 +320,7 @@ async fn logs_show_it_waiting(orders: &Orders) {
     assert_eq!(listed[0].waiting, 1);
 }
 
-async fn register_patient(orders: &Orders) {
+pub(super) async fn register_patient(orders: &Orders) {
     orders.bench.sign_in(Staff::Desk(Role::Accessioner)).await;
     orders
         .bench
