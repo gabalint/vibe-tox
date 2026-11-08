@@ -57,7 +57,7 @@ describe("HealthPage (REQ-OPS-008, REQ-OPS-013)", () => {
     expect(screen.queryByText("not_readable")).toBeNull();
     expect(screen.getByText("Keeping the computer awake")).toBeTruthy();
     expect(screen.getByText("WebKitGTK 2.44")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Health history" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Health history" })).toBeTruthy();
     expect(screen.queryByText(/Select a check/)).toBeNull();
     await openRow(user, "UPS");
     const panel = screen.getByRole("region", { name: "UPS" });
