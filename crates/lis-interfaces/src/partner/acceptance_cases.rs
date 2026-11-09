@@ -1,7 +1,7 @@
 //! The acceptance test cases of outgoing connections (ticket #4555 step 5a; REQ-INT-001),
 //! on synthetic data only, with nothing sent. An HL7 Results connection's cases build ORU
 //! messages with its partner and approved code mappings and read them back: header, the
-//! patient's sex code, codes and units, a censored value, no interpretation, a correction and a withdrawal, and how
+//! patient's identifier and sex code, codes and units, a censored value, no interpretation, a correction and a withdrawal, and how
 //! it travels. A file connection's case makes a file name with its pattern. Pure but for
 //! reading the mappings.
 
@@ -80,6 +80,7 @@ fn hl7_cases(
     let mut cases = vec![
         case("mappings_complete", complete),
         message.header_case(),
+        message.patient_identifier_case(),
         message.patient_sex_case(),
         message.codes_case(),
         message.censored_case(),
@@ -181,6 +182,18 @@ impl Synthetic<'_> {
         case(
             "message_header",
             problem.is_none().then_some("header_mismatch"),
+        )
+    }
+
+    /// PID-3 carries the patient's identifier, which HL7 v2.5.1 requires.
+    fn patient_identifier_case(&self) -> AcceptanceCase {
+        let found = read(&self.final_oru().encode(), |reader, segments| {
+            let pid = find(segments, "PID")?;
+            (!reader.component(pid.field(3), 1).is_empty()).then_some(())
+        });
+        case(
+            "patient_identifier",
+            found.is_none().then_some("identifier_not_sent"),
         )
     }
 

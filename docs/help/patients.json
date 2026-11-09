@@ -212,7 +212,7 @@
           "name": "Identifiers: Identifier / Assigning authority / Identifier type",
           "meaning": "Each supplied patient identifier and its issuing namespace.",
           "values": "Source-supplied identifier, authority and type, each up to 64 characters.",
-          "rules": "Adding identifiers is optional, but all three fields are required in each added row. Duplicate triples and identifiers owned by another patient are refused."
+          "rules": "Adding identifiers is optional, but all three fields are required in each added row. Duplicate triples and identifiers owned by another patient are refused. HL7 result messages carry them in PID-3, which HL7 requires: a result for a patient with no identifier waits in Interfaces › Logs until one is added."
         },
         {
           "name": "Details to register",

@@ -16,7 +16,7 @@ use lis_interfaces::partner::{
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
-use super::partner_hl7::{approve, draft_held};
+use super::partner_hl7::{add_identifier, approve, draft_held};
 use super::partner_pdfs::{AMENDMENT, Pdfs};
 
 /// What the partner read, message by message.
@@ -88,6 +88,8 @@ async fn an_hl7_result_over_mllp_is_sent_again_until_acknowledged_and_shows_the_
     let hl7 = Pdfs::start_with(settings(port)).await;
     // An MLLP connection keeps no folder.
     assert_eq!(hl7.connection.connection.folder, "");
+    // The patient has an identifier for PID-3 before release (#4676).
+    add_identifier(&hl7).await;
     hl7.release(None).await;
     hl7.deliver().await;
     draft_held(&hl7).await;

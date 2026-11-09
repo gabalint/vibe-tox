@@ -74,6 +74,9 @@ text_enum! {
         /// A test or analyte of the HL7 message has no approved code mapping, so it
         /// is held, never sent with a guessed code (REQ-INT-004). Set by the engine.
         NotMapped = "not_mapped",
+        /// The patient has no identifier for PID-3, which HL7 v2.5.1 requires: it is
+        /// held until one is added (#4676). Set by the engine.
+        NoPatientIdentifier = "no_patient_identifier",
     }
 }
 
