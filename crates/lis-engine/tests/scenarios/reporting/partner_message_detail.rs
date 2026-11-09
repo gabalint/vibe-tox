@@ -7,7 +7,7 @@ use lis_core::ErrorCode;
 use lis_engine::{GetPartnerMessage, ListPartnerMessages, PartnerMessageDetail};
 use lis_interfaces::partner::{MessageContent, MessageView, PartnerDeliveryId};
 
-use super::partner_hl7::{approve, draft_held};
+use super::partner_hl7::{approve, draft_held, identify};
 use super::partner_mllp::{partner, settings};
 use super::partner_pdfs::Pdfs;
 use crate::m2_lab::Role;
@@ -27,7 +27,7 @@ async fn detail(hl7: &Pdfs, delivery_id: PartnerDeliveryId) -> PartnerMessageDet
 async fn a_sent_hl7_result_shows_as_sent_with_its_control_id_and_attempts() {
     let (port, received) = partner(vec![None, Some("AA")]).await;
     let hl7 = Pdfs::start_with(settings(port)).await;
-    hl7.release(None).await;
+    let released = hl7.release(None).await;
     hl7.deliver().await;
     draft_held(&hl7).await;
     let delivery_id = hl7.rows().await.remove(0).delivery_id.unwrap();
@@ -37,6 +37,9 @@ async fn a_sent_hl7_result_shows_as_sent_with_its_control_id_and_attempts() {
     assert!(held.segments.is_empty() && held.control_id.is_none() && held.attempts.is_empty());
 
     approve(&hl7).await;
+    // The patient has no identifier for PID-3 (#4676): it waits until one is added.
+    hl7.deliver().await;
+    identify(&hl7, released.revision_id).await;
     hl7.deliver().await;
     hl7.bench.lab().t().advance(60);
     hl7.deliver().await;
