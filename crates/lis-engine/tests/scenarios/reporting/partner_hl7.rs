@@ -14,6 +14,7 @@ use lis_interfaces::partner::{
     PartnerConnectionSettings, PartnerMappings, PartnerMessageType, PartnerProtocol, Schedule,
     WaitReason,
 };
+use lis_reporting::ReportRevisionId;
 
 use super::partner_pdfs::{AMENDMENT, Pdfs};
 use crate::m2_lab::Role;
@@ -104,6 +105,20 @@ pub(super) async fn add_identifier(hl7: &Pdfs) -> i64 {
         .subject_revision
 }
 
+/// #4676: the patient gets an identifier after release and the impact review it opens
+/// records no impact, so a message held for PID-3 can go; the caller delivers next.
+pub(super) async fn identify(hl7: &Pdfs, revision_id: ReportRevisionId) {
+    let subject_revision = add_identifier(hl7).await;
+    hl7.deliver().await;
+    assert_eq!(hl7.rows().await[0].waiting, Some(WaitReason::ImpactReview));
+    hl7.bench
+        .assess_no_impact(
+            revision_id,
+            vec![format!("identity_changed:{subject_revision}")],
+        )
+        .await;
+}
+
 /// The drafter may not approve under the default policy; a second administrator does.
 pub(super) async fn approve(hl7: &Pdfs) {
     let current = mappings(hl7, Staff::Desk(Role::Admin)).await;
@@ -178,17 +193,9 @@ async fn an_hl7_result_waits_for_approved_codes_and_its_correction_follows() {
         hl7.rows().await[0].waiting,
         Some(WaitReason::NoPatientIdentifier)
     );
-    let subject_revision = add_identifier(&hl7).await;
-    hl7.deliver().await;
-    // The patient's record changed after release, so its impact review decides (L13);
+    // The patient's record changes after release, so its impact review decides (L13);
     // with no impact, the message goes with the identifier now recorded.
-    assert_eq!(hl7.rows().await[0].waiting, Some(WaitReason::ImpactReview));
-    hl7.bench
-        .assess_no_impact(
-            released.revision_id,
-            vec![format!("identity_changed:{subject_revision}")],
-        )
-        .await;
+    identify(&hl7, released.revision_id).await;
     hl7.deliver().await;
     let number = hl7.report().await.report_number;
     let name = format!("{number}_r1.hl7");
