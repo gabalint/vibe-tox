@@ -1,8 +1,10 @@
+import { Link } from "react-router";
 import type { DataGridColumn } from "@/components/DataGrid";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Timestamp } from "@/components/Timestamp";
 import type { PartnerMessageRow } from "@/generated/PartnerMessageRow";
 import { applicationOf, detailText, MESSAGE_TYPES, recordText, transportOf } from "../labels";
+import { handoffPath, reportPath, revisionPath } from "../paths";
 
 type FormatTime = (at: string) => string;
 type PersonText = (userId: string, display?: string) => string;
@@ -14,6 +16,27 @@ function resolvedText(row: PartnerMessageRow, formatTime: FormatTime, person: Pe
   const verb = row.errorCode === "rejected_by_person" ? "Rejected" : "Resolved";
   const who = person(done.resolved.by, done.resolved.byDisplay);
   return `${verb} by ${who}, ${formatTime(done.resolved.at)}: ${done.note}`;
+}
+
+/** The page of the record a message was made from; none for a test message or an order. */
+function recordPath({ source, sourceId }: PartnerMessageRow): string | null {
+  if (sourceId === null) return null;
+  switch (source) {
+    case "report_revision":
+      return revisionPath(sourceId);
+    case "report_withdrawal":
+      return reportPath(sourceId);
+    case "billing_handoff":
+      return handoffPath(sourceId);
+    default:
+      return null;
+  }
+}
+
+/** The record, linked to the report revision sent, the withdrawn report or the handoff. */
+function Record({ row }: { row: PartnerMessageRow }) {
+  const to = recordPath(row);
+  return to === null ? recordText(row) : <Link to={to}>{recordText(row)}</Link>;
 }
 
 /** One row of the message log: never a bare delivery claim (REQ-RPT-011). */
@@ -52,7 +75,7 @@ export function messageColumns(
     {
       id: "record",
       header: "Record",
-      cell: recordText,
+      cell: (row) => <Record row={row} />,
       sortValue: (row) => row.sourceNumber ?? 0,
       width: 170,
     },
