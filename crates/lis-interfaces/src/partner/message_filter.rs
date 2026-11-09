@@ -5,12 +5,32 @@ use super::message_queries::{
 };
 use super::model::MessageSource;
 
-/// Whether the row passes the input's view, test-message choice and search.
+/// Whether the row passes the input's view, test-message choice, selected rows and search.
 pub(super) fn kept(row: &PartnerMessageRow, input: &ListPartnerMessages) -> bool {
-    let search = input.search.as_deref().map(str::trim).unwrap_or_default();
+    let mut terms = input
+        .search
+        .as_deref()
+        .unwrap_or_default()
+        .split(',')
+        .map(str::trim)
+        .filter(|term| !term.is_empty())
+        .peekable();
     in_view(row, input.view)
         && !(input.hide_tests && row.source == MessageSource::Test)
-        && found(row, search)
+        && selected(row, &input.row_ids)
+        && (terms.peek().is_none() || terms.any(|term| found(row, term)))
+}
+
+/// Whether the row is among those selected, by its delivery's ID or else its message's.
+fn selected(row: &PartnerMessageRow, row_ids: &[String]) -> bool {
+    if row_ids.is_empty() {
+        return true;
+    }
+    let id = row
+        .delivery_id
+        .as_ref()
+        .map_or_else(|| row.message_id.to_string(), |id| id.to_string());
+    row_ids.contains(&id)
 }
 
 fn in_view(row: &PartnerMessageRow, view: MessageView) -> bool {
@@ -25,9 +45,6 @@ fn in_view(row: &PartnerMessageRow, view: MessageView) -> bool {
 /// Digits find a handoff number; other text is found in the report number or
 /// the written file's path.
 fn found(row: &PartnerMessageRow, search: &str) -> bool {
-    if search.is_empty() {
-        return true;
-    }
     if search.bytes().all(|byte| byte.is_ascii_digit()) && row.source_label.is_none() {
         return row
             .source_number
@@ -85,6 +102,7 @@ mod tests {
             view: MessageView::All,
             search: search.map(str::to_owned),
             hide_tests,
+            row_ids: Vec::new(),
         }
     }
 
@@ -104,5 +122,29 @@ mod tests {
         assert!(kept(&report, &input(Some(" a26000009 "), false)));
         assert!(kept(&handoff, &input(Some("12"), false)));
         assert!(!kept(&handoff, &input(Some("1"), false)));
+    }
+
+    #[test]
+    fn finds_the_rows_of_any_comma_separated_value() {
+        let first = row(MessageSource::ReportRevision, Some("A26000009-UR"), 1);
+        let second = row(MessageSource::ReportRevision, Some("A26000022-UR"), 1);
+        let other = row(MessageSource::ReportRevision, Some("A26000033-UR"), 1);
+        let search = input(Some("A26000009, A26000022,"), false);
+        assert!(kept(&first, &search));
+        assert!(kept(&second, &search));
+        assert!(!kept(&other, &search));
+        assert!(kept(&other, &input(Some(" , "), false)));
+    }
+
+    #[test]
+    fn keeps_only_the_selected_rows() {
+        let chosen = row(MessageSource::ReportRevision, Some("A26000009-UR"), 1);
+        let other = row(MessageSource::ReportRevision, Some("A26000022-UR"), 1);
+        let only = ListPartnerMessages {
+            row_ids: vec![chosen.message_id.to_string()],
+            ..input(None, false)
+        };
+        assert!(kept(&chosen, &only));
+        assert!(!kept(&other, &only));
     }
 }

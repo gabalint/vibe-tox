@@ -2,7 +2,7 @@
   "id": "interfaces",
   "title": "Interfaces",
   "summary": "Receive HL7 orders from a clinic's EMR and send HL7 results, report PDFs and billing handoff files to outside systems, through a folder or the partner's SFTP server, or HL7 over MLLP with a partner on the lab network; map codes between the LIS and each partner, follow every message in Logs, and decide on messages no connection matched.",
-  "reviewedOn": "2026-11-08",
+  "reviewedOn": "2026-11-09",
   "routes": [
     "/interfaces/connections",
     "/interfaces/connections/:connectionId/:tab?",
@@ -611,7 +611,7 @@
         {
           "name": "Search (Search report, handoff, file…)",
           "meaning": "Narrow the rows.",
-          "values": "Part of a report or accession number, such as A26000009, a handoff number (digits only, exact), or part of a file name or folder.",
+          "values": "Part of a report or accession number, such as A26000009, a handoff number (digits only, exact), or part of a file name or folder. Several values separated by commas, such as A26000009, A26000022, show the rows of any of them.",
           "rules": "Optional; kept in the address."
         },
         {
@@ -619,6 +619,12 @@
           "meaning": "Which rows the tab shows, with their number.",
           "values": "Failed: a write failed and is retried or given up. Rejected: an incoming order the LIS refused, its file in Failed, or a message an MLLP partner did not accept (AE or AR), until a person resolves it with Mark resolved…; then it shows only under All. Awaiting ACK: sent over MLLP and waiting for the partner's answer; it is sent again. Outcome unknown: written to a folder or uploaded to an SFTP server, which never confirm. Duplicates: an incoming order read again with the same content, which had no effect.",
           "rules": "Only MLLP partners answer; a folder or SFTP server never does. The tab is part of the address."
+        },
+        {
+          "name": "Check column (Select all rows)",
+          "meaning": "The rows to export.",
+          "values": "Click a row's check box or press Space on it; the header's check box selects or clears every row shown. The bar above the list says how many are selected; Clear unselects them.",
+          "rules": "Checking a row does not open it. Rows that a tab, filter or search no longer shows are unselected, and the bar says so."
         },
         {
           "name": "Time, Dir., Connection, Message, Record",
@@ -665,8 +671,8 @@
           "result": "It leaves the Rejected tab and stays under All; Details end with Resolved by <person>, <time>: <note>. Nothing is sent and nothing changes at the partner. A rejection is resolved once. Recorded in the audit trail."
         },
         {
-          "name": "Export CSV",
-          "does": "Saves the rows shown, with the current tab and filters.",
+          "name": "Export CSV / Export N selected",
+          "does": "With no row checked, Export CSV saves the rows shown, with the current tab and filters. With rows checked, the button reads Export N selected, such as Export 3 selected, and saves only those rows.",
           "availableWhen": "At least one row is shown and the Downloads folder is available.",
           "result": "An interface-log-<date>.csv file in your Downloads folder, with codes as stored. The export is recorded in the audit trail."
         },
@@ -819,6 +825,7 @@
     "crates/lis-interfaces/src/partner/messages.rs",
     "crates/lis-interfaces/src/partner/delivery.rs",
     "crates/lis-interfaces/src/partner/message_queries.rs",
+    "crates/lis-interfaces/src/partner/message_filter.rs",
     "crates/lis-interfaces/src/partner/message_repo.rs",
     "crates/lis-interfaces/src/partner/unrouted_queries.rs",
     "crates/lis-engine/src/commands/partner/routing.rs",

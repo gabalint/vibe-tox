@@ -166,6 +166,7 @@ async fn log_rows(orders: &Orders) -> Vec<PartnerMessageRow> {
         view: MessageView::All,
         search: None,
         hide_tests: false,
+        row_ids: Vec::new(),
     };
     let engine = orders.bench.lab().engine();
     engine.list_partner_messages(input).await.unwrap().rows

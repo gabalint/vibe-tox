@@ -10,10 +10,16 @@ export type ListPartnerMessages = {
  */
 since?: string, connectionId?: string, view: MessageView, 
 /**
- * A handoff number, a report or accession number, or part of a file name.
+ * A handoff number, a report or accession number, or part of a file name; several
+ * separated by commas find the rows of any of them.
  */
 search?: string, 
 /**
  * Leaves out the synthetic test messages of Send test message.
  */
-hideTests?: boolean, };
+hideTests?: boolean, 
+/**
+ * Only these rows, by their delivery's ID, or the message's ID for a row without a
+ * delivery: the rows a person selected for Export. Every row when empty.
+ */
+rowIds?: Array<string>, };

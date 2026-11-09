@@ -265,6 +265,7 @@ fn all() -> ListPartnerMessages {
         view: MessageView::All,
         search: None,
         hide_tests: false,
+        row_ids: Vec::new(),
     }
 }
 

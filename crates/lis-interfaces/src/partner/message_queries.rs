@@ -91,7 +91,8 @@ pub struct ListPartnerMessages {
     #[ts(optional)]
     pub connection_id: Option<PartnerConnectionId>,
     pub view: MessageView,
-    /// A handoff number, a report or accession number, or part of a file name.
+    /// A handoff number, a report or accession number, or part of a file name; several
+    /// separated by commas find the rows of any of them.
     #[serde(default)]
     #[ts(optional)]
     pub search: Option<String>,
@@ -99,6 +100,11 @@ pub struct ListPartnerMessages {
     #[serde(default)]
     #[ts(as = "Option<_>", optional)]
     pub hide_tests: bool,
+    /// Only these rows, by their delivery's ID, or the message's ID for a row without a
+    /// delivery: the rows a person selected for Export. Every row when empty.
+    #[serde(default)]
+    #[ts(as = "Option<_>", optional)]
+    pub row_ids: Vec<String>,
 }
 
 /// A connection named in a row.

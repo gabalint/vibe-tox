@@ -1,4 +1,4 @@
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { Button } from "@/components/Button";
 import { Checkbox } from "@/components/Checkbox";
@@ -105,7 +105,8 @@ function exportView(tab: TabId, outcome: string): MessageView {
  * delivery claim. Period, connection, direction, outcome, Show test messages (off: the engine
  * leaves test messages out, tab counts included, #4679) and search sit in one row; the tabs
  * below count what they hold. Filters stay in the URL, the tab in the path. Export CSV saves
- * the rows shown to the Downloads folder; it is audited.
+ * the rows shown to the Downloads folder, or Export N selected only the rows checked (#4682);
+ * it is audited. The search takes several values separated by commas.
  */
 export function LogsPage() {
   const toast = useToast();
@@ -142,6 +143,7 @@ export function LogsPage() {
     EXPORT_MESSAGES,
     { invalidates: [] },
   );
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const visible = (messages.data?.rows ?? []).filter(
     (row) => inDirection(row, direction) && (outcome === "all" || row.transport === outcome),
   );
@@ -153,9 +155,14 @@ export function LogsPage() {
       else next.set(key, value);
       return next;
     });
+  // The rows checked, or with none the rows shown.
+  const exported: ListPartnerMessages =
+    selectedIds.size > 0
+      ? { ...input, rowIds: [...selectedIds] }
+      : { ...input, view: exportView(tab, outcome) };
   const runExport = () =>
     exportLog.mutate(
-      { input: { ...input, view: exportView(tab, outcome) } },
+      { input: exported },
       {
         onSuccess: (file) =>
           toast.show({
@@ -215,14 +222,14 @@ export function LogsPage() {
         </Checkbox>
         <div className={styles.search}>
           <FindField
-            label="Search by report number, handoff number or file name"
+            label="Search by report number, handoff number or file name; separate several with commas"
             placeholder="Search report, handoff, file…"
             value={search}
             onChange={setSearch}
           />
         </div>
         <Button isDisabled={shown.length === 0} isPending={exportLog.isPending} onPress={runExport}>
-          Export CSV
+          {selectedIds.size > 0 ? `Export ${selectedIds.size} selected` : "Export CSV"}
         </Button>
       </div>
       {exportLog.error && <ErrorState title="Not exported" error={exportLog.error} />}
@@ -237,7 +244,11 @@ export function LogsPage() {
         }))}
         selectedId={tab}
       >
-        <MessagesGrid query={messages} rows={shown} />
+        <MessagesGrid
+          query={messages}
+          rows={shown}
+          selection={{ selectedIds, onChange: setSelectedIds }}
+        />
       </Tabs>
     </Page>
   );

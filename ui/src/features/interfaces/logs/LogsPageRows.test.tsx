@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockCommands } from "@/lib/test/ipc";
 import { mockGridLayout } from "@/lib/test/layout";
@@ -54,5 +54,34 @@ describe("Logs rows (tickets #4680, #4679, #4682)", () => {
     expect(screen.getByRole("gridcell", { name: "Test" })).toBeTruthy();
     const [args] = list.mock.calls.at(-1) as unknown as [{ input: { hideTests: boolean } }];
     expect(args.input.hideTests).toBe(false);
+  });
+
+  it("exports only the rows checked, and the rows shown when none is", async () => {
+    const exported = vi.fn(() => ({ fileName: "interface-log.csv", folder: "downloads", rows: 2 }));
+    const { user } = renderPage(() => ({ rows: [WRITTEN, CORRECTION], more: false }), {
+      export_partner_messages: exported,
+    });
+    await user.click(await screen.findByRole("button", { name: "Export CSV" }));
+    await waitFor(() => expect(exported).toHaveBeenCalledTimes(1));
+    const [all] = exported.mock.calls.at(-1) as unknown as [{ input: { rowIds?: string[] } }];
+    expect(all.input.rowIds).toBeUndefined();
+    await user.click(screen.getByRole("columnheader", { name: "Select all rows" }));
+    await user.click(await screen.findByRole("button", { name: "Export 2 selected" }));
+    await waitFor(() => expect(exported).toHaveBeenCalledTimes(2));
+    const [checked] = exported.mock.calls.at(-1) as unknown as [{ input: { rowIds: string[] } }];
+    expect(checked.input.rowIds.sort()).toEqual([WRITTEN.deliveryId, CORRECTION.deliveryId].sort());
+  });
+
+  it("passes several comma-separated values to the engine's search", async () => {
+    const list = vi.fn(() => ({ rows: [CORRECTION], more: false }));
+    const { user } = renderPage(list);
+    await user.type(
+      await screen.findByRole("searchbox", { name: /Search by report number/ }),
+      "A26000005, A26000009",
+    );
+    await waitFor(() => {
+      const [args] = list.mock.calls.at(-1) as unknown as [{ input: { search?: string } }];
+      expect(args.input.search).toBe("A26000005, A26000009");
+    });
   });
 });

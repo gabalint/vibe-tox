@@ -303,6 +303,7 @@ async fn logs_show_it_waiting(orders: &Orders) {
             view: MessageView::All,
             search: None,
             hide_tests: false,
+            row_ids: Vec::new(),
         })
         .await
         .unwrap();
