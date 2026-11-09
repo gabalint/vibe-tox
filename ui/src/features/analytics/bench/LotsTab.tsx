@@ -20,6 +20,7 @@ import { LotPanel } from "./LotPanel";
 import { RegisterLotDialog } from "./RegisterLotDialog";
 import { WithdrawLotDialog } from "./WithdrawLotDialog";
 
+// No fixed widths: the columns share the grid's width equally.
 const COLUMNS: readonly DataGridColumn<LotView>[] = [
   {
     id: "lot",
@@ -27,7 +28,6 @@ const COLUMNS: readonly DataGridColumn<LotView>[] = [
     identifier: true,
     cell: (row) => row.lotNumber,
     sortValue: (row) => row.lotNumber,
-    width: 140,
   },
   { id: "product", header: "Product", cell: (row) => row.productName },
   {
@@ -35,16 +35,14 @@ const COLUMNS: readonly DataGridColumn<LotView>[] = [
     header: "Material",
     cell: (row) => labelOf(MATERIAL_KINDS, row.materialKind),
     sortValue: (row) => row.materialKind,
-    width: 150,
   },
-  { id: "level", header: "Level", cell: (row) => row.levelText ?? "—", width: 120 },
-  { id: "sample", header: "Sample label", cell: (row) => row.sampleLabel ?? "—", width: 140 },
+  { id: "level", header: "Level", cell: (row) => row.levelText ?? "—" },
+  { id: "sample", header: "Sample label", cell: (row) => row.sampleLabel ?? "—" },
   {
     id: "expires",
     header: "Expires",
     cell: (row) => row.expiresOn,
     sortValue: (row) => row.expiresOn,
-    width: 120,
   },
   {
     id: "status",
@@ -53,7 +51,6 @@ const COLUMNS: readonly DataGridColumn<LotView>[] = [
       const status = lotStatus(row);
       return <StatusBadge tone={status.tone}>{status.label}</StatusBadge>;
     },
-    width: 140,
   },
 ];
 
