@@ -198,8 +198,8 @@ export function LogsPage() {
         />
         <div className={styles.search}>
           <FindField
-            label="Search by handoff number or file name"
-            placeholder="Search handoff, file…"
+            label="Search by report number, handoff number or file name"
+            placeholder="Search report, handoff, file…"
             value={search}
             onChange={setSearch}
           />

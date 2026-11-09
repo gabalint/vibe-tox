@@ -597,9 +597,9 @@
           "rules": "Combines with the tab; the tabs count what the other filters leave."
         },
         {
-          "name": "Search",
+          "name": "Search (Search report, handoff, file…)",
           "meaning": "Narrow the rows.",
-          "values": "A handoff number (digits only, exact), or part of a report or accession number, file name or folder.",
+          "values": "Part of a report or accession number, such as A26000009, a handoff number (digits only, exact), or part of a file name or folder.",
           "rules": "Optional; kept in the address."
         },
         {

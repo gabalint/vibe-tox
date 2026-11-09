@@ -46,7 +46,8 @@ export function messageColumns(
       id: "message",
       header: "Message",
       cell: (row) => MESSAGE_TYPES[row.messageType],
-      width: 130,
+      // Fits the longest type, HL7 Results (ORU^R01).
+      width: 190,
     },
     {
       id: "record",
