@@ -76,6 +76,8 @@ async fn a_sent_hl7_result_shows_as_sent_with_its_control_id_and_attempts() {
         connection_id: None,
         view: MessageView::All,
         search: Some(delivery_id.to_string().to_uppercase()),
+        hide_tests: false,
+        row_ids: Vec::new(),
     };
     let page = hl7
         .bench
