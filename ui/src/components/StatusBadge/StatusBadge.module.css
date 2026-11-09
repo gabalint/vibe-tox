@@ -20,12 +20,7 @@
   flex: none;
 }
 
-/* Plain text with a muted icon. */
-.badge[data-tone="neutral"] {
-  border-color: transparent;
-  background: transparent;
-}
-
+/* A quiet gray tint and border, with a muted icon. */
 .badge[data-tone="neutral"] .icon {
   color: var(--color-text-muted);
 }

@@ -282,7 +282,7 @@ The accent is blue because blue carries no hazard meaning in medical alarm and s
 
 | Tone | Means | Badge | Values | Examples |
 | --- | --- | --- | --- | --- |
-| `neutral` | Routine, finished or inactive | Plain text with a muted icon; no fill or border | Text `#3c4550` | Active, Approved, Enabled, Reviewed, Final, Current, Superseded, Retired, Withdrawn, Rejected, Closed |
+| `neutral` | Routine, finished or inactive | Quiet gray tint and border with a muted icon | Fill `#eceef2`, border `#6a7484`, text `#3c4550` | Active, Approved, Enabled, Reviewed, Final, Current, Superseded, Retired, Withdrawn, Rejected, Closed |
 | `info` | The system is working or waiting; informational notices | Quiet tint | Fill `#edf1f6`, border `#7d8ca1`, text `#3a4b61` | Queued, Rendering, Received |
 | `warning` | A person needs to act, but nothing is blocked yet | Tint | Fill `#fff1c7`, border `#b07800`, text `#6b4500` | Draft awaiting approval, Needs a decision, Review out of date, Partial, Not connected |
 | `hold` | A hold stops release until someone resolves it | Solid | Fill `#9c1f6e` with white text; alert tint `#f8e8f3` with text `#7d1858` | Identity hold, QC hold, Clarification hold |
