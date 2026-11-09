@@ -178,8 +178,9 @@ impl Engine {
     }
 }
 
-/// The log page, with report revisions that wait on their impact review saying so (L13):
-/// the interfaces module does not know reports.
+/// The log page, with report revisions that wait on their impact review saying so (L13),
+/// and HL7 messages held for a code mapping or a patient identifier: the interfaces module
+/// does not know reports.
 fn log_page(
     conn: &rusqlite::Connection,
     input: &ListPartnerMessages,
@@ -196,8 +197,8 @@ fn log_page(
         }
         if impact_pause(conn, row, &mut paused)? {
             row.waiting = Some(WaitReason::ImpactReview);
-        } else if !super::mappings::missing_for(conn, row)?.is_empty() {
-            row.waiting = Some(WaitReason::NotMapped);
+        } else if let Some(held) = super::mappings::hold_reason(conn, row)? {
+            row.waiting = Some(held);
         }
     }
     let resolved = page

@@ -26,6 +26,7 @@ mod error;
 pub mod hl7;
 pub mod hl7_order;
 mod hl7_read;
+mod hl7_sex;
 mod intake_model;
 mod intake_settings;
 mod intake_sources;
