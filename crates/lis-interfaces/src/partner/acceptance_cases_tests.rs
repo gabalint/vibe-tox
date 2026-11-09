@@ -61,6 +61,7 @@ fn an_hl7_connection_with_complete_mappings_passes_every_case() {
         [
             "mappings_complete",
             "message_header",
+            "patient_sex",
             "mapped_codes",
             "censored_value",
             "correction",
@@ -79,7 +80,7 @@ fn missing_mappings_or_units_fail_and_say_why() {
         ("mappings_complete", Some("no_approved_mappings"))
     );
     assert_eq!(
-        problems(&none)[2],
+        problems(&none)[3],
         ("mapped_codes", Some("no_approved_mappings"))
     );
     let unitless = ApprovedMappings {

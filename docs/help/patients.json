@@ -2,7 +2,7 @@
   "id": "patients",
   "title": "Patients and registration",
   "summary": "Find a patient, review identifying details and check possible matches before registration.",
-  "reviewedOn": "2026-11-03",
+  "reviewedOn": "2026-11-09",
   "routes": ["/patients", "/patients/register", "/patients/:subjectId"],
   "sections": [
     {
@@ -200,7 +200,7 @@
           "name": "Administrative sex",
           "meaning": "Administrative sex code exactly as supplied.",
           "values": "Free text, up to 64 characters; no fixed choice list.",
-          "rules": "Optional; do not infer from name, appearance or other records."
+          "rules": "Optional; do not infer from name, appearance or other records. The record keeps the text as typed. HL7 result messages send it in PID-8 as its HL7 table 0001 code: Female or F as F, Male or M as M, and likewise Ambiguous (A), Not applicable (N), Other (O) and Unknown (U), in any letter case; any other text is sent as U, and none recorded leaves PID-8 empty."
         },
         {
           "name": "Source of these details",

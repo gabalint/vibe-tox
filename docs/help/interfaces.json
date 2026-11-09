@@ -2,7 +2,7 @@
   "id": "interfaces",
   "title": "Interfaces",
   "summary": "Receive HL7 orders from a clinic's EMR and send HL7 results, report PDFs and billing handoff files to outside systems, through a folder or the partner's SFTP server, or HL7 over MLLP with a partner on the lab network; map codes between the LIS and each partner, follow every message in Logs, and decide on messages no connection matched.",
-  "reviewedOn": "2026-11-08",
+  "reviewedOn": "2026-11-09",
   "routes": [
     "/interfaces/connections",
     "/interfaces/connections/:connectionId/:tab?",
@@ -340,7 +340,7 @@
         {
           "name": "Interface contract: In force, Draft, Acceptance tests",
           "meaning": "What the partner and the laboratory agreed for this connection (REQ-INT-001): the version in force with who approved it, when and why; the next version drafted and waiting for approval; and the latest run of the acceptance tests, each case with ✓ or ✗ and why it failed.",
-          "values": "Acceptance tests passed (the latest run, for the connection as it is now, passed), failed, out of date (the contract, the code mappings or the settings that shape the messages changed since), or not run. HL7 Results cases: code mappings approved, each analyte with a UCUM unit; the message header (partner, ORU^R01, 2.5.1); the partner's codes and unit sent; a censored value sent as SN with no interpretation; a correction with status C; a withdrawal with status W; over MLLP, the partner asked to answer each message. File connections: the file name pattern makes a valid name. HL7 Orders cases: a mapped order code makes an order in Received status; an exact replay makes no second order; the same message ID with changed content is held; an unknown test code and another sending facility are refused; an unknown patient waits or is refused, as set; over MLLP, each with the acknowledgement it should get (AA, AE or AR).",
+          "values": "Acceptance tests passed (the latest run, for the connection as it is now, passed), failed, out of date (the contract, the code mappings or the settings that shape the messages changed since), or not run. HL7 Results cases: code mappings approved, each analyte with a UCUM unit; the message header (partner, ORU^R01, 2.5.1); the patient's sex sent as an HL7 table 0001 code; the partner's codes and unit sent; a censored value sent as SN with no interpretation; a correction with status C; a withdrawal with status W; over MLLP, the partner asked to answer each message. File connections: the file name pattern makes a valid name. HL7 Orders cases: a mapped order code makes an order in Received status; an exact replay makes no second order; the same message ID with changed content is held; an unknown test code and another sending facility are refused; an unknown patient waits or is refused, as set; over MLLP, each with the acknowledgement it should get (AA, AE or AR).",
           "rules": "Patient data waits until a version is approved and the latest run passed. The tests use synthetic messages, the connection's settings and its approved code mappings; nothing is sent, and the order tests register a synthetic patient and provider and make orders in a transaction that is undone, so nothing they make is kept. They prove the LIS's side only: what the partner does with the messages is qualified with the partner."
         },
         {
