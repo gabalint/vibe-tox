@@ -14,6 +14,7 @@ import {
   type WorkQueueSummary,
 } from "./contract";
 import { itemTarget } from "./itemPath";
+import { LOTS_EXPIRING_SOON, useLotColumns } from "./lotColumns";
 import styles from "./workqueues.module.css";
 
 /** Items of different kinds may share an identifier. */
@@ -84,6 +85,8 @@ export function WorkQueuePage() {
   // caller's) is named generically.
   const label = summary?.label ?? "Work queue";
   const items = useWorkQueueItems(queue, ITEM_LIMIT);
+  const isLots = queue === LOTS_EXPIRING_SOON;
+  const lotColumns = useLotColumns(isLots);
   // Items of one queue may open different screens, so each opens at its own address; the
   // sequence holds record IDs, as the record's screen knows them.
   const openPage = useOpenRecordPage((path) => path, label);
@@ -115,7 +118,7 @@ export function WorkQueuePage() {
         query={items}
         total={total}
         label={`Items in ${label}`}
-        columns={COLUMNS}
+        columns={isLots ? lotColumns : COLUMNS}
         getRowId={rowId}
         onOpen={open}
         controls={<RefreshControl query={refresh} />}

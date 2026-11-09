@@ -8,7 +8,9 @@
 mod billing_items;
 mod catalog;
 mod interface_items;
+mod lot_items;
 mod ops_items;
+mod order;
 mod owner_items;
 mod reporting_items;
 mod review_items;
@@ -19,6 +21,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use self::catalog::{QUEUES, QueueDefinition, queue_definition};
+use self::order::sort_items;
 use crate::engine::Engine;
 use crate::pipeline::{Failure, ModuleError, access, domain_failure};
 use crate::registry::{Access, CommandSpec, spec};
@@ -173,8 +176,8 @@ impl Engine {
     /// Lists only queues whose owner capability the caller currently holds.
     pub async fn list_work_queues(&self) -> Result<Vec<WorkQueueSummary>, CommandError> {
         self.run(&LIST_WORK_QUEUES, |call| async move {
-            let principal = call.principal.clone();
-            self.read(&call, move |conn| summaries(conn, &principal))
+            let (principal, now) = (call.principal.clone(), self.clock.now());
+            self.read(&call, move |conn| summaries(conn, &principal, now))
                 .await
         })
         .await
@@ -199,7 +202,7 @@ impl Engine {
             let capability = definition.capability;
             self.write(&call, move |ctx| ctx.require(capability))
                 .await?;
-            let principal = call.principal.clone();
+            let (principal, now) = (call.principal.clone(), self.clock.now());
             let page = self
                 .read(&call, move |conn| {
                     load_page(
@@ -208,7 +211,10 @@ impl Engine {
                         input.limit,
                         u32::MAX,
                         input.after.as_ref(),
-                        &principal,
+                        Reader {
+                            principal: &principal,
+                            now,
+                        },
                     )
                 })
                 .await?;
@@ -227,9 +233,17 @@ impl Engine {
     }
 }
 
+/// Who reads a queue, and when: time-based queues select at the engine's clock.
+#[derive(Clone, Copy)]
+struct Reader<'a> {
+    principal: &'a Principal,
+    now: UtcTimestamp,
+}
+
 fn summaries(
     conn: &rusqlite::Connection,
     principal: &Principal,
+    now: UtcTimestamp,
 ) -> Result<Vec<WorkQueueSummary>, WorkQueueError> {
     let mut result = Vec::new();
     for definition in QUEUES {
@@ -246,7 +260,7 @@ fn summaries(
                 MAX_ITEMS,
                 MAX_ITEMS + 1,
                 None,
-                principal,
+                Reader { principal, now },
             )?)
         };
         result.push(WorkQueueSummary {
@@ -272,7 +286,7 @@ fn load_page(
     limit: u32,
     source_limit: u32,
     after: Option<&WorkQueueCursor>,
-    principal: &Principal,
+    reader: Reader<'_>,
 ) -> Result<WorkQueuePage, WorkQueueError> {
     if matches!(
         definition.code,
@@ -280,7 +294,7 @@ fn load_page(
     ) {
         return review_items::page(conn, definition, limit, after);
     }
-    let items = load_items(conn, definition, limit, source_limit, after, principal)?;
+    let items = load_items(conn, definition, limit, source_limit, after, reader)?;
     let next = items
         .last()
         .filter(|item| item.has_more == Some(true))
@@ -302,7 +316,7 @@ fn load_items(
     limit: u32,
     source_limit: u32,
     after: Option<&WorkQueueCursor>,
-    principal: &Principal,
+    reader: Reader<'_>,
 ) -> Result<Vec<WorkQueueItem>, WorkQueueError> {
     let query_limit = source_limit;
     let mut items = match definition.code {
@@ -318,6 +332,7 @@ fn load_items(
         "label_failures" => owner_items::label_items(conn, definition, query_limit)?,
         "qc_review" => owner_items::qc_items(conn, definition, query_limit)?,
         "open_deviations" => owner_items::deviation_items(conn, definition, query_limit)?,
+        "lots_expiring_soon" => lot_items::expiring_lot_items(conn, definition, reader.now)?,
         "import_quarantine" | "performed_not_ordered" => {
             owner_items::exception_items(conn, definition, query_limit)?
         }
@@ -325,7 +340,9 @@ fn load_items(
         | "listening_gaps"
         | "recovery_reconciliation"
         | "version_acceptance"
-        | "results_expected" => ops_items::ops_items(conn, definition, query_limit, principal)?,
+        | "results_expected" => {
+            ops_items::ops_items(conn, definition, query_limit, reader.principal)?
+        }
         "unrouted_messages" | "interface_failures" => {
             interface_items::interface_items(conn, definition, query_limit)?
         }
@@ -341,36 +358,6 @@ fn load_items(
         }
     }
     Ok(items)
-}
-
-fn sort_items(items: &mut Vec<WorkQueueItem>, limit: u32, after: Option<&WorkQueueCursor>) {
-    items.sort_by(|left, right| {
-        (left.since, &left.item_kind, &left.item_id).cmp(&(
-            right.since,
-            &right.item_kind,
-            &right.item_id,
-        ))
-    });
-    // Multiple pending owner events can lead to the same record workspace.
-    // Keep one navigation task per record, including its earliest outstanding time.
-    let mut seen = std::collections::BTreeSet::new();
-    items.retain(|item| seen.insert((item.item_kind.clone(), item.item_id.clone())));
-    if let Some(cursor) = after {
-        items.retain(|item| {
-            (item.since, item.item_kind.as_str(), item.item_id.as_str())
-                > (
-                    cursor.since,
-                    cursor.item_kind.as_str(),
-                    cursor.item_id.as_str(),
-                )
-        });
-    }
-    let limit = limit as usize;
-    let has_more = items.len() > limit;
-    items.truncate(limit);
-    for item in items {
-        item.has_more = Some(has_more);
-    }
 }
 
 fn validation(field: &str, code: &str, message: &str) -> Failure {

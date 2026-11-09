@@ -83,6 +83,8 @@ export const CONTROL_LOT: LotView = {
   sampleLabel: "QC-L1",
   expiresOn: "2027-01-31",
   expired: false,
+  daysLeft: 120,
+  expiringSoon: false,
   state: "active",
   recordedAt: "2026-10-12T07:00:00Z",
   revision: 1,
@@ -98,6 +100,7 @@ export const REAGENT_LOT: LotView = {
   sampleLabel: null,
   expiresOn: "2026-09-30",
   expired: true,
+  daysLeft: null,
 };
 
 export const RUN_ID = "00000000-0000-7000-8000-000000004001";

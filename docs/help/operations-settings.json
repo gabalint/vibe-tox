@@ -2,7 +2,7 @@
   "id": "operations-settings",
   "title": "Operations settings",
   "summary": "Review versioned backup, health, sign-in and separation-of-duties policies.",
-  "reviewedOn": "2026-10-15",
+  "reviewedOn": "2026-11-09",
   "routes": ["/operations/settings"],
   "sections": [
     {

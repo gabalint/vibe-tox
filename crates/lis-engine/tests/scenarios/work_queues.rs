@@ -1,9 +1,11 @@
 //! Operational work queues through the real engine (REQ-OPS-004,
 //! REQ-RES-004/005). Synthetic identifiers and accession numbers only.
 
-use lis_analytical::{QcOutcome, RevisionIndicator};
-use lis_core::{CommandError, ErrorCode, UserId};
-use lis_engine::{Engine, ListWorkQueueItemsInput, PlaceClarificationHoldInput, WorkQueueItem};
+use lis_analytical::{MaterialKind, QcOutcome, RegisterLotInput, RevisionIndicator};
+use lis_core::{Clock, CommandError, ErrorCode, UserId};
+use lis_engine::{
+    Engine, ListLotsInput, ListWorkQueueItemsInput, PlaceClarificationHoldInput, WorkQueueItem,
+};
 
 use crate::m2_lab::{Lab, Role};
 use crate::m2_steps::{JOURNEY, UNIT_MISMATCH, message};
@@ -203,4 +205,57 @@ async fn positions_awaiting_results_are_named_by_their_run_and_position() {
         let (named_run, position) = row.item_id.split_once(':').unwrap();
         assert_eq!((named_run, position.len()), (run.as_str(), run.len()));
     }
+}
+
+// #4557: an active lot inside the laboratory's warning period (14 days by default) is listed
+// and marked in the lot list; one beyond it is not.
+#[tokio::test]
+async fn lots_expiring_soon_lists_active_lots_inside_the_warning_period() {
+    let lab = Lab::start(RevisionIndicator::None).await;
+    lab.sign_in(Role::Quality).await;
+    let today: jiff::civil::Date = lab.t().clock.now().to_string()[..10].parse().unwrap();
+    let mut registered = Vec::new();
+    for (number, days) in [("LOT-SOON-3", 3), ("LOT-LATE-15", 15)] {
+        let expires = today.checked_add(jiff::Span::new().days(days)).unwrap();
+        let lot = lab
+            .engine()
+            .register_lot(RegisterLotInput {
+                material_kind: MaterialKind::Control,
+                product_name: "Synthetic control".to_owned(),
+                lot_number: number.to_owned(),
+                level_text: None,
+                sample_label: Some(format!("QC-{number}")),
+                expires_on: expires.to_string(),
+            })
+            .await
+            .unwrap();
+        registered.push(lot.lot_id);
+    }
+
+    let rows = items(&lab, "lots_expiring_soon").await;
+    assert_eq!(rows.len(), 1, "{rows:?}");
+    assert_eq!(
+        (
+            rows[0].item_kind.as_str(),
+            rows[0].item_id.clone(),
+            rows[0].title.as_str()
+        ),
+        ("lot", registered[0].to_string(), "LOT-SOON-3")
+    );
+    assert_eq!(rows[0].state_label.as_deref(), Some("Expires in 3 days"));
+    assert_eq!(rows[0].next_action, "Register a new lot");
+
+    let lots = lab
+        .engine()
+        .list_lots(ListLotsInput { active_only: true })
+        .await
+        .unwrap();
+    let marked = |id| {
+        lots.iter()
+            .find(|lot| lot.lot_id == id)
+            .unwrap()
+            .expiring_soon
+    };
+    assert!(marked(registered[0]));
+    assert!(!marked(registered[1]));
 }

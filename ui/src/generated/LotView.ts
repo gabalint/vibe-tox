@@ -39,6 +39,16 @@ expiresOn: string,
  */
 expired: boolean, 
 /**
+ * Whole days from today (UTC) to the expiry date, 0 on the last day of use; `None` once
+ * expired.
+ */
+daysLeft: number | null, 
+/**
+ * An active lot within the laboratory's lot expiry warning period. Only lot lists apply
+ * the period; other reads report `false`.
+ */
+expiringSoon: boolean, 
+/**
  * Active or withdrawn.
  */
 state: LotState, 

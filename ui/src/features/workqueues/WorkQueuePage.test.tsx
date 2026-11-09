@@ -5,6 +5,7 @@ import { openRow, openRowWithEnter } from "@/lib/test/grid";
 import { engineError, mockCommands } from "@/lib/test/ipc";
 import { mockGridLayout } from "@/lib/test/layout";
 import { renderRoutes } from "@/lib/test/router";
+import { CONTROL_LOT } from "../analytics/testData";
 import { item, LABEL_QUEUE, NOW, REVIEW_QUEUE } from "./testData";
 import { WorkQueuePage } from "./WorkQueuePage";
 
@@ -220,5 +221,43 @@ describe("WorkQueuePage (REQ-OPS-004)", () => {
       Promise.reject(engineError("forbidden", "This queue needs the review results capability.")),
     );
     expect(await screen.findByText("This queue needs the review results capability.")).toBeTruthy();
+  });
+
+  it("shows a lot expiring soon with its lot's columns and opens it in Bench setup", async () => {
+    const lot = { ...CONTROL_LOT, daysLeft: 3, expiringSoon: true, expiresOn: "2026-10-16" };
+    mockCommands({
+      list_work_queues: () => [
+        { ...REVIEW_QUEUE, queue: "lots_expiring_soon", label: "Lots expiring soon" },
+      ],
+      list_work_queue_items: () => ({
+        items: [
+          item({
+            queue: "lots_expiring_soon",
+            itemKind: "lot",
+            itemId: lot.lotId,
+            title: lot.lotNumber,
+            state: "expiring_soon",
+            stateLabel: "Expires in 3 days",
+            nextAction: "Register a new lot",
+          }),
+        ],
+        next: null,
+        scanned: 0,
+      }),
+      list_lots: () => [lot],
+    });
+    const { user } = renderRoutes(
+      [{ path: "/work-queues/:queue", element: <WorkQueuePage /> }],
+      "/work-queues/lots_expiring_soon",
+    );
+    expect(await screen.findByRole("gridcell", { name: "Synthetic control" })).toBeTruthy();
+    for (const name of ["CTL-001", "Control", "QC-L1", "2026-10-16", "Expires in 3 days"]) {
+      expect(screen.getByRole("gridcell", { name })).toBeTruthy();
+    }
+    expect(screen.getByRole("gridcell", { name: "Register a new lot" })).toBeTruthy();
+    await openRow(user, "Synthetic control");
+    expect(
+      await screen.findByText(`Navigated to /bench/setup/lots?open=${lot.lotId}`),
+    ).toBeTruthy();
   });
 });

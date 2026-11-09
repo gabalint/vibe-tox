@@ -35,6 +35,7 @@ describe("itemTarget (REQ-OPS-004)", () => {
     ["app_run", ID, `/operations/health/history?open=${ID}`, ID],
     ["recovery_reconciliation", ID, "/operations/recovery", ID],
     ["app_version", "1.4.0", "/operations/versions/installed?open=1.4.0", "1.4.0"],
+    ["lot", ID, `/bench/setup/lots?open=${ID}`, ID],
   ])("opens a %s item %s at its exact record", (itemKind, itemId, path, recordId) => {
     expect(itemTarget({ itemKind, itemId, state: "open" })).toEqual({ path, recordId });
   });

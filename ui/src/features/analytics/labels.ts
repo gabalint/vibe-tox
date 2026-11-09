@@ -44,9 +44,19 @@ export function lotText(lot: Pick<LotView, "productName" | "lotNumber">): string
   return `${lot.productName}, lot ${lot.lotNumber}`;
 }
 
+/** "Expires today", "Expires in 1 day" or "Expires in N days", as the engine words it. */
+export function expiresIn(daysLeft: number): string {
+  if (daysLeft === 0) return "Expires today";
+  return daysLeft === 1 ? "Expires in 1 day" : `Expires in ${daysLeft} days`;
+}
+
+/** An active lot inside the laboratory's warning period shows how soon it expires (#4557). */
 export function lotStatus(lot: LotView): Status {
   if (lot.state === "withdrawn") return { label: "Withdrawn", tone: "neutral" };
   if (lot.expired) return { label: "Expired", tone: "neutral" };
+  if (lot.expiringSoon && lot.daysLeft !== null) {
+    return { label: expiresIn(lot.daysLeft), tone: "warning" };
+  }
   return { label: "Active", tone: "neutral" };
 }
 

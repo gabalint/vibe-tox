@@ -367,6 +367,15 @@ describe("BenchSetupPage (REQ-ANA-003, REQ-ANA-007)", { timeout: WALKTHROUGH_TIM
     expect(screen.getByText("Withdrawn")).toBeTruthy();
   });
 
+  it("marks an active lot that expires soon with how many days are left", async () => {
+    renderPage("/bench/setup/lots", ["perform_analysis"], {
+      list_lots: () => [{ ...CONTROL_LOT, daysLeft: 3, expiringSoon: true }],
+    });
+    const grid = await screen.findByRole("grid", { name: "Lots" });
+    expect(within(grid).getByText("Expires in 3 days")).toBeTruthy();
+    expect(within(grid).queryByText("Active")).toBeNull();
+  });
+
   it("says when the filter hides every lot, and clears it", async () => {
     const { user } = renderPage("/bench/setup/lots", ["perform_analysis"], {
       list_lots: () => [REAGENT_LOT, WITHDRAWN_LOT],

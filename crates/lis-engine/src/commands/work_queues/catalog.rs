@@ -56,6 +56,12 @@ pub(super) const QUEUES: &[QueueDefinition] = &[
     queue!("qc_review", "QC requiring review", ManageQuality, "Assess"),
     queue!("open_deviations", "Open deviations", ManageQuality, "Close"),
     queue!(
+        "lots_expiring_soon",
+        "Lots expiring soon",
+        ManageQuality,
+        "Register a new lot"
+    ),
+    queue!(
         "review_ready",
         "Results ready for review",
         ReviewResults,

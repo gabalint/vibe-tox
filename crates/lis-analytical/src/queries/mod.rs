@@ -4,11 +4,13 @@
 //! demographics; the engine audits the reads that disclose container
 //! sample labels and accession numbers (worklist, run detail).
 
+pub(crate) mod lot_list;
 pub(crate) mod preparation;
 pub(crate) mod qc;
 pub(crate) mod queues;
 pub(crate) mod runs;
 
+pub(crate) use lot_list::lot_view;
 pub(crate) use qc::qc_assessment;
 pub(crate) use runs::get_run;
 
@@ -16,22 +18,20 @@ use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 
 use lis_catalog::MethodVersionId;
-use lis_core::{InstrumentId, UtcTimestamp};
+use lis_core::InstrumentId;
 use lis_orders::OrderComponentId;
 use lis_specimens::{AccessionDetail, AccessionId, AccessionSpecimenView};
 use rusqlite::Connection;
 
 use crate::error::AnalyticalError;
-use crate::model::{
-    CivilDate, ExecutionId, LotId, PrepBatchId, RegistrationState, SourceRegistrationId, is_expired,
-};
-use crate::repo::lots::{self, LotRow};
+use crate::model::{ExecutionId, PrepBatchId, RegistrationState, SourceRegistrationId};
+use crate::repo::lots;
 use crate::repo::published::{self, ContainerRef};
 use crate::repo::{readiness, runs as run_repo};
 use crate::served::{CatalogCache, ServedComponent, served_components};
 use crate::views::{
-    InstrumentReadinessView, LotView, PositionMatch, PositionRef, PrepBatchView,
-    RegistrationSummary, SourceRegistrationView, WorklistEntry,
+    InstrumentReadinessView, PositionMatch, PositionRef, PrepBatchView, RegistrationSummary,
+    SourceRegistrationView, WorklistEntry,
 };
 
 /// The configured instrument's name, or `NotFound`.
@@ -124,46 +124,6 @@ fn complete_registration(
         registration.allowed_actions = vec!["approve_source".to_owned()];
     }
     Ok(registration)
-}
-
-/// Every lot, or the active ones, with expiry derived at `now`.
-pub fn list_lots(
-    conn: &Connection,
-    active_only: bool,
-    now: UtcTimestamp,
-) -> Result<Vec<LotView>, AnalyticalError> {
-    lots::lots(conn, active_only)?
-        .into_iter()
-        .map(|row| lot_view_of(row, now))
-        .collect()
-}
-
-pub(crate) fn lot_view(
-    conn: &Connection,
-    id: LotId,
-    now: UtcTimestamp,
-) -> Result<LotView, AnalyticalError> {
-    lot_view_of(
-        lots::lot(conn, id)?.ok_or(AnalyticalError::NotFound("lot"))?,
-        now,
-    )
-}
-
-fn lot_view_of(row: LotRow, now: UtcTimestamp) -> Result<LotView, AnalyticalError> {
-    let expired = is_expired(CivilDate::parse("expiresOn", &row.expires_on)?, now);
-    Ok(LotView {
-        lot_id: row.id,
-        material_kind: row.material_kind,
-        product_name: row.product_name,
-        lot_number: row.lot_number,
-        level_text: row.level_text,
-        sample_label: row.sample_label,
-        expires_on: row.expires_on,
-        expired,
-        state: row.state,
-        recorded_at: row.recorded_at,
-        revision: row.revision,
-    })
 }
 
 pub fn prep_batch(conn: &Connection, id: PrepBatchId) -> Result<PrepBatchView, AnalyticalError> {

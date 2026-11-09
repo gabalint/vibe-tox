@@ -2,7 +2,7 @@
   "id": "bench-setup",
   "title": "Bench setup",
   "summary": "Review instrument readiness, result sources and material lots before analytical work.",
-  "reviewedOn": "2026-11-03",
+  "reviewedOn": "2026-11-09",
   "routes": ["/bench/setup/:tab?"],
   "sections": [
     {
@@ -47,6 +47,7 @@
     "crates/lis-analytical/src/commands/au_sources.rs",
     "crates/lis-analytical/src/au_profile.rs",
     "crates/lis-analytical/src/commands/lots.rs",
+    "crates/lis-analytical/src/queries/lot_list.rs",
     "crates/lis-analytical/src/commands/mod.rs",
     "ui/src/components/SelfApprovalConfirm/SelfApprovalConfirm.tsx",
     "ui/src/features/analytics/contract.ts",
@@ -206,8 +207,8 @@
         {
           "name": "Lot Status / Registered",
           "meaning": "Shows eligibility and registration time.",
-          "values": "Active, Expired or Withdrawn; recorded date/time.",
-          "rules": "Read-only; withdrawal takes precedence in the display. Runs retain historical lot associations."
+          "values": "Active, Expires today / Expires in N days (warning), Expired or Withdrawn; recorded date/time.",
+          "rules": "Read-only; withdrawal takes precedence in the display. Expires in N days marks an active lot inside the laboratory's Warning before a lot expires setting (System › Operations settings, 14 days by default); it is still usable through its expiry date, and it is also listed in the Lots expiring soon work queue. Runs retain historical lot associations."
         },
         {
           "name": "Source approval: Confirm self-approval",

@@ -36,4 +36,5 @@ export type WorkItemKind =
   | "recovery_reconciliation"
   | "app_version"
   | "unrouted_message"
-  | "failed_delivery";
+  | "failed_delivery"
+  | "lot";

@@ -133,6 +133,29 @@ describe("WorklistPage (REQ-ANA-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () =
     });
   });
 
+  it("warns, without blocking, when a chosen lot expires soon", async () => {
+    const create = vi.fn(() => RUN);
+    const soon = { ...CONTROL_LOT, daysLeft: 3, expiringSoon: true, expiresOn: "2026-10-15" };
+    const { user } = renderPage(`/bench/worklist?method=${METHOD.id}&version=${METHOD_VERSION_ID}`, {
+      create_run: create,
+      list_lots: () => [soon],
+    });
+    await user.click(await screen.findByRole("button", { name: "Create run" }));
+    const dialog = await screen.findByRole("dialog", { name: "Create run" });
+    expect(within(dialog).queryByText("A lot on this run expires soon")).toBeNull();
+    await chooseWithKeyboard(user, /Instrument$/, "Synthetic analyzer 1: in service");
+    await user.click(
+      within(dialog).getByRole("checkbox", { name: /Synthetic control, lot CTL-001/ }),
+    );
+    expect(within(dialog).getByText("A lot on this run expires soon")).toBeTruthy();
+    expect(
+      within(dialog).getByText(/Synthetic control, lot CTL-001: expires in 3 days \(2026-10-15\)/),
+    ).toBeTruthy();
+    await user.click(within(dialog).getByRole("button", { name: "Create run" }));
+    expect(await screen.findByText(`Navigated to /bench/runs/${RUN_ID}`)).toBeTruthy();
+    expect(create).toHaveBeenCalledOnce();
+  });
+
   it("lists why the engine refuses a run", async () => {
     const { user } = renderPage(
       `/bench/worklist?method=${METHOD.id}&version=${METHOD_VERSION_ID}`,

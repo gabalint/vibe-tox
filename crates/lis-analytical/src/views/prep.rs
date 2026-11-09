@@ -28,6 +28,12 @@ pub struct LotView {
     pub expires_on: String,
     /// Whether the expiry date has passed (UTC date).
     pub expired: bool,
+    /// Whole days from today (UTC) to the expiry date, 0 on the last day of use; `None` once
+    /// expired.
+    pub days_left: Option<u32>,
+    /// An active lot within the laboratory's lot expiry warning period. Only lot lists apply
+    /// the period; other reads report `false`.
+    pub expiring_soon: bool,
     /// Active or withdrawn.
     pub state: LotState,
     /// When it was recorded.
