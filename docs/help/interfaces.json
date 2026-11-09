@@ -674,7 +674,7 @@
           "name": "Export CSV / Export N selected",
           "does": "With no row checked, Export CSV saves the rows shown, with the current tab and filters. With rows checked, the button reads Export N selected, such as Export 3 selected, and saves only those rows.",
           "availableWhen": "At least one row is shown and the Downloads folder is available.",
-          "result": "An interface-log-<date>.csv file in your Downloads folder, with codes as stored. The export is recorded in the audit trail."
+          "result": "An interface-log-<date>.csv file in your Downloads folder, with codes as stored. The export is recorded in the audit trail. Columns follow the page: transport is written, uploaded (SFTP) or sent (MLLP), failed, not_sent or received; application is the partner's acknowledgement code (AA, AE, AR) with its reason in ack_text, awaiting_ack, outcome_unknown for a written file, or what a received order became; failed_attempts counts only failed attempts; file is the file written or, over MLLP, the partner's address and port."
         },
         {
           "name": "Open row",

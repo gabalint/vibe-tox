@@ -7,9 +7,9 @@ use std::path::PathBuf;
 use lis_audit::{AuditDetail, AuditEvent, Outcome, Stream};
 use lis_core::{CommandError, ErrorCode};
 use lis_interfaces::partner::{
-    ListPartnerMessages, MessageSource, PartnerMessagePage, PartnerMessageRow,
-    RejectReceivedMessage, ResendPartnerDelivery, ResolvePartnerRejection, ResolveUnroutedMessage,
-    UnroutedMessage, WaitReason,
+    AckCode, ListPartnerMessages, MessageSource, PartnerMessagePage, PartnerMessageRow,
+    PartnerProtocol, ReceivedState, RejectReceivedMessage, ResendPartnerDelivery,
+    ResolvePartnerRejection, ResolveUnroutedMessage, TransportOutcome, UnroutedMessage, WaitReason,
 };
 use lis_reporting::{ReportRevisionId, ReportingError};
 use serde::Serialize;
@@ -28,8 +28,8 @@ use crate::report_rendering::ExportFile;
 use crate::report_rendering::csv::cell as csv_cell;
 
 const CSV_HEADER: &str = "time_utc,direction,connection,message,record,transport,\
-     application,waiting,attempts,given_up,next_attempt_utc,error,file,unrouted,decision,\
-     reason,superseded";
+     application,waiting,failed_attempts,given_up,next_attempt_utc,error,file,unrouted,decision,\
+     reason,superseded,ack_text";
 
 /// Where the log export was written: always the user's Downloads folder.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
@@ -262,12 +262,19 @@ fn csv(rows: &[PartnerMessageRow]) -> String {
                 .unwrap_or_default(),
             row.message_type.as_str().to_owned(),
             record,
-            row.transport.as_str().to_owned(),
-            if row.outcome_unknown {
-                "outcome_unknown"
-            } else {
-                ""
-            }
+            transport_text(
+                row.transport,
+                row.connection
+                    .as_ref()
+                    .map(|connection| connection.protocol),
+            )
+            .to_owned(),
+            application_text(
+                row.received,
+                row.ack_code,
+                row.awaiting_ack,
+                row.outcome_unknown,
+            )
             .to_owned(),
             row.waiting
                 .map(|reason| reason.as_str())
@@ -290,10 +297,94 @@ fn csv(rows: &[PartnerMessageRow]) -> String {
                 .unwrap_or_default()
                 .to_owned(),
             row.superseded.to_string(),
+            row.ack_text.clone().unwrap_or_default(),
         ];
         let line: Vec<String> = cells.iter().map(|cell| csv_cell(cell)).collect();
         text.push_str(&line.join(","));
         text.push_str("\r\n");
     }
     text
+}
+
+/// The transport as the Logs page shows it: a message that left over MLLP was sent, to an
+/// SFTP server uploaded, to a folder written.
+fn transport_text(transport: TransportOutcome, protocol: Option<PartnerProtocol>) -> &'static str {
+    match (transport, protocol) {
+        (TransportOutcome::Written, Some(PartnerProtocol::Sftp)) => "uploaded",
+        (
+            TransportOutcome::Written,
+            Some(PartnerProtocol::MllpConnect | PartnerProtocol::MllpListen),
+        ) => "sent",
+        _ => transport.as_str(),
+    }
+}
+
+/// The application outcome as the Logs page shows it: what a received message became, the
+/// partner's acknowledgement code, still awaiting one, or unknowable (a written file).
+fn application_text(
+    received: Option<ReceivedState>,
+    ack: Option<AckCode>,
+    awaiting_ack: bool,
+    outcome_unknown: bool,
+) -> &'static str {
+    if let Some(state) = received {
+        return state.as_str();
+    }
+    if let Some(ack) = ack {
+        return ack.as_str();
+    }
+    if awaiting_ack {
+        return "awaiting_ack";
+    }
+    if outcome_unknown {
+        "outcome_unknown"
+    } else {
+        ""
+    }
+}
+
+#[cfg(test)]
+mod csv_tests {
+    use super::*;
+
+    #[test]
+    fn transport_reads_as_the_page_shows_it() {
+        let written = TransportOutcome::Written;
+        assert_eq!(
+            transport_text(written, Some(PartnerProtocol::MllpConnect)),
+            "sent"
+        );
+        assert_eq!(
+            transport_text(written, Some(PartnerProtocol::Sftp)),
+            "uploaded"
+        );
+        assert_eq!(
+            transport_text(written, Some(PartnerProtocol::Folder)),
+            "written"
+        );
+        assert_eq!(
+            transport_text(TransportOutcome::Failed, Some(PartnerProtocol::MllpConnect)),
+            "failed"
+        );
+    }
+
+    #[test]
+    fn application_names_the_acknowledgement_or_what_was_received() {
+        assert_eq!(
+            application_text(None, Some(AckCode::Accepted), false, false),
+            "AA"
+        );
+        assert_eq!(application_text(None, None, true, false), "awaiting_ack");
+        assert_eq!(application_text(None, None, false, true), "outcome_unknown");
+        assert_eq!(application_text(None, None, false, false), "");
+        assert_eq!(
+            application_text(
+                Some(ReceivedState::Rejected),
+                Some(AckCode::Rejected),
+                false,
+                false
+            ),
+            "rejected"
+        );
+    }
 }
