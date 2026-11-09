@@ -136,10 +136,13 @@ describe("WorklistPage (REQ-ANA-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () =
   it("warns, without blocking, when a chosen lot expires soon", async () => {
     const create = vi.fn(() => RUN);
     const soon = { ...CONTROL_LOT, daysLeft: 3, expiringSoon: true, expiresOn: "2026-10-15" };
-    const { user } = renderPage(`/bench/worklist?method=${METHOD.id}&version=${METHOD_VERSION_ID}`, {
-      create_run: create,
-      list_lots: () => [soon],
-    });
+    const { user } = renderPage(
+      `/bench/worklist?method=${METHOD.id}&version=${METHOD_VERSION_ID}`,
+      {
+        create_run: create,
+        list_lots: () => [soon],
+      },
+    );
     await user.click(await screen.findByRole("button", { name: "Create run" }));
     const dialog = await screen.findByRole("dialog", { name: "Create run" });
     expect(within(dialog).queryByText("A lot on this run expires soon")).toBeNull();
