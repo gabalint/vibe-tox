@@ -467,7 +467,7 @@
         },
         {
           "name": "Send test message",
-          "does": "Writes a synthetic file with no patient data to the folder or SFTP server now: vibetox-test-<date>-<time>.hl7, an ORU^R01 with processing ID T and a synthetic patient, for HL7 Results; a one-page PDF for Report PDF; a .json file for Billing JSON. Over MLLP, the synthetic ORU^R01 is sent to the partner and its acknowledgement read.",
+          "does": "Writes a synthetic file with no patient data to the folder or SFTP server now: vibetox-test-<date>-<time>.hl7, an ORU^R01 with processing ID T, a synthetic patient and its own control ID (MSH-10: TEST- and a new ID each time), for HL7 Results; a one-page PDF for Report PDF; a .json file for Billing JSON. Over MLLP, the synthetic ORU^R01 is sent to the partner and its acknowledgement read.",
           "availableWhen": "A saved connection that sends, stopped or not verified too; an HL7 Orders connection has none, as the LIS sends it nothing.",
           "result": "The file name, or the problem, shows; over MLLP the partner's answer, such as ✓ Synthetic test message sent; the partner accepted it (AA), or ✗ … the partner found an error (AE): <its reason>. The test appears in Logs as Test message. A failed test is not retried."
         },
