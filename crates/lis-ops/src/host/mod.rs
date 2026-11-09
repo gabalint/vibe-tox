@@ -23,7 +23,7 @@ mod windows;
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
-pub use os_support::{OsSupport, SupportStatus, assess};
+pub use os_support::{OsName, OsSupport, SupportStatus, assess, describe};
 
 /// Whether the disk holding the data folder is encrypted.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -72,6 +72,8 @@ pub struct LinuxRelease {
     pub id: String,
     /// `VERSION_ID`, such as `24.04`.
     pub version_id: String,
+    /// `NAME`, such as `Ubuntu`, when present.
+    pub name: Option<String>,
     /// `PRETTY_NAME`, when present.
     pub pretty_name: Option<String>,
 }

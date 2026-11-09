@@ -48,8 +48,8 @@
         },
         {
           "name": "Operating system / Version / Edition / Architecture",
-          "meaning": "Identify the host platform.",
-          "values": "Values reported by the computer; a dash means not reported.",
+          "meaning": "Identify the host platform, with the same name, release and build as the Operating system support check.",
+          "values": "Operating system: the product, for example Windows 10, macOS or Ubuntu. Version: the release, for example 22H2 (build 19045), 26.1 or 24.04.1 LTS; unknown when the computer did not report it. Edition: shown only on Windows, for example Enterprise. Architecture: for example x86_64.",
           "rules": "Read-only; not editable here."
         },
         {
@@ -59,9 +59,9 @@
           "rules": "Read-only; this page does not relocate data."
         },
         {
-          "name": "Keep awake / Since / Problem code",
-          "meaning": "Sleep-prevention status and when it began.",
-          "values": "Keeping the computer awake; Not needed: no analyzer listener is active; Unavailable. Timestamp and problem code when supplied.",
+          "name": "Keep awake",
+          "meaning": "Sleep-prevention status, when it began and, when unavailable, why. It describes keep awake only, not Overall.",
+          "values": "Keeping the computer awake; Not needed: no analyzer listener is active; Unavailable. Followed by “since” and the time of the last change, and by “problem code” and a code when the app reports one; a part that is not reported is left out.",
           "rules": "Read-only. Investigate Unavailable before depending on unattended analyzer intake."
         },
         {

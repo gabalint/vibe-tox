@@ -5,15 +5,16 @@
  */
 export type HostView = { 
 /**
- * `windows`, `macos` or `linux`.
+ * The product, such as "Windows 11", "macOS" or "Ubuntu"; `windows`, `macos` or
+ * `linux` when it could not be read.
  */
 os: string, 
 /**
- * The OS version; `unknown` when it could not be read.
+ * The release, such as "24H2 (build 26100)"; `unknown` when it could not be read.
  */
 osVersion: string, 
 /**
- * The Windows edition.
+ * The Windows edition, such as "Professional".
  */
 edition: string | null, 
 /**
