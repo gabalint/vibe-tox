@@ -162,7 +162,8 @@ describe("OperationsSettingsPage (REQ-OPS-007, REQ-OPS-008, NFR-19)", {
       Promise.reject(
         engineError("validation", "Check the highlighted fields.", {
           fieldErrors: [
-            { field: "values.keepRecent", code: "out_of_range", message: "Keep 2 to 96 sets." },
+            // The engine names a setting alone, not by its place in the input.
+            { field: "keepRecent", code: "out_of_range", message: "Keep 2 to 96 sets." },
           ],
         }),
       ),
