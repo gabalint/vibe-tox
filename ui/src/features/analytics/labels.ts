@@ -57,7 +57,7 @@ export function lotStatus(lot: LotView): Status {
   if (lot.expiringSoon && lot.daysLeft !== null) {
     return { label: expiresIn(lot.daysLeft), tone: "warning" };
   }
-  return { label: "Active", tone: "neutral" };
+  return { label: "Active", tone: "success" };
 }
 
 export const QC_ROLES: readonly Choice<QcRole>[] = [
@@ -93,7 +93,7 @@ export function runStatus(state: RunState): Status {
 
 const REGISTRATION_STATUSES: Record<RegistrationState, Status> = {
   draft: { label: "Draft, awaiting approval", tone: "warning" },
-  active: { label: "Active", tone: "neutral" },
+  active: { label: "Active", tone: "success" },
   retired: { label: "Retired", tone: "neutral" },
 };
 

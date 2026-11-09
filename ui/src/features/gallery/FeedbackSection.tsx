@@ -13,7 +13,8 @@ export function FeedbackSection() {
   return (
     <GallerySection title="Status and feedback">
       <div className={styles.row}>
-        <StatusBadge tone="neutral">Approved</StatusBadge>
+        <StatusBadge tone="neutral">Withdrawn</StatusBadge>
+        <StatusBadge tone="success">Approved</StatusBadge>
         <StatusBadge tone="info">Queued</StatusBadge>
         <StatusBadge tone="warning">Draft awaiting approval</StatusBadge>
         <StatusBadge tone="hold">Identity hold</StatusBadge>
