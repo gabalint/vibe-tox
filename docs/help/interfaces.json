@@ -97,6 +97,12 @@
           "result": "Shows the latest status and counts."
         },
         {
+          "name": "Open record",
+          "does": "Opens the record the message was made from: the report revision sent, the withdrawn report, or the billing handoff.",
+          "availableWhen": "A click on the Record link; not on a test message or a received order.",
+          "result": "Nothing changes. The report or handoff page needs its own rights and records the read as it does from Reports or Billing."
+        },
+        {
           "name": "Open row",
           "does": "Opens the connection's page.",
           "availableWhen": "A listed connection.",
@@ -469,7 +475,7 @@
           "name": "Send test message",
           "does": "Writes a synthetic file with no patient data to the folder or SFTP server now: vibetox-test-<date>-<time>.hl7, an ORU^R01 with processing ID T and a synthetic patient, for HL7 Results; a one-page PDF for Report PDF; a .json file for Billing JSON. Over MLLP, the synthetic ORU^R01 is sent to the partner and its acknowledgement read.",
           "availableWhen": "A saved connection that sends, stopped or not verified too; an HL7 Orders connection has none, as the LIS sends it nothing.",
-          "result": "The file name, or the problem, shows; over MLLP the partner's answer, such as ✓ Synthetic test message sent; the partner accepted it (AA), or ✗ … the partner found an error (AE): <its reason>. The test appears in Logs as Test message. A failed test is not retried."
+          "result": "The file name, or the problem, shows; over MLLP the partner's answer, such as ✓ Synthetic test message sent; the partner accepted it (AA), or ✗ … the partner found an error (AE): <its reason>. The test appears in Logs with a Test badge once Show test messages is on, and on the connection's Logs tab. A failed test is not retried."
         },
         {
           "name": "Add mapping / Change / Remove / Discard draft",
@@ -597,9 +603,15 @@
           "rules": "Combines with the tab; the tabs count what the other filters leave."
         },
         {
-          "name": "Search",
+          "name": "Show test messages (off)",
+          "meaning": "Whether the synthetic messages of Send test message are listed.",
+          "values": "Off (default): test messages are left out of the list, the tab counts and Export CSV. On: they are listed with a Test badge in Record.",
+          "rules": "Kept in the address. A connection's own Logs tab always lists its test messages."
+        },
+        {
+          "name": "Search (Search report, handoff, file…)",
           "meaning": "Narrow the rows.",
-          "values": "A handoff number (digits only, exact); a whole control ID (MSH-10) of an outgoing message, such as the one a partner quotes, in any letter case; or part of a report or accession number, file name or folder.",
+          "values": "Part of a report or accession number, such as A26000009, a handoff number (digits only, exact), a whole control ID (MSH-10) of an outgoing message, such as the one a partner quotes, in any letter case, or part of a file name or folder. Several values separated by commas, such as A26000009, A26000022, show the rows of any of them.",
           "rules": "Optional; kept in the address."
         },
         {
@@ -609,10 +621,16 @@
           "rules": "Only MLLP partners answer; a folder or SFTP server never does. The tab is part of the address."
         },
         {
+          "name": "Check column (Select all rows)",
+          "meaning": "The rows to export.",
+          "values": "Click a row's check box or press Space on it; the header's check box selects or clears every row shown. The bar above the list says how many are selected; Clear unselects them.",
+          "rules": "Checking a row does not open it. Rows that a tab, filter or search no longer shows are unselected, and the bar says so."
+        },
+        {
           "name": "Time, Dir., Connection, Message, Record",
-          "meaning": "When the row last changed (written, tried, made or received), the direction (In for a received order), the connection (None matched for an unrouted message), the message type and the record: the report number and revision (such as A26000005-U r2), the report's withdrawal notice, the billing handoff, Test message, or for a received order its placer order number (the file name when it could not be read; Order message over MLLP).",
+          "meaning": "When the row last changed (written, tried, made or received), the direction (In for a received order), the connection (None matched for an unrouted message), the message type and the record: the report number and revision (such as A26000005-U r2), the report's withdrawal notice, the billing handoff, a Test badge for a message of Send test message, or for a received order its placer order number (the file name when it could not be read; Order message over MLLP).",
           "values": "As recorded.",
-          "rules": "Read-only."
+          "rules": "Read-only. The record is a link: a report revision opens that revision of the report, the revision that was sent; a withdrawal notice opens the report; a billing handoff opens the handoff. A test message or a received order has no link."
         },
         {
           "name": "Transport",
@@ -671,10 +689,10 @@
           "result": "It leaves the Rejected tab and stays under All; Details end with Resolved by <person>, <time>: <note>. Nothing is sent and nothing changes at the partner. A rejection is resolved once. Recorded in the audit trail."
         },
         {
-          "name": "Export CSV",
-          "does": "Saves the rows shown, with the current tab and filters.",
+          "name": "Export CSV / Export N selected",
+          "does": "With no row checked, Export CSV saves the rows shown, with the current tab and filters. With rows checked, the button reads Export N selected, such as Export 3 selected, and saves only those rows.",
           "availableWhen": "At least one row is shown and the Downloads folder is available.",
-          "result": "An interface-log-<date>.csv file in your Downloads folder, with codes as stored. The export is recorded in the audit trail."
+          "result": "An interface-log-<date>.csv file in your Downloads folder, with codes as stored. The export is recorded in the audit trail. Columns follow the page: transport is written, uploaded (SFTP) or sent (MLLP), failed, not_sent or received; application is the partner's acknowledgement code (AA, AE, AR) with its reason in ack_text, awaiting_ack, outcome_unknown for a written file, or what a received order became; failed_attempts counts only failed attempts; file is the file written or, over MLLP, the partner's address and port."
         },
         {
           "name": "Open row",
@@ -685,7 +703,7 @@
       ],
       "restrictions": [
         "Failed writes are retried automatically after 1, 2, 4 and 8 minutes; after the fifth failure the message waits for Send again and appears in the Interface messages not written work queue.",
-        "Only HL7 Results messages show their content here. A report PDF is opened from Reports, and the billing handoff file from Billing › Billing handoffs, by people with those rights; opening them is audited. A received order's content is not shown here."
+        "Only HL7 Results messages show their content here, in the message panel. A report PDF is opened from Reports, and the billing handoff file from Billing › Billing handoffs, by people with those rights; the Record link opens the report or billing handoff. Opening them is audited. A received order's content is not shown here."
       ],
       "workflow": [
         "Check the Failed and Rejected tabs daily.",
@@ -837,6 +855,7 @@
     "crates/lis-interfaces/src/partner/messages.rs",
     "crates/lis-interfaces/src/partner/delivery.rs",
     "crates/lis-interfaces/src/partner/message_queries.rs",
+    "crates/lis-interfaces/src/partner/message_filter.rs",
     "crates/lis-interfaces/src/partner/message_repo.rs",
     "crates/lis-interfaces/src/partner/unrouted_queries.rs",
     "crates/lis-engine/src/commands/partner/routing.rs",
