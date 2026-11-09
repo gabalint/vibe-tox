@@ -121,7 +121,7 @@ function SourceStatus({
   approved: SourceRegistrationView | undefined;
   shown: SourceRegistrationView | undefined;
 }) {
-  if (approved) return <StatusBadge tone="neutral">Approved</StatusBadge>;
+  if (approved) return <StatusBadge tone="success">Approved</StatusBadge>;
   if (shown) return <StatusBadge tone="warning">Waiting for approval</StatusBadge>;
   return <StatusBadge tone="warning">Not registered</StatusBadge>;
 }

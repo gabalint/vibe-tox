@@ -51,7 +51,7 @@ export const VALIDITY_ACTIONS: readonly Choice<ValidityAction>[] = [
 
 const STATUSES: Record<CatalogVersionStatus, { label: string; tone: Tone }> = {
   draft: { label: "Draft", tone: "warning" },
-  approved: { label: "Approved", tone: "neutral" },
+  approved: { label: "Approved", tone: "success" },
   retired: { label: "Retired", tone: "neutral" },
 };
 

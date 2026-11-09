@@ -22,7 +22,7 @@ function LayoutStatus({ view }: { view: ReportLayoutsView }) {
       </StatusBadge>
     );
   }
-  return <StatusBadge tone="neutral">{`Active: ${view.inForce.name}`}</StatusBadge>;
+  return <StatusBadge tone="success">{`Active: ${view.inForce.name}`}</StatusBadge>;
 }
 
 /**

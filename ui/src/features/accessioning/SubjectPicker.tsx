@@ -8,7 +8,8 @@ import { identifierText, orNotRecorded, patientPath, subjectName } from "./subje
 
 /**
  * Two identifiers on every row (REQ-IDN-001): the name, the birth date with the month as
- * text and the age, and the active identifiers.
+ * text and the age, and the active identifiers. No fixed widths: the columns share the grid's
+ * width equally.
  */
 function subjectColumns(
   formatBirthDate: (birthDate: string) => string,
@@ -20,13 +21,11 @@ function subjectColumns(
       header: "Birth date",
       cell: (subject) => formatBirthDate(subject.birthDate),
       sortValue: (subject) => subject.birthDate,
-      width: 170,
     },
     {
       id: "sex",
       header: "Administrative sex",
       cell: (subject) => orNotRecorded(subject.administrativeSex),
-      width: 160,
     },
     {
       id: "identifiers",
@@ -38,7 +37,6 @@ function subjectColumns(
       header: "Identity",
       cell: (subject) => <IdentityHoldBadge count={subject.openIdentityHolds} />,
       sortValue: (subject) => subject.openIdentityHolds,
-      width: 200,
     },
   ];
 }

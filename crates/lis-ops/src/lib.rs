@@ -40,8 +40,8 @@ pub mod updates;
 pub use runtime_error::RuntimeError;
 
 /// Migrations of the `ops_runtime` schema module: settings, app runs, health history
-/// and attestations, update records, media disposals, then clock jumps and the D-1/D-2
-/// health checks.
+/// and attestations, update records, media disposals, then clock jumps, the D-1/D-2
+/// health checks and the lot expiry warning.
 pub const RUNTIME_MIGRATIONS: &[Migration] = &[
     Migration {
         version: 1,
@@ -67,6 +67,11 @@ pub const RUNTIME_MIGRATIONS: &[Migration] = &[
         version: 5,
         name: "update_backup_eligibility",
         sql: include_str!("../migrations/runtime/0005_update_backup_eligibility.sql"),
+    },
+    Migration {
+        version: 6,
+        name: "lot_expiry_warning",
+        sql: include_str!("../migrations/runtime/0006_lot_expiry_warning.sql"),
     },
 ];
 

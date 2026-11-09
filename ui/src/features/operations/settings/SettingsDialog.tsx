@@ -52,14 +52,18 @@ export function SettingsFields<Values extends Record<keyof Values, number>>({
   ));
 }
 
+/** Each setting's engine field name, mapped to its field inside `values`. */
+const nestedPaths = (fields: readonly SettingField<string>[]) =>
+  Object.fromEntries(fields.map(({ key }) => [key, `values.${key}`]));
+
 const hasSections = (fields: readonly SettingField<string>[]) =>
   fields.some((field) => field.section !== undefined);
 
 /**
  * Sets a new version of a settings record, prefilled from the current one. The screen checks
  * only that each value is a whole number; the engine checks the ranges. Every version after the
- * first needs a reason. Field names match the engine's paths (`values.keepRecent`, or
- * `idleTimeoutMinutes`), so its field errors land on the matching fields.
+ * first needs a reason. The engine names a nested setting's error by the setting alone
+ * (`keepRecent`), so it is mapped to its `values.` field and shows under that field.
  */
 export function SettingsDialog<Values extends Record<keyof Values, number>>({
   fields,
@@ -84,6 +88,7 @@ export function SettingsDialog<Values extends Record<keyof Values, number>>({
       submitLabel="Save settings"
       defaultValues={defaultValues}
       toInput={toInput}
+      fieldPaths={nested ? nestedPaths(fields) : undefined}
       size={hasSections(fields) ? "wide" : "default"}
     >
       <SettingsFields fields={fields} view={view} nested={nested} />

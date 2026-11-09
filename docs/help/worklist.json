@@ -2,7 +2,7 @@
   "id": "worklist",
   "title": "Worklist",
   "summary": "Find accepted containers waiting for an approved method version.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-11-09",
   "routes": ["/bench/worklist"],
   "sections": [
     {
@@ -35,6 +35,7 @@
     "ui/src/features/analytics/runs/RecordPrepStepDialog.tsx",
     "crates/lis-analytical/src/commands/runs.rs",
     "crates/lis-analytical/src/commands/lots.rs",
+    "crates/lis-analytical/src/queries/lot_list.rs",
     "crates/lis-analytical/src/commands/mod.rs",
     "ui/src/features/analytics/runs/PrepBatchDirectory.tsx",
     "ui/src/features/analytics/runs/PrepBatchDetail.tsx",
@@ -104,8 +105,8 @@
         {
           "name": "Create run: Lots used on this run",
           "meaning": "Records the reagent, calibrator, control and internal-standard materials used.",
-          "values": "Registered active lots, including product, lot number and expiry.",
-          "rules": "Optional checklist; every selected lot must remain active and unexpired at submission."
+          "values": "Registered active lots, including product, lot number and expiry; a lot inside the laboratory's expiry warning period also shows Expires today or Expires in N days.",
+          "rules": "Optional checklist; every selected lot must remain active and unexpired at submission. Choosing a lot that expires soon shows the warning A lot on this run expires soon with the lot and its days left; the run can still be created. Register a replacement lot in Bench setup › Lots."
         },
         {
           "name": "Preparation batch: Batch",

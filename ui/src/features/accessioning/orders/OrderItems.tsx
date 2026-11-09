@@ -23,18 +23,26 @@ const STATE_TONES: Record<ItemState, Tone> = {
   cancelled: "neutral",
 };
 
+/** The four columns after Test share one width; Test takes the rest. */
+const DETAIL_WIDTH = 250;
+
 function itemColumns(references: OrderReferences): DataGridColumn<OrderItemView>[] {
   const test = orderedTestName;
   return [
     { id: "test", header: "Test", cell: test, sortValue: test },
-    { id: "kind", header: "Kind", cell: (item) => labelOf(ITEM_KINDS, item.kind), width: 110 },
+    {
+      id: "kind",
+      header: "Kind",
+      cell: (item) => labelOf(ITEM_KINDS, item.kind),
+      width: DETAIL_WIDTH,
+    },
     {
       id: "role",
       header: "Sequence role",
       // Items migrated from before sequence roles were recorded have none; never assume one.
       cell: (item) =>
         item.sequenceRole === null ? "Not recorded" : labelOf(SEQUENCE_ROLES, item.sequenceRole),
-      width: 150,
+      width: DETAIL_WIDTH,
     },
     {
       id: "state",
@@ -42,7 +50,7 @@ function itemColumns(references: OrderReferences): DataGridColumn<OrderItemView>
       cell: (item) => (
         <StatusBadge tone={STATE_TONES[item.state]}>{labelOf(ITEM_STATES, item.state)}</StatusBadge>
       ),
-      width: 140,
+      width: DETAIL_WIDTH,
     },
     {
       id: "reflex",
@@ -54,6 +62,7 @@ function itemColumns(references: OrderReferences): DataGridColumn<OrderItemView>
           .join(", ");
         return scope ? `${authorization}: ${scope}` : authorization;
       },
+      width: DETAIL_WIDTH,
     },
   ];
 }

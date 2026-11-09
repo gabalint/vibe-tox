@@ -235,12 +235,15 @@ impl Engine {
         .await
     }
 
-    /// `list_lots`, with expiry derived at the engine's current time.
+    /// `list_lots`, with expiry derived at the engine's current time and active lots inside
+    /// the laboratory's lot expiry warning period marked as expiring soon.
     pub async fn list_lots(&self, input: ListLotsInput) -> Result<Vec<LotView>, CommandError> {
         let now = self.clock.now();
         self.run(&LIST_LOTS, |call| async move {
+            let settings = self.read(&call, lis_ops::settings::current).await?;
+            let warn_days = Some(settings.lot_expiry_warn_days);
             self.read(&call, move |conn| {
-                lis_analytical::list_lots(conn, input.active_only, now)
+                lis_analytical::list_lots(conn, input.active_only, now, warn_days)
             })
             .await
         })

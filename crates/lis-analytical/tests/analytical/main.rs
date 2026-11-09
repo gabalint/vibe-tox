@@ -15,6 +15,7 @@ mod dependency_read;
 mod deviations;
 mod file_sources;
 mod imports;
+mod lot_expiry;
 mod positions;
 mod qc;
 mod readiness;

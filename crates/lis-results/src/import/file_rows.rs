@@ -82,7 +82,7 @@ fn known_label(
         return Ok(true);
     }
     if planner.lot_labels.is_none() {
-        let labels = lis_analytical::list_lots(ctx.tx(), false, ctx.now())?
+        let labels = lis_analytical::list_lots(ctx.tx(), false, ctx.now(), None)?
             .into_iter()
             .filter_map(|lot| lot.sample_label)
             .collect();

@@ -65,7 +65,7 @@ Versioned record pages show the version in effect and any open draft in the head
 | Order | Front desk › Orders → page | Supplied evidence revisions, cancellation decisions and billing context remain attributable |
 | Accession and container | Order page, scan field or Container lookup → page | Connected intake preserves patient/order context; receiving, allocation, collection facts and label decisions are explicit |
 | Run | Bench › Runs → page | Positions, QC and expected results remain linked to their exact run |
-| Lot and instrument readiness | Bench › Bench setup → tab and panel | Lots expose withdrawal; instrument panels expose service status and approved result sources, and for configuration staff a one-line connection linked back to Laboratory setup |
+| Lot and instrument readiness | Bench › Bench setup → tab and panel | Lots expose withdrawal and mark lots expiring soon, which the Lots expiring soon work queue also lists; instrument panels expose service status and approved result sources, and for configuration staff a one-line connection linked back to Laboratory setup |
 | Deviation | Work item or related record → `/quality/deviations/:deviationId` | Exact audited read independent of run scope |
 | Specimen results | Review › Result review → page | Result lines form the technical-review workspace |
 | Import attempt | Review › Result imports → page | Quarantine decisions operate on the selected retained attempt/item |

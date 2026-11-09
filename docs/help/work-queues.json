@@ -2,7 +2,7 @@
   "id": "work-queues",
   "title": "Work queues",
   "summary": "Find work that needs attention and open the record where it can be resolved.",
-  "reviewedOn": "2026-11-02",
+  "reviewedOn": "2026-11-09",
   "routes": ["/work-queues", "/work-queues/:queue"],
   "sections": [
     {
@@ -50,6 +50,9 @@
     "ui/src/features/workqueues/ageText.ts",
     "ui/src/features/workqueues/contract.ts",
     "ui/src/features/workqueues/itemPath.ts",
+    "ui/src/features/workqueues/lotColumns.tsx",
+    "crates/lis-engine/src/commands/work_queues/lot_items.rs",
+    "crates/lis-analytical/src/queries/lot_list.rs",
     "ui/src/lib/WorkQueueList.tsx",
     "crates/lis-engine/src/commands/work_queues/mod.rs",
     "crates/lis-engine/src/commands/work_queues/catalog.rs",
@@ -77,7 +80,7 @@
         {
           "name": "Queue: analytical and review",
           "meaning": "Groups unfinished analysis and result decisions.",
-          "values": "QC requiring review; Open deviations; Results ready for review; Stale result reviews; Result review blocked; Open import quarantine; Performed but not ordered; Results expected from analyzers.",
+          "values": "QC requiring review; Open deviations; Lots expiring soon; Results ready for review; Stale result reviews; Result review blocked; Open import quarantine; Performed but not ordered; Results expected from analyzers.",
           "rules": "Read-only list filtered by quality, result-review or analysis authority."
         },
         {
@@ -206,6 +209,12 @@
           "rules": "Read-only; follow the stated action even when the item has no direct record screen."
         },
         {
+          "name": "Lots expiring soon: Lot, Product, Material, Sample label, Expires, Days left",
+          "meaning": "In the Lots expiring soon queue, each item is an active lot that expires within the laboratory's Warning before a lot expires setting (System › Operations settings, 14 days by default). These columns replace Item, State and Waiting.",
+          "values": "The lot number, product name, material (Control, Calibrator, Reagent or Internal standard), sample label (— when none), last day of use and Expires today, Expires in 1 day or Expires in N days. Next action is Register a new lot.",
+          "rules": "Read-only; requires Manage quality. Days are counted by UTC date. An expired or withdrawn lot leaves the queue; an expired lot stays blocked for new runs as before. Registering the replacement does not remove the old lot until it expires or is withdrawn."
+        },
+        {
           "name": "Shown / total / Updated",
           "meaning": "Distinguishes loaded items from the full or capped count.",
           "values": "Loaded workspaces; known count or lower bound where available; candidate specimens checked for review queues; last read time.",
@@ -215,7 +224,7 @@
       "actions": [
         {
           "name": "Open item row",
-          "does": "Navigates to the owning order, accession, QC, result, report, delivery, billing or operations record.",
+          "does": "Navigates to the owning order, accession, QC, result, report, delivery, billing, lot or operations record. A lot opens in its panel in Bench setup › Lots.",
           "availableWhen": "The item kind has an implemented target screen and your account can access it.",
           "result": "Opens the record, sometimes its matching panel. Previous/Next there follow distinct records of the same item kind in this queue."
         },

@@ -272,7 +272,9 @@ fn expiry_is_derived_and_withdrawal_needs_a_reason_once() {
     let expired = f.lot(MaterialKind::Reagent, "R-OLD", "2026-01-01");
     let current = f.lot(MaterialKind::Reagent, "R-NEW", crate::LATER);
     let now = lis_store::testing::test_start();
-    let lots = read(&f, move |conn| lis_analytical::list_lots(conn, false, now));
+    let lots = read(&f, move |conn| {
+        lis_analytical::list_lots(conn, false, now, None)
+    });
     let by_id = |id| lots.iter().find(|lot| lot.lot_id == id).unwrap().expired;
     assert!(by_id(expired));
     assert!(!by_id(current));
@@ -310,7 +312,9 @@ fn expiry_is_derived_and_withdrawal_needs_a_reason_once() {
         ))),
         ErrorCode::Conflict
     );
-    let active = read(&f, move |conn| lis_analytical::list_lots(conn, true, now));
+    let active = read(&f, move |conn| {
+        lis_analytical::list_lots(conn, true, now, None)
+    });
     assert!(active.iter().all(|lot| lot.lot_id != current));
     assert!(
         f.raw()

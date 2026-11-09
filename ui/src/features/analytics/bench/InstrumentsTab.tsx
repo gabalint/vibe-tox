@@ -21,6 +21,7 @@ import { InstrumentPanel } from "./InstrumentPanel";
 import { InstrumentStatusDialog } from "./InstrumentStatusDialog";
 import { RegisterSourceDialog } from "./RegisterSourceDialog";
 
+// No fixed widths: the columns share the grid's width equally.
 const COLUMNS: readonly DataGridColumn<InstrumentReadinessView>[] = [
   {
     id: "name",
@@ -36,13 +37,11 @@ const COLUMNS: readonly DataGridColumn<InstrumentReadinessView>[] = [
       const status = instrumentStatus(row.status);
       return <StatusBadge tone={status.tone}>{status.label}</StatusBadge>;
     },
-    width: 200,
   },
   {
     id: "since",
     header: "Since",
     cell: (row) => (row.since === null ? "Not recorded" : <Timestamp value={row.since} />),
-    width: 200,
   },
   { id: "source", header: "Approved result source", cell: sourceText },
 ];
