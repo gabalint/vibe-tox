@@ -264,6 +264,7 @@ fn all() -> ListPartnerMessages {
         connection_id: None,
         view: MessageView::All,
         search: None,
+        hide_tests: false,
     }
 }
 

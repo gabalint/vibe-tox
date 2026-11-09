@@ -302,6 +302,7 @@ async fn logs_show_it_waiting(orders: &Orders) {
             connection_id: Some(orders.connection.connection.id),
             view: MessageView::All,
             search: None,
+            hide_tests: false,
         })
         .await
         .unwrap();

@@ -32,6 +32,7 @@ mod intake_sources;
 mod mapping_model;
 mod mapping_repo;
 mod mappings;
+mod message_filter;
 mod message_queries;
 mod message_repo;
 mod messages;

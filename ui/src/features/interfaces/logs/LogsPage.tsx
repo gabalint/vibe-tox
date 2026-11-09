@@ -1,6 +1,7 @@
 import { useContext, useMemo } from "react";
 import { useSearchParams } from "react-router";
 import { Button } from "@/components/Button";
+import { Checkbox } from "@/components/Checkbox";
 import { ErrorState } from "@/components/ErrorState";
 import { FindField } from "@/components/FindField";
 import { Page, PageHeader } from "@/components/Page";
@@ -101,7 +102,8 @@ function exportView(tab: TabId, outcome: string): MessageView {
 /**
  * Logs (ticket #4555; REQ-INT-002, REQ-RPT-003, REQ-RPT-011), as the Interfaces mockup: every
  * message in and out, with two separate outcomes, transport and application, and never a bare
- * delivery claim. Period, connection, direction, outcome and search sit in one row; the tabs
+ * delivery claim. Period, connection, direction, outcome, Show test messages (off: the engine
+ * leaves test messages out, tab counts included, #4679) and search sit in one row; the tabs
  * below count what they hold. Filters stay in the URL, the tab in the path. Export CSV saves
  * the rows shown to the Downloads folder; it is audited.
  */
@@ -124,8 +126,16 @@ export function LogsPage() {
         : new Date(now.getTime() - Number(period) * DAY_MS),
     );
   }, [period, labTimeZone]);
+  const showTests = params.get("tests") === "shown";
   const searched = optionalText(search) ?? undefined;
-  const input: ListPartnerMessages = { view: "all", since, connectionId, search: searched };
+  // Hidden in the engine, so the tab counts leave them out too.
+  const input: ListPartnerMessages = {
+    view: "all",
+    since,
+    connectionId,
+    search: searched,
+    hideTests: !showTests,
+  };
   const messages = useCommandQuery<PartnerMessagePage>(LIST_MESSAGES, { input });
   const connections = useCommandQuery<PartnerConnection[]>(LIST_CONNECTIONS);
   const exportLog = useCommandMutation<ExportedMessageLog, { input: ListPartnerMessages }>(
@@ -196,6 +206,13 @@ export function LogsPage() {
           value={outcome}
           onChange={(value) => setParam("outcome", value, "all")}
         />
+        <Checkbox
+          name="tests"
+          isSelected={showTests}
+          onChange={(shown) => setParam("tests", shown ? "shown" : null, "")}
+        >
+          Show test messages
+        </Checkbox>
         <div className={styles.search}>
           <FindField
             label="Search by report number, handoff number or file name"

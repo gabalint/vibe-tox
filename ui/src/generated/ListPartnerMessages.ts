@@ -12,4 +12,8 @@ since?: string, connectionId?: string, view: MessageView,
 /**
  * A handoff number, a report or accession number, or part of a file name.
  */
-search?: string, };
+search?: string, 
+/**
+ * Leaves out the synthetic test messages of Send test message.
+ */
+hideTests?: boolean, };

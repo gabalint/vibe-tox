@@ -159,6 +159,7 @@ impl Pdfs {
             connection_id: None,
             view: MessageView::All,
             search: None,
+            hide_tests: false,
         };
         let mut rows = self
             .bench

@@ -475,7 +475,7 @@
           "name": "Send test message",
           "does": "Writes a synthetic file with no patient data to the folder or SFTP server now: vibetox-test-<date>-<time>.hl7, an ORU^R01 with processing ID T and a synthetic patient, for HL7 Results; a one-page PDF for Report PDF; a .json file for Billing JSON. Over MLLP, the synthetic ORU^R01 is sent to the partner and its acknowledgement read.",
           "availableWhen": "A saved connection that sends, stopped or not verified too; an HL7 Orders connection has none, as the LIS sends it nothing.",
-          "result": "The file name, or the problem, shows; over MLLP the partner's answer, such as ✓ Synthetic test message sent; the partner accepted it (AA), or ✗ … the partner found an error (AE): <its reason>. The test appears in Logs as Test message. A failed test is not retried."
+          "result": "The file name, or the problem, shows; over MLLP the partner's answer, such as ✓ Synthetic test message sent; the partner accepted it (AA), or ✗ … the partner found an error (AE): <its reason>. The test appears in Logs with a Test badge once Show test messages is on, and on the connection's Logs tab. A failed test is not retried."
         },
         {
           "name": "Add mapping / Change / Remove / Discard draft",
@@ -603,6 +603,12 @@
           "rules": "Combines with the tab; the tabs count what the other filters leave."
         },
         {
+          "name": "Show test messages (off)",
+          "meaning": "Whether the synthetic messages of Send test message are listed.",
+          "values": "Off (default): test messages are left out of the list, the tab counts and Export CSV. On: they are listed with a Test badge in Record.",
+          "rules": "Kept in the address. A connection's own Logs tab always lists its test messages."
+        },
+        {
           "name": "Search (Search report, handoff, file…)",
           "meaning": "Narrow the rows.",
           "values": "Part of a report or accession number, such as A26000009, a handoff number (digits only, exact), or part of a file name or folder.",
@@ -616,7 +622,7 @@
         },
         {
           "name": "Time, Dir., Connection, Message, Record",
-          "meaning": "When the row last changed (written, tried, made or received), the direction (In for a received order), the connection (None matched for an unrouted message), the message type and the record: the report number and revision (such as A26000005-U r2), the report's withdrawal notice, the billing handoff, Test message, or for a received order its placer order number (the file name when it could not be read; Order message over MLLP).",
+          "meaning": "When the row last changed (written, tried, made or received), the direction (In for a received order), the connection (None matched for an unrouted message), the message type and the record: the report number and revision (such as A26000005-U r2), the report's withdrawal notice, the billing handoff, a Test badge for a message of Send test message, or for a received order its placer order number (the file name when it could not be read; Order message over MLLP).",
           "values": "As recorded.",
           "rules": "Read-only. The record is a link: a report revision opens that revision of the report, the revision that was sent; a withdrawal notice opens the report; a billing handoff opens the handoff. A test message or a received order has no link."
         },

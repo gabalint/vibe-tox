@@ -33,8 +33,12 @@ function recordPath({ source, sourceId }: PartnerMessageRow): string | null {
   }
 }
 
-/** The record, linked to the report revision sent, the withdrawn report or the handoff. */
+/**
+ * The record, linked to the report revision sent, the withdrawn report or the handoff; a
+ * synthetic test message shows as a Test badge, so it stands apart from real messages.
+ */
 function Record({ row }: { row: PartnerMessageRow }) {
+  if (row.source === "test") return <StatusBadge tone="info">Test</StatusBadge>;
   const to = recordPath(row);
   return to === null ? recordText(row) : <Link to={to}>{recordText(row)}</Link>;
 }
