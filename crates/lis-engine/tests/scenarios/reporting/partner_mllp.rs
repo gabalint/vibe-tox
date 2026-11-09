@@ -24,7 +24,7 @@ type Received = Arc<Mutex<Vec<Vec<u8>>>>;
 
 /// A partner's interface on localhost that keeps each message it reads and answers it with
 /// the next code of `answers`, or with silence for `None`.
-async fn partner(answers: Vec<Option<&'static str>>) -> (u16, Received) {
+pub(super) async fn partner(answers: Vec<Option<&'static str>>) -> (u16, Received) {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let port = listener.local_addr().unwrap().port();
     let received = Received::default();
@@ -61,7 +61,7 @@ async fn read_message(stream: &mut TcpStream) -> Vec<u8> {
     }
 }
 
-fn settings(port: u16) -> PartnerConnectionSettings {
+pub(super) fn settings(port: u16) -> PartnerConnectionSettings {
     PartnerConnectionSettings {
         name: "HL7 Results - Hospital B".to_owned(),
         partner: "CLINIC-B".to_owned(),

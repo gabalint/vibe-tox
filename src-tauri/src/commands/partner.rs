@@ -6,10 +6,10 @@ use lis_core::CommandError;
 use lis_engine::{
     ApprovePartnerContract, ApprovePartnerMappings, ChosenPartnerFolder,
     CreatePartnerConnectionInput, DialogCommand, DiscardPartnerMappingDraft, DraftPartnerContract,
-    DraftPartnerMapping, Engine, ExportedMessageLog, FolderTestResult, ListPartnerMessages,
-    PartnerConnection, PartnerConnectionDetail, PartnerConnectionInput, PartnerMappings,
-    PartnerMessagePage, RecordPartnerDestinationCheck, RejectReceivedMessage,
-    ResendPartnerDelivery, ResolvePartnerRejection, ResolveUnroutedMessage,
+    DraftPartnerMapping, Engine, ExportedMessageLog, FolderTestResult, GetPartnerMessage,
+    ListPartnerMessages, PartnerConnection, PartnerConnectionDetail, PartnerConnectionInput,
+    PartnerMappings, PartnerMessageDetail, PartnerMessagePage, RecordPartnerDestinationCheck,
+    RejectReceivedMessage, ResendPartnerDelivery, ResolvePartnerRejection, ResolveUnroutedMessage,
     SetPartnerConnectionActive, TestPartnerFolderInput, TestPartnerMllpInput, TestPartnerSftpInput,
     UnroutedMessage, UpdatePartnerConnectionInput,
 };
@@ -127,6 +127,14 @@ pub(crate) async fn list_partner_messages(
     input: ListPartnerMessages,
 ) -> Result<PartnerMessagePage, CommandError> {
     engine.list_partner_messages(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn get_partner_message(
+    engine: State<'_, Engine>,
+    input: GetPartnerMessage,
+) -> Result<PartnerMessageDetail, CommandError> {
+    engine.get_partner_message(input).await
 }
 
 #[tauri::command]

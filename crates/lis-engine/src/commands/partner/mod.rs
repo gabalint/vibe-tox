@@ -13,6 +13,7 @@ mod contracts;
 mod folder_choices;
 mod folders;
 mod mappings;
+mod message_detail;
 mod messages;
 mod mllp;
 mod routing;
@@ -86,6 +87,8 @@ pub(crate) const SEND_PARTNER_TEST_MESSAGE: CommandSpec = spec(
 );
 pub(crate) const LIST_PARTNER_MESSAGES: CommandSpec =
     spec("list_partner_messages", "interfaces.list_messages", MANAGE);
+pub(crate) const GET_PARTNER_MESSAGE: CommandSpec =
+    spec("get_partner_message", "interfaces.get_message", MANAGE);
 pub(crate) const EXPORT_PARTNER_MESSAGES: CommandSpec = spec(
     "export_partner_messages",
     "interfaces.export_messages",

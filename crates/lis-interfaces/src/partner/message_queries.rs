@@ -90,7 +90,8 @@ pub struct ListPartnerMessages {
     #[ts(optional)]
     pub connection_id: Option<PartnerConnectionId>,
     pub view: MessageView,
-    /// A handoff number, a report or accession number, or part of a file name.
+    /// A handoff number, a report or accession number, part of a file name, or a whole
+    /// control ID (MSH-10).
     #[serde(default)]
     #[ts(optional)]
     pub search: Option<String>,
@@ -203,10 +204,11 @@ fn in_view(row: &PartnerMessageRow, view: MessageView) -> bool {
     }
 }
 
-/// Digits find a handoff number; other text is found in the report number or
-/// the written file's path.
+/// Digits find a handoff number; a whole control ID (MSH-10, the delivery ID) finds its
+/// message; other text is found in the report number or the written file's path.
 fn found(row: &PartnerMessageRow, search: &str) -> bool {
-    if search.is_empty() {
+    let control_id = row.delivery_id.map(|id| id.to_string());
+    if search.is_empty() || control_id.is_some_and(|id| id.eq_ignore_ascii_case(search)) {
         return true;
     }
     if search.bytes().all(|byte| byte.is_ascii_digit()) && row.source_label.is_none() {
