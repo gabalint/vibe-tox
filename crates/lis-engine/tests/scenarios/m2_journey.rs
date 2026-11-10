@@ -329,7 +329,7 @@ async fn a_byte_identical_message_is_listed_as_a_duplicate_with_no_evidence() {
         })
         .await
         .unwrap();
-    assert_eq!(shown, [first.clone()]);
+    assert_eq!(shown, std::slice::from_ref(&first));
     assert_eq!(journey_lines(&lab).await, before);
     let refused = lab
         .engine()
