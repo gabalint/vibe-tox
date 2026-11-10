@@ -78,6 +78,15 @@ describe("OrdersPage (REQ-ORD-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => 
     },
   );
 
+  it("shows an accepted order as a success badge and the whole Find text as a tooltip (#4705)", async () => {
+    renderPage(vi.fn(() => [{ ...SUMMARY, status: "accepted" }]));
+    const cell = await screen.findByRole("gridcell", { name: "Accepted" });
+    expect(cell.querySelector("[data-tone]")?.getAttribute("data-tone")).toBe("success");
+    const find = screen.getByRole("searchbox");
+    expect(find.getAttribute("placeholder")).toBe("Patient, barcode, accession, order no., client");
+    expect(find.getAttribute("title")).toBe(find.getAttribute("placeholder"));
+  });
+
   it("names each order by patient, order number, client and tests, and opens it with Enter", async () => {
     const list = vi.fn(() => [SUMMARY, { ...summary(2), placerOrderId: null }]);
     const { user, container } = renderPage(list);
