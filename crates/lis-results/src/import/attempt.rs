@@ -17,16 +17,12 @@ pub(super) struct Attempt {
 impl Attempt {
     /// The attempt of `input`; the parser follows the source's format.
     pub(super) fn of(input: &ImportReceiptInput) -> Self {
-        let parser_version = match &input.source {
-            ImportSource::Extracted(_) | ImportSource::Malformed(_) => ASTM_PARSER_VERSION,
-            ImportSource::Au { .. } => AU_PARSER_VERSION,
-            ImportSource::File(_) | ImportSource::UnregisteredFile => FILE_PARSER_VERSION,
-            ImportSource::Duplicate(_) => NOT_READ_PARSER_VERSION,
-        };
         // Nothing in a duplicate is read, so it names no registration.
-        let duplicate_of = match input.source {
-            ImportSource::Duplicate(earlier) => Some(earlier),
-            _ => None,
+        let (parser_version, duplicate_of) = match &input.source {
+            ImportSource::Extracted(_) | ImportSource::Malformed(_) => (ASTM_PARSER_VERSION, None),
+            ImportSource::Au { .. } => (AU_PARSER_VERSION, None),
+            ImportSource::File(_) | ImportSource::UnregisteredFile => (FILE_PARSER_VERSION, None),
+            ImportSource::Duplicate(earlier) => (NOT_READ_PARSER_VERSION, Some(*earlier)),
         };
         let registration = input
             .registration
