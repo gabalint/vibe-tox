@@ -6,11 +6,11 @@ Status: **implemented on synthetic data; fifth delivery step: interface contract
 
 | Message type | Made when | Direction | Protocol | Default file name |
 | --- | --- | --- | --- | --- |
-| HL7 Results (ORU^R01, v2.5.1) | A report revision is released; a withdrawal message when the report is withdrawn | Out | Folder, the partner's SFTP server, or MLLP – LIS connects | `{accession}_r{revision}_{date}.hl7` (none over MLLP) |
-| Report PDF | A report revision is released; its withdrawal notice when the report is withdrawn | Out | Folder, or the partner's SFTP server | `{accession}_r{revision}_{date}.pdf` |
+| HL7 Results (ORU^R01, v2.5.1) | A report revision is released; a withdrawal message when the report is withdrawn | Out | Folder, the partner's SFTP server, or MLLP – LIS connects | `{report}_r{revision}_{date}.hl7` (none over MLLP) |
+| Report PDF | A report revision is released; its withdrawal notice when the report is withdrawn | Out | Folder, or the partner's SFTP server | `{report}_r{revision}_{date}.pdf` |
 | Billing JSON (`bil-handoff-v2`) | A billing handoff is created | Out | Folder, or the partner's SFTP server | `billing-{handoff}_{date}.json` |
 
-In a report's file name, `{accession}` is the report number (the accession number and the specimen type code, so two specimens of one accession never share a name) and `{revision}` the revision number; a withdrawal's revision reads `<n>-withdrawn`.
+In a report's file name, `{report}` is the report number (the accession number and the specimen type code, so two specimens of one accession never share a name), `{accession}` the accession number alone (optional) and `{revision}` the revision number; a withdrawal's revision reads `<n>-withdrawn`. `{report}` and `{revision}` are required. Interfaces migration 0017 rewrote patterns saved when `{accession}` stood for the report number to `{report}`, so their files keep their names, and the acceptance key reads `{report}` as that earlier `{accession}`, so their acceptance tests stay current.
 
 | HL7 Orders (OML^O21, or ORM^O01, v2.5.1) | The clinic's EMR writes a file, or sends a message | In | Folder, the clinic's SFTP server, or MLLP – LIS listens | — (read, not named) |
 

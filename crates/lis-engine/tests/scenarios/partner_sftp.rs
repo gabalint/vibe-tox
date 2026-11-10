@@ -36,7 +36,7 @@ fn settings(sftp: SftpSettings) -> PartnerConnectionSettings {
         protocol: PartnerProtocol::Sftp,
         rules: Vec::new(),
         schedule: Schedule::Immediately,
-        file_name_pattern: "{accession}_r{revision}.hl7".to_owned(),
+        file_name_pattern: "{report}_r{revision}.hl7".to_owned(),
         sftp: Some(sftp),
         intake: None,
         mllp: None,

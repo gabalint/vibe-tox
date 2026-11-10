@@ -38,13 +38,13 @@ const fn pattern_rules(message_type: PartnerMessageType) -> Option<PatternRules>
             extension: ".json",
         }),
         PartnerMessageType::ReportPdf => Some(PatternRules {
-            required: &["{accession}", "{revision}"],
-            optional: &["{date}", "{time}"],
+            required: &["{report}", "{revision}"],
+            optional: &["{accession}", "{date}", "{time}"],
             extension: ".pdf",
         }),
         PartnerMessageType::Hl7Oru => Some(PatternRules {
-            required: &["{accession}", "{revision}"],
-            optional: &["{date}", "{time}"],
+            required: &["{report}", "{revision}"],
+            optional: &["{accession}", "{date}", "{time}"],
             extension: ".hl7",
         }),
         PartnerMessageType::Hl7Orders => None,
@@ -231,8 +231,10 @@ fn plain_byte(byte: u8) -> bool {
 
 /// The values a file name pattern's placeholders take.
 pub(crate) struct FileNameParts<'a> {
-    /// `{handoff}` or `{accession}`: the handoff number, or the report number.
+    /// `{handoff}` or `{report}`: the handoff number, or the report number.
     pub(crate) record: &'a str,
+    /// `{accession}`: the report's accession number.
+    pub(crate) accession: &'a str,
     /// `{revision}`: the report's revision number.
     pub(crate) revision: &'a str,
     /// `{date}`: `YYYYMMDD`.
@@ -260,7 +262,8 @@ pub(crate) fn file_name(pattern: &str, parts: &FileNameParts<'_>) -> String {
     let record = plain(parts.record);
     pattern
         .replace("{handoff}", &record)
-        .replace("{accession}", &record)
+        .replace("{report}", &record)
+        .replace("{accession}", &plain(parts.accession))
         .replace("{revision}", &plain(parts.revision))
         .replace("{date}", &plain(parts.date))
         .replace("{time}", &plain(parts.time))
@@ -382,10 +385,12 @@ mod tests {
                 ..settings()
             })
         };
-        assert!(report("{accession}_r{revision}_{date}.pdf").is_ok());
+        assert!(report("{report}_r{revision}_{date}.pdf").is_ok());
+        assert!(report("{accession}-{report}_r{revision}.pdf").is_ok());
         for pattern in [
-            "{accession}_{date}.pdf",
-            "{accession}_r{revision}.json",
+            "{report}_{date}.pdf",
+            "{accession}_r{revision}.pdf",
+            "{report}_r{revision}.json",
             "{handoff}_r{revision}.pdf",
         ] {
             assert_eq!(
@@ -400,6 +405,7 @@ mod tests {
     fn file_names_fill_every_placeholder() {
         let parts = FileNameParts {
             record: "12",
+            accession: "",
             revision: "",
             date: "20261103",
             time: "101500",
@@ -410,12 +416,17 @@ mod tests {
         );
         let parts = FileNameParts {
             record: "A26000005-U/1",
+            accession: "A26000005",
             revision: "2-withdrawn",
             ..parts
         };
         assert_eq!(
-            file_name("{accession}_r{revision}_{date}.pdf", &parts),
+            file_name("{report}_r{revision}_{date}.pdf", &parts),
             "A26000005-U_1_r2-withdrawn_20261103.pdf"
+        );
+        assert_eq!(
+            file_name("{accession}_{report}_r{revision}.pdf", &parts),
+            "A26000005_A26000005-U_1_r2-withdrawn.pdf"
         );
     }
 }

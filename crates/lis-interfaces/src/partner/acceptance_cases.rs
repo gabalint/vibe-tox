@@ -96,6 +96,7 @@ fn file_name_case(settings: &PartnerConnectionSettings) -> AcceptanceCase {
         &settings.file_name_pattern,
         &FileNameParts {
             record: "TEST00001-U",
+            accession: "TEST00001",
             revision: "1",
             date: "20260101",
             time: "120000",

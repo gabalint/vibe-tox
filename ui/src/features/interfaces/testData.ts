@@ -82,7 +82,7 @@ export const HL7: PartnerConnection = {
     partner: "CLINIC-A",
     messageType: "hl7_oru",
     rules: [{ field: "client", condition: "equals", value: "CLINIC-A" }],
-    fileNamePattern: "{accession}_r{revision}_{date}.hl7",
+    fileNamePattern: "{report}_r{revision}_{date}.hl7",
   },
 };
 

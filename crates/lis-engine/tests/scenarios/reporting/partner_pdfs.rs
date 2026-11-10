@@ -25,7 +25,7 @@ use crate::m3_fixture::{Bench, Staff, Variant};
 use crate::m3_release_races::verified_artifact;
 use crate::partner_contract::{approve_and_test, draft_contract};
 
-const PATTERN: &str = "{accession}_r{revision}.pdf";
+const PATTERN: &str = "{report}_r{revision}.pdf";
 pub(super) const AMENDMENT: &str = "Synthetic correction: integration error";
 
 fn settings(rules: Vec<RoutingRule>) -> PartnerConnectionSettings {

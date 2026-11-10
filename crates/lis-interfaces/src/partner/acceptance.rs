@@ -49,7 +49,7 @@ fn settings_digest(settings: &PartnerConnectionSettings) -> Result<String, Partn
         "partner": settings.partner,
         "messageType": settings.message_type,
         "protocol": settings.protocol,
-        "fileNamePattern": settings.file_name_pattern,
+        "fileNamePattern": digest_pattern(&settings.file_name_pattern),
         "acceptFrom": settings.intake.as_ref().map(|intake| &intake.accept_from),
         "unknownPatient": settings.intake.as_ref().map(|intake| intake.unknown_patient),
         "acknowledgement": settings.mllp.as_ref().map(|mllp| mllp.acknowledgement),
@@ -58,6 +58,16 @@ fn settings_digest(settings: &PartnerConnectionSettings) -> Result<String, Partn
     });
     let digest = Sha256::digest(serde_json::to_vec(&shape)?);
     Ok(hex::encode(&digest[..8]))
+}
+
+/// The pattern as the key reads it. Before migration 0017 `{accession}` stood for the
+/// report number, now `{report}`: reading `{report}` as `{accession}`, and the accession
+/// as a name no pattern can hold, keeps a migrated connection's key and tells every
+/// pattern apart.
+fn digest_pattern(pattern: &str) -> String {
+    pattern
+        .replace("{accession}", "{accession_number}")
+        .replace("{report}", "{accession}")
 }
 
 /// The connection's stored acceptance key.
@@ -203,3 +213,20 @@ fn insert_run(
 /// Marker for an acceptance run's ID.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum RunMarker {}
+
+#[cfg(test)]
+mod tests {
+    use super::digest_pattern;
+
+    #[test]
+    fn a_migrated_pattern_keeps_its_key_and_a_new_accession_does_not_share_it() {
+        assert_eq!(
+            digest_pattern("{report}_r{revision}.pdf"),
+            "{accession}_r{revision}.pdf"
+        );
+        assert_ne!(
+            digest_pattern("{accession}-{report}_r{revision}.pdf"),
+            digest_pattern("{report}-{report}_r{revision}.pdf")
+        );
+    }
+}

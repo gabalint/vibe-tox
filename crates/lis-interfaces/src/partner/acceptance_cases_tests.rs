@@ -49,7 +49,7 @@ fn an_hl7_connection_with_complete_mappings_passes_every_case() {
             mapping(MappingKind::Analyte, "CA-AMP", Some("ng/mL")),
         ],
     };
-    let hl7 = settings(PartnerMessageType::Hl7Oru, "{accession}_r{revision}.hl7");
+    let hl7 = settings(PartnerMessageType::Hl7Oru, "{report}_r{revision}.hl7");
     let mut cases = hl7_cases(&hl7, Some(&mappings));
     cases.push(file_name_case(&hl7));
     assert!(cases.iter().all(|case| case.passed), "{cases:?}");
@@ -72,7 +72,7 @@ fn an_hl7_connection_with_complete_mappings_passes_every_case() {
 
 #[test]
 fn missing_mappings_or_units_fail_and_say_why() {
-    let hl7 = settings(PartnerMessageType::Hl7Oru, "{accession}_r{revision}.hl7");
+    let hl7 = settings(PartnerMessageType::Hl7Oru, "{report}_r{revision}.hl7");
     let none = hl7_cases(&hl7, None);
     assert_eq!(
         problems(&none)[0],
@@ -115,9 +115,9 @@ fn over_mllp_the_partner_is_asked_to_answer_and_no_file_is_named() {
 
 #[test]
 fn a_file_name_must_keep_its_extension() {
-    let pdf = settings(PartnerMessageType::ReportPdf, "{accession}_r{revision}.pdf");
+    let pdf = settings(PartnerMessageType::ReportPdf, "{report}_r{revision}.pdf");
     assert!(file_name_case(&pdf).passed);
-    let wrong = settings(PartnerMessageType::ReportPdf, "{accession}_r{revision}.txt");
+    let wrong = settings(PartnerMessageType::ReportPdf, "{report}_r{revision}.txt");
     assert_eq!(
         file_name_case(&wrong).problem.as_deref(),
         Some("file_name_invalid")
