@@ -12,6 +12,7 @@ import type { PartnerMessageType } from "@/generated/PartnerMessageType";
 import type { UnroutedMessage } from "@/generated/UnroutedMessage";
 import { useCommandQuery } from "@/lib/commands";
 import { LIST_CONNECTIONS, LIST_UNROUTED } from "../contract";
+import { awaitsAck } from "../mllpLabels";
 import { CONNECTIONS_PATH, connectionPath } from "../paths";
 import { ConnectionDialog } from "./ConnectionDialog";
 import styles from "./ConnectionsPage.module.css";
@@ -46,6 +47,7 @@ export function ConnectionsPage() {
     tab.id === "all" ? all : all.filter((row) => tab.types.includes(row.settings.messageType));
   const rows = selected ? of(selected) : all;
   const loaded = connections.data !== undefined;
+  const acking = all.filter(awaitsAck);
   return (
     <Page layout="collection">
       <PageHeader
@@ -62,12 +64,14 @@ export function ConnectionsPage() {
           tone="danger"
           value={loaded ? all.filter((row) => row.status === "error").length : null}
         />
-        {/* Only MLLP partners answer; a folder or SFTP server never does. */}
-        <Tile
-          label="Waiting for acknowledgement"
-          tone="warning"
-          value={loaded ? all.reduce((sum, row) => sum + row.awaitingAck, 0) : null}
-        />
+        {/* Only an MLLP partner the LIS sends to answers; without one the count has no meaning. */}
+        {acking.length > 0 && (
+          <Tile
+            label="Waiting for acknowledgement"
+            tone="warning"
+            value={acking.reduce((sum, row) => sum + row.awaitingAck, 0)}
+          />
+        )}
         <Tile label="Unrouted messages" tone="warning" value={unrouted.data?.length ?? null} />
       </div>
       <Tabs

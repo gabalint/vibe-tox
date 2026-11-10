@@ -2,7 +2,7 @@
   "id": "interfaces",
   "title": "Interfaces",
   "summary": "Receive HL7 orders from a clinic's EMR and send HL7 results, report PDFs and billing handoff files to outside systems, through a folder or the partner's SFTP server, or HL7 over MLLP with a partner on the lab network; map codes between the LIS and each partner, follow every message in Logs, and decide on messages no connection matched.",
-  "reviewedOn": "2026-11-08",
+  "reviewedOn": "2026-11-10",
   "routes": [
     "/interfaces/connections",
     "/interfaces/connections/:connectionId/:tab?",
@@ -50,7 +50,7 @@
           "name": "Active connections / With errors / Waiting for acknowledgement / Unrouted messages",
           "meaning": "Counts that need attention: started connections working normally, started connections whose latest attempt failed, messages sent that wait for the partner's acknowledgement, and messages waiting for a decision.",
           "values": "Whole numbers; … while loading. With errors shows in red, the other two in amber, when not zero.",
-          "rules": "Read-only. Only an MLLP partner answers: Waiting for acknowledgement counts messages sent over MLLP that the partner has not acknowledged yet; a folder or SFTP server never answers. Unrouted messages also shows beside the menu entry."
+          "rules": "Read-only. Only an MLLP partner answers: Waiting for acknowledgement counts messages sent over MLLP – LIS connects that the partner has not acknowledged yet, and shows only while at least one such connection exists; a folder or SFTP server never answers, and an MLLP – LIS listens connection sends the acknowledgements itself. Unrouted messages also shows beside the menu entry."
         },
         {
           "name": "All / Orders in / Results out / Report PDFs / Billing",
@@ -80,7 +80,7 @@
           "name": "Last attempt, Waiting, Awaiting ACK, Errors",
           "meaning": "When the LIS last tried to write or send a message (for HL7 Orders, when it last read the folder or server, else the last message received), how many messages wait to be written (for HL7 Orders, wait for a patient or are held), how many sent over MLLP wait for the partner's acknowledgement, and how many have failed attempts (for HL7 Orders, were refused).",
           "values": "A time or None yet; whole numbers.",
-          "rules": "Synthetic test messages are not counted. A message awaiting its acknowledgement is not counted in Errors; it is sent again at its next attempt. Awaiting ACK is 0 for a folder or SFTP server."
+          "rules": "Synthetic test messages are not counted. A message awaiting its acknowledgement is not counted in Errors; it is sent again at its next attempt. Awaiting ACK counts only for MLLP – LIS connects; it is — for a folder, SFTP or MLLP – LIS listens connection, which awaits no acknowledgement."
         }
       ],
       "actions": [
@@ -334,7 +334,7 @@
         {
           "name": "Overview: Connection and Checks and contract",
           "meaning": "Connection: partner, message, protocol and folder, send when and schedule, file name and rules. For SFTP, Protocol shows the server and port, then Remote folder, and Sign-in with the username and the server fingerprint shortened, such as SSH key as vibetox_lab · fingerprint SHA256:8Zq3...f1Kx. For MLLP, Protocol shows the partner, such as MLLP – LIS connects – 10.20.0.15:6661, and Acknowledgement shows Application ACK (AA / AE / AR) · timeout 30 seconds; there is no file name, and the page's description reads such as Sends an HL7 ORU result message with the partner's codes to CLINIC-B's interface over MLLP when results are released. An HL7 Orders connection shows its input folder, Processed and Failed folders, Check every, Accept messages from and Unknown patient instead of send when, file name and rules; the page's description reads such as Reads HL7 order messages from CLINIC-A's folder every 30 seconds. Over MLLP – LIS listens, Protocol shows where the LIS listens, such as MLLP – LIS listens – 192.168.1.20:6660, then Partners allowed, Acknowledgement (Application ACK (AA / AE / AR), after the message is saved · idle timeout 300 seconds) and Listener: Listening since <time>; Not listening: <why> (since <time>); tried again every 5 seconds; or Not listening: the connection is stopped, not checked, or its acceptance tests have not passed. It has no folders or Check every, and the description reads such as Receives HL7 order messages from CLINIC-B over MLLP on 192.168.1.20:6660. Checks and contract: who verified the destination, when and how; the interface contract, as v<n> · acceptance tests passed <time> (or failed <time>, out of date, not run), or Not approved: no patient data goes or comes until it is approved and tested, which opens the contract; the last connection and its result, as <time> · OK or <time> · <problem> (for HL7 Orders read from a folder or SFTP server, the latest reading and its first problem, such as Folder not found or A file could not be read; it stays in the input folder; after the app starts, the last message received until the first reading; over MLLP – LIS listens, the last message received); messages awaiting the partner's application acknowledgement; the last change with its reason.",
-          "values": "As recorded. Awaiting application ACK counts messages sent over MLLP that the partner has not acknowledged yet; it is 0 messages for a folder or SFTP server, which never answer. HL7 Results and HL7 Orders connections also show their Code mappings card below, read-only. On the Rules tab, an HL7 Orders connection shows What to accept.",
+          "values": "As recorded. Awaiting application ACK, for MLLP – LIS connects only, counts messages sent that the partner has not acknowledged yet; it is not shown for a folder or SFTP server, which never answer, or for MLLP – LIS listens, which sends the acknowledgements itself. HL7 Results and HL7 Orders connections also show their Code mappings card below, read-only. On the Rules tab, an HL7 Orders connection shows What to accept.",
           "rules": "Read-only, but the Interface contract line, which opens the contract."
         },
         {

@@ -14,7 +14,7 @@ import {
   scheduleText,
   shortFingerprint,
 } from "../labels";
-import { listeningText, socketText } from "../mllpLabels";
+import { awaitsAck, listeningText, socketText } from "../mllpLabels";
 import styles from "./ConnectionPage.module.css";
 import { ContractLine } from "./contract/ContractLine";
 import { partnersText } from "./listenerForm";
@@ -177,10 +177,14 @@ export function ConnectionOverview({ detail }: { detail: PartnerConnectionDetail
               : "None yet",
           ],
           // Only an MLLP partner answers; a folder or SFTP server never does.
-          [
-            "Awaiting application ACK",
-            `${connection.awaitingAck} message${connection.awaitingAck === 1 ? "" : "s"}`,
-          ],
+          ...(awaitsAck(connection)
+            ? [
+                [
+                  "Awaiting application ACK",
+                  `${connection.awaitingAck} message${connection.awaitingAck === 1 ? "" : "s"}`,
+                ] satisfies [string, ReactNode],
+              ]
+            : []),
           [
             "Last change",
             `${person(lastChange.by, lastChange.byDisplay)}, ${formatTime(lastChange.at)}${lastReason ? ` · reason: ${lastReason}` : ""}`,
