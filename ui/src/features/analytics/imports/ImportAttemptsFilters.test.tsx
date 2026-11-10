@@ -36,6 +36,7 @@ const NONE = {
   receivedFrom: null,
   receivedBefore: null,
   search: null,
+  hideDuplicates: false,
   limit: 200,
   before: null,
   afterImportAttemptId: undefined,
@@ -121,6 +122,38 @@ describe("Result imports filters (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_
     expect(router.state.location.search).toBe("?from=2026-11-03");
     await user.type(screen.getByRole("textbox", { name: "Received to" }), "2026-11-02");
     expect(screen.getByText("Choose a day on or after the start day.")).toBeTruthy();
+  });
+
+  it("hides duplicates in the engine, and shows one as not imported and not retryable", async () => {
+    const duplicate: ImportAttemptSummary = {
+      ...ATTEMPT,
+      importAttemptId: "00000000-0000-7000-8000-000000008102",
+      receiptId: "00000000-0000-7000-8000-000000009102",
+      outcome: "duplicate",
+      failureCode: null,
+      rowsTotal: 0,
+      rowsQuarantined: 0,
+      duplicateOfAttemptId: ATTEMPT.importAttemptId,
+    };
+    const list = vi.fn((args: unknown) =>
+      (args as { input: { hideDuplicates: boolean } }).input.hideDuplicates
+        ? [ATTEMPT]
+        : [duplicate, ATTEMPT],
+    );
+    const { user, router } = renderList("/review/imports", list);
+    expect(await screen.findByRole("gridcell", { name: "Duplicate – not imported" })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Select all quarantined" }));
+    expect(screen.getByText("1 selected.")).toBeTruthy();
+    await user.click(screen.getByRole("checkbox", { name: "Hide duplicates" }));
+    await waitFor(() =>
+      expect(list).toHaveBeenLastCalledWith({ input: { ...NONE, hideDuplicates: true } }),
+    );
+    expect(router.state.location.search).toBe("?duplicates=hidden");
+    await waitFor(() =>
+      expect(screen.queryByRole("gridcell", { name: "Duplicate – not imported" })).toBeNull(),
+    );
+    await user.click(screen.getAllByRole("button", { name: "Clear filters" })[0] as HTMLElement);
+    await waitFor(() => expect(list).toHaveBeenLastCalledWith({ input: NONE }));
   });
 
   it("says when no import matches the filters, and ignores a day that is not real", async () => {

@@ -32,7 +32,7 @@ pub type ValidityAssessmentId = Id<ValidityAssessment>;
 pub type SetAsideRowId = Id<SetAsideRow>;
 
 text_enum!(/// Overall import disposition.
-    ImportOutcome { Processed = "processed", ProcessedWithQuarantine = "processed_with_quarantine", Quarantined = "quarantined", });
+    ImportOutcome { Processed = "processed", ProcessedWithQuarantine = "processed_with_quarantine", Quarantined = "quarantined", Duplicate = "duplicate", });
 text_enum!(/// Whole-message failure.
 ImportFailureCode {
     MalformedMessage = "malformed_message",

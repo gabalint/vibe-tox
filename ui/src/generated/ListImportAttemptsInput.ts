@@ -16,4 +16,8 @@ receivedBefore?: string | null,
 /**
  * Text in a sample label, container label, accession number or file name.
  */
-search?: string | null, };
+search?: string | null, 
+/**
+ * Leaves out messages identical to an earlier one (outcome `duplicate`).
+ */
+hideDuplicates?: boolean, };

@@ -9,9 +9,13 @@ import type { RetryImportInput } from "@/generated/RetryImportInput";
 import { useCommandMutation } from "@/lib/commands";
 import { toCommandError } from "@/lib/errors";
 import { IMPORT_QUERIES } from "../contract";
+import { isQuarantinedImport } from "../resultLabels";
 
-/** Whether an attempt left anything to retry: a fully processed one did not. */
-export const canRetry = (attempt: ImportAttemptSummary) => attempt.outcome !== "processed";
+/**
+ * Whether an attempt left anything to retry: a fully processed one did not, and a duplicate's
+ * rows are retried on the earlier attempt.
+ */
+export const canRetry = (attempt: ImportAttemptSummary) => isQuarantinedImport(attempt.outcome);
 
 const retries = (count: number) => (count === 1 ? "1 retry" : `${count} retries`);
 const imports = (count: number) => (count === 1 ? "1 import" : `${count} imports`);

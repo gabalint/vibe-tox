@@ -148,7 +148,10 @@ function ImportActivity({ instrument }: { instrument: InstrumentConfiguration })
         {(page) => {
           const rows = page.slice(0, RECENT_IMPORTS);
           const latest = rows[0];
-          const quarantined = rows.filter((row) => row.outcome !== "processed").length;
+          // A duplicate imports nothing and quarantines nothing.
+          const quarantined = rows.filter(
+            (row) => row.outcome === "quarantined" || row.outcome === "processed_with_quarantine",
+          ).length;
           const counted =
             page.length > RECENT_IMPORTS ? `of the last ${RECENT_IMPORTS}` : `of ${rows.length}`;
           return (

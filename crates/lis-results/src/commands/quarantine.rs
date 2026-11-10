@@ -60,13 +60,18 @@ pub fn retry_import(
     ctx.require(Capability::ReviewResults)?;
     require_user(ctx)?;
     require_reason("reason", &input.reason)?;
-    let exists: bool = ctx.tx().query_row(
-        "SELECT EXISTS(SELECT 1 FROM ifc_receipts WHERE id = ?1 AND state = 'complete')",
-        [input.receipt_id],
-        |row| row.get(0),
-    )?;
-    if !exists {
-        return Err(ResultError::NotFound("complete receipt"));
+    let duplicate: bool = ctx
+        .tx()
+        .query_row(
+            "SELECT duplicate_of IS NOT NULL FROM ifc_receipts WHERE id = ?1 AND state = 'complete'",
+            [input.receipt_id],
+            |row| row.get(0),
+        )
+        .optional()?
+        .ok_or(ResultError::NotFound("complete receipt"))?;
+    // A duplicate's rows are the earlier receipt's: that one is retried.
+    if duplicate {
+        return Err(ResultError::WrongState("duplicate receipt"));
     }
     let attempt_no = next_attempt_no(ctx.tx(), input.receipt_id)?;
     ctx.enqueue(OutboxItem {

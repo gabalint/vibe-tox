@@ -13,6 +13,7 @@
 mod au;
 mod awaiting;
 mod dilution;
+mod duplicates;
 mod failures;
 mod kept;
 mod range_policy;

@@ -2,13 +2,14 @@
   "id": "result-imports",
   "title": "Result imports",
   "summary": "Account for received results and investigate rows that were not applied.",
-  "reviewedOn": "2026-11-06",
+  "reviewedOn": "2026-11-10",
   "routes": ["/review/imports", "/review/imports/:importAttemptId/:tab?"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
         "Result imports lists attempts to process received data. Narrow it by instrument, outcome and received days, or find the attempts that brought a sample label, accession, container label or file name; the filters combine and stay in the address. Load results file lets you choose a registered instrument and a file. Open an attempt to see its outcome, counts and refusal reasons; file attempts also show file provenance and the template version used.",
+        "A message or file identical to one received earlier from the same instrument is listed as Duplicate – not imported: nothing in it is read or imported again, and its attempt links to the earlier one, which holds its samples and results. Hide duplicates leaves these out of the list.",
         "Quarantined rows need investigation. Set aside lists rows kept outside patient results. Retry import processes the received message again as a new attempt and replaces earlier open quarantine outcomes with the retry’s outcome. After fixing a cause shared by many attempts, check them in the list, or use Select all quarantined, and use Retry selected to retry them together with one reason."
       ]
     },
@@ -54,7 +55,9 @@
     "ui/src/features/analytics/imports/fixLinks.tsx",
     "ui/src/features/analytics/imports/RetryImportDialog.tsx",
     "ui/src/features/analytics/paths.ts",
-    "crates/lis-results/src/queries/quarantine_items.rs"
+    "crates/lis-results/src/queries/quarantine_items.rs",
+    "crates/lis-results/src/import/attempt.rs",
+    "crates/lis-engine/src/result_import.rs"
   ],
   "pages": [
     {
@@ -78,8 +81,14 @@
         {
           "name": "Outcome filter",
           "meaning": "Show only the attempts with one processing outcome.",
-          "values": "Any outcome (default); Processed; Processed, some rows quarantined; Quarantined.",
+          "values": "Any outcome (default); Processed; Processed, some rows quarantined; Quarantined; Duplicate – not imported.",
           "rules": "Optional. Kept in the address (?outcome=)."
+        },
+        {
+          "name": "Hide duplicates",
+          "meaning": "Leaves out the attempts of messages or files identical to one received earlier from the same instrument.",
+          "values": "Checked or not; not checked by default, so duplicates are listed.",
+          "rules": "Optional. Applied by the engine before the list is paged, so every page stays full. Combines with the other filters; Clear filters unchecks it. Kept in the address (?duplicates=hidden)."
         },
         {
           "name": "More filters: Received from / Received to",
@@ -91,7 +100,7 @@
           "name": "Check column",
           "meaning": "Chooses attempts for Retry selected.",
           "values": "Checked or not; the header checks or clears every attempt that can be checked.",
-          "rules": "Only attempts with something to retry can be checked: Quarantined, or Processed, some rows quarantined. A Processed attempt shows no check mark. A filter, search or refresh that removes a checked attempt from the list unchecks it and says so. Space toggles the focused row."
+          "rules": "Only attempts with something to retry can be checked: Quarantined, or Processed, some rows quarantined. A Processed or Duplicate – not imported attempt shows no check mark: a duplicate's rows are retried on the earlier attempt. A filter, search or refresh that removes a checked attempt from the list unchecks it and says so. Space toggles the focused row."
         },
         {
           "name": "Processed",
@@ -126,7 +135,7 @@
         {
           "name": "Outcome",
           "meaning": "Summarizes processing, not clinical approval.",
-          "values": "Processed (green badge with a check mark); Processed, some rows quarantined (amber warning badge); Quarantined (red badge).",
+          "values": "Processed (green badge with a check mark); Processed, some rows quarantined (amber warning badge); Quarantined (red badge); Duplicate – not imported (gray badge): identical to an earlier message or file from the same instrument, nothing imported, 0 rows.",
           "rules": "Read-only; supplied by the current record."
         },
         {
@@ -181,7 +190,7 @@
         },
         {
           "name": "Clear filters",
-          "does": "Removes the search, instrument, outcome and received days at once.",
+          "does": "Removes the search, instrument, outcome, received days and Hide duplicates at once.",
           "availableWhen": "Any filter is applied; also offered when no import matches the filters.",
           "result": "Shows every attempt, newest first, and removes the filters from the address."
         },
@@ -223,7 +232,7 @@
         }
       ],
       "restrictions": [
-        "Identical bytes received again from the same instrument are deduplicated. To reprocess after a reviewed template change, use Retry import on the existing receipt.",
+        "Identical bytes received again from the same instrument are deduplicated: the receipt is kept and acknowledged, and its attempt, Duplicate – not imported, reads and imports nothing. To reprocess after a reviewed template change, use Retry import on the existing receipt.",
         "Files larger than 20 MiB are not read or imported; a receipt records the arrival. Export a supported smaller file.",
         "The file receipt preserves transport evidence. Technical review and report release remain separate.",
         "Retry selected retries only the attempts checked among the loaded rows. Fix and approve the shared cause first: a retry of an unchanged cause gives the same outcome."
@@ -242,6 +251,10 @@
         {
           "problem": "File already received appears.",
           "recovery": "Open the earlier attempt. Use Retry import there after correcting a documented cause; selecting the identical file again does not reprocess it."
+        },
+        {
+          "problem": "An attempt shows Duplicate – not imported.",
+          "recovery": "The analyzer or the file sent the same bytes again. Nothing was imported twice; open the attempt and use Open the earlier import attempt to see the samples and results. If the earlier one needs reprocessing, use Retry import there."
         },
         {
           "problem": "The file is received but no attempt is displayed.",
@@ -266,8 +279,14 @@
         {
           "name": "Attempt / Processed / Outcome",
           "meaning": "Identifies the processing event and broad result.",
-          "values": "Attempt number, recorded processing time and Processed, Processed, some rows quarantined or Quarantined.",
+          "values": "Attempt number, recorded processing time and Processed, Processed, some rows quarantined, Quarantined or Duplicate – not imported.",
           "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Earlier import attempt (duplicate)",
+          "meaning": "Links a duplicate to the attempt of the identical message or file received first, which holds its samples and results.",
+          "values": "Open the earlier import attempt, or a note that the earlier message or file has not been imported yet.",
+          "rules": "Shown only for Duplicate – not imported, in place of the counts and rows, which a duplicate does not have; the File section still shows a duplicate file. The link opens the earlier receipt's latest attempt, so after a retry there it opens the retry. Refresh shows the link once the earlier one is imported."
         },
         {
           "name": "Message failure / File failure",
@@ -346,7 +365,7 @@
         {
           "name": "Retry import",
           "does": "Processes the original complete receipt again after a reasoned request. From a row it still retries the whole received message, not that row alone.",
-          "availableWhen": "Result-review authority and a complete stored receipt. Offered in the page header and, once a row's cause is fixed, in each open quarantined row's menu and panel.",
+          "availableWhen": "Result-review authority and a complete stored receipt that is not a duplicate. Offered in the page header and, once a row's cause is fixed, in each open quarantined row's menu and panel.",
           "result": "Queues a new attempt; earlier open quarantine outcomes are superseded by the retry’s outcome. Review the new attempt."
         },
         {

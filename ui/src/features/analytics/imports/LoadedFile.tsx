@@ -103,8 +103,8 @@ function Outcome({ file, attempt, waiting, unlisted }: OutcomeProps) {
   if (file.outcome === "duplicate") {
     return (
       <Alert tone="info" title="The same file was received before from this instrument">
-        Nothing was imported again. To read it again after a template change, use Retry import on
-        the earlier import attempt.
+        Nothing was imported again; Result imports lists it as Duplicate – not imported. To read it
+        again after a template change, use Retry import on the earlier import attempt.
       </Alert>
     );
   }

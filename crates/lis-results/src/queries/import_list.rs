@@ -15,6 +15,8 @@ pub struct ImportAttemptFilter {
     /// Text in a sample label, container label, accession number or file name
     /// the attempt brought; letters match in either case.
     pub search: Option<String>,
+    /// Leaves out `duplicate` attempts: messages identical to an earlier one.
+    pub hide_duplicates: bool,
 }
 
 /// The longest search text accepted.
@@ -69,6 +71,7 @@ pub fn list_import_attempts_page(
            AND (?2 IS NULL OR processed_at < ?2) \
            AND (?3 IS NULL OR processed_at < ?3 OR (processed_at = ?3 AND id < ?4)) \
            AND (?6 IS NULL OR outcome = ?6) \
+           AND (?10 = 0 OR outcome <> 'duplicate') \
            AND ((?7 IS NULL AND ?8 IS NULL) OR receipt_id IN ( \
                 SELECT receipt_id FROM ifc_v_receipt_arrivals \
                 WHERE (?7 IS NULL OR received_at >= ?7) AND (?8 IS NULL OR received_at < ?8))) \
@@ -98,6 +101,7 @@ pub fn list_import_attempts_page(
                 filter.received_from,
                 filter.received_before,
                 search,
+                filter.hide_duplicates,
             ],
             attempt_summary,
         )?

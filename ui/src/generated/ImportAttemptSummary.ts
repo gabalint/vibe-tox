@@ -27,4 +27,9 @@ origin?: ResultFileOrigin,
 /**
  * When the message or file began to arrive; a retry keeps its receipt's time.
  */
-receivedAt: string, };
+receivedAt: string, 
+/**
+ * For a `duplicate` attempt, the latest attempt of the identical earlier
+ * receipt, which holds its rows. Absent until that receipt is imported.
+ */
+duplicateOfAttemptId?: string, };

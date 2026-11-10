@@ -15,11 +15,13 @@ export interface ImportFilter {
   to?: string | undefined;
   /** A sample label, container label, accession number or file name, or part of one. */
   search?: string | undefined;
+  /** `hidden` leaves out messages identical to an earlier one. */
+  duplicates?: "hidden" | undefined;
 }
 
 /** Each outcome the filter offers, worded as its badge; a later outcome is one more code. */
 export const OUTCOME_FILTERS: readonly Choice<ImportOutcome>[] = (
-  ["processed", "processed_with_quarantine", "quarantined"] as const
+  ["processed", "processed_with_quarantine", "quarantined", "duplicate"] as const
 ).map((id) => ({ id, label: importStatus(id).label }));
 
 /** The address parameter of each filter. */
@@ -29,6 +31,7 @@ const PARAMS = {
   from: "from",
   to: "to",
   search: "q",
+  duplicates: "duplicates",
 } as const satisfies Record<keyof ImportFilter, string>;
 
 function filterFrom(params: URLSearchParams): ImportFilter {
@@ -43,6 +46,7 @@ function filterFrom(params: URLSearchParams): ImportFilter {
     from: day("from"),
     to: day("to"),
     search: text("search"),
+    duplicates: text("duplicates") === "hidden" ? "hidden" : undefined,
   };
 }
 
@@ -50,7 +54,7 @@ function filterFrom(params: URLSearchParams): ImportFilter {
 export const isFiltered = (filter: ImportFilter) => Object.values(filter).some(Boolean);
 
 /**
- * The filters in the address (`?instrument=&outcome=&from=&to=&q=`), so a filtered list can
+ * The filters in the address (`?instrument=&outcome=&from=&to=&q=&duplicates=hidden`), so a filtered list can
  * be shared, reloaded or reached again from an attempt's breadcrumb, and the call that applies
  * a whole new set. It replaces the history entry and keeps the navigation state.
  */
@@ -85,5 +89,6 @@ export function useImportListInput(
     receivedFrom: filter.from ? labDayStart(filter.from, timeZone) : null,
     receivedBefore: filter.to ? labDayStart(filter.to, timeZone, 1) : null,
     search: filter.search ?? null,
+    hideDuplicates: filter.duplicates === "hidden",
   };
 }

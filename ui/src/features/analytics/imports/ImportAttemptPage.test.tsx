@@ -111,6 +111,7 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
         receivedFrom: null,
         receivedBefore: null,
         search: null,
+        hideDuplicates: false,
         limit: 200,
         before: null,
         afterImportAttemptId: undefined,
@@ -180,6 +181,7 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
         receivedFrom: null,
         receivedBefore: null,
         search: null,
+        hideDuplicates: false,
         limit: 200,
         before: null,
         afterImportAttemptId: "attempt-199",
@@ -309,6 +311,7 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
         receivedFrom: null,
         receivedBefore: null,
         search: null,
+        hideDuplicates: false,
         limit: 200,
         before: null,
         afterImportAttemptId: undefined,
@@ -316,6 +319,47 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     });
     expect(
       await screen.findByRole("button", { name: /Synthetic analyzer 1 Instrument/ }),
+    ).toBeTruthy();
+  });
+
+  it("shows a duplicate as not imported, linked to the earlier attempt, with no retry", async () => {
+    const duplicate: ImportAttemptDetail = {
+      ...SECOND,
+      importAttemptId: "00000000-0000-7000-8000-000000008003",
+      attemptNo: 1,
+      receiptId: "00000000-0000-7000-8000-000000009003",
+      outcome: "duplicate",
+      rowsTotal: 0,
+      rowsNew: 0,
+      rowsQc: 0,
+      duplicateOfAttemptId: ATTEMPT_ID,
+    };
+    const { user, container } = renderPage(`/review/imports/${duplicate.importAttemptId}`, {
+      get_import_attempt: (args) =>
+        (args as { input: { importAttemptId: string } }).input.importAttemptId === ATTEMPT_ID
+          ? DETAIL
+          : duplicate,
+    });
+    expect(await screen.findByText("Duplicate – not imported")).toBeTruthy();
+    expect(
+      screen.getByText("The same message was received before from this instrument"),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Retry import" })).toBeNull();
+    expect(screen.queryByText("Quarantined rows")).toBeNull();
+    await expectNoA11yViolations(container, { wholePage: true });
+    await user.click(screen.getByRole("link", { name: "Open the earlier import attempt" }));
+    expect(await screen.findByText("Processed, some rows quarantined")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Retry import" })).toBeTruthy();
+  });
+
+  it("says when a duplicate's earlier message is not imported yet", async () => {
+    renderPage(`/review/imports/${ATTEMPT_ID}`, {
+      get_import_attempt: () => ({ ...SECOND, outcome: "duplicate", rowsTotal: 0, rowsNew: 0 }),
+    });
+    expect(
+      await screen.findByText(
+        "The earlier message has not been imported yet. Refresh to check again.",
+      ),
     ).toBeTruthy();
   });
 

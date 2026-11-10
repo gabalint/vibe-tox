@@ -2,7 +2,7 @@
   "id": "instruments",
   "title": "Instruments",
   "summary": "Configure analyzer connections and result-file intake for registered instruments.",
-  "reviewedOn": "2026-11-05",
+  "reviewedOn": "2026-11-10",
   "routes": ["/configuration/instruments"],
   "sections": [
     {
@@ -283,7 +283,7 @@
           "name": "Activity: Imports with quarantined rows",
           "meaning": "How many recent import attempts held rows in quarantine.",
           "values": "A count of the analyzer's last 50 imports, such as 1 of the last 50, as a link to Result imports filtered on this analyzer; None.",
-          "rules": "Shown only with Review results. Counts attempts whose outcome was not fully processed, including ones resolved later."
+          "rules": "Shown only with Review results. Counts attempts that quarantined rows or the whole message (Quarantined, or Processed, some rows quarantined), including ones resolved later. A Duplicate – not imported attempt quarantines nothing and is not counted."
         },
         {
           "name": "Changes: Registered",

@@ -129,6 +129,11 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "review_causal_evidence",
         sql: include_str!("../migrations/0008_review_causal_evidence.sql"),
     },
+    Migration {
+        version: 9,
+        name: "duplicate_imports",
+        sql: include_str!("../migrations/0009_duplicate_imports.sql"),
+    },
 ];
 
 /// This module's schema; the engine applies it in crate-map order.

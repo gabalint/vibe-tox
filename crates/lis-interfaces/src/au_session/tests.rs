@@ -581,7 +581,8 @@ fn final_frame_ambiguity_keeps_single_block_receipt_evidence_and_holds_multibloc
             .expect("repeated final");
         assert_eq!(due_ack(&mut session, now, &context), vec![6]);
         let receipts = fixture.receipts();
-        assert_eq!(fixture.imports(), 1);
+        // A repeated single block is a duplicate receipt, queued to be listed only.
+        assert_eq!(fixture.imports(), if multiblock { 1 } else { 2 });
         if multiblock {
             assert_eq!(receipts.len(), 1);
             assert_eq!(receipts[0].frame_count, 2);

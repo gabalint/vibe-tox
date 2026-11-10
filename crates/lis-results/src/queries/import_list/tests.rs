@@ -1,7 +1,7 @@
 use super::*;
 
 /// The tables and published views the list reads, without their owners' constraints.
-const SCHEMA: &str = "CREATE TABLE res_import_attempts(id TEXT PRIMARY KEY,receipt_id TEXT,attempt_no INTEGER,instrument_id TEXT,outcome TEXT,failure_code TEXT,rows_total INTEGER,rows_new INTEGER,rows_duplicate INTEGER,rows_reprocessed INTEGER,rows_qc INTEGER,rows_quarantined INTEGER,rows_not_result INTEGER,rows_set_aside INTEGER,rows_retained INTEGER,processed_at TEXT);
+const SCHEMA: &str = "CREATE TABLE res_import_attempts(id TEXT PRIMARY KEY,receipt_id TEXT,attempt_no INTEGER,instrument_id TEXT,outcome TEXT,failure_code TEXT,rows_total INTEGER,rows_new INTEGER,rows_duplicate INTEGER,rows_reprocessed INTEGER,rows_qc INTEGER,rows_quarantined INTEGER,rows_not_result INTEGER,rows_set_aside INTEGER,rows_retained INTEGER,processed_at TEXT,duplicate_of_receipt_id TEXT);
     CREATE TABLE ifc_v_receipt_origins(receipt_id TEXT,origin TEXT);
     CREATE TABLE ifc_v_receipt_arrivals(receipt_id TEXT,received_at TEXT,file_name TEXT);
     CREATE TABLE res_measurements(import_attempt_id TEXT,position_id TEXT);
@@ -22,7 +22,7 @@ fn attempt(
 ) -> Result<(ImportAttemptId, ReceiptId), rusqlite::Error> {
     let (id, receipt) = (ImportAttemptId::generate(), ReceiptId::generate());
     conn.execute(
-        "INSERT INTO res_import_attempts VALUES(?1,?2,1,?3,?4,NULL,1,1,0,0,0,0,0,0,0,?5)",
+        "INSERT INTO res_import_attempts VALUES(?1,?2,1,?3,?4,NULL,1,1,0,0,0,0,0,0,0,?5,NULL)",
         params![id, receipt, instrument, outcome, processed],
     )?;
     conn.execute(
@@ -194,5 +194,64 @@ fn search_finds_labels_accessions_and_file_names_in_any_row_kind()
     assert!(found("nothing like it")?.is_empty());
     assert_eq!(found("   ")?.len(), 6, "blank text is no search");
     assert!(found(&"x".repeat(101)).is_err());
+    Ok(())
+}
+
+#[test]
+fn hidden_duplicates_leave_full_pages_and_a_duplicate_names_the_latest_earlier_attempt()
+-> Result<(), Box<dyn std::error::Error>> {
+    let conn = Connection::open_in_memory()?;
+    conn.execute_batch(SCHEMA)?;
+    let instrument = InstrumentId::generate();
+    let (first, receipt) = attempt(&conn, instrument, "processed", NOON, NOON)?;
+    let retried = ImportAttemptId::generate();
+    conn.execute(
+        "INSERT INTO res_import_attempts VALUES(?1,?2,2,?3,'processed',NULL,1,0,1,0,0,0,0,0,0,?4,NULL)",
+        params![retried, receipt, instrument, NOON],
+    )?;
+    let mut duplicates = Vec::new();
+    for _ in 0..3 {
+        let (id, _) = attempt(&conn, instrument, "duplicate", NOON, NOON)?;
+        conn.execute(
+            "UPDATE res_import_attempts SET rows_total = 0, rows_new = 0, \
+             duplicate_of_receipt_id = ?2 WHERE id = ?1",
+            params![id, receipt],
+        )?;
+        duplicates.push(id);
+    }
+    let page = |hide_duplicates| {
+        let filter = ImportAttemptFilter {
+            hide_duplicates,
+            ..ImportAttemptFilter::default()
+        };
+        list_import_attempts_page(&conn, &filter, 2, None, None)
+    };
+    let shown = page(true)?;
+    assert_eq!(ids(&shown), ids_of(&[first, retried]));
+    assert!(
+        shown
+            .iter()
+            .all(|row| row.duplicate_of_attempt_id.is_none())
+    );
+    let all = page(false)?;
+    assert_eq!(all.len(), 3, "the extra row says more attempts exist");
+    for row in all
+        .iter()
+        .filter(|row| row.outcome == ImportOutcome::Duplicate)
+    {
+        assert!(duplicates.contains(&row.import_attempt_id));
+        assert_eq!(row.duplicate_of_attempt_id, Some(retried));
+    }
+    let only = list_import_attempts_page(
+        &conn,
+        &ImportAttemptFilter {
+            outcome: Some(ImportOutcome::Duplicate),
+            ..ImportAttemptFilter::default()
+        },
+        10,
+        None,
+        None,
+    )?;
+    assert_eq!(ids(&only), ids_of(&duplicates));
     Ok(())
 }

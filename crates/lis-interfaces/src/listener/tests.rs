@@ -274,7 +274,7 @@ fn update_and_enable_increment_revision_and_write_audit() {
 }
 
 #[test]
-fn duplicate_message_links_receipt_without_second_outbox_item() {
+fn duplicate_message_links_receipt_and_queues_its_listing() {
     let fixture = Fixture::open();
     let instrument = fixture.register(tcp_settings(local_port()), true);
     let message = assembled_message(records());
@@ -297,7 +297,8 @@ fn duplicate_message_links_receipt_without_second_outbox_item() {
             Ok::<_, InterfaceError>(count)
         })
         .expect("outbox count reads");
-    assert_eq!(outbox_count, 1);
+    // The second item lists the duplicate as an attempt that imports nothing.
+    assert_eq!(outbox_count, 2);
 }
 
 #[test]
