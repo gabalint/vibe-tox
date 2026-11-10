@@ -251,6 +251,15 @@ describe("Connections (ticket #4555; REQ-RPT-012)", () => {
     }
   });
 
+  it("shows no application ACK for a folder connection, which never gets one (#4704)", async () => {
+    renderPage({}, `/interfaces/connections/${CONNECTION_ID}`);
+    expect(await screen.findByRole("region", { name: "Checks and contract" })).toBeTruthy();
+    expect(screen.queryByText("Awaiting application ACK")).toBeNull();
+    renderPage({}, "/interfaces/connections");
+    expect(await screen.findByRole("gridcell", { name: "—" })).toBeTruthy();
+    expect(screen.queryByText("Waiting for acknowledgement")).toBeNull();
+  });
+
   it("describes a Report PDF connection by what it writes and when", async () => {
     const pdfs = {
       ...CONNECTION,

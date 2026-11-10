@@ -8,11 +8,19 @@ import type { FolderTestResult } from "@/generated/FolderTestResult";
 import type { ListenerView } from "@/generated/ListenerView";
 import type { MllpListener } from "@/generated/MllpListener";
 import type { MllpPartner } from "@/generated/MllpPartner";
+import type { PartnerConnection } from "@/generated/PartnerConnection";
 import type { PartnerMessageRow } from "@/generated/PartnerMessageRow";
 
 /** An address and port as the LIS connects to them; an IPv6 address goes in brackets. */
 export const socketText = ({ address, port }: Pick<MllpPartner, "address" | "port">) =>
   `${address.includes(":") ? `[${address}]` : address}:${port}`;
+
+/**
+ * Whether the connection waits for a partner's application ACK: only when the LIS sends over
+ * MLLP. A folder or SFTP server never answers, and a listener sends the ACKs itself (#4704).
+ */
+export const awaitsAck = (connection: PartnerConnection) =>
+  connection.settings.protocol === "mllp_connect";
 
 /** Why a message sent over MLLP got no acknowledgement, or a test failed. */
 export const MLLP_PROBLEMS: Record<string, string> = {

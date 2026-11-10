@@ -130,6 +130,8 @@ describe("MLLP – LIS listens (ticket #4555 step 4b; REQ-INT-002, REQ-INT-006)"
     expect(screen.getByText(/^Listening since /)).toBeTruthy();
     expect(screen.getByText("Held until the patient is registered")).toBeTruthy();
     expect(screen.queryByText("Processed folder")).toBeNull();
+    // It sends the ACKs itself; it awaits none (#4704).
+    expect(screen.queryByText("Awaiting application ACK")).toBeNull();
     await user.click(screen.getByRole("button", { name: "Test listener" }));
     expect(await screen.findByText("✓ The LIS can listen on 192.168.1.20:6660.")).toBeTruthy();
     // The check names what it covers: where the LIS listens and who may connect.

@@ -102,6 +102,7 @@ describe("MLLP – LIS connects (ticket #4555 step 4; REQ-INT-002, REQ-INT-006)"
     ).toBeTruthy();
     expect(screen.getByText("MLLP – LIS connects – 10.20.0.15:6661")).toBeTruthy();
     expect(screen.getByText("Application ACK (AA / AE / AR) · timeout 30 seconds")).toBeTruthy();
+    expect(screen.getByText("Awaiting application ACK")).toBeTruthy();
     expect(screen.getByText("2 messages")).toBeTruthy();
     expect(screen.queryByText("File name")).toBeNull();
     await user.click(screen.getByRole("button", { name: "Test connection" }));
@@ -114,5 +115,17 @@ describe("MLLP – LIS connects (ticket #4555 step 4; REQ-INT-002, REQ-INT-006)"
         "✗ Synthetic test message sent; the partner found an error (AE): Unknown provider NPI 1234567893",
       ),
     ).toBeTruthy();
+  });
+
+  it("counts the messages awaiting an ACK only for MLLP – LIS connects (#4704)", async () => {
+    renderPage(
+      { list_partner_connections: () => [CONNECTION, HL7_MLLP] },
+      "/interfaces/connections",
+    );
+    expect(await screen.findByText("Waiting for acknowledgement")).toBeTruthy();
+    const mllp = screen.getByRole("row", { name: /Hospital B/ });
+    expect(within(mllp).getByRole("gridcell", { name: "2" })).toBeTruthy();
+    const folder = screen.getByRole("row", { name: /Billing - RCM/ });
+    expect(within(folder).getByRole("gridcell", { name: "—" })).toBeTruthy();
   });
 });

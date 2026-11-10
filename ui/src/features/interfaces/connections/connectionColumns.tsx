@@ -4,6 +4,7 @@ import { Timestamp } from "@/components/Timestamp";
 import type { PartnerConnection } from "@/generated/PartnerConnection";
 import styles from "@/styles/layout.module.css";
 import { destinationText, isIncoming, MESSAGE_TYPES, PROTOCOLS, STATUS } from "../labels";
+import { awaitsAck } from "../mllpLabels";
 
 /** Verified or not: whether a destination check covers the connection's current destination. */
 export function CheckBadge({ connection }: { connection: PartnerConnection }) {
@@ -91,8 +92,8 @@ export const CONNECTION_COLUMNS: readonly DataGridColumn<PartnerConnection>[] = 
   {
     id: "awaiting",
     header: "Awaiting ACK",
-    cell: (row) => row.awaitingAck,
-    sortValue: (row) => row.awaitingAck,
+    cell: (row) => (awaitsAck(row) ? row.awaitingAck : "—"),
+    sortValue: (row) => (awaitsAck(row) ? row.awaitingAck : undefined),
     align: "end",
     width: 110,
   },
