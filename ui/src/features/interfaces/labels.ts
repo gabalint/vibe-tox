@@ -259,6 +259,7 @@ const WAITING: Record<WaitReason, string> = {
   queued: "Written at the next pass",
   impact_review: "Paused while the report's impact review is open",
   not_mapped: "Held: a test or analyte has no approved code mapping",
+  no_patient_identifier: "Held: the patient has no identifier; add one on the patient's page",
 };
 
 const RESOLUTIONS: Record<UnroutedResolution, string> = {

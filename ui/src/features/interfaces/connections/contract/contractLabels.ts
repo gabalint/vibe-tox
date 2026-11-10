@@ -32,6 +32,8 @@ export const EDGES: Record<ContractEdge, string> = {
 const CASES: Record<string, string> = {
   mappings_complete: "Code mappings approved, each analyte with a UCUM unit",
   message_header: "Message header: the partner, ORU^R01 and version 2.5.1",
+  patient_identifier: "The patient's identifier is sent in PID-3",
+  patient_sex: "The patient's sex goes as an HL7 table 0001 code (F, M, U…)",
   mapped_codes: "The partner's test and analyte codes and the unit are sent",
   censored_value: "A censored value goes as SN, with no interpretation",
   correction: "A correction goes with status C",
@@ -53,6 +55,8 @@ const PROBLEMS: Record<string, string> = {
   no_analyte_mapping: "no analyte is mapped",
   analyte_without_unit: "an analyte mapping has no UCUM unit",
   header_mismatch: "the header did not read back as expected",
+  identifier_not_sent: "PID-3 is empty",
+  sex_not_coded: "PID-8 is not a table 0001 code",
   codes_not_sent: "the partner's codes or unit did not read back",
   censored_not_sn: "the value was not sent as SN",
   status_mismatch: "the status did not read back",

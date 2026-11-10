@@ -1,17 +1,20 @@
 //! Interfaces (ticket #4555, step 2): a released report as an HL7 ORU^R01 written to an
 //! HL7 Results connection's folder, held until a second person approves the partner's code
-//! mappings, never sent with a guessed code; and its correction sent with status C
-//! (REQ-INT-004, REQ-RPT-013, REQ-RPT-012). Synthetic data only.
+//! mappings, never sent with a guessed code, and until the patient has an identifier for
+//! PID-3 (#4676); and its correction sent with status C (REQ-INT-004, REQ-RPT-013,
+//! REQ-RPT-012). Synthetic data only.
 
 use std::fs;
 
-use lis_core::ErrorCode;
-use lis_engine::PartnerConnectionInput;
+use lis_core::{ErrorCode, Phi};
+use lis_engine::{AddSubjectIdentifier, GetSubjectInput, PartnerConnectionInput};
+use lis_identity::IdentifierInput;
 use lis_interfaces::partner::{
     ApprovePartnerMappings, DraftPartnerMapping, MappingKind, MappingValues,
     PartnerConnectionSettings, PartnerMappings, PartnerMessageType, PartnerProtocol, Schedule,
     WaitReason,
 };
+use lis_reporting::ReportRevisionId;
 
 use super::partner_pdfs::{AMENDMENT, Pdfs};
 use crate::m2_lab::Role;
@@ -77,6 +80,45 @@ pub(super) async fn draft_held(hl7: &Pdfs) {
     }
 }
 
+/// The accessioner adds the patient's synthetic MRN, which the fixture registered without;
+/// the patient's new record revision.
+pub(super) async fn add_identifier(hl7: &Pdfs) -> i64 {
+    hl7.bench.sign_in(Staff::Desk(Role::Accessioner)).await;
+    let engine = hl7.bench.lab().engine();
+    let subject_id = hl7.bench.lab().parties.subject;
+    let subject = engine
+        .get_subject(GetSubjectInput { subject_id })
+        .await
+        .unwrap();
+    engine
+        .add_subject_identifier(AddSubjectIdentifier {
+            subject_id,
+            expected_revision: subject.revision,
+            identifier: IdentifierInput {
+                assigning_authority: "CLINIC-A".to_owned(),
+                identifier_type: "MR".to_owned(),
+                value: Phi::new("MRN-00000".to_owned()),
+            },
+        })
+        .await
+        .unwrap()
+        .subject_revision
+}
+
+/// #4676: the patient gets an identifier after release and the impact review it opens
+/// records no impact, so a message held for PID-3 can go; the caller delivers next.
+pub(super) async fn identify(hl7: &Pdfs, revision_id: ReportRevisionId) {
+    let subject_revision = add_identifier(hl7).await;
+    hl7.deliver().await;
+    assert_eq!(hl7.rows().await[0].waiting, Some(WaitReason::ImpactReview));
+    hl7.bench
+        .assess_no_impact(
+            revision_id,
+            vec![format!("identity_changed:{subject_revision}")],
+        )
+        .await;
+}
+
 /// The drafter may not approve under the default policy; a second administrator does.
 pub(super) async fn approve(hl7: &Pdfs) {
     let current = mappings(hl7, Staff::Desk(Role::Admin)).await;
@@ -124,7 +166,7 @@ pub(super) async fn approve(hl7: &Pdfs) {
 #[tokio::test]
 async fn an_hl7_result_waits_for_approved_codes_and_its_correction_follows() {
     let hl7 = Pdfs::start_with(settings()).await;
-    hl7.release(None).await;
+    let released = hl7.release(None).await;
     hl7.deliver().await;
     // REQ-INT-004, REQ-INT-001: no approved code, so the acceptance tests failed and
     // nothing is written.
@@ -144,6 +186,17 @@ async fn an_hl7_result_waits_for_approved_codes_and_its_correction_follows() {
     draft_held(&hl7).await;
     approve(&hl7).await;
     hl7.deliver().await;
+    // #4676: the patient has no identifier, so PID-3 would be empty: nothing is written,
+    // and the row says why; the report stays released.
+    assert!(hl7.files().is_empty());
+    assert_eq!(
+        hl7.rows().await[0].waiting,
+        Some(WaitReason::NoPatientIdentifier)
+    );
+    // The patient's record changes after release, so its impact review decides (L13);
+    // with no impact, the message goes with the identifier now recorded.
+    identify(&hl7, released.revision_id).await;
+    hl7.deliver().await;
     let number = hl7.report().await.report_number;
     let name = format!("{number}_r1.hl7");
     assert_eq!(hl7.files(), std::slice::from_ref(&name));
@@ -152,6 +205,8 @@ async fn an_hl7_result_waits_for_approved_codes_and_its_correction_follows() {
     assert!(segments[0].starts_with("MSH|^~\\&|VIBETOX LIS|"));
     assert!(segments[0].contains("|CLINIC-A|"));
     assert!(segments[0].contains("|ORU^R01^ORU_R01|"));
+    let pid = segments.iter().find(|s| s.starts_with("PID|")).unwrap();
+    assert!(pid.starts_with("PID|1||MRN-00000^^^CLINIC-A^MR||"), "{pid}");
     let obr = segments.iter().find(|s| s.starts_with("OBR|")).unwrap();
     assert!(obr.ends_with("|F"), "{obr}");
     let obx: Vec<&&str> = segments.iter().filter(|s| s.starts_with("OBX|")).collect();

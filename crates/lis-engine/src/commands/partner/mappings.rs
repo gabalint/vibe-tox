@@ -7,6 +7,7 @@ use lis_interfaces::partner::{
     ApprovePartnerMappings, DiscardPartnerMappingDraft, DraftPartnerMapping, LisRecordId,
     ListPartnerMessages, MappingKind, MessageView, NewMappingDraft, PartnerConnectionId,
     PartnerError, PartnerMappings, PartnerMessageRow, PartnerMessageType, TransportOutcome,
+    WaitReason,
 };
 use lis_reporting::ReportingError;
 use rusqlite::Connection;
@@ -136,20 +137,47 @@ fn held_for(
 }
 
 /// What a waiting HL7 row misses; nothing for any other row.
-pub(super) fn missing_for(
+fn missing_for(
     conn: &Connection,
     row: &PartnerMessageRow,
 ) -> Result<Vec<Missing>, ReportRoutingError> {
-    let (Some(delivery_id), Some(connection)) = (row.delivery_id, &row.connection) else {
+    let Some(target) = waiting_target(row) else {
         return Ok(Vec::new());
+    };
+    Ok(make(conn, &target)?.err().unwrap_or_default())
+}
+
+/// Why a waiting HL7 row is held: a missing code mapping, or no patient identifier for
+/// PID-3 (#4676); `None` for a row that is not held, or any other row.
+pub(super) fn hold_reason(
+    conn: &Connection,
+    row: &PartnerMessageRow,
+) -> Result<Option<WaitReason>, ReportRoutingError> {
+    let Some(target) = waiting_target(row) else {
+        return Ok(None);
+    };
+    Ok(match make(conn, &target)? {
+        Err(missing) => (!missing.is_empty()).then_some(WaitReason::NotMapped),
+        Ok((oru, _)) => oru
+            .patient
+            .identifiers
+            .is_empty()
+            .then_some(WaitReason::NoPatientIdentifier),
+    })
+}
+
+/// The message of an HL7 row not sent yet; `None` for any other row.
+fn waiting_target(row: &PartnerMessageRow) -> Option<Target> {
+    let (Some(delivery_id), Some(connection)) = (row.delivery_id, &row.connection) else {
+        return None;
     };
     if row.message_type != PartnerMessageType::Hl7Oru
         || row.transport != TransportOutcome::NotSent
         || row.superseded
     {
-        return Ok(Vec::new());
+        return None;
     }
-    let target = Target {
+    Some(Target {
         delivery_id,
         connection_id: connection.id,
         created_at: row.at,
@@ -158,8 +186,7 @@ pub(super) fn missing_for(
         source_id: row.source_id.clone(),
         // Only what the message misses is read here, not its bytes.
         acknowledged: false,
-    };
-    Ok(make(conn, &target)?.err().unwrap_or_default())
+    })
 }
 
 /// The code and name of the LIS orderable or analyte `lis_id`.
