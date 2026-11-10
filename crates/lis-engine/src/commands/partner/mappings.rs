@@ -123,6 +123,8 @@ fn held_for(
             connection_id: Some(connection_id),
             view: MessageView::NotSent,
             search: None,
+            hide_tests: false,
+            row_ids: Vec::new(),
         },
     )?;
     let mut held: Vec<Missing> = Vec::new();

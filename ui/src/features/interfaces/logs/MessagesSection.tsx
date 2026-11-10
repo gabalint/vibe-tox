@@ -42,6 +42,11 @@ interface MessagesGridProps {
   rows: readonly PartnerMessageRow[];
   /** Whether a row opens its connection; not on the connection's own Logs tab. */
   opensConnection?: boolean;
+  /** Rows checked for Export, by row ID: a check column and select all. */
+  selection?: {
+    selectedIds: ReadonlySet<string>;
+    onChange: (selectedIds: ReadonlySet<string>) => void;
+  };
 }
 
 /**
@@ -52,7 +57,12 @@ interface MessagesGridProps {
  * received message waiting for its patient or held can be rejected with a reason, and a
  * rejection resolved with a note.
  */
-export function MessagesGrid({ query, rows, opensConnection = true }: MessagesGridProps) {
+export function MessagesGrid({
+  query,
+  rows,
+  opensConnection = true,
+  selection,
+}: MessagesGridProps) {
   const navigate = useNavigate();
   const toast = useToast();
   const formatTime = useFormatTime();
@@ -109,6 +119,8 @@ export function MessagesGrid({ query, rows, opensConnection = true }: MessagesGr
             getRowId={(row) => row.deliveryId ?? row.messageId}
             onRowAction={opensConnection ? open : undefined}
             rowActions={rowActions}
+            // The export button stays in the filter row, counting the rows checked.
+            bulk={selection && { ...selection, actions: null }}
             fill
           />
         )}
