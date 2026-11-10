@@ -6,6 +6,7 @@
   "permissions": [
     "allow-app-info",
     "allow-set-window-theme",
+    "allow-set-unsaved-forms",
     "allow-security-key-signup",
     "allow-acknowledge-key-recovery",
     "allow-security-key-sign-in",

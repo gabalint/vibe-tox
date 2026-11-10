@@ -31,7 +31,7 @@ export function PatientDetailsForm({
   const identifiers = useFieldArray({ control: form.control, name: "identifiers" });
   return (
     <FormProvider {...form}>
-      <UnsavedChangesGuard when={hasDraft || form.formState.isDirty} />
+      <UnsavedChangesGuard form="Register patient" when={hasDraft || form.formState.isDirty} />
       <Form
         aria-label="Patient details"
         onSubmit={form.handleSubmit(onCheck)}

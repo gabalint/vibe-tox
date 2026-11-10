@@ -34,7 +34,7 @@ export function RegisterPatientPage() {
       {checking ? (
         <>
           {/* Before the redirect, so the guard is released when the patient's page opens. */}
-          <UnsavedChangesGuard when={registeredId === null} />
+          <UnsavedChangesGuard form="Register patient" when={registeredId === null} />
           {registeredId !== null && (
             <Navigate to={forOrder ? newOrderPath(registeredId) : patientPath(registeredId)} />
           )}

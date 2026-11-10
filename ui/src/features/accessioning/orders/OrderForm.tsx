@@ -51,7 +51,7 @@ export function OrderForm({ subjectId, references }: OrderFormProps) {
   return (
     <FormProvider {...form}>
       {/* Before the redirect, so the guard is released when the saved order opens. */}
-      <UnsavedChangesGuard when={form.formState.isDirty && savedPath === null} />
+      <UnsavedChangesGuard form="New order" when={form.formState.isDirty && savedPath === null} />
       {savedPath !== null && <Navigate to={savedPath} />}
       <div className={styles.entry}>
         <Form

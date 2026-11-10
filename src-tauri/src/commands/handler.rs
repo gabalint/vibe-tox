@@ -4,7 +4,7 @@ use super::{
     analytical, anchors, app_info, audit, backup, billing, billing_intake, catalog, catalog_review,
     collection_corrections, demo, file_templates, identity, interfaces, listeners, operations,
     orders, partner, report_layouts, reporting, result_files, results, security_keys, session,
-    specimens, updates, users, window_theme, work_queues,
+    specimens, unsaved_forms, updates, users, window_theme, work_queues,
 };
 
 use tauri::Runtime;
@@ -37,6 +37,7 @@ pub(crate) fn handler<R: Runtime>() -> impl Fn(Invoke<R>) -> bool + Send + Sync 
         specimens::resolve_receipt_chronology,
         app_info::app_info,
         window_theme::set_window_theme,
+        unsaved_forms::set_unsaved_forms,
         security_keys::security_key_signup,
         security_keys::acknowledge_key_recovery,
         security_keys::security_key_sign_in,

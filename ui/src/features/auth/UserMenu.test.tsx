@@ -4,6 +4,7 @@ import type { SessionInfo } from "@/generated/SessionInfo";
 import { expectNoA11yViolations } from "@/lib/test/a11y";
 import { engineError, mockCommands } from "@/lib/test/ipc";
 import { renderRoutes } from "@/lib/test/router";
+import { useUnsavedForm } from "@/lib/unsavedForms";
 import { AuthGate } from "./AuthGate";
 import { TEST_SESSION } from "./testSession";
 import { UserMenu } from "./UserMenu";
@@ -18,6 +19,11 @@ function renderMenu() {
 }
 
 type User = ReturnType<typeof renderMenu>["user"];
+
+function UnsavedOrder() {
+  useUnsavedForm("New order", true);
+  return null;
+}
 
 async function choose(user: User, item: string) {
   await user.click(await screen.findByRole("button", { name: "Signed in as Test Analyst" }));
@@ -169,6 +175,49 @@ describe("UserMenu", () => {
     const { user } = renderMenu();
     await choose(user, "Sign out");
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeTruthy();
+  });
+
+  it("asks before signing out with an unsaved form, Cancel first (#4585)", async () => {
+    let session: SessionInfo | null = TEST_SESSION;
+    const signOut = vi.fn(() => {
+      session = null;
+      return null;
+    });
+    mockCommands({
+      current_session: () => session,
+      setup_status: () => ({ needsAdministrator: false }),
+      sign_out: signOut,
+      set_unsaved_forms: () => null,
+    });
+    const { user } = renderRoutes(
+      [
+        {
+          path: "/",
+          element: (
+            <AuthGate>
+              {(signedIn) => (
+                <>
+                  <UserMenu session={signedIn} />
+                  <UnsavedOrder />
+                </>
+              )}
+            </AuthGate>
+          ),
+        },
+      ],
+      "/",
+    );
+    await choose(user, "Sign out");
+    const dialog = await screen.findByRole("alertdialog", { name: "Leave without saving?" });
+    expect(dialog.textContent).toContain("You have unsaved changes in New order.");
+    expect(within(dialog).getByRole("button", { name: "Cancel" })).toBe(document.activeElement);
+    await user.keyboard("{Enter}");
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(signOut).not.toHaveBeenCalled();
+    await choose(user, "Sign out");
+    await user.click(await screen.findByRole("button", { name: "Sign out without saving" }));
+    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeTruthy();
+    expect(signOut).toHaveBeenCalledOnce();
   });
 
   it("stays signed in and says so when the engine refuses to sign out", async () => {

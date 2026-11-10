@@ -90,7 +90,10 @@ export function TemplateForm({ instrumentId }: { instrumentId: string }) {
   return (
     <FormProvider {...form}>
       {/* Before the redirect, so the guard is released when the instrument opens. */}
-      <UnsavedChangesGuard when={(form.formState.isDirty || sample !== null) && !saved} />
+      <UnsavedChangesGuard
+        form="New file template"
+        when={(form.formState.isDirty || sample !== null) && !saved}
+      />
       {saved && <Navigate to={benchInstrumentPath(instrumentId)} />}
       <Form
         aria-label="New file template"
