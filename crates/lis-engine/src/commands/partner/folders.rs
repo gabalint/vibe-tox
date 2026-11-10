@@ -9,6 +9,7 @@ use lis_core::{CommandError, ErrorCode};
 use lis_interfaces::partner::{
     AckCode, AttemptOutcome, ConnectionTarget, Destination, MovedTo, PartnerConnectionId,
 };
+use lis_interfaces::without_verbatim_prefix;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
@@ -248,7 +249,7 @@ fn file_name(path: &str) -> Option<String> {
         .map(|name| name.to_string_lossy().into_owned())
 }
 
-/// The canonical path of a folder that exists.
+/// The canonical path of a folder that exists, in its usual form.
 fn existing_folder(chosen: &Path) -> Result<String, Failure> {
     let refused = |message| Failure::refused(ErrorCode::Validation, message);
     let canonical = fs::canonicalize(chosen)
@@ -259,6 +260,7 @@ fn existing_folder(chosen: &Path) -> Result<String, Failure> {
     canonical
         .into_os_string()
         .into_string()
+        .map(|path| without_verbatim_prefix(&path))
         .map_err(|_| refused("Choose a folder whose path has only standard characters."))
 }
 
