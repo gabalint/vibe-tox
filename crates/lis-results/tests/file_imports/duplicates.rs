@@ -73,23 +73,31 @@ fn a_duplicate_file_imports_nothing_and_links_the_earlier_attempt() {
     // Repeated delivery of the outbox item: the same attempt, no second event.
     let repeated = f.import_source(again, 1, ImportSource::Duplicate(first));
     assert_eq!(repeated.import_attempt_id, duplicate.import_attempt_id);
-    let events: i64 = f.read(|conn| {
+    assert_eq!(import_events(&f), 2);
+    assert_listed(&f, &duplicate, &earlier);
+    assert_retry_refused(&f, again);
+}
+
+fn import_events(f: &Fixture) -> i64 {
+    f.read(|conn| {
         Ok(conn.query_row(
             "SELECT count(*) FROM audit_events WHERE action = 'result.import'",
             [],
             |row| row.get(0),
         )?)
-    });
-    assert_eq!(events, 2);
+    })
+}
 
-    let all = listed(&f, false);
+/// Listed with its link to the earlier attempt, and left out by Hide duplicates.
+fn assert_listed(f: &Fixture, duplicate: &ImportAttemptSummary, earlier: &ImportAttemptSummary) {
+    let all = listed(f, false);
     assert_eq!(all.len(), 2);
     assert!(
         all.iter()
             .any(|row| row.import_attempt_id == duplicate.import_attempt_id
                 && row.duplicate_of_attempt_id == Some(earlier.import_attempt_id))
     );
-    let shown = listed(&f, true);
+    let shown = listed(f, true);
     assert_eq!(
         shown
             .iter()
@@ -97,8 +105,10 @@ fn a_duplicate_file_imports_nothing_and_links_the_earlier_attempt() {
             .collect::<Vec<_>>(),
         [earlier.import_attempt_id]
     );
+}
 
-    // A duplicate's rows are the earlier receipt's: it is the one retried.
+/// A duplicate's rows are the earlier receipt's: it is the one retried.
+fn assert_retry_refused(f: &Fixture, again: ReceiptId) {
     let retry = f.run_as(principal(&[Capability::ReviewResults]), move |ctx| {
         lis_results::retry_import(
             ctx,
