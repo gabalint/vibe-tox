@@ -94,7 +94,9 @@ export const ORDER_FILTERS: readonly Choice<OrderFilter>[] = [
 
 const ORDER_STATUSES: Record<OrderStatus, { label: string; tone: Tone }> = {
   received: { label: "Received, not yet accepted", tone: "warning" },
-  accepted: { label: "Accepted", tone: "neutral" },
+  // An accepted order is green, as Active and Approved are; a rejected one needs nothing more,
+  // so it stays neutral (ui-standards).
+  accepted: { label: "Accepted", tone: "success" },
   rejected: { label: "Rejected", tone: "neutral" },
 };
 

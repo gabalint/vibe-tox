@@ -21,6 +21,8 @@ interface FindFieldProps {
   placeholder?: string;
   /** Hides the visible "Find", as in a filter row whose fields have their labels above. */
   isLabelHidden?: boolean;
+  /** A wider field, for a placeholder that names many searched fields. */
+  isWide?: boolean;
   /** The find text in effect, usually from `?q=` (`useFindParam`). */
   value: string;
   /** Called after a short pause in typing, and at once on Enter, Escape or clear. */
@@ -46,6 +48,7 @@ export function FindField({
   label,
   placeholder = label,
   isLabelHidden,
+  isWide,
   value,
   onChange,
   count,
@@ -69,6 +72,7 @@ export function FindField({
         onSubmit={pause.now}
         onClear={() => pause.now("")}
         className={styles.field}
+        data-wide={isWide || undefined}
       >
         {isLabelHidden ? (
           // Out of the row, so the field starts where the content below it does.
@@ -81,7 +85,8 @@ export function FindField({
         )}
         <div className={styles.control}>
           <Search aria-hidden="true" className={styles.icon} />
-          <Input placeholder={placeholder} className={styles.input} />
+          {/* The placeholder as a tooltip too, for when the field is too narrow to show it. */}
+          <Input placeholder={placeholder} title={placeholder} className={styles.input} />
           <Button className={styles.fieldButton}>
             <X aria-hidden="true" />
           </Button>

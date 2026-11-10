@@ -17,6 +17,11 @@
   max-width: 100%;
 }
 
+.field[data-wide] {
+  flex-basis: 28rem;
+  width: 28rem;
+}
+
 .label {
   font-weight: var(--font-weight-semibold);
 }

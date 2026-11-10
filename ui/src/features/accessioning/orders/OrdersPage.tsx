@@ -80,7 +80,8 @@ export function OrdersPage() {
       >
         <FindField
           label="Find orders by patient, sample barcode, accession, order number or client"
-          placeholder="Patient, barcode, accession, order number or client"
+          placeholder="Patient, barcode, accession, order no., client"
+          isWide
           value={search}
           onChange={setSearch}
         />
