@@ -45,6 +45,13 @@ fn in_view(row: &PartnerMessageRow, view: MessageView) -> bool {
 /// Digits find a handoff number; other text is found in the report number or
 /// the written file's path.
 fn found(row: &PartnerMessageRow, search: &str) -> bool {
+    // A whole control ID (MSH-10, the delivery ID) finds its message (#4678).
+    if row
+        .delivery_id
+        .is_some_and(|id| id.to_string().eq_ignore_ascii_case(search))
+    {
+        return true;
+    }
     if search.bytes().all(|byte| byte.is_ascii_digit()) && row.source_label.is_none() {
         return row
             .source_number

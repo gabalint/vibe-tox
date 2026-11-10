@@ -1,0 +1,47 @@
+/* The message panel's parts: the HL7 message as sent and its attempts (tokens only). */
+.part {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+.part h3 {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* One segment per line, as sent: never wrapped, so fields keep their positions. */
+.message {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-sunken);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  white-space: pre;
+}
+
+.note {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.ackText {
+  margin-inline-start: var(--space-2);
+}
+
+.attempts {
+  margin: 0;
+  padding-inline-start: var(--space-5);
+}

@@ -151,6 +151,7 @@ pub const COMMANDS: &[CommandSpec] = &[
     crate::commands::partner::RECORD_PARTNER_DESTINATION_CHECK,
     crate::commands::partner::SEND_PARTNER_TEST_MESSAGE,
     crate::commands::partner::LIST_PARTNER_MESSAGES,
+    crate::commands::partner::GET_PARTNER_MESSAGE,
     crate::commands::partner::EXPORT_PARTNER_MESSAGES,
     crate::commands::partner::LIST_UNROUTED_PARTNER_MESSAGES,
     crate::commands::partner::RESOLVE_UNROUTED_MESSAGE,

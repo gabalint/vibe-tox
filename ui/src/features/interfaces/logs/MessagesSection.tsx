@@ -1,7 +1,7 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import { DataGrid } from "@/components/DataGrid";
+import { DetailLayout } from "@/components/DetailPanel";
 import { ErrorState } from "@/components/ErrorState";
 import { ListCount } from "@/components/ListLimit";
 import { QueryContent } from "@/components/QueryContent";
@@ -25,9 +25,9 @@ import {
   RESOLVE_REJECTION,
 } from "../contract";
 import { recordText } from "../labels";
-import { connectionPath, UNROUTED_PATH } from "../paths";
 import { type FollowUp, FollowUpDialog } from "./FollowUpDialog";
 import { messageColumns } from "./messageColumns";
+import { messageRowId, useMessagePanel } from "./useMessagePanel";
 
 const ACTIONS = [
   { id: RESEND_DELIVERY, label: "Send again" },
@@ -40,7 +40,7 @@ interface MessagesGridProps {
   query: UseQueryResult<PartnerMessagePage, CommandError>;
   /** The rows to show: the query's rows, narrowed by the screen's filters. */
   rows: readonly PartnerMessageRow[];
-  /** Whether a row opens its connection; not on the connection's own Logs tab. */
+  /** Whether rows and the panel open the connection; not on the connection's own Logs tab. */
   opensConnection?: boolean;
   /** Rows checked for Export, by row ID: a check column and select all. */
   selection?: {
@@ -52,10 +52,11 @@ interface MessagesGridProps {
 /**
  * Messages to and from outside systems, newest first, at most 500 (REQ-INT-002, REQ-RPT-011):
  * what the transport can prove and what the other system confirmed, never a bare delivery
- * claim. A row opens its connection, or Unrouted messages for one that matched none. A message
- * whose attempts all failed can be sent again; that never makes a new message or report. A
- * received message waiting for its patient or held can be rejected with a reason, and a
- * rejection resolved with a note.
+ * claim. An outgoing message opens in a side panel with the message as sent and its attempts
+ * (`useMessagePanel`); an unrouted one opens Unrouted messages, and a received one its
+ * connection. A message whose attempts all failed can be sent again; that never makes a new
+ * message or report. A received message waiting for its patient or held can be rejected with a
+ * reason, and a rejection resolved with a note.
  */
 export function MessagesGrid({
   query,
@@ -63,7 +64,6 @@ export function MessagesGrid({
   opensConnection = true,
   selection,
 }: MessagesGridProps) {
-  const navigate = useNavigate();
   const toast = useToast();
   const formatTime = useFormatTime();
   const person = usePersonText();
@@ -86,12 +86,7 @@ export function MessagesGrid({
       );
     },
   });
-  const open = (row: PartnerMessageRow) =>
-    navigate(
-      row.connection
-        ? connectionPath(row.connection.id)
-        : `${UNROUTED_PATH}?open=${encodeURIComponent(row.messageId)}`,
-    );
+  const opening = useMessagePanel(query.data?.rows, rows, opensConnection);
   return (
     <>
       {query.data?.more && (
@@ -100,31 +95,35 @@ export function MessagesGrid({
         </p>
       )}
       {resend.error && <ErrorState title="Not sent again" error={resend.error} />}
-      <QueryContent
-        query={query}
-        what="messages"
-        loadingRows={8}
-        empty={{
-          when: () => rows.length === 0,
-          title: "No messages",
-          description:
-            "Messages appear here when a report is released or a billing handoff is created for a connection.",
-        }}
-      >
-        {() => (
-          <DataGrid
-            label="Messages"
-            columns={messageColumns(formatTime, person)}
-            rows={rows}
-            getRowId={(row) => row.deliveryId ?? row.messageId}
-            onRowAction={opensConnection ? open : undefined}
-            rowActions={rowActions}
-            // The export button stays in the filter row, counting the rows checked.
-            bulk={selection && { ...selection, actions: null }}
-            fill
-          />
-        )}
-      </QueryContent>
+      <DetailLayout panel={opening.panel}>
+        <QueryContent
+          query={query}
+          what="messages"
+          loadingRows={8}
+          empty={{
+            when: () => rows.length === 0,
+            title: "No messages",
+            description:
+              "Messages appear here when a report is released or a billing handoff is created for a connection.",
+          }}
+        >
+          {() => (
+            <DataGrid
+              label="Messages"
+              columns={messageColumns(formatTime, person)}
+              rows={rows}
+              getRowId={messageRowId}
+              openRowId={opening.openId}
+              onOrderChange={opening.followOrder}
+              onRowAction={opening.open}
+              rowActions={rowActions}
+              // The export button stays in the filter row, counting the rows checked.
+              bulk={selection && { ...selection, actions: null }}
+              fill
+            />
+          )}
+        </QueryContent>
+      </DetailLayout>
       {followUp && <FollowUpDialog followUp={followUp} onClose={() => setFollowUp(null)} />}
     </>
   );

@@ -145,6 +145,7 @@ const APP_COMMANDS: &[&str] = &[
     "record_partner_destination_check",
     "send_partner_test_message",
     "list_partner_messages",
+    "get_partner_message",
     "export_partner_messages",
     "list_unrouted_partner_messages",
     "resolve_unrouted_message",

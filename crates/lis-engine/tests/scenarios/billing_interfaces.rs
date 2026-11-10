@@ -7,7 +7,7 @@ use std::fs;
 use std::path::Path;
 
 use lis_engine::{
-    CreatePartnerConnectionInput, ListPartnerMessages, PartnerConnectionDetail,
+    CreatePartnerConnectionInput, GetPartnerMessage, ListPartnerMessages, PartnerConnectionDetail,
     PartnerConnectionInput, RecordPartnerDestinationCheck, ResendPartnerDelivery,
     ResolveUnroutedMessage, SetPartnerConnectionActive, TestPartnerFolderInput,
     TestPartnerMllpInput, TestPartnerSftpInput, UpdatePartnerConnectionInput,
@@ -121,6 +121,12 @@ async fn state_call(
             .await
             .map(drop),
         "list_partner_messages" => engine.list_partner_messages(all()).await.map(drop),
+        "get_partner_message" => engine
+            .get_partner_message(GetPartnerMessage {
+                delivery_id: PartnerDeliveryId::generate(),
+            })
+            .await
+            .map(drop),
         "export_partner_messages" => engine.export_partner_messages(all(), None).await.map(drop),
         "list_unrouted_partner_messages" => engine.list_unrouted_partner_messages().await.map(drop),
         "resolve_unrouted_message" => {
