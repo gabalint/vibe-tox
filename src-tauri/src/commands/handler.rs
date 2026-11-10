@@ -158,6 +158,7 @@ pub(crate) fn handler<R: Runtime>() -> impl Fn(Invoke<R>) -> bool + Send + Sync 
         partner::record_partner_destination_check,
         partner::send_partner_test_message,
         partner::list_partner_messages,
+        partner::get_partner_message,
         partner::export_partner_messages,
         partner::list_unrouted_partner_messages,
         partner::resolve_unrouted_message,

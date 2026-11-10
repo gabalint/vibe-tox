@@ -25,6 +25,11 @@ export const RECORD_CHECK = "record_partner_destination_check" satisfies Command
 export const SEND_TEST_MESSAGE = "send_partner_test_message" satisfies CommandName;
 /** `list_partner_messages({input:ListPartnerMessages}) → PartnerMessagePage`. */
 export const LIST_MESSAGES = "list_partner_messages" satisfies CommandName;
+/**
+ * `get_partner_message({input:{deliveryId}}) → PartnerMessageDetail`: the HL7 message as sent,
+ * its control ID and its attempts. Audited: it holds patient data, so load it only on open.
+ */
+export const GET_MESSAGE = "get_partner_message" satisfies CommandName;
 export const EXPORT_MESSAGES = "export_partner_messages" satisfies CommandName;
 /** `list_unrouted_partner_messages() → UnroutedMessage[]`. */
 export const LIST_UNROUTED = "list_unrouted_partner_messages" satisfies CommandName;
@@ -69,6 +74,7 @@ export const MESSAGE_QUERIES: readonly CommandName[] = [
   LIST_CONNECTIONS,
   GET_CONNECTION,
   LIST_MESSAGES,
+  GET_MESSAGE,
   LIST_UNROUTED,
   WORK_QUEUES,
 ];

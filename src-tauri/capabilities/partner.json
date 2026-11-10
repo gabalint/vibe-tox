@@ -17,6 +17,7 @@
     "allow-record-partner-destination-check",
     "allow-send-partner-test-message",
     "allow-list-partner-messages",
+    "allow-get-partner-message",
     "allow-export-partner-messages",
     "allow-list-unrouted-partner-messages",
     "allow-resolve-unrouted-message",

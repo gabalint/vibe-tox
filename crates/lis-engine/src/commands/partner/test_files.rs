@@ -7,7 +7,9 @@ use lis_identity::LaboratoryProfileView;
 use lis_interfaces::partner::hl7::{
     Coded, Observation, ObservationGroup, ObservationValue, Organization, Oru,
 };
-use lis_interfaces::partner::{ConnectionTarget, PartnerConnectionId, PartnerMessageType};
+use lis_interfaces::partner::{
+    ConnectionTarget, PartnerConnectionId, PartnerMessageId, PartnerMessageType,
+};
 
 use crate::partner_delivery::hl7_message::dtm;
 
@@ -28,7 +30,7 @@ pub(super) fn test_file(
             Oru {
                 // Over MLLP the partner answers the test message too.
                 acknowledged: target.destination.mllp.is_some(),
-                ..test_oru(connection_id, &target.partner, laboratory, sent_at)
+                ..test_oru(&target.partner, laboratory, sent_at)
             }
             .encode(),
             "hl7",
@@ -97,9 +99,10 @@ fn test_pdf(connection_id: PartnerConnectionId, sent_at: UtcTimestamp) -> Vec<u8
 }
 
 /// The synthetic test file of an HL7 Results connection: an ORU^R01 with processing ID
-/// `T`, a synthetic patient and one text result saying what it is.
+/// `T`, a synthetic patient and one text result saying what it is. Each test message has
+/// its own control ID (MSH-10), `TEST-` and a new ID, so a partner that drops a repeated
+/// control ID still takes the next test.
 fn test_oru(
-    connection_id: PartnerConnectionId,
     partner: &str,
     laboratory: Option<&LaboratoryProfileView>,
     sent_at: UtcTimestamp,
@@ -134,10 +137,25 @@ fn test_oru(
     };
     let now = dtm(sent_at, &zone);
     Oru::synthetic(
-        format!("TEST-{connection_id}"),
+        format!("TEST-{}", PartnerMessageId::generate()),
         &now,
         lab,
         partner,
         vec![group],
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn each_test_message_has_its_own_control_id_and_stays_a_test() {
+        let at = UtcTimestamp::parse("2026-11-05T10:00:00.000000000Z").unwrap();
+        let first = test_oru("CLINIC-A", None, at);
+        let second = test_oru("CLINIC-A", None, at);
+        assert!(first.control_id.starts_with("TEST-"));
+        assert_ne!(first.control_id, second.control_id);
+        assert_eq!((first.processing_id, second.processing_id), ("T", "T"));
+    }
 }

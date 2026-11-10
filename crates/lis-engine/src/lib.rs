@@ -264,9 +264,10 @@ pub use commands::partner::{
 };
 pub use lis_interfaces::partner::{
     ApprovePartnerContract, ApprovePartnerMappings, DiscardPartnerMappingDraft,
-    DraftPartnerContract, DraftPartnerMapping, ListPartnerMessages, PartnerConnection,
-    PartnerConnectionDetail, PartnerMappings, PartnerMessagePage, RecordPartnerDestinationCheck,
-    RejectReceivedMessage, ResendPartnerDelivery, ResolvePartnerRejection, ResolveUnroutedMessage,
+    DraftPartnerContract, DraftPartnerMapping, GetPartnerMessage, ListPartnerMessages,
+    PartnerConnection, PartnerConnectionDetail, PartnerMappings, PartnerMessageDetail,
+    PartnerMessagePage, RecordPartnerDestinationCheck, RejectReceivedMessage,
+    ResendPartnerDelivery, ResolvePartnerRejection, ResolveUnroutedMessage,
     SetPartnerConnectionActive, UnroutedMessage,
 };
 // partner: end

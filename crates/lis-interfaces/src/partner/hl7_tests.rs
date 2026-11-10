@@ -26,7 +26,7 @@ fn message() -> Oru {
             family_name: "Doe".to_owned(),
             given_names: Some("Jane".to_owned()),
             birth_date: "19800101".to_owned(),
-            sex: Some("F".to_owned()),
+            sex: Some("Female".to_owned()),
         },
         location: Some(("LOC-1".to_owned(), "Main office".to_owned())),
         order: Order {

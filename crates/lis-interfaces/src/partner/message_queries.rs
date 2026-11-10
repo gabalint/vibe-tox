@@ -8,6 +8,7 @@ use ts_rs::TS;
 
 use super::acceptance::ACCEPTED;
 use super::error::PartnerError;
+use super::message_filter::kept;
 use super::message_repo::NOT_REPLACED;
 use super::mllp::NO_ACK;
 use super::model::{
@@ -74,6 +75,9 @@ text_enum! {
         /// A test or analyte of the HL7 message has no approved code mapping, so it
         /// is held, never sent with a guessed code (REQ-INT-004). Set by the engine.
         NotMapped = "not_mapped",
+        /// The patient has no identifier for PID-3, which HL7 v2.5.1 requires: it is
+        /// held until one is added (#4676). Set by the engine.
+        NoPatientIdentifier = "no_patient_identifier",
     }
 }
 
@@ -90,10 +94,20 @@ pub struct ListPartnerMessages {
     #[ts(optional)]
     pub connection_id: Option<PartnerConnectionId>,
     pub view: MessageView,
-    /// A handoff number, a report or accession number, or part of a file name.
+    /// A handoff number, a report or accession number, part of a file name, or a whole
+    /// control ID (MSH-10); several separated by commas find the rows of any of them.
     #[serde(default)]
     #[ts(optional)]
     pub search: Option<String>,
+    /// Leaves out the synthetic test messages of Send test message.
+    #[serde(default)]
+    #[ts(as = "Option<_>", optional)]
+    pub hide_tests: bool,
+    /// Only these rows, by their delivery's ID, or the message's ID for a row without a
+    /// delivery: the rows a person selected for Export. Every row when empty.
+    #[serde(default)]
+    #[ts(as = "Option<_>", optional)]
+    pub row_ids: Vec<String>,
 }
 
 /// A connection named in a row.
@@ -186,39 +200,11 @@ pub fn list_partner_messages(
         input.connection_id,
         SCAN_LIMIT,
     )?);
-    let search = input.search.as_deref().map(str::trim).unwrap_or_default();
-    rows.retain(|row| in_view(row, input.view) && found(row, search));
+    rows.retain(|row| kept(row, input));
     rows.sort_by_key(|row| std::cmp::Reverse(row.at));
     let more = rows.len() > LOG_LIMIT;
     rows.truncate(LOG_LIMIT);
     Ok(PartnerMessagePage { rows, more })
-}
-
-fn in_view(row: &PartnerMessageRow, view: MessageView) -> bool {
-    match view {
-        MessageView::All => true,
-        MessageView::Failed => row.transport == TransportOutcome::Failed,
-        MessageView::NotSent => row.transport == TransportOutcome::NotSent,
-        MessageView::OutcomeUnknown => row.outcome_unknown,
-    }
-}
-
-/// Digits find a handoff number; other text is found in the report number or
-/// the written file's path.
-fn found(row: &PartnerMessageRow, search: &str) -> bool {
-    if search.is_empty() {
-        return true;
-    }
-    if search.bytes().all(|byte| byte.is_ascii_digit()) && row.source_label.is_none() {
-        return row
-            .source_number
-            .is_some_and(|number| number.to_string() == search);
-    }
-    let search = search.to_lowercase();
-    [row.source_label.as_deref(), row.written_path.as_deref()]
-        .into_iter()
-        .flatten()
-        .any(|text| text.to_lowercase().contains(&search))
 }
 
 fn delivery_rows(

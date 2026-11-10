@@ -26,12 +26,15 @@ mod error;
 pub mod hl7;
 pub mod hl7_order;
 mod hl7_read;
+mod hl7_sex;
 mod intake_model;
 mod intake_settings;
 mod intake_sources;
 mod mapping_model;
 mod mapping_repo;
 mod mappings;
+mod message_detail;
+mod message_filter;
 mod message_queries;
 mod message_repo;
 mod messages;
@@ -85,6 +88,9 @@ pub use mapping_model::{
 pub use mappings::{
     approve_partner_mappings, approved_mappings, discard_partner_mapping_draft,
     draft_partner_mapping, partner_mappings,
+};
+pub use message_detail::{
+    GetPartnerMessage, MessageContent, PartnerAttempt, PartnerMessageDetail, partner_message_detail,
 };
 pub use message_queries::{
     ConnectionRef, ListPartnerMessages, MessageView, PartnerMessagePage, PartnerMessageRow,

@@ -6,6 +6,8 @@
 //! It is not a parser and claims no profile conformance; a partner's contract
 //! and acceptance tests decide that (REQ-INT-001).
 
+pub use super::hl7_sex::administrative_sex;
+
 /// The sending application in MSH-3.
 pub const SENDING_APPLICATION: &str = "VIBETOX LIS";
 
@@ -50,7 +52,8 @@ pub struct Patient {
     pub given_names: Option<String>,
     /// `YYYYMMDD`.
     pub birth_date: String,
-    /// PID-8: the administrative sex code as recorded, never mapped.
+    /// PID-8: the administrative sex as recorded; sent as its table 0001 code
+    /// ([`administrative_sex`]).
     pub sex: Option<String>,
 }
 
@@ -133,7 +136,7 @@ pub struct Specimen {
 
 impl Oru {
     /// A synthetic message with no patient data, processing ID `T`: the synthetic patient
-    /// TEST^SYNTHETIC, a test provider, a synthetic specimen and `groups`, all at `at`. For the
+    /// TEST^SYNTHETIC with sex recorded as Unknown, a test provider, a synthetic specimen and `groups`, all at `at`. For the
     /// test message and the acceptance tests.
     #[must_use]
     pub fn synthetic(
@@ -159,7 +162,7 @@ impl Oru {
                 family_name: "TEST".to_owned(),
                 given_names: Some("SYNTHETIC".to_owned()),
                 birth_date: "19000101".to_owned(),
-                sex: None,
+                sex: Some("Unknown".to_owned()),
             },
             location: None,
             order: Order {
@@ -240,7 +243,7 @@ impl Oru {
                 comp(&[&patient.family_name, given]),
                 String::new(),
                 esc(&patient.birth_date),
-                esc(patient.sex.as_deref().unwrap_or_default()),
+                administrative_sex(patient.sex.as_deref()).to_owned(),
             ],
         )
     }

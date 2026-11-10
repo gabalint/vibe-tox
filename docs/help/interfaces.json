@@ -97,6 +97,12 @@
           "result": "Shows the latest status and counts."
         },
         {
+          "name": "Open record",
+          "does": "Opens the record the message was made from: the report revision sent, the withdrawn report, or the billing handoff.",
+          "availableWhen": "A click on the Record link; not on a test message or a received order.",
+          "result": "Nothing changes. The report or handoff page needs its own rights and records the read as it does from Reports or Billing."
+        },
+        {
           "name": "Open row",
           "does": "Opens the connection's page.",
           "availableWhen": "A listed connection.",
@@ -129,7 +135,7 @@
         },
         {
           "problem": "Waiting does not go down",
-          "recovery": "Check that the connection is started, that its destination check is Verified, that its Interface contract line says acceptance tests passed, and its schedule. Logs show the reason on each waiting message, such as Interface contract not approved, or its acceptance tests not passed: open Interface contract on Overview, approve a version and run the tests, fixing what a failed case names (often a code mapping without a UCUM unit); a report revision also waits while its impact review is open. Nothing is written while a recovery reconciliation after a restore is open."
+          "recovery": "Check that the connection is started, that its destination check is Verified, that its Interface contract line says acceptance tests passed, and its schedule. Logs show the reason on each waiting message, such as Interface contract not approved, or its acceptance tests not passed: open Interface contract on Overview, approve a version and run the tests, fixing what a failed case names (often a code mapping without a UCUM unit); a report revision also waits while its impact review is open, and an HL7 result while its patient has no identifier (Held: the patient has no identifier). Nothing is written while a recovery reconciliation after a restore is open."
         }
       ]
     },
@@ -340,7 +346,7 @@
         {
           "name": "Interface contract: In force, Draft, Acceptance tests",
           "meaning": "What the partner and the laboratory agreed for this connection (REQ-INT-001): the version in force with who approved it, when and why; the next version drafted and waiting for approval; and the latest run of the acceptance tests, each case with ✓ or ✗ and why it failed.",
-          "values": "Acceptance tests passed (the latest run, for the connection as it is now, passed), failed, out of date (the contract, the code mappings or the settings that shape the messages changed since), or not run. HL7 Results cases: code mappings approved, each analyte with a UCUM unit; the message header (partner, ORU^R01, 2.5.1); the partner's codes and unit sent; a censored value sent as SN with no interpretation; a correction with status C; a withdrawal with status W; over MLLP, the partner asked to answer each message. File connections: the file name pattern makes a valid name. HL7 Orders cases: a mapped order code makes an order in Received status; an exact replay makes no second order; the same message ID with changed content is held; an unknown test code and another sending facility are refused; an unknown patient waits or is refused, as set; over MLLP, each with the acknowledgement it should get (AA, AE or AR).",
+          "values": "Acceptance tests passed (the latest run, for the connection as it is now, passed), failed, out of date (the contract, the code mappings or the settings that shape the messages changed since), or not run. HL7 Results cases: code mappings approved, each analyte with a UCUM unit; the message header (partner, ORU^R01, 2.5.1); the patient's identifier sent in PID-3; the patient's sex sent as an HL7 table 0001 code; the partner's codes and unit sent; a censored value sent as SN with no interpretation; a correction with status C; a withdrawal with status W; over MLLP, the partner asked to answer each message. File connections: the file name pattern makes a valid name. HL7 Orders cases: a mapped order code makes an order in Received status; an exact replay makes no second order; the same message ID with changed content is held; an unknown test code and another sending facility are refused; an unknown patient waits or is refused, as set; over MLLP, each with the acknowledgement it should get (AA, AE or AR).",
           "rules": "Patient data waits until a version is approved and the latest run passed. The tests use synthetic messages, the connection's settings and its approved code mappings; nothing is sent, and the order tests register a synthetic patient and provider and make orders in a transaction that is undone, so nothing they make is kept. They prove the LIS's side only: what the partner does with the messages is qualified with the partner."
         },
         {
@@ -359,7 +365,7 @@
           "name": "Rules, Code mappings, Logs, History",
           "meaning": "The routing rules; code mappings to a partner's codes; this connection's messages; every change with who, when, the settings changed and the reason or method.",
           "values": "As recorded, newest first. Code mappings is empty for Report PDF and Billing JSON, whose files carry the LIS's own codes. History also lists each approved code mapping version and each approved interface contract version, with its reason.",
-          "rules": "Read-only, except Code mappings of an HL7 Results connection, and on Logs a row's ⋯ menu (Send again, Reject…, Mark resolved…, as on the Logs page); a row there opens nothing, as its connection is already open. History is never edited."
+          "rules": "Read-only, except Code mappings of an HL7 Results connection, and on Logs a row's ⋯ menu (Send again, Reject…, Mark resolved…, as on the Logs page); an outgoing message opens its details beside the list, as on the Logs page, without the connection link; a received order opens nothing, as its connection is already open. History is never edited."
         },
         {
           "name": "Code mappings of an HL7 Orders connection: LIS test, Partner code, Sequence role, Status",
@@ -467,9 +473,9 @@
         },
         {
           "name": "Send test message",
-          "does": "Writes a synthetic file with no patient data to the folder or SFTP server now: vibetox-test-<date>-<time>.hl7, an ORU^R01 with processing ID T and a synthetic patient, for HL7 Results; a one-page PDF for Report PDF; a .json file for Billing JSON. Over MLLP, the synthetic ORU^R01 is sent to the partner and its acknowledgement read.",
+          "does": "Writes a synthetic file with no patient data to the folder or SFTP server now: vibetox-test-<date>-<time>.hl7, an ORU^R01 with processing ID T, a synthetic patient and its own control ID (MSH-10: TEST- and a new ID each time), for HL7 Results; a one-page PDF for Report PDF; a .json file for Billing JSON. Over MLLP, the synthetic ORU^R01 is sent to the partner and its acknowledgement read.",
           "availableWhen": "A saved connection that sends, stopped or not verified too; an HL7 Orders connection has none, as the LIS sends it nothing.",
-          "result": "The file name, or the problem, shows; over MLLP the partner's answer, such as ✓ Synthetic test message sent; the partner accepted it (AA), or ✗ … the partner found an error (AE): <its reason>. The test appears in Logs as Test message. A failed test is not retried."
+          "result": "The file name, or the problem, shows; over MLLP the partner's answer, such as ✓ Synthetic test message sent; the partner accepted it (AA), or ✗ … the partner found an error (AE): <its reason>. The test appears in Logs with a Test badge once Show test messages is on, and on the connection's Logs tab. A failed test is not retried."
         },
         {
           "name": "Add mapping / Change / Remove / Discard draft",
@@ -523,6 +529,10 @@
         {
           "problem": "Choose the folder again",
           "recovery": "The chosen folder is kept only for your session and the last 8 choices. Use Choose folder… again and save."
+        },
+        {
+          "problem": "An HL7 message stays Not sent with Held: the patient has no identifier; add one on the patient's page",
+          "recovery": "HL7 v2.5.1 requires the patient identifier (PID-3), so the result is not sent without one; the report stays released. On the patient's page use Add identifier with the value, assigning authority and type agreed with the partner. This changes the patient's record after release, so the row then shows Paused while the report's impact review is open: on the report, use Record impact assessment with No impact on the released report (or issue a correction). The message goes at the next pass, with the identifier."
         },
         {
           "problem": "An HL7 message stays Not sent with Held: a test or analyte has no approved code mapping",
@@ -597,9 +607,15 @@
           "rules": "Combines with the tab; the tabs count what the other filters leave."
         },
         {
-          "name": "Search",
+          "name": "Show test messages (off)",
+          "meaning": "Whether the synthetic messages of Send test message are listed.",
+          "values": "Off (default): test messages are left out of the list, the tab counts and Export CSV. On: they are listed with a Test badge in Record.",
+          "rules": "Kept in the address. A connection's own Logs tab always lists its test messages."
+        },
+        {
+          "name": "Search (Search report, handoff, file…)",
           "meaning": "Narrow the rows.",
-          "values": "A handoff number (digits only, exact), or part of a report or accession number, file name or folder.",
+          "values": "Part of a report or accession number, such as A26000009, a handoff number (digits only, exact), a whole control ID (MSH-10) of an outgoing message, such as the one a partner quotes, in any letter case, or part of a file name or folder. Several values separated by commas, such as A26000009, A26000022, show the rows of any of them.",
           "rules": "Optional; kept in the address."
         },
         {
@@ -609,10 +625,16 @@
           "rules": "Only MLLP partners answer; a folder or SFTP server never does. The tab is part of the address."
         },
         {
+          "name": "Check column (Select all rows)",
+          "meaning": "The rows to export.",
+          "values": "Click a row's check box or press Space on it; the header's check box selects or clears every row shown. The bar above the list says how many are selected; Clear unselects them.",
+          "rules": "Checking a row does not open it. Rows that a tab, filter or search no longer shows are unselected, and the bar says so."
+        },
+        {
           "name": "Time, Dir., Connection, Message, Record",
-          "meaning": "When the row last changed (written, tried, made or received), the direction (In for a received order), the connection (None matched for an unrouted message), the message type and the record: the report number and revision (such as A26000005-U r2), the report's withdrawal notice, the billing handoff, Test message, or for a received order its placer order number (the file name when it could not be read; Order message over MLLP).",
+          "meaning": "When the row last changed (written, tried, made or received), the direction (In for a received order), the connection (None matched for an unrouted message), the message type and the record: the report number and revision (such as A26000005-U r2), the report's withdrawal notice, the billing handoff, a Test badge for a message of Send test message, or for a received order its placer order number (the file name when it could not be read; Order message over MLLP).",
           "values": "As recorded.",
-          "rules": "Read-only."
+          "rules": "Read-only. The record is a link: a report revision opens that revision of the report, the revision that was sent; a withdrawal notice opens the report; a billing handoff opens the handoff. A test message or a received order has no link."
         },
         {
           "name": "Transport",
@@ -629,8 +651,26 @@
         {
           "name": "Details",
           "meaning": "Why the row stands where it does.",
-          "values": "Written as <folder and file> (for SFTP, the remote folder and file); over MLLP Sent to <address:port>, followed by · Partner: <its reason> when it did not accept the message; <problem>; attempt N of 5 at <time>, such as No acknowledgement in time; attempt 2 of 5 at 11:20; <problem>; not written (over MLLP, not acknowledged) after 5 attempts; Connection stopped; Destination check not recorded; Interface contract not approved, or its acceptance tests not passed; Waiting for the connection's schedule; Written at the next pass; Paused while the report's impact review is open; Held: a test or analyte has no approved code mapping; Replaced by a newer revision; never written; No connection rule matched; or the decision on an unrouted message. A report's later revision or withdrawal notice sent to a connection that had the report starts with Replaces r<n>, sent first or Withdrawal notice, sent first. A received order shows why it waits, is held or was refused (Exact replay; no second order for a duplicate), and Moved to <Processed or Failed folder › year › month › file>, or over MLLP the answer it got, such as ACK AA returned to 192.168.1.50; an order created once its patient was registered shows Waited until the patient was registered. A resolved rejection ends with · Resolved by <person>, <time>: <note>; a message a person rejected shows Rejected by <person>, <time>: <reason>.",
+          "values": "Written as <folder and file> (for SFTP, the remote folder and file); over MLLP Sent to <address:port>, followed by · Partner: <its reason> when it did not accept the message; <problem>; attempt N of 5 at <time>, such as No acknowledgement in time; attempt 2 of 5 at 11:20; <problem>; not written (over MLLP, not acknowledged) after 5 attempts; Connection stopped; Destination check not recorded; Interface contract not approved, or its acceptance tests not passed; Waiting for the connection's schedule; Written at the next pass; Paused while the report's impact review is open; Held: a test or analyte has no approved code mapping; Held: the patient has no identifier; add one on the patient's page (HL7 Results only: PID-3 is required, so it is never sent empty); Replaced by a newer revision; never written; No connection rule matched; or the decision on an unrouted message. A report's later revision or withdrawal notice sent to a connection that had the report starts with Replaces r<n>, sent first or Withdrawal notice, sent first. A received order shows why it waits, is held or was refused (Exact replay; no second order for a duplicate), and Moved to <Processed or Failed folder › year › month › file>, or over MLLP the answer it got, such as ACK AA returned to 192.168.1.50; an order created once its patient was registered shows Waited until the patient was registered. A resolved rejection ends with · Resolved by <person>, <time>: <note>; a message a person rejected shows Rejected by <person>, <time>: <reason>.",
           "rules": "Read-only."
+        },
+        {
+          "name": "Message details: Connection, Control ID (MSH-10), Partner's answer",
+          "meaning": "The side panel an outgoing message opens in: its connection (a link to its page, except on the connection's own Logs tab), the message's control ID as sent in MSH-10, and what the partner answered.",
+          "values": "Control ID: the ID the partner quotes, or — until the message is made, and for a report PDF or billing file. Partner's answer over MLLP: Accepted (AA), Rejected (AE) or Rejected (AR) with the partner's reason as received (ERR-8, else MSA-3); No answer: <problem>, such as No acknowledgement in time, when it did not answer; None yet. For a folder or SFTP server: None, as they never answer.",
+          "rules": "Read-only. The panel's heading shows the record, the message type and the Transport badge. Opening it reads the message, which holds patient data: each opening is recorded in the audit trail (interfaces.get_message) and needs Manage configuration."
+        },
+        {
+          "name": "Message as sent",
+          "meaning": "The HL7 Results message exactly as the partner received it, one segment per line (MSH, PID, ORC, OBR, OBX, SPM…).",
+          "values": "Matches what was sent: the copy the LIS kept when it made the message, checked against the digest recorded then; every attempt sent these bytes, so a retry is the same message with the same control ID. Not made yet: the message is made at its first attempt, once every test and analyte has an approved code mapping. A report PDF or billing file is not an HL7 message: open it from its report or billing handoff. When the kept copy is missing or no longer matches its digest, a red notice says so and nothing is shown: the LIS never shows a message made again in its place, as it could differ from the one sent. A test message shows its synthetic content, with no patient data.",
+          "rules": "Read-only; lines are not wrapped, so scroll sideways for long segments. The panel widens while a message is shown."
+        },
+        {
+          "name": "Attempts",
+          "meaning": "Each attempt to send the message, oldest first, with its time and outcome.",
+          "values": "Written (to a folder or SFTP server); Sent; the partner answered AA, AE or AR (over MLLP); Failed: <problem>, such as No acknowledgement in time. None yet before the first attempt. A test message: Sent once when the test ran; a test message is never sent again.",
+          "rules": "Read from the audit trail; Send again does not remove earlier attempts."
         }
       ],
       "actions": [
@@ -653,21 +693,21 @@
           "result": "It leaves the Rejected tab and stays under All; Details end with Resolved by <person>, <time>: <note>. Nothing is sent and nothing changes at the partner. A rejection is resolved once. Recorded in the audit trail."
         },
         {
-          "name": "Export CSV",
-          "does": "Saves the rows shown, with the current tab and filters.",
+          "name": "Export CSV / Export N selected",
+          "does": "With no row checked, Export CSV saves the rows shown, with the current tab and filters. With rows checked, the button reads Export N selected, such as Export 3 selected, and saves only those rows.",
           "availableWhen": "At least one row is shown and the Downloads folder is available.",
-          "result": "An interface-log-<date>.csv file in your Downloads folder, with codes as stored. The export is recorded in the audit trail."
+          "result": "An interface-log-<date>.csv file in your Downloads folder, with codes as stored. The export is recorded in the audit trail. Columns follow the page: transport is written, uploaded (SFTP) or sent (MLLP), failed, not_sent or received; application is the partner's acknowledgement code (AA, AE, AR) with its reason in ack_text, awaiting_ack, outcome_unknown for a written file, or what a received order became; failed_attempts counts only failed attempts; file is the file written or, over MLLP, the partner's address and port."
         },
         {
           "name": "Open row",
-          "does": "Opens the connection, or Unrouted messages for an unrouted message.",
-          "availableWhen": "A listed row.",
-          "result": "Nothing changes."
+          "does": "Click a row, or press Enter on it. An outgoing message opens its details beside the list (Previous and Next step through the outgoing messages shown; Close or Escape closes it); an unrouted message opens Unrouted messages; a received order opens its connection.",
+          "availableWhen": "A listed row. The open message is kept in the address (?open=), so Back closes it.",
+          "result": "Nothing changes. Opening a message's details is recorded in the audit trail."
         }
       ],
       "restrictions": [
         "Failed writes are retried automatically after 1, 2, 4 and 8 minutes; after the fifth failure the message waits for Send again and appears in the Interface messages not written work queue.",
-        "Message content is not shown here. A report is opened from Reports, and the billing handoff file from Billing › Billing handoffs, by people with those rights; opening them is audited."
+        "Only HL7 Results messages show their content here, in the message panel. A report PDF is opened from Reports, and the billing handoff file from Billing › Billing handoffs, by people with those rights; the Record link opens the report or billing handoff. Opening them is audited. A received order's content is not shown here."
       ],
       "workflow": [
         "Check the Failed and Rejected tabs daily.",
@@ -687,6 +727,14 @@
         {
           "problem": "Reject… or Mark resolved… is missing",
           "recovery": "Reject… appears only on a received order message that waits for its patient or is held; one already made into an order, a duplicate or a rejected one cannot be rejected. Mark resolved… appears only on a rejection not resolved yet; a resolved one shows who resolved it in Details."
+        },
+        {
+          "problem": "A partner quotes a control ID and searching finds nothing",
+          "recovery": "Type the whole control ID, as the partner's MSH-10 or MSA-2 shows it, and choose All time in Period: the search does not match part of a control ID. A control ID the LIS did not send, such as the ID of an order the partner sent, is not found."
+        },
+        {
+          "problem": "Message as sent says the kept copy is missing or no longer matches its digest",
+          "recovery": "The message file kept on this computer was removed or damaged, so it is not shown; the attempts and the partner's answer still stand. Tell your system administrator, who can check the data folder and the backups (System › Backups). The partner can also look up the message by its control ID."
         },
         {
           "problem": "Export CSV says the Downloads folder is not available",
@@ -797,6 +845,10 @@
     "ui/src/features/interfaces/logs/LogsPage.tsx",
     "ui/src/features/interfaces/logs/MessagesSection.tsx",
     "ui/src/features/interfaces/logs/messageColumns.tsx",
+    "ui/src/features/interfaces/logs/MessagePanel.tsx",
+    "ui/src/features/interfaces/logs/useMessagePanel.tsx",
+    "crates/lis-interfaces/src/partner/message_detail.rs",
+    "crates/lis-engine/src/commands/partner/message_detail.rs",
     "ui/src/features/interfaces/unrouted/UnroutedPage.tsx",
     "ui/src/features/interfaces/unrouted/UnroutedDetails.tsx",
     "ui/src/features/interfaces/unrouted/AnotherWayDialog.tsx",
@@ -807,6 +859,7 @@
     "crates/lis-interfaces/src/partner/messages.rs",
     "crates/lis-interfaces/src/partner/delivery.rs",
     "crates/lis-interfaces/src/partner/message_queries.rs",
+    "crates/lis-interfaces/src/partner/message_filter.rs",
     "crates/lis-interfaces/src/partner/message_repo.rs",
     "crates/lis-interfaces/src/partner/unrouted_queries.rs",
     "crates/lis-engine/src/commands/partner/routing.rs",
