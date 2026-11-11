@@ -1,8 +1,20 @@
-# Agent instructions — Vibe Toxicology LIS
+# Agent instructions — OpenBGA/tox
 
 ## Current mandate
 
-**Public repository — user instruction, 2026-10-20.** `gabalint/vibe-tox` is
+**Product name and repository — user instruction, 2026-11-11.** The project is
+**OpenBGA/tox**, hosted at `openbga/tox` under the **OpenBGA** organization.
+Use this identity in the application, presentation video, website and documentation.
+OS bundles use **OpenBGA Tox**, since Tauri's product name cannot contain `/`;
+download filenames use `openbga-tox`. Describe the
+substantial AI-assisted development alongside the human work in requirements
+analysis, research, architecture review, testing and
+iteration; distinguish required review from completed evidence. Keep persistent
+data/security identifiers compatible. See
+[development controls](docs/governance/engineering-standards.md#ai-assisted-development-controls)
+and [packaging identity](docs/development/packaging.md#product-name-and-compatibility).
+
+**Public repository — user instruction, 2026-10-20.** `openbga/tox` is
 public and the presentation website is published through GitHub Pages from
 `website/`. Publication does not authorize signing, supported releases, cloud
 implementation or clinical use; those keep their own gates (Q-19, Q-34).
@@ -27,10 +39,10 @@ supported releases or clinical use (Q-19, Q-34).
 **Open-source preparation — user instruction, 2026-10-20.** Retain GPL-3.0-only
 and keep the free clinical toxicology LIS scope explicit. Keep project pricing,
 business-model material and other LIS organizations' names and brands out of
-tracked documents. Exception (user instruction, 2026-11-05): the README and the
-website each carry one factual support notice linking to
-<https://limsiq.com/solutions/vibe-tox-support/>, limited to the link and a one-line
-description with no pricing or offer terms. Tracked documents describe current decisions and open
+tracked documents. Exception (user instruction, 2026-11-11): the README and the
+website each carry one small notice: “Are you looking for support? Contact
+bgasoft.com.” Link `bgasoft.com` to <https://bgasoft.com>, with no pricing or
+offer terms. Tracked documents describe current decisions and open
 proposals only; they do not narrate earlier internal project choices. The public
 history starts from a single initial snapshot. This does not authorize cloud
 implementation or change clinical scope. Preserve third-party license notices and

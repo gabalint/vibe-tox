@@ -162,7 +162,7 @@ fn the_kit_holds_the_key_line_locations_and_steps_and_is_recorded_without_the_ke
         }
     );
     let text = fs::read_to_string(f.kit_path()).unwrap();
-    assert!(text.starts_with("Vibe Toxicology LIS recovery kit\nFormat: vtkit-1\n"));
+    assert!(text.starts_with("OpenBGA/tox recovery kit\nFormat: vtkit-1\n"));
     let key_line = text
         .lines()
         .find_map(|line| line.strip_prefix("Installation key: "))

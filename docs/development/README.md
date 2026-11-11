@@ -45,9 +45,11 @@ records the synthetic-development exception and mandatory patch gate before prod
 
 Optional [local build storage guidance](local-build-storage.md) explains target paths and cache relocation.
 
-From the repository root:
+Clone the OpenBGA repository, then run from its root:
 
 ```bash
+git clone https://github.com/openbga/tox.git
+cd tox
 npm ci
 npm run tauri dev
 ```

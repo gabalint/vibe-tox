@@ -10,7 +10,7 @@ import unittest
 from update_feed import FeedError, index, main, manifest
 
 
-BASE = "https://github.com/example/vibe-tox/releases/download/nightly-20261028.20"
+BASE = "https://github.com/example/tox/releases/download/nightly-20261028.20"
 SHA = "a" * 40
 
 

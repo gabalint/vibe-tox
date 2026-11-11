@@ -1,7 +1,7 @@
 import { type RefObject, useLayoutEffect, useRef } from "react";
 import { useLocation } from "react-router";
 
-export const APP_NAME = "Vibe Tox LIS";
+export const APP_NAME = "OpenBGA/tox";
 
 /**
  * Keeps the window title equal to the page's `h1` and, after each navigation, moves focus to

@@ -1,4 +1,4 @@
-# Vibe Toxicology LIS at a glance
+# OpenBGA/tox at a glance
 
 Status: updated 2026-10-20 from the [project scope](project-scope.md), the
 [implementation plan](planning/implementation-plan.md#status) and the
@@ -12,7 +12,7 @@ licensed under [GPL-3.0-only](../LICENSE), running on a single computer the labo
 
 ## In 30 seconds
 
-Vibe Toxicology LIS covers a test from order to delivered report: orders, specimens and labels,
+OpenBGA/tox covers a test from order to delivered report: orders, specimens and labels,
 analyzer results, quality control, review, release, delivery and billing. It is a desktop
 application for Windows, macOS and Linux that keeps all data on the lab's own computer, works
 without internet, and lets the lab back up, restore or export everything at no cost. Optional
@@ -22,8 +22,16 @@ application scope.
 > **Status.** Built and tested on synthetic data only. It is not yet clinically validated, and is
 > not ready to report patient results.
 
-This project is vibe coded with substantial AI assistance; see the
-[development disclaimer](governance/development-disclaimer.md).
+OpenBGA/tox is vibe coded with substantial AI assistance and sustained human
+effort. Development includes research, requirements analysis, architecture review,
+code review, test design, hands-on testing and repeated refinement. Human
+direction shapes the scope, challenges generated work and determines what needs
+further investigation. The [requirements](requirements/functional-requirements.md),
+[architecture decisions](architecture/decisions/README.md),
+[review standards](governance/engineering-standards.md#human-direction-and-review)
+and [quality guidance](quality/README.md) make that work and its limits inspectable.
+See the [development disclaimer](governance/development-disclaimer.md) for the
+current readiness and warranty boundaries.
 
 ## The two-minute overview
 

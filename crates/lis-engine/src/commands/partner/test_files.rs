@@ -13,7 +13,7 @@ use lis_interfaces::partner::{
 
 use crate::partner_delivery::hl7_message::dtm;
 
-const NOTE: &str = "Synthetic test message from the Vibe Tox LIS. It contains no patient data.";
+const NOTE: &str = "Synthetic test message from OpenBGA/tox. It contains no patient data.";
 
 /// The test file's bytes and extension for the connection's message type; `None` for an
 /// incoming type, to which the LIS sends nothing.
@@ -55,7 +55,7 @@ fn test_message(connection_id: PartnerConnectionId, sent_at: UtcTimestamp) -> Ve
 /// The synthetic test file of a Report PDF connection: a one-page PDF.
 fn test_pdf(connection_id: PartnerConnectionId, sent_at: UtcTimestamp) -> Vec<u8> {
     let lines = [
-        "Vibe Tox LIS - synthetic test message".to_owned(),
+        "OpenBGA/tox - synthetic test message".to_owned(),
         "It contains no patient data.".to_owned(),
         format!("Connection: {connection_id}"),
         format!("Sent at: {sent_at}"),
@@ -111,7 +111,7 @@ fn test_oru(
         .and_then(|profile| TimeZone::get(&profile.time_zone).ok())
         .unwrap_or(TimeZone::UTC);
     let lab = Organization {
-        name: laboratory.map_or_else(|| "Vibe Tox LIS".to_owned(), |profile| profile.name.clone()),
+        name: laboratory.map_or_else(|| "OpenBGA/tox".to_owned(), |profile| profile.name.clone()),
         id: laboratory
             .map(|profile| profile.clia_id.clone())
             .unwrap_or_default(),

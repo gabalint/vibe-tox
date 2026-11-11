@@ -22,7 +22,7 @@ work or authorize a production release; repository publication follows
 | --- | --- |
 | License | Use the unmodified GNU General Public License, version 3, with SPDX identifier `GPL-3.0-only`. The example “or later” notice in the application appendix does not expand the project's grant. |
 | Canonical text and metadata | Keep the official GPLv3 text in root [LICENSE](../../../LICENSE), with consistent workspace, npm and Tauri metadata and project-crate license policy. |
-| Attribution | Use “Vibe Toxicology LIS contributors” for the respective rights holders. Preserve applicable third-party terms, attribution and notices. |
+| Attribution | Use “OpenBGA/tox contributors” for the respective rights holders. Preserve applicable third-party terms, attribution and notices. |
 | Development disclaimer | State that the project is developed with substantial AI assistance and reasonable effort in research, planning, analysis, review and testing. Publish the [canonical disclaimer](../../governance/development-disclaimer.md) and concise summaries in the README and presentation. |
 | Disclaimer boundary | Keep the disclaimer informational, with GPLv3 sections 15–17 warranty/liability references. It does not modify the license or add noncommercial, no-resale, clinical-use or other restrictions. |
 

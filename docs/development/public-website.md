@@ -1,8 +1,8 @@
 # Public website and presentation
 
 The presentation is published at
-[gabalint.github.io/vibe-tox](https://gabalint.github.io/vibe-tox/) from the public
-repository [gabalint/vibe-tox](https://github.com/gabalint/vibe-tox); see
+[openbga.github.io/tox](https://openbga.github.io/tox/) from the public
+repository [openbga/tox](https://github.com/openbga/tox); see
 [publication](#publication).
 
 The website summarizes the [license](../architecture/decisions/0017-gplv3-license.md) and links the
@@ -35,12 +35,14 @@ the single-computer proposition to the video, the workflow shown through applica
 screens, data ownership, common questions, downloading installers or building from source,
 development status with the license and disclaimer, and the repository. Its actions open the
 latest development release, presentation, documentation, contribution and security
-guidance, the commercial support link that [AGENTS.md](../../AGENTS.md#current-mandate)
+guidance, the support link that [AGENTS.md](../../AGENTS.md#current-mandate)
 permits, or source. The hero's “Download development build” action and the
-getting-started section link to the [latest release](https://github.com/gabalint/vibe-tox/releases/latest),
+getting-started section link to the [latest release](https://github.com/openbga/tox/releases/latest),
 where visitors choose their platform's installer and read its release notes. Keep
 the destination independent of versioned asset filenames; [branches and releases](releases.md)
 describes the unsigned development builds and the separate nightly channel.
+The footer credits OpenBGA and carries one small support notice: “Are you looking
+for support? Contact bgasoft.com.” The domain links to <https://bgasoft.com>.
 
 ### Search and sharing metadata
 
@@ -56,7 +58,7 @@ project has none and must not invent them (WEB-07). The video's `uploadDate` is 
 Pages deployment, 2026-10-20 15:42 UTC; change it and `duration` only when a different
 recording is published.
 
-A project site at `gabalint.github.io/vibe-tox/` is a subdirectory of the host. Google
+A project site at `openbga.github.io/tox/` is a subdirectory of the host. Google
 reads `robots.txt` only from the host root and does not support site names for
 subdirectories (WEB-08), so the site ships neither a `robots.txt` nor `WebSite` markup.
 Search Console verification and sitemap submission would be project-owner actions outside
@@ -78,6 +80,10 @@ recording of the actual React interface with a mocked engine and synthetic data,
 with narration and music. It demonstrates a workflow, not end-to-end clinical
 execution or validation.
 
+The recording and its poster still show the earlier name, Vibe Toxicology LIS.
+Label that fact beside the player; keep captions and scene descriptions faithful
+to the recording until the media is replaced. Current page copy uses OpenBGA/tox.
+
 English captions, a descriptive transcript and audio credits accompany the video.
 Keep development status and platform verification limits accurate when changing
 the page or choosing a later recording.
@@ -88,7 +94,7 @@ the page or choosing a later recording.
 | --- | --- |
 | `website/index.html` | Public content, search metadata and structured data, navigation, native player and links |
 | `website/styles.css`, `website/responsive.css` | Presentation styles and responsive adaptations |
-| `website/favicon.svg` | Authored geometric V mark |
+| `website/favicon.png` | Application test-tube icon, reused from `src-tauri/icons/128x128.png` |
 | `website/media/vibe-tox-overview.mp4` | Supplied narrated H.264/AAC application walkthrough; progressive playback |
 | `website/media/vibe-tox-overview-poster.jpg` | Supplied title poster, unchanged |
 | `website/media/vibe-tox-overview.en.vtt` | English captions for the narration and music |

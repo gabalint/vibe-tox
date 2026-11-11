@@ -8,6 +8,30 @@ Every substantive change identifies its problem, affected requirement/risk/decis
 
 Risk determines review depth. A documentation typo needs a local check. Patient matching, numerical semantics, authorization, QC/release, report corrections, retention and migrations need independent technical review plus the appropriate laboratory/quality or privacy owner. Clinical rule changes require approved specifications and independently supplied expected outcomes. Operational gates are defined in [validation](../quality/validation-plan.md).
 
+## Human direction and review
+
+OpenBGA/tox combines substantial AI assistance with sustained human effort.
+People direct the work through research, requirements analysis, architecture
+review, code review, test design, hands-on testing and iterative correction.
+Agents can help with each activity, including proposing alternatives and finding
+defects. Human decisions and the evidence supporting them remain attributable.
+
+| Work | Human responsibility | Inspectable record |
+| --- | --- | --- |
+| Requirements analysis | Define the problem and scope, challenge assumptions, resolve conflicting needs and identify decisions requiring laboratory input | [Workflows](../requirements/workflows.md), [requirements and acceptance criteria](../requirements/functional-requirements.md), [open questions](../planning/open-questions.md) |
+| Architecture review | Assess alternatives, boundaries, failure behavior, security and operational consequences before accepting consequential design choices | [Architecture](../architecture/overview.md), [decision records](../architecture/decisions/README.md), [risk register](../planning/risk-register.md) |
+| Implementation review | Examine changes against their requirements and invariants; apply independent review at the depth their consequences require | Review records tied to the change, under the [coding standards](coding-standards.md#definition-of-done) |
+| Testing and analysis | Select meaningful expected outcomes and adverse cases, inspect failures, exercise workflows and decide whether further work is needed | Executed checks and limitations under the [quality-gate policy](../../.ai/skills/quality-gate/SKILL.md), with remaining gaps in [quality guidance](../quality/README.md) |
+
+This table defines responsibilities, not a claim that every required review or
+validation has been completed. Distinguish tool-generated analysis, human review,
+executed automated checks and manual testing in the change record. Name the
+reviewer and scope when claiming human review; retain unresolved findings and
+record checks that were skipped. An agent's review is useful evidence but does
+not satisfy a requirement for independent human or laboratory approval. Clinical
+acceptance remains with the qualified people identified by the laboratory under
+the [validation plan](../quality/validation-plan.md).
+
 ## Implementation principles
 
 - Use supported dependency/runtime versions, reproducible lockfiles, explicit module ownership, type checking and consistent formatting/linting. Do not maintain competing toolchains without need.
