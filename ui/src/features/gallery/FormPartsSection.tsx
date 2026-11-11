@@ -98,7 +98,7 @@ export function FormPartsSection() {
         <p>
           Once something is typed, <Link to="/">leaving the gallery</Link> asks first.
         </p>
-        <UnsavedChangesGuard when={draft !== ""} />
+        <UnsavedChangesGuard form="Component gallery" when={draft !== ""} />
       </Section>
       <Section
         title="Self-approval confirmation"

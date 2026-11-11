@@ -42,7 +42,7 @@ export function CatalogChooser({ tree, onLoaded, onReload }: CatalogChooserProps
   }, [tree, query, selection]);
   return (
     <>
-      <UnsavedChangesGuard when={selection.methods.size > 0} />
+      <UnsavedChangesGuard form="Load Standard Catalog" when={selection.methods.size > 0} />
       <Toolbar variant="collection">
         <FindField
           label="Find tests, panels and methods"

@@ -13,7 +13,7 @@ function OrderEntry() {
     <>
       <TextField label="Placer order number" name="code" value={code} onChange={setCode} />
       <Link to="/elsewhere">Work queues</Link>
-      <UnsavedChangesGuard when={code !== ""} />
+      <UnsavedChangesGuard form="New order" when={code !== ""} />
     </>
   );
 }

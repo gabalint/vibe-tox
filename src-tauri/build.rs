@@ -24,6 +24,7 @@ const APP_COMMANDS: &[&str] = &[
     "resolve_receipt_chronology",
     "app_info",
     "set_window_theme",
+    "set_unsaved_forms",
     "security_key_signup",
     "acknowledge_key_recovery",
     "security_key_sign_in",

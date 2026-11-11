@@ -86,10 +86,18 @@ The application checks for work that closing could interrupt:
 - pending outbox work, named by topic;
 - a backup, audit-anchor export, restore test, exit export or integrity verification in progress.
 
-If nothing is pending, it closes. Otherwise a native dialog lists the PHI-free warnings and offers
-**Cancel** or **Quit anyway**. Prefer **Cancel**, finish or reconcile the work, and then close.
-Choosing **Quit anyway** records the stop and attributes it to the signed-in person or the sign-in
-screen. During operating-system shutdown or sign-out, the warning is not allowed to prevent the
+It also names any full-page form with typed input that is not saved, such as New order or Register
+patient (page names only, never what was typed).
+
+If nothing is pending or unsaved, it closes. With only unsaved input, a native dialog says "You
+have unsaved changes in <page>. Leave without saving?" and offers **Cancel** or **Leave**. With work
+in progress, the dialog lists the PHI-free warnings, and any unsaved page, and offers **Cancel** or
+**Quit anyway**. **Cancel** is the default button, so Enter keeps the app open. Prefer **Cancel**,
+save the page or finish and reconcile the work, and then close. Choosing **Quit anyway** with work
+in progress records the stop and attributes it to the signed-in person or the sign-in screen;
+leaving unsaved input alone is not recorded. **Sign out** in the signed-in menu asks the same
+"Leave without saving?" question in the app when a page form is unsaved; analyzers keep listening
+at the sign-in screen. During operating-system shutdown or sign-out, the warning is not allowed to prevent the
 shutdown indefinitely. Exact close, quit, sign-out and shutdown behavior still needs real-host
 verification under [host-health and lifecycle contract](../architecture/operations-contract.md#host-health-and-application-lifecycle).
 

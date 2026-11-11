@@ -61,7 +61,10 @@ export function AccessionForm({ order, context, specimenTypes }: AccessionFormPr
   const blocked = !canReceive && !create.isPending;
   return (
     <FormProvider {...form}>
-      <UnsavedChangesGuard when={form.formState.isDirty && savedId === null} />
+      <UnsavedChangesGuard
+        form="Receive specimens"
+        when={form.formState.isDirty && savedId === null}
+      />
       {savedId !== null && <Navigate to={`/accessions/${savedId}`} />}
       {blocked ? (
         <>

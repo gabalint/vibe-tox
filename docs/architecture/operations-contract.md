@@ -82,7 +82,7 @@ Health combines bounded OS probes with pure evaluation and versioned laboratory 
 
 `lis-ops/src/policy.rs` owns defaults/ranges; `health/` owns evaluation; `host/` owns probes. Daily OS support facts need maintained source evidence and per-release review. macOS support heuristics and unavailable native evidence must stay visibly qualified.
 
-The single desktop process owns listeners and jobs. Keep-awake reflects active intake, with native platform behavior still requiring qualification. Close/quit warnings identify active intake and durable work; an explicit override is audited. Startup applies a pending restore before database open, protects migrations with an intact snapshot, records restore/run/key state, reconciles interrupted work and receipts, then starts listeners/workers. A startup failure displays a typed failure and recovery guidance.
+The single desktop process owns listeners and jobs. Keep-awake reflects active intake, with native platform behavior still requiring qualification. Close/quit warnings identify active intake and durable work, and name full-page forms with unsaved input that the UI reports to the shell; Cancel is the default choice, and an explicit override with work in progress is audited (unsaved input is UI state and is not recorded). Startup applies a pending restore before database open, protects migrations with an intact snapshot, records restore/run/key state, reconciles interrupted work and receipts, then starts listeners/workers. A startup failure displays a typed failure and recovery guidance.
 
 ## Update records
 

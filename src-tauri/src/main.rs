@@ -19,30 +19,32 @@
 //!   the project's GitHub releases on request ([`updater`], ADR 0020); installing restarts
 //!   the app through the same exit path, or shuts the engine down before the Windows
 //!   installer replaces the app.
-//! - Closing the main window or quitting asks the engine what is still pending; if anything
-//!   is, a native dialog off the main thread offers Cancel or "Quit anyway", which is
-//!   recorded (REQ-OPS-013, §6.3). A second close or quit request while the dialog is
-//!   open, such as an OS shutdown, is never blocked.
+//! - Closing the main window or quitting asks first while the engine reports work in
+//!   progress or the UI reports an unsaved page form; Cancel is the default and quitting
+//!   with work in progress is recorded (REQ-OPS-013, §6.3, [`quit`]). A second close or
+//!   quit request while the dialog is open, such as an OS shutdown, is never blocked.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
 mod installation;
 mod logging;
+mod quit;
 mod report_window;
 mod security_key_operations;
 mod startup;
 mod updater;
 
 use std::path::Path;
-use std::sync::{Arc, Mutex, PoisonError};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use lis_core::SystemClock;
 use lis_engine::{Engine, EngineConfig, Inhibitor, KeyProvider, PrinterDestinations};
 use tauri::{AppHandle, Manager, RunEvent, WindowEvent};
-use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 
 use crate::installation::{Choice, Folders, Installation};
+pub(crate) use crate::quit::confirm_exit;
+use crate::quit::{QuitState, UnsavedForms, may_exit};
 use crate::report_window::ReportWindows;
 use crate::startup::StartupState;
 
@@ -51,32 +53,6 @@ const RESTART_LOCK_WAIT: Duration = Duration::from_secs(5);
 
 /// Label of the main window, matching `tauri.conf.json` and the capability files.
 const MAIN_WINDOW: &str = "main";
-
-/// Where a close or quit request stands; one prompt at a time.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-enum Quit {
-    /// No request is being handled.
-    #[default]
-    Idle,
-    /// The pending work is being checked or the dialog is open.
-    Prompting,
-    /// The app may exit.
-    Confirmed,
-}
-
-/// The shell's quit state, managed for the event handlers.
-#[derive(Debug, Default)]
-struct QuitState(Mutex<Quit>);
-
-impl QuitState {
-    fn get(&self) -> Quit {
-        *self.0.lock().unwrap_or_else(PoisonError::into_inner)
-    }
-
-    fn set(&self, quit: Quit) {
-        *self.0.lock().unwrap_or_else(PoisonError::into_inner) = quit;
-    }
-}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let context = context();
@@ -111,6 +87,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 tracing::warn!(%error, "opening the laboratory installation");
             }
             app.manage(QuitState::default());
+            app.manage(UnsavedForms::default());
             app.manage(Installation(choice.kind()));
             let state = match start_engine(app.handle(), folders.as_ref(), choice) {
                 Ok(engine) => {
@@ -253,87 +230,6 @@ fn reset_demo(folders: &Folders, data_dir: &Path) -> Result<(), StartupState> {
                 data_folder: Some(data_dir.to_path_buf()),
             })
         }
-    }
-}
-
-/// Lets the next close or quit request go ahead without the pending-work dialog: a switch
-/// of installations checked the pending work itself.
-pub(crate) fn confirm_exit<R: tauri::Runtime>(app: &AppHandle<R>) {
-    if let Some(quit) = app.try_state::<QuitState>() {
-        quit.set(Quit::Confirmed);
-    }
-}
-
-/// Whether a close or quit request may go ahead now. The first request starts the check
-/// and is held; a request while the check or dialog is open (for example an OS shutdown)
-/// goes ahead and is recorded as a quit with warnings.
-fn may_exit(app: &AppHandle) -> bool {
-    let (Some(engine), Some(quit)) = (app.try_state::<Engine>(), app.try_state::<QuitState>())
-    else {
-        return true;
-    };
-    match quit.get() {
-        Quit::Confirmed => true,
-        Quit::Prompting => {
-            quit.set(Quit::Confirmed);
-            tauri::async_runtime::block_on(engine.record_quit_with_warnings());
-            true
-        }
-        Quit::Idle => {
-            quit.set(Quit::Prompting);
-            let app = app.clone();
-            tauri::async_runtime::spawn(async move { confirm_quit(app).await });
-            false
-        }
-    }
-}
-
-/// Exits at once when nothing is pending; otherwise asks, off the main thread.
-async fn confirm_quit(app: AppHandle) {
-    let Some(engine) = app.try_state::<Engine>() else {
-        return;
-    };
-    let warnings = engine.quit_warnings().await;
-    let quit = if warnings.is_empty() {
-        true
-    } else {
-        let text = format!(
-            "These are still in progress:\n\n• {}\n\nQuitting now may leave results or \
-             copies unfinished.",
-            warnings.0.join("\n• ")
-        );
-        let dialog_app = app.clone();
-        let chosen = tauri::async_runtime::spawn_blocking(move || {
-            dialog_app
-                .dialog()
-                .message(text)
-                .title("Quit Vibe Toxicology LIS?")
-                .kind(MessageDialogKind::Warning)
-                .buttons(MessageDialogButtons::OkCancelCustom(
-                    "Quit anyway".to_owned(),
-                    "Cancel".to_owned(),
-                ))
-                .blocking_show()
-        })
-        .await
-        .unwrap_or(false);
-        if chosen {
-            engine.record_quit_with_warnings().await;
-        }
-        chosen
-    };
-    let Some(state) = app.try_state::<QuitState>() else {
-        return;
-    };
-    if state.get() == Quit::Confirmed {
-        // An OS shutdown already went ahead while the dialog was open.
-        return;
-    }
-    if quit {
-        state.set(Quit::Confirmed);
-        app.exit(0);
-    } else {
-        state.set(Quit::Idle);
     }
 }
 

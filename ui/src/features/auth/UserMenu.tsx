@@ -12,6 +12,7 @@ import {
 } from "react-aria-components";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/Button";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/components/Toast";
 import type { AppInfo } from "@/generated/AppInfo";
 import type { CommandError } from "@/generated/CommandError";
@@ -20,6 +21,7 @@ import { APPEARANCES, type Appearance, useAppearance } from "@/lib/appearance";
 import { useCommandMutation, useCommandQuery } from "@/lib/commands";
 import { toUserMessage } from "@/lib/errors";
 import type { AuthenticationStatus } from "@/lib/securityKey";
+import { unsavedFormNames } from "@/lib/unsavedForms";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
 import { SecurityKeysDialog } from "./SecurityKeysDialog";
 import { UnlockPinDialog } from "./UnlockPinDialog";
@@ -29,7 +31,8 @@ import styles from "./UserMenu.module.css";
  * The signed-in person's menu: change password, lock, sign out, Appearance (light, dark or the
  * system's setting, applied at once), "About this app" (the app and web engine versions) and, last, the
  * running version with Copy (ticket #4584). Lock and sign-out clear every cached engine result, so nothing
- * from this session is shown to the next person (REQ-IDN-004).
+ * from this session is shown to the next person (REQ-IDN-004). Sign out asks first while a page form has
+ * unsaved input (ticket #4585).
  */
 export function UserMenu({ session }: { session: SessionInfo }) {
   const toast = useToast();
@@ -37,6 +40,7 @@ export function UserMenu({ session }: { session: SessionInfo }) {
   const [changingPassword, setChangingPassword] = useState(false);
   const [managingKeys, setManagingKeys] = useState(false);
   const [managingPin, setManagingPin] = useState(false);
+  const [leavingForms, setLeavingForms] = useState<string[]>([]);
   const [appearance, chooseAppearance] = useAppearance(session.userId);
   const authentication = useCommandQuery<AuthenticationStatus>("get_authentication_status");
   const lock = useCommandMutation<null>("lock_session", { invalidates: "all" });
@@ -47,6 +51,10 @@ export function UserMenu({ session }: { session: SessionInfo }) {
       title: "The session did not change",
       description: toUserMessage(error),
     });
+  const signOutNow = () => {
+    setLeavingForms([]);
+    signOut.mutate({}, { onError });
+  };
 
   return (
     <>
@@ -96,7 +104,11 @@ export function UserMenu({ session }: { session: SessionInfo }) {
             <MenuItem
               className={styles.item}
               textValue="Sign out"
-              onAction={() => signOut.mutate({}, { onError })}
+              onAction={() => {
+                const forms = unsavedFormNames();
+                if (forms.length > 0) setLeavingForms(forms);
+                else signOutNow();
+              }}
             >
               <LogOut aria-hidden="true" className={styles.icon} />
               Sign out
@@ -150,6 +162,20 @@ export function UserMenu({ session }: { session: SessionInfo }) {
         <SecurityKeysDialog session={session} onClose={() => setManagingKeys(false)} />
       )}
       {managingPin && <UnlockPinDialog onClose={() => setManagingPin(false)} />}
+      <ConfirmDialog
+        title="Leave without saving?"
+        isOpen={leavingForms.length > 0}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setLeavingForms([]);
+        }}
+        confirmLabel="Sign out without saving"
+        onConfirm={signOutNow}
+      >
+        <p>
+          You have unsaved changes in {leavingForms.join(", ")}. If you sign out, what you typed is
+          lost.
+        </p>
+      </ConfirmDialog>
     </>
   );
 }
