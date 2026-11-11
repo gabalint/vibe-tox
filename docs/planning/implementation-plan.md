@@ -10,7 +10,7 @@ Build the **US clinical toxicology LIS** defined in the [project scope](../proje
 
 | Boundary | Current instruction |
 | --- | --- |
-| License and repository content | GPL-3.0-only ([ADR 0017](../architecture/decisions/0017-gplv3-license.md)); content rules follow the [AGENTS.md mandate](../../AGENTS.md#current-mandate). |
+| License and repository content | AGPL-3.0-only ([ADR 0021](../architecture/decisions/0021-agplv3-license.md)); content rules follow the [AGENTS.md mandate](../../AGENTS.md#current-mandate). |
 | Publication | The repository is public and GitHub Pages publishes `website/` ([website maintenance](../development/public-website.md)). Software releases remain gated (Q-19, Q-34). |
 | Future capabilities | Optional hosted services, LAN workstations (Q-28), patient portal, and HL7 v2/FHIR routes beyond canonical local exports require separate scope decisions. The Interfaces menu's HL7 v2 routes (ticket #4555) are such a decision: the user instructed them on 2026-11-04, starting with outgoing results over a folder. |
 | Release and clinical use | Signing waits for publisher identity (Q-19). Synthetic implementation and local builds do not authorize deployment, real patient data or clinical operation. |
@@ -29,7 +29,7 @@ The [coding](../governance/coding-standards.md), [UI](../governance/ui-standards
 | `fixtures/` | Synthetic data shared across crates, added when two crates need the same fixture |
 | `scripts/`, `.github/workflows/ci.yml` | Small repository checks (for example the file-length budget) and the CI quality gate on Linux, macOS and Windows |
 | `docs/`, `.ai/` | Documentation, standards, agent roles and skills |
-| `website/`, `.github/workflows/pages.yml` | Static presentation, video, captions, transcript and application stills; GitHub Pages deployment workflow |
+| `website/`, `.github/workflows/pages.yml` | Static presentation website, social image and application screens; GitHub Pages deployment workflow |
 
 ## Crate map
 

@@ -72,7 +72,7 @@ also sign the update packages with Minisign.
 The gate calls the [`ci` workflow](../../.github/workflows/ci.yml), which selects
 every check for a dispatched run. Bundles build in parallel on the
 [packaging](packaging.md) matrix. The publish job runs only after the gate and every
-build pass. It names the four installers `vibe-tox-lis_<version>_<os>-<arch>.<ext>`,
+build pass. It names the four installers `openbga-tox_<version>_<os>-<arch>.<ext>`,
 adds `SHA256SUMS.txt`, and writes notes with the development-build warning, the
 unsigned-installer prompts and the workflow-run link. A release is created as a
 draft and becomes visible only with every asset attached.
@@ -90,7 +90,7 @@ remains necessary. Browser-download and clean-host launch checks remain separate
 | `linux-amd64.deb` and `linux-amd64.AppImage` | Ubuntu 22.04 |
 
 With in-app updates configured, each release also carries `latest.json` and
-`vibe-tox-lis_<version>_macos-arm64.app.tar.gz`, and the rolling `nightly` release also
+`openbga-tox_<version>_macos-arm64.app.tar.gz`, and the rolling `nightly` release also
 carries `nightly.json`.
 
 The rolling nightly needs a deletable tag, and so do the retained `nightly-*` builds.
@@ -129,7 +129,7 @@ from that time cannot update itself. Only the project owner or a person they nam
 the private key:
 
 1. Generate a key pair once, on a trusted computer:
-   `npx tauri signer generate -w ~/.tauri/vibe-tox-updater.key`. Keep the private key and its
+   `npx tauri signer generate -w ~/.tauri/openbga-tox-updater.key`. Keep the private key and its
    password offline and backed up. Losing them means every installed build must be updated
    by hand once to a build signed with a new key.
 2. In the repository settings, add the secret `TAURI_SIGNING_PRIVATE_KEY` with the private
@@ -162,7 +162,7 @@ publishing anything. Release builds, which CI publishes, ignore this.
    `identifier` such as `org.vibetox.lis.nightlytest` (so the laboratory's data folder and
    key-store entry are not touched) and `plugins.updater.pubkey` set to the throwaway public
    key.
-3. Start the app with `VIBE_TOX_UPDATE_FEED_URL=http://127.0.0.1:8765/ npx tauri dev
+3. Start the app with `OPENBGA_TOX_UPDATE_FEED_URL=http://127.0.0.1:8765/ npx tauri dev
    --config <overlay>`. Only a loopback `http` address is accepted.
 
 Download, signature checks and approval work as published. Installation is refused while a

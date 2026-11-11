@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="28%" r="80%">
+      <stop offset="0" stop-color="#23476f"/>
+      <stop offset="0.55" stop-color="#142a47"/>
+      <stop offset="1" stop-color="#0b1424"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <g transform="translate(906 362) scale(0.2109)">
+    <rect x="0" y="0" width="512" height="512" rx="110" fill="#1f4e5f"/>
+    <path d="M200 248H312V320A56 56 0 0 1 200 320Z" fill="#8fd3e0"/>
+    <path d="M184 112H328V144H312V320A56 56 0 0 1 200 320V144H184Z" fill="none" stroke="#ffffff" stroke-width="20" stroke-linejoin="round"/>
+  </g>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">
+    <text x="960" y="518" fill="#8fc7f0" font-size="20" font-weight="700" letter-spacing="4.5">FREE · WORKS OFFLINE · YOUR DATA STAYS YOURS</text>
+    <text x="960" y="612" fill="#ffffff" font-size="76" font-weight="700" letter-spacing="-1">OpenBGA Tox</text>
+    <text x="960" y="680" fill="#d5dde8" font-size="30">Free, open-source LIS for toxicology labs:</text>
+    <text x="960" y="722" fill="#d5dde8" font-size="30">from order to delivered report, on one computer you own.</text>
+  </g>
+</svg>

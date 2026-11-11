@@ -1,12 +1,15 @@
 # Open-source project governance
 
-Status: **GPL-3.0-only; remaining governance decisions open.**
-[ADR 0017](../architecture/decisions/0017-gplv3-license.md) records the license;
+Status: **AGPL-3.0-only; remaining governance decisions open.**
+OpenBGA Tox is an open-source project of BGASoft Inc.
+[ADR 0021](../architecture/decisions/0021-agplv3-license.md) records the license and the
+copyright and trademark notice in [NOTICE](../../NOTICE);
 the [development disclaimer](development-disclaimer.md) states the development
 and clinical-validation limits without adding license restrictions.
 
-The repository [gabalint/vibe-tox](https://github.com/gabalint/vibe-tox) is public,
-and the presentation website is published from `website/`. Supported software
+The repository [openbga/tox](https://github.com/openbga/tox) is public,
+and the presentation website is published at
+[openbga.github.io/tox](https://openbga.github.io/tox/) from `website/`. Supported software
 releases, signing and security-response commitments remain open
 ([Q-19](../planning/open-questions.md#decision-and-discovery-queue)).
 
@@ -14,16 +17,20 @@ releases, signing and security-response commitments remain open
 
 | Material | Current terms | Maintainer responsibility |
 | --- | --- | --- |
-| Original repository code, documentation, synthetic fixtures, website and presentation assets | GPL-3.0-only unless identified otherwise | Preserve the unmodified [LICENSE](../../LICENSE), consistent SPDX metadata and contributor attribution |
+| Original repository code, documentation, synthetic fixtures, website and media | AGPL-3.0-only unless identified otherwise; builds published before 2026-11-11 remain GPL-3.0-only | Preserve the unmodified [LICENSE](../../LICENSE), consistent SPDX metadata and the [NOTICE](../../NOTICE) copyright line |
 | Third-party dependencies, fonts, media and other incorporated material | Their respective terms and notices | Check compatibility and retain required notices/source obligations for the actual distributed artifact |
-| Contributions | GPL-3.0-only, from people with the right to grant that license | Follow [contribution guidance](../../CONTRIBUTING.md); no copyright assignment, separate DCO or CLA is adopted |
+| Contributions | AGPL-3.0-only, from people with the right to grant that license | Follow [contribution guidance](../../CONTRIBUTING.md); no copyright assignment, separate DCO or CLA is adopted |
+| OpenBGA names and logos | Trademarks of BGASoft Inc., not licensed under AGPL-3.0-only (section 7(e)) | Others may use them only as needed to describe the origin of the software |
 | Separately developed future hosted-service code | Undecided, Q-11 | Obtain a scope and license decision before development; reuse of covered project material remains subject to its license |
 
 The [license decision and primary
-sources](../architecture/decisions/0017-gplv3-license.md#consequences-and-limits)
-explain commercial use, private modification, conveying obligations and the
-version-3-only grant. Ownership administration, trademarks and any separate
-contribution agreement remain Q-11.
+sources](../architecture/decisions/0021-agplv3-license.md#consequences-and-limits)
+explain commercial use, private modification, conveying obligations, the
+network-source offer for modified versions used over a network and the
+version-3-only grant. OpenBGA and the OpenBGA product names and logos are
+trademarks of BGASoft Inc.; the license does not grant permission to use them
+(AGPLv3 section 7(e)), except as needed to describe the origin of the software.
+A written trademark-use policy and any separate contribution agreement remain Q-11.
 
 Before distributing covered binaries, verify the complete dependency/content
 inventory, applicable notices, compatibility and matching corresponding source.
@@ -46,7 +53,7 @@ Q-30/Q-31 and [G2-37](../quality/open-items-g1-g2.md).
 | Security reporting | Follow the [security policy](../../SECURITY.md); a private reporting route and response commitments remain unresolved |
 | Release identity and support | Decide publisher, signing route, release channel and support window before promising supported releases (Q-19/Q-34) |
 | Laboratory acceptance | The laboratory approves its configuration, methods, workflows and each release for its intended use; software publication supplies no clinical certification |
-| Contribution and trademark administration | Resolve ownership administration, conduct/review expectations and official-build identification without inventing legal entities or agreements (Q-11) |
+| Contribution and trademark administration | Copyright and trademarks: BGASoft Inc. ([NOTICE](../../NOTICE)). Resolve a written trademark-use policy, conduct/review expectations and official-build identification without inventing further agreements (Q-11) |
 
 Clinical defaults remain governed by laboratory policy and review. Community
 contributions, external-service interests or a maintainer's release decision do

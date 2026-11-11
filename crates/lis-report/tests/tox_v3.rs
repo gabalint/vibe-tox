@@ -66,7 +66,7 @@ fn report_v3_final_partial_correction_long_and_unicode_artifacts() {
         )
         .unwrap();
         assert!(pdf.bytes.starts_with(b"%PDF"));
-        if let Some(dir) = std::env::var_os("VIBE_REPORT_ARTIFACT_DIR") {
+        if let Some(dir) = std::env::var_os("OPENBGA_TOX_REPORT_ARTIFACT_DIR") {
             let dir = std::path::PathBuf::from(dir);
             std::fs::create_dir_all(&dir).unwrap();
             std::fs::write(dir.join(format!("report-v3-{name}.pdf")), &pdf.bytes).unwrap();

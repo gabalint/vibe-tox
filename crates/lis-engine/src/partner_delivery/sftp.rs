@@ -241,7 +241,7 @@ pub(crate) fn probe_blocking(
 /// Writes and removes a small probe file in `remote_folder`.
 async fn probe_in(sftp: &SftpSession, remote_folder: &str) -> Result<(), SftpProblem> {
     let folder = folder_at(sftp, remote_folder).await?;
-    let probe = format!("{folder}/.vibetox-probe-{}.tmp", random_suffix());
+    let probe = format!("{folder}/.openbga-tox-probe-{}.tmp", random_suffix());
     let written = fill(sftp, &probe, b"probe\n").await;
     let removed = sftp.remove_file(probe).await;
     written.and(removed).map_err(|error| problem(&error))

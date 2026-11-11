@@ -136,15 +136,15 @@ impl Synthetic<'_> {
             loinc: values.and_then(|values| values.loinc.clone()),
         };
         let lab = Organization {
-            name: "Vibe Tox LIS".to_owned(),
+            name: "OpenBGA Tox".to_owned(),
             id: String::new(),
         };
         let group = ObservationGroup {
             filler_order: "TEST-1".to_owned(),
-            service: coded(self.test, "VIBETOX-TEST"),
+            service: coded(self.test, "OPENBGA-TEST"),
             status: group,
             observations: vec![Observation {
-                code: coded(self.analyte, "VIBETOX-ANALYTE"),
+                code: coded(self.analyte, "OPENBGA-ANALYTE"),
                 sub_id: "1".to_owned(),
                 value,
                 unit: self.analyte.and_then(|values| values.ucum_unit.clone()),

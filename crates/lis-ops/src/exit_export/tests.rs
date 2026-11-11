@@ -1,6 +1,6 @@
 //! The package carries the independent verifier (M4 design brief §5): `tools/verify_export.py`
 //! is a byte-identical copy of `scripts/verify_exit_export.py`, listed in the manifest, and
-//! verifies its own package (run when `VIBE_TOX_RUN_PY_VERIFIER=1`, as CI does on Linux).
+//! verifies its own package (run when `OPENBGA_TOX_RUN_PY_VERIFIER=1`, as CI does on Linux).
 
 use std::fs;
 use std::path::Path;
@@ -158,7 +158,7 @@ fn the_package_lists_a_byte_identical_copy_of_the_verifier() {
         (digest.to_string().as_str(), bytes)
     );
 
-    if std::env::var("VIBE_TOX_RUN_PY_VERIFIER").as_deref() == Ok("1") {
+    if std::env::var("OPENBGA_TOX_RUN_PY_VERIFIER").as_deref() == Ok("1") {
         check_tampered_variants(&script, &package, &manifest, &manifest_bytes);
     }
 }

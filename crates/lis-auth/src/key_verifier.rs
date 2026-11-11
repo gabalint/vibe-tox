@@ -59,7 +59,7 @@ impl SecurityKeyVerifier {
         let origin = Url::parse(origin).map_err(|_| AuthError::SecurityKeyConfiguration)?;
         let verifier = WebauthnBuilder::new(rp_id, &origin)
             .map_err(|_| AuthError::SecurityKeyConfiguration)?
-            .rp_name("Vibe Toxicology LIS")
+            .rp_name("OpenBGA Tox")
             .build()
             .map_err(|_| AuthError::SecurityKeyConfiguration)?;
         Ok(Self(verifier))

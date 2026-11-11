@@ -3,17 +3,17 @@
 
 use tauri::Url;
 
-/// Debug builds only: the loopback HTTP address in `VIBE_TOX_UPDATE_FEED_URL`, laid out like
+/// Debug builds only: the loopback HTTP address in `OPENBGA_TOX_UPDATE_FEED_URL`, laid out like
 /// a repository's `releases/` path. Release builds never read it.
 pub(super) fn local_feed() -> Option<Url> {
     if !cfg!(debug_assertions) {
         return None;
     }
-    let text = std::env::var("VIBE_TOX_UPDATE_FEED_URL").ok()?;
+    let text = std::env::var("OPENBGA_TOX_UPDATE_FEED_URL").ok()?;
     let mut url = Url::parse(&text).ok()?;
     let loopback = matches!(url.host_str(), Some("127.0.0.1" | "localhost" | "[::1]"));
     if url.scheme() != "http" || !loopback || url.query().is_some() {
-        tracing::warn!("VIBE_TOX_UPDATE_FEED_URL ignored: not a loopback http address");
+        tracing::warn!("OPENBGA_TOX_UPDATE_FEED_URL ignored: not a loopback http address");
         return None;
     }
     if !url.path().ends_with('/') {

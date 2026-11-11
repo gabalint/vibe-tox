@@ -202,7 +202,7 @@ async fn an_hl7_result_waits_for_approved_codes_and_its_correction_follows() {
     assert_eq!(hl7.files(), std::slice::from_ref(&name));
     let text = fs::read_to_string(hl7.folder.path().join(&name)).unwrap();
     let segments: Vec<&str> = text.split('\r').collect();
-    assert!(segments[0].starts_with("MSH|^~\\&|VIBETOX LIS|"));
+    assert!(segments[0].starts_with("MSH|^~\\&|OPENBGA TOX|"));
     assert!(segments[0].contains("|CLINIC-A|"));
     assert!(segments[0].contains("|ORU^R01^ORU_R01|"));
     let pid = segments.iter().find(|s| s.starts_with("PID|")).unwrap();

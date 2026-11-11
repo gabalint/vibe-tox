@@ -29,7 +29,7 @@ fn issued() -> jiff::Timestamp {
 }
 
 fn keep(name: &str, bytes: &[u8]) {
-    if let Some(dir) = std::env::var_os("VIBE_REPORT_ARTIFACT_DIR") {
+    if let Some(dir) = std::env::var_os("OPENBGA_TOX_REPORT_ARTIFACT_DIR") {
         let dir = std::path::PathBuf::from(dir);
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(dir.join(format!("{name}.pdf")), bytes).unwrap();

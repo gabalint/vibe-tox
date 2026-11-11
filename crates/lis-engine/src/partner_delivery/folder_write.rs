@@ -74,7 +74,7 @@ pub(crate) fn write_file(folder: &Path, name: &str, bytes: &[u8]) -> Result<Path
 /// can create, write and delete files in `folder`.
 pub(crate) fn probe(folder: &Path) -> Result<(), WriteProblem> {
     ensure_folder(folder)?;
-    let probe = folder.join(format!(".vibetox-probe-{}.tmp", random_suffix()));
+    let probe = folder.join(format!(".openbga-tox-probe-{}.tmp", random_suffix()));
     let written = fill(&probe, b"probe\n");
     let removed = fs::remove_file(&probe);
     written

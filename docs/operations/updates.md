@@ -118,6 +118,13 @@ not verify a publisher signature and does not install the package. For a package
 4. Review startup, host health, listener state, the web-engine change check and the laboratory's
    release-specific smoke tests.
 
+Builds published before 2026-11-11 carried an earlier product name and repository address.
+They cannot update themselves to OpenBGA Tox: install the new package manually, as in steps
+1–4. It keeps the same data folder, installation key and backups, but installs as a separate
+application entry. Afterwards remove the earlier entry with the operating system's
+uninstaller or package manager. Both entries share the data folder, so on Windows leave the
+uninstaller's option to delete application data cleared.
+
 Automated rollback is not built. The planned rollback is reinstalling the prior package and
 restoring its verified pre-update snapshot, followed by recovery reconciliation. Rehearse that
 procedure before relying on it.

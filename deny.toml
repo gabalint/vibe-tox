@@ -32,7 +32,7 @@ ignore = [
 ]
 
 [licenses]
-# Reviewed dependency licenses; third-party terms remain in force alongside GPL-3.0-only.
+# Reviewed dependency licenses; third-party terms remain in force alongside AGPL-3.0-only.
 allow = [
   "Apache-2.0",
   "Apache-2.0 WITH LLVM-exception",
@@ -52,29 +52,29 @@ allow = [
 ]
 confidence-threshold = 0.9
 
-# ADR 0017: allow GPLv3 only for our workspace packages, not new external dependencies.
+# ADR 0021: allow AGPL-3.0-only only for our workspace packages, not new external dependencies.
 exceptions = [
-  { crate = "lis-analytical", allow = ["GPL-3.0-only"] },
-  { crate = "lis-astm", allow = ["GPL-3.0-only"] },
-  { crate = "lis-au", allow = ["GPL-3.0-only"] },
-  { crate = "lis-audit", allow = ["GPL-3.0-only"] },
-  { crate = "lis-auth", allow = ["GPL-3.0-only"] },
-  { crate = "lis-billing", allow = ["GPL-3.0-only"] },
-  { crate = "lis-catalog", allow = ["GPL-3.0-only"] },
-  { crate = "lis-core", allow = ["GPL-3.0-only"] },
-  { crate = "lis-desktop", allow = ["GPL-3.0-only"] },
-  { crate = "lis-engine", allow = ["GPL-3.0-only"] },
-  { crate = "lis-identity", allow = ["GPL-3.0-only"] },
-  { crate = "lis-interfaces", allow = ["GPL-3.0-only"] },
-  { crate = "lis-labels", allow = ["GPL-3.0-only"] },
-  { crate = "lis-ops", allow = ["GPL-3.0-only"] },
-  { crate = "lis-orders", allow = ["GPL-3.0-only"] },
-  { crate = "lis-report", allow = ["GPL-3.0-only"] },
-  { crate = "lis-reporting", allow = ["GPL-3.0-only"] },
-  { crate = "lis-results", allow = ["GPL-3.0-only"] },
-  { crate = "lis-security-key", allow = ["GPL-3.0-only"] },
-  { crate = "lis-specimens", allow = ["GPL-3.0-only"] },
-  { crate = "lis-store", allow = ["GPL-3.0-only"] },
+  { crate = "lis-analytical", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-astm", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-au", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-audit", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-auth", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-billing", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-catalog", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-core", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-desktop", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-engine", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-identity", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-interfaces", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-labels", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-ops", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-orders", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-report", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-reporting", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-results", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-security-key", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-specimens", allow = ["AGPL-3.0-only"] },
+  { crate = "lis-store", allow = ["AGPL-3.0-only"] },
 ]
 
 [bans]

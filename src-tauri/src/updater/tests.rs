@@ -11,23 +11,23 @@ fn updates(repository: &str) -> Updates {
 
 #[test]
 fn only_release_downloads_of_the_repository_are_fetched() {
-    let updates = updates("example/vibe-tox");
+    let updates = updates("example/tox");
     let owned = [
-        "https://github.com/example/vibe-tox/releases/download/nightly/nightly.json",
-        "https://github.com/example/vibe-tox/releases/latest/download/latest.json",
-        "https://github.com/example/vibe-tox/releases/download/v0.2.0/a.exe",
+        "https://github.com/example/tox/releases/download/nightly/nightly.json",
+        "https://github.com/example/tox/releases/latest/download/latest.json",
+        "https://github.com/example/tox/releases/download/v0.2.0/a.exe",
     ];
     for url in owned {
         assert!(updates.owns(&Url::parse(url).unwrap()), "{url}");
     }
     let foreign = [
-        "http://github.com/example/vibe-tox/releases/download/nightly/nightly.json",
-        "https://github.com/other/vibe-tox/releases/download/nightly/nightly.json",
-        "https://github.com/example/vibe-tox-fork/releases/download/v1/a.exe",
-        "https://github.com/example/vibe-tox/archive/main.zip",
-        "https://github.com:8443/example/vibe-tox/releases/download/v1/a.exe",
-        "https://github.com/example/vibe-tox/releases/download/v1/a.exe?x=1",
-        "https://objects.example.com/example/vibe-tox/releases/download/v1/a.exe",
+        "http://github.com/example/tox/releases/download/nightly/nightly.json",
+        "https://github.com/other/tox/releases/download/nightly/nightly.json",
+        "https://github.com/example/tox-fork/releases/download/v1/a.exe",
+        "https://github.com/example/tox/archive/main.zip",
+        "https://github.com:8443/example/tox/releases/download/v1/a.exe",
+        "https://github.com/example/tox/releases/download/v1/a.exe?x=1",
+        "https://objects.example.com/example/tox/releases/download/v1/a.exe",
     ];
     for url in foreign {
         assert!(!updates.owns(&Url::parse(url).unwrap()), "{url}");
@@ -38,11 +38,11 @@ fn only_release_downloads_of_the_repository_are_fetched() {
 
 #[test]
 fn repository_and_file_names_are_checked() {
-    assert!(valid_repository("gabalint/vibe-tox"));
-    for bad in ["", "gabalint", "a/b/c", "../x", "a/.git", "a b/c"] {
+    assert!(valid_repository("openbga/tox"));
+    for bad in ["", "openbga", "a/b/c", "../x", "a/.git", "a b/c"] {
         assert!(!valid_repository(bad), "{bad}");
     }
-    assert!(valid_file_name("vibe-tox-lis_0.1.2_windows-x64-setup.exe"));
+    assert!(valid_file_name("openbga-tox_0.1.2_windows-x64-setup.exe"));
     for bad in ["", ".hidden", "a/b", "a\\b", "a b.exe"] {
         assert!(!valid_file_name(bad), "{bad}");
     }
@@ -92,7 +92,7 @@ fn a_local_feed_owns_only_its_own_release_downloads() {
     for url in [
         "http://127.0.0.1:8766/download/nightly/nightly.json",
         "http://127.0.0.1:8765/other/a.deb",
-        "https://github.com/gabalint/vibe-tox/releases/download/nightly/nightly.json",
+        "https://github.com/openbga/tox/releases/download/nightly/nightly.json",
     ] {
         assert!(!feed.owns(&Url::parse(url).unwrap()), "{url}");
     }

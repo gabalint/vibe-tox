@@ -120,7 +120,7 @@ jobs:
       - name: Exit export passes the independent verifier
         if: runner.os == 'Linux'
         env:
-          VIBE_TOX_RUN_PY_VERIFIER: "1"
+          OPENBGA_TOX_RUN_PY_VERIFIER: "1"
         run: cargo test -p lis-engine --locked --test scenarios m4_anchors::an_exit_export_passes_the_independent_verifier
       - name: Generated TypeScript bindings are committed
         if: runner.os == 'Linux'

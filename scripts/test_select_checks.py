@@ -48,11 +48,11 @@ class ClassificationTests(unittest.TestCase):
 
     def test_license_only_manifests_do_not_build_or_test_application(self):
         cases = [
-            ("Cargo.toml", '[workspace.package]\nlicense="MIT"\n', '[workspace.package]\nlicense="GPL-3.0-only"\n'),
+            ("Cargo.toml", '[workspace.package]\nlicense="MIT"\n', '[workspace.package]\nlicense="AGPL-3.0-only"\n'),
             ("crates/example/Cargo.toml", '[package]\nlicense="MIT"\n', '[package]\nlicense.workspace=true\n'),
-            ("package.json", '{"license":"MIT","scripts":{"build":"vite"}}', '{"license":"GPL-3.0-only","scripts":{"build":"vite"}}'),
-            ("package-lock.json", '{"packages":{"":{"license":"MIT"},"node_modules/x":{"license":"MIT"}}}', '{"packages":{"":{"license":"GPL-3.0-only"},"node_modules/x":{"license":"MIT"}}}'),
-            ("src-tauri/tauri.conf.json", '{"bundle":{"license":"MIT","active":true}}', '{"bundle":{"license":"GPL-3.0-only","licenseFile":"../LICENSE","active":true}}'),
+            ("package.json", '{"license":"MIT","scripts":{"build":"vite"}}', '{"license":"AGPL-3.0-only","scripts":{"build":"vite"}}'),
+            ("package-lock.json", '{"packages":{"":{"license":"MIT"},"node_modules/x":{"license":"MIT"}}}', '{"packages":{"":{"license":"AGPL-3.0-only"},"node_modules/x":{"license":"MIT"}}}'),
+            ("src-tauri/tauri.conf.json", '{"bundle":{"license":"MIT","active":true}}', '{"bundle":{"license":"AGPL-3.0-only","licenseFile":"../LICENSE","active":true}}'),
         ]
         for path, old, new in cases:
             with self.subTest(path=path):
@@ -60,10 +60,10 @@ class ClassificationTests(unittest.TestCase):
 
     def test_mixed_license_and_behavior_changes_select_full_checks(self):
         cases = [
-            ("Cargo.toml", '[workspace.package]\nlicense="MIT"\n[workspace.dependencies]\na="1"', '[workspace.package]\nlicense="GPL-3.0-only"\n[workspace.dependencies]\na="2"'),
-            ("package.json", '{"license":"MIT","scripts":{"build":"vite"}}', '{"license":"GPL-3.0-only","scripts":{"build":"different"}}'),
-            ("package-lock.json", '{"packages":{"":{"license":"MIT"},"node_modules/x":{"license":"MIT"}}}', '{"packages":{"":{"license":"GPL-3.0-only"},"node_modules/x":{"license":"GPL-3.0-only"}}}'),
-            ("src-tauri/tauri.conf.json", '{"bundle":{"license":"MIT","active":true}}', '{"bundle":{"license":"GPL-3.0-only","active":1}}'),
+            ("Cargo.toml", '[workspace.package]\nlicense="MIT"\n[workspace.dependencies]\na="1"', '[workspace.package]\nlicense="AGPL-3.0-only"\n[workspace.dependencies]\na="2"'),
+            ("package.json", '{"license":"MIT","scripts":{"build":"vite"}}', '{"license":"AGPL-3.0-only","scripts":{"build":"different"}}'),
+            ("package-lock.json", '{"packages":{"":{"license":"MIT"},"node_modules/x":{"license":"MIT"}}}', '{"packages":{"":{"license":"AGPL-3.0-only"},"node_modules/x":{"license":"AGPL-3.0-only"}}}'),
+            ("src-tauri/tauri.conf.json", '{"bundle":{"license":"MIT","active":true}}', '{"bundle":{"license":"AGPL-3.0-only","active":1}}'),
         ]
         for path, old, new in cases:
             with self.subTest(path=path):
@@ -76,7 +76,7 @@ class ClassificationTests(unittest.TestCase):
 
     def test_license_policy_does_not_trigger_advisory_or_build_checks(self):
         old = '[licenses]\nallow=["MIT"]\n[bans]\nmultiple-versions="warn"'
-        new = old.replace('["MIT"]', '["MIT", "GPL-3.0-only"]')
+        new = old.replace('["MIT"]', '["MIT", "AGPL-3.0-only"]')
         self.assertEqual(classify("deny.toml", old, new)[0], {"licenses"})
         self.assertEqual(classify("deny.toml", old, new.replace('"warn"', '"deny"'))[0], {"licenses", "policy"})
 
@@ -117,7 +117,7 @@ class GitSelectionTests(unittest.TestCase):
     def test_staged_unstaged_and_untracked_are_combined(self):
         self.write("README.md", "# Changed\n")
         self.git("add", "README.md")
-        self.write("package.json", '{"license":"GPL-3.0-only"}\n')
+        self.write("package.json", '{"license":"AGPL-3.0-only"}\n')
         self.write("website/new file.html", "hello\n")
         self.assertEqual(self.selected(), {"docs", "licenses", "website"})
 
@@ -140,7 +140,7 @@ class GitSelectionTests(unittest.TestCase):
         self.assertEqual(self.selected(), {"tooling", "website", "docs", "ui", "rust", "help"})
 
     def test_commit_comparison_ignores_worktree_and_compares_all_commits(self):
-        self.write("package.json", '{"license":"GPL-3.0-only"}\n')
+        self.write("package.json", '{"license":"AGPL-3.0-only"}\n')
         self.commit()
         self.write("README.md", "# Changed\n")
         self.commit()

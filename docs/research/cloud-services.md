@@ -54,7 +54,7 @@ future design work.
 | HL7 LOI/LRI guide versions differ across the published standards and ONC advisory listings (DOM-009/063; ENG-27–29). | Record the exact guide, message families, optional fields, acknowledgements and deviations for each partner. A generic “HL7 supported” claim is insufficient. |
 | FHIR US Core and Order Catalog define resources/profiles with different version and scope boundaries (DOM-064; ENG-28/34). | Resource availability does not prove adoption or a complete laboratory ordering workflow. FHIR remains a separately qualified route. |
 | Test orders may omit individualized toxicology evidence or external ordering-authority records. | Qualify a completion route and hold semantics for missing authority, without manufacturing clinical content (REQ-ORD-005/007). |
-| Interface software adds a security and maintenance boundary (ENG-19–23/289–296). | Identify an active patch source, license obligations, supported versions, ownership and recovery before admitting a specific engine. No engine is selected here. |
+| Interface software adds a security and maintenance boundary. | Identify an active patch source, license obligations, supported versions, ownership and recovery before admitting a specific engine. No engine is selected here. |
 
 #### Design for a cloud-operated interface endpoint
 

@@ -128,7 +128,7 @@ No action on one record ever requires ticking a box first, and no toolbar button
 | Record page | The record is a hub: several child lists, versions, long content, or a decision in several parts | Own route. Breadcrumb to the list it was opened from, keeping that list's find and filters. The `h1` is the identifier and name. Previous and Next when opened from a list or queue, in that list's order. |
 | Dialog | A short task on one record: create with the required fields, one edit, one decision with its reason, or a confirmation | Never used to view a record. Titled with the action and the record. |
 
-Sources: ENG-161 to ENG-163, ENG-165 to ENG-167. Clinical systems use the same side panel: OpenMRS calls it a workspace and warns about unsaved changes (ENG-191).
+Sources: ENG-161 to ENG-163, ENG-165 to ENG-167.
 
 ### Side panel
 
@@ -311,7 +311,7 @@ These come from health-IT safety guidance for clinical software. They apply to e
 - **Identity banner.** Every screen about one patient, order, specimen or report shows the identity banner under the page title. It stays in view while the page scrolls (ENG-179 to ENG-181).
   - It shows at least two identifiers: the family name in capitals, the given names, the date of birth with the month as text and the age, and the medical record number.
   - On specimen screens, it adds the accession number and the container label code.
-  - The primary identifier is bold (ENG-191).
+  - The primary identifier is bold.
   - When the engine reports an identity hold or a possible match, the banner shows it.
   - The banner is one shared part (`IdentityBanner` in `lib/`). It reads identity from the engine, so it lives in `lib/`, not in the domain-free `components/`.
 - **Two identifiers per row.** Lists of patients or specimens show two identifiers on every row, so similar names stay apart (ENG-180, ENG-181).
@@ -394,4 +394,3 @@ These rules rest on these sources, registered with their checked dates in the [e
 | ENG-188 | One blue for links and primary actions. No blank table cells. |
 | ENG-189 | Light mode reads better for most people; dark mode is optional. |
 | ENG-190 | The color-vision simulation used to check the palette. |
-| ENG-191 | The clinical side panel ("workspace") with an unsaved-changes warning, and identifiers emphasized in the patient header. |

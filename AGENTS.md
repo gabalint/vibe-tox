@@ -1,8 +1,16 @@
-# Agent instructions — Vibe Toxicology LIS
+# Agent instructions — OpenBGA Tox
 
 ## Current mandate
 
-**Public repository — user instruction, 2026-10-20.** `gabalint/vibe-tox` is
+**Name, repository and owner — project owner decision, 2026-11-11.** The product is
+**OpenBGA Tox**, an open-source project of BGASoft Inc. Write the name exactly so, with a
+plain descriptor in titles (for example “OpenBGA Tox: free, open-source LIS for toxicology
+labs”). The repository is `openbga/tox` and the website is
+<https://openbga.github.io/tox/>; sibling projects are OpenBGA Roots (`openbga/roots`),
+OpenBGA Qual (`openbga/qual`) and OpenBGA Exchange (`openbga/exchange`). This replaces the
+earlier product name and repository location.
+
+**Public repository — user instruction, 2026-10-20; location 2026-11-11.** `openbga/tox` is
 public and the presentation website is published through GitHub Pages from
 `website/`. Publication does not authorize signing, supported releases, cloud
 implementation or clinical use; those keep their own gates (Q-19, Q-34).
@@ -24,13 +32,32 @@ retained `nightly-*` releases. Every installation, nightly included, keeps the r
 approval and verified pre-update backup (NFR-24). It does not authorize OS code signing,
 supported releases or clinical use (Q-19, Q-34).
 
-**Open-source preparation — user instruction, 2026-10-20.** Retain GPL-3.0-only
-and keep the free clinical toxicology LIS scope explicit. Keep project pricing,
-business-model material and other LIS organizations' names and brands out of
-tracked documents. Exception (user instruction, 2026-11-05): the README and the
-website each carry one factual support notice linking to
-<https://limsiq.com/solutions/vibe-tox-support/>, limited to the link and a one-line
-description with no pricing or offer terms. Tracked documents describe current decisions and open
+**License — project owner decision, 2026-11-11.** The whole project is licensed under
+AGPL-3.0-only ([ADR 0021](docs/architecture/decisions/0021-agplv3-license.md)), replacing
+the 2026-10-20 instruction to retain GPL-3.0-only; builds published earlier stay under
+GPL-3.0-only. Keep `LICENSE` as the unmodified official AGPLv3 text and all metadata,
+notices and documents in agreement with it.
+
+**Open-source preparation — user instruction, 2026-10-20; updated 2026-11-11.** Keep the
+free clinical toxicology LIS scope explicit. Keep project pricing, business-model material
+and other organizations' names and brands out of tracked documents. The owner's decision of
+2026-11-11 extends this: tracked material must not name, compare, evaluate or research
+other LIMS, LIS, middleware or interface-engine products or vendors (no competitor analysis,
+market research, feature comparisons, alternatives lists, or screenshots or notes of other
+systems). Regulatory and standards sources, third-party dependency notices and the
+instruments and data formats an implemented feature directly supports are not affected.
+Exceptions:
+
+- (user instruction, 2026-11-05) the README and the website each carry one factual support
+  notice linking to <https://limsiq.com/solutions/vibe-tox-support/>, limited to the link and
+  a one-line description with no pricing or offer terms;
+- (project owner decision, 2026-11-11) the README, [NOTICE](NOTICE) and installer metadata
+  carry the notice `Copyright (C) 2026 BGASoft Inc. and OpenBGA contributors.` and the
+  statement that OpenBGA and the OpenBGA product names and logos are trademarks of
+  BGASoft Inc. that the license does not grant (AGPL-3.0 section 7(e)), except as needed to
+  describe the origin of the software.
+
+Tracked documents describe current decisions and open
 proposals only; they do not narrate earlier internal project choices. The public
 history starts from a single initial snapshot. This does not authorize cloud
 implementation or change clinical scope. Preserve third-party license notices and
@@ -105,7 +132,7 @@ The initial scope is **US clinical toxicology** (user, 2026-10-12). The product 
 - optional future services for clinic ordering, backup, report delivery and EHR interfaces;
 - a patient portal later.
 
-The local application follows [ADR 0009](docs/architecture/decisions/0009-single-computer-local-lis.md). Specific states, laboratory partners, specimen matrices, assay menus, host qualification, component choices, capacity estimates and production service targets remain unresolved or proposed. The project uses GPL-3.0-only ([ADR 0017](docs/architecture/decisions/0017-gplv3-license.md)) and the informational [development disclaimer](docs/governance/development-disclaimer.md). Preserve third-party terms and notices. Ownership, trademark and future cloud-service terms remain Q-11. [Decision statuses](docs/architecture/decisions/README.md) and [open questions](docs/planning/open-questions.md) are the canonical status records. No document in this repository certifies regulatory compliance, laboratory accreditation, clinical validity, or production readiness.
+The local application follows [ADR 0009](docs/architecture/decisions/0009-single-computer-local-lis.md). Specific states, laboratory partners, specimen matrices, assay menus, host qualification, component choices, capacity estimates and production service targets remain unresolved or proposed. The project uses AGPL-3.0-only ([ADR 0021](docs/architecture/decisions/0021-agplv3-license.md)), the copyright and trademark notice in [NOTICE](NOTICE) and the informational [development disclaimer](docs/governance/development-disclaimer.md). Preserve third-party terms and notices. A written trademark-use policy, contribution terms and future cloud-service terms remain Q-11. [Decision statuses](docs/architecture/decisions/README.md) and [open questions](docs/planning/open-questions.md) are the canonical status records. No document in this repository certifies regulatory compliance, laboratory accreditation, clinical validity, or production readiness.
 
 ## Working process
 

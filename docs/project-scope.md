@@ -12,7 +12,7 @@ Make a free, open-source toxicology LIS that a small laboratory runs on one comp
 
 The LIS runs locally so the laboratory keeps control of its data. It uses a Rust engine and TypeScript UI in a Tauri 2 desktop window ([ADR 0012](architecture/decisions/0012-rust-tauri-desktop-application.md)).
 
-- **Free and open source.** The whole application, including backup, restore, audit verification and complete export, is free software under GPL-3.0-only and works without any hosted service.
+- **Free and open source.** The whole application, including backup, restore, audit verification and complete export, is free software under AGPL-3.0-only and works without any hosted service.
 - **One process, no background service.** Analyzers work only while the application is open. It may remain open with nobody signed in; people sign in to act, so each action is attributed to a person.
 - **Cross-platform.** The application targets Windows, Linux and macOS, with platform qualification required before a supported release.
 - **Local scope.** The current implementation scope covers the LIS application on synthetic data.

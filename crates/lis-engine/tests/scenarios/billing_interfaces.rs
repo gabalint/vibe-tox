@@ -240,7 +240,7 @@ fn sftp_server() -> SftpSettings {
     SftpSettings {
         host: "127.0.0.1".to_owned(),
         port: lis_store::testing::local_port(),
-        username: "vibetox_lab".to_owned(),
+        username: "openbga_lab".to_owned(),
         auth: SftpAuth::Key,
         fingerprint: format!("SHA256:{}", "A".repeat(43)),
         remote_folder: "/inbound/results".to_owned(),

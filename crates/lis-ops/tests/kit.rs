@@ -90,7 +90,7 @@ impl Fixture {
     fn kit_path(&self) -> PathBuf {
         self.folders
             .path()
-            .join("vibe-tox-recovery-kit-2026-01-02.txt")
+            .join("openbga-tox-recovery-kit-2026-01-02.txt")
     }
 
     fn export_as(&self, who: Principal, reference: &str) -> Result<KitExport, BackupError> {
@@ -158,11 +158,11 @@ fn the_kit_holds_the_key_line_locations_and_steps_and_is_recorded_without_the_ke
         exported,
         KitExport {
             kit_no: 1,
-            file_name: "vibe-tox-recovery-kit-2026-01-02.txt".to_owned(),
+            file_name: "openbga-tox-recovery-kit-2026-01-02.txt".to_owned(),
         }
     );
     let text = fs::read_to_string(f.kit_path()).unwrap();
-    assert!(text.starts_with("Vibe Toxicology LIS recovery kit\nFormat: vtkit-1\n"));
+    assert!(text.starts_with("OpenBGA Tox recovery kit\nFormat: vtkit-1\n"));
     let key_line = text
         .lines()
         .find_map(|line| line.strip_prefix("Installation key: "))
@@ -324,11 +324,11 @@ fn a_mistyped_or_malformed_key_line_is_refused() {
 fn the_default_file_name_carries_the_date_and_the_kit_number() {
     assert_eq!(
         kit::default_file_name("2026-10-13", Some(3)),
-        "vibe-tox-recovery-kit-2026-10-13-kit3.txt"
+        "openbga-tox-recovery-kit-2026-10-13-kit3.txt"
     );
     assert_eq!(
         kit::default_file_name("2026-10-13", None),
-        "vibe-tox-recovery-kit-2026-10-13.txt"
+        "openbga-tox-recovery-kit-2026-10-13.txt"
     );
 }
 

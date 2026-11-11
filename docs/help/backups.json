@@ -291,7 +291,7 @@
           "name": "Export recovery kit / Choose where to save",
           "does": "Write the installation key, backup locations and restore instructions to the selected file.",
           "availableWhen": "Backup and restore authority, valid location reference, working installation key and fresh account confirmation.",
-          "result": "The save dialog proposes vibe-tox-recovery-kit-<date>-kit<number>.txt, with today’s date in the laboratory’s time zone and the number this kit will get; you may change the name. A completed export is recorded with kit number and the name you saved; canceling file selection writes no kit."
+          "result": "The save dialog proposes openbga-tox-recovery-kit-<date>-kit<number>.txt, with today’s date in the laboratory’s time zone and the number this kit will get; you may change the name. A completed export is recorded with kit number and the name you saved; canceling file selection writes no kit."
         },
         {
           "name": "Confirm where the kit is stored / Confirm storage",

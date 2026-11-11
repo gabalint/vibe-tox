@@ -33,8 +33,8 @@ const DETAIL: PartnerMessageDetail = {
   controlId: DELIVERY,
   content: "sent",
   segments: [
-    `MSH|^~\\&|VIBETOX LIS|LAB^00D0000000^CLIA||TEST-PARTNER|20261105100000-0500||ORU^R01^ORU_R01|${DELIVERY}|P|2.5.1`,
-    "PID|1||TEST-00000^^^VIBETOX^MR||TEST^SYNTHETIC||19000101",
+    `MSH|^~\\&|OPENBGA TOX|LAB^00D0000000^CLIA||TEST-PARTNER|20261105100000-0500||ORU^R01^ORU_R01|${DELIVERY}|P|2.5.1`,
+    "PID|1||TEST-00000^^^OPENBGA^MR||TEST^SYNTHETIC||19000101",
   ],
   attempts: [
     { at: "2026-11-05T10:00:00.000000000Z", succeeded: false, errorCode: "no_ack", ackCode: null },

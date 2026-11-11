@@ -1,0 +1,19 @@
+OpenBGA Tox
+Copyright (C) 2026 BGASoft Inc. and OpenBGA contributors.
+
+This program is free software: you can redistribute it and/or modify it under the terms of
+the GNU Affero General Public License, version 3 only (AGPL-3.0-only), as published by the
+Free Software Foundation. The complete license text is in the LICENSE file.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU Affero General Public License for more details.
+
+OpenBGA and the OpenBGA product names and logos are trademarks of BGASoft Inc. The licence
+does not grant permission to use them (AGPL-3.0 section 7(e)), except as needed to describe
+the origin of the software.
+
+Third-party components keep their own licenses and notices, recorded with those components
+and in the project documentation.
+
+Source code: https://github.com/openbga/tox

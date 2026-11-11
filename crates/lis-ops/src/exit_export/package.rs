@@ -1,7 +1,7 @@
 //! Writing one exit package (M4 design brief §5 steps 1–5):
 //!
 //! ```text
-//! vibe-tox-exit-<installationId>-<YYYYMMDDTHHMMSSZ>/
+//! openbga-tox-exit-<installationId>-<YYYYMMDDTHHMMSSZ>/
 //!   README.txt  manifest.json  database/lis.sqlite3  artifacts/<sha256>
 //!   audit/anchors.jsonl  schema/schema.sql  schema/data-dictionary.json|md
 //!   schema/migrations/<module>/<NNNN>_<name>.sql  tools/verify_export.py
@@ -26,7 +26,7 @@ use crate::installation_id;
 
 /// The `format` value of every exit manifest.
 pub const EXIT_FORMAT: &str = "vibe-tox-exit-1";
-const PACKAGE_PREFIX: &str = "vibe-tox-exit-";
+const PACKAGE_PREFIX: &str = "openbga-tox-exit-";
 
 /// The package's `manifest.json`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

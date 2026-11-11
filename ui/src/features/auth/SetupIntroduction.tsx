@@ -15,7 +15,7 @@ export function SetupIntroduction({ isDemo }: { isDemo: boolean }) {
         <p className={styles.lead}>
           {isDemo
             ? "Create your account and we’ll prepare a workspace you can explore at your own pace."
-            : "Get to know Vibe Tox with a separate demo laboratory, a starter catalog and fictional people."}
+            : "Get to know OpenBGA Tox with a separate demo laboratory, a starter catalog and fictional people."}
         </p>
       </div>
       {!isDemo && DemoEntry && <DemoEntry />}

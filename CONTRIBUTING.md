@@ -2,7 +2,7 @@
 
 The project accepts design, research and implementation work. Implementation follows the [implementation plan](docs/planning/implementation-plan.md) and the standards it links. Read [AGENTS.md](AGENTS.md) and the [documentation index](docs/README.md).
 
-Use [GitHub issues](https://github.com/gabalint/vibe-tox/issues) for bugs, questions and proposals, and pull requests against `develop` for changes. `main` holds released versions; see [branches and releases](docs/development/releases.md). Never post patient information, real requisitions, analyzer exports or credentials; report vulnerabilities privately as described in the [security policy](SECURITY.md). Developer setup is in the [developer guide](docs/development/README.md).
+Use [GitHub issues](https://github.com/openbga/tox/issues) for bugs, questions and proposals, and pull requests against `develop` for changes. `main` holds released versions; see [branches and releases](docs/development/releases.md). Never post patient information, real requisitions, analyzer exports or credentials; report vulnerabilities privately as described in the [security policy](SECURITY.md). Developer setup is in the [developer guide](docs/development/README.md).
 
 Describe the problem, evidence, affected requirement or decision IDs, proposed change, and remaining uncertainties. Prefer focused changes that update the canonical document rather than creating another competing summary. Include direct primary-source links and the date checked for claims that may change. Keep examples synthetic and avoid copying restricted standards or proprietary interface manuals.
 
@@ -10,15 +10,16 @@ Before submitting a change, check local links and requirement references, distin
 
 Contributions follow the [project scope](docs/project-scope.md). Build and verification commands are in the [quality-gate skill](.ai/skills/quality-gate/SKILL.md); engineering and contribution requirements are in the [engineering standards](docs/governance/engineering-standards.md) and [coding standards](docs/governance/coding-standards.md).
 
-The project is licensed under [GPL-3.0-only](LICENSE)
-([ADR 0017](docs/architecture/decisions/0017-gplv3-license.md)). Submit
-original contributions under GPL-3.0-only and identify any material governed by
+The project is licensed under [AGPL-3.0-only](LICENSE)
+([ADR 0021](docs/architecture/decisions/0021-agplv3-license.md)); see [NOTICE](NOTICE) for
+the copyright and trademark notice. Submit original contributions under
+AGPL-3.0-only and identify any material governed by
 other terms so its compatibility and notice obligations can be reviewed before
 inclusion. Preserve applicable third-party notices. Contributors retain their
 respective rights; no copyright assignment or separate DCO/CLA process is
 introduced here.
 
-Maintainer responsibilities, trademark policy and software release commitments
+Maintainer responsibilities, a written trademark-use policy and software release commitments
 remain open; see the [open-source strategy](docs/governance/open-source-strategy.md),
 [development disclaimer](docs/governance/development-disclaimer.md) and
 [security reporting](SECURITY.md).

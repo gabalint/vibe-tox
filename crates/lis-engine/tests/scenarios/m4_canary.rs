@@ -36,7 +36,7 @@ async fn keys_and_target_paths_never_reach_logs_errors_or_audit_details() {
         .await;
     let kit_folder = station.folders.path().join(format!("{PATH_CANARY}-kit"));
     fs::create_dir_all(&kit_folder).unwrap();
-    let kit_file = kit_folder.join("vibe-tox-recovery-kit.txt");
+    let kit_file = kit_folder.join("openbga-tox-recovery-kit.txt");
     station
         .engine()
         .export_recovery_kit(

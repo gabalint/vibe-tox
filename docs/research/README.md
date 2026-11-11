@@ -22,9 +22,9 @@ Distinguish requirements, conditional requirements, guidance, vendor claims, pro
 | Authentication | [Security-key research](security-key-authentication.md); implementation and remaining qualification limits | Engineering and regulatory source ledgers |
 | Future external services | [External-service boundaries and interoperability](cloud-services.md); proposals outside current implementation scope | Domain, engineering and regulatory source ledgers |
 
-Keep implementation guidance in the operator/developer guides and accepted choices in the ADRs; research supplies evidence, not a parallel specification. Surveys of options that current decisions exclude and commercial product planning do not belong in the evidence collection. Primary-source attribution covers instruments, laboratory practice, interoperability software and dependency licenses.
+Keep implementation guidance in the operator/developer guides and accepted choices in the ADRs; research supplies evidence, not a parallel specification. Surveys of options that current decisions exclude and commercial product planning do not belong in the evidence collection. Primary-source attribution covers instruments, laboratory practice, interoperability standards and dependency licenses.
 
-Source IDs are stable; reserved IDs supply no evidence. Technical interface-engine and immutable-storage sources are in the [engineering ledger](sources-engineering.md#integration-and-storage-sources).
+Source IDs are stable; reserved IDs supply no evidence. Quantitation-software and immutable-storage sources are in the [engineering ledger](sources-engineering.md#integration-and-storage-sources).
 
 ## Refresh triggers
 

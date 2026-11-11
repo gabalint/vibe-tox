@@ -255,7 +255,7 @@ The [operations guide](../operations/backups-and-recovery-kit.md#schedule-and-re
 
 Code home: `crates/lis-ops/src/backup/kit_text.rs` (text and key line, normative) and `crates/lis-ops/src/kit.rs` (export records, storage confirmations and the *outdated* status). Design: [M4 design brief](../planning/m4-design-brief.md) §3.3 and §3.9.
 
-The kit is a UTF-8 text file, `vibe-tox-recovery-kit-<YYYY-MM-DD>-kit<N>.txt` by default (the laboratory's local date and the kit number), that restores the installation key on a replacement computer. That key decrypts the backups and the sealed sign-in secrets. The kit is not itself a sign-in credential and is separate from each person's security-key recovery code ([ADR 0019](decisions/0019-security-key-authentication.md)). **Anyone with this file can read your backups.** Store it like a disk-encryption recovery key, in two places off this computer, and confirm in the application where it is kept at least every 90 days (NFR-30).
+The kit is a UTF-8 text file, `openbga-tox-recovery-kit-<YYYY-MM-DD>-kit<N>.txt` by default (the laboratory's local date and the kit number), that restores the installation key on a replacement computer. That key decrypts the backups and the sealed sign-in secrets. The kit is not itself a sign-in credential and is separate from each person's security-key recovery code ([ADR 0019](decisions/0019-security-key-authentication.md)). **Anyone with this file can read your backups.** Store it like a disk-encryption recovery key, in two places off this computer, and confirm in the application where it is kept at least every 90 days (NFR-30).
 
 It holds, one item per line (`Label: value`): the format `vtkit-1`; the installation ID; the kit number (1, 2, 3 …); when and by whom (sign-in name) it was created; the application version, platform, operating system and data folder; the installation key; the key fingerprint; the laboratory's description of where the disk-encryption recovery key is kept; the backup locations at export time (`- label (kind, purpose): path`); the restore steps; and the two lines `Cloud re-enrollment: not applicable in this version` and `Break-glass envelope: not applicable in this version`.
 
@@ -343,7 +343,7 @@ This section is also the `README.txt` of every exit package, followed there by t
 ### Package layout
 
 ```text
-vibe-tox-exit-<installationId>-<YYYYMMDDTHHMMSSZ>/
+openbga-tox-exit-<installationId>-<YYYYMMDDTHHMMSSZ>/
   README.txt                       this text
   manifest.json                    what the package holds, written last
   database/lis.sqlite3             the database (SQLite 3)
@@ -394,7 +394,7 @@ The folder name holds the installation's ID and the UTC time the export started.
 
 ### Checking a package
 
-Everything below needs only this text, the files of the package and a SQLite library; Python's standard library (`hashlib`, `json`, `sqlite3`) is enough. The embedded `tools/verify_export.py` is only a convenience copy and is data from the package until independently checked. **Do not run it first.** Obtain a trusted `scripts/verify_exit_export.py` from the published Vibe Toxicology repository at the exported `appVersion`, or use the copy installed with the application. The app's export-completion details and the final line of this README print the embedded file's SHA-256. Compute the embedded file's SHA-256 with an operating-system tool (`sha256sum`, `shasum -a 256`, or `Get-FileHash -Algorithm SHA256`) and compare all 64 hexadecimal digits with both the trusted copy and the printed value. Then run the trusted copy from outside the package:
+Everything below needs only this text, the files of the package and a SQLite library; Python's standard library (`hashlib`, `json`, `sqlite3`) is enough. The embedded `tools/verify_export.py` is only a convenience copy and is data from the package until independently checked. **Do not run it first.** Obtain a trusted `scripts/verify_exit_export.py` from the published OpenBGA Tox repository at the exported `appVersion`, or use the copy installed with the application. The app's export-completion details and the final line of this README print the embedded file's SHA-256. Compute the embedded file's SHA-256 with an operating-system tool (`sha256sum`, `shasum -a 256`, or `Get-FileHash -Algorithm SHA256`) and compare all 64 hexadecimal digits with both the trusted copy and the printed value. Then run the trusted copy from outside the package:
 
 ```text
 python3 -I /trusted/path/verify_exit_export.py <package folder>

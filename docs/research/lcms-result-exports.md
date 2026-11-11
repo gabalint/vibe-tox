@@ -1,13 +1,12 @@
-# LC-MS/MS result exports: file formats, prior art and loader engineering
+# LC-MS/MS result exports: file formats and loader engineering
 
-Evidence for the [result files design brief](../planning/result-files-design-brief.md). It asks four questions:
+Evidence for the [result files design brief](../planning/result-files-design-brief.md). It asks three questions:
 
 - What files does LC-MS/MS quantitation and batch-review software write for an LIS?
 - How do users configure those files?
-- How do other systems load them?
 - What does a safe loader need?
 
-All sources were checked on 2026-10-13 and are registered as DOM-133 to DOM-141 and ENG-217 to ENG-221.
+All sources were checked on 2026-10-13 and are registered as DOM-133 to DOM-140 and ENG-217 to ENG-221.
 
 **How to read the evidence.** Vendor manuals for the export layouts are mostly behind a login or blocked. The shapes below therefore come from public parsers, test files, forum threads and knowledge-base pages. They describe files real users produced, not vendor specifications. Every product lets the user change the columns, so the layout a laboratory actually uses has to be read from its own file. "Verified" means the fact was read in the cited source; "not confirmed" means it was only inferred or seen in a search snippet.
 
@@ -83,7 +82,7 @@ All sources were checked on 2026-10-13 and are registered as DOM-133 to DOM-141 
 - **Not found is written as `0`.**
 - Insight has flags and LIS-linkage marketing; no documented CSV export was found.
 
-### SCIEX, Waters and review platforms
+### SCIEX and Waters
 
 **SCIEX OS (Analytics), DOM-139.**
 
@@ -141,15 +140,6 @@ All sources were checked on 2026-10-13 and are registered as DOM-133 to DOM-141 
 - **Review fields.** No export documents a reviewer or approval field. The LIMS file records who modified a peak and when.
 - **Other routes.** The MassLynx LIMS Interface sends HL7 from configured templates ([DOM-021](sources-domain.md)). waters_connect MS Quan release notes mention a configurable CSV LIMS export to a folder, with worklist and sample ID columns. That was not verified beyond search excerpts.
 
-**Review platforms, DOM-141.**
-
-- **A hosted review service.** Processing and assessing steps apply laboratory-written quality rules.
-  - It delivers "CSV or XML", with custom outputs defined and provided by the vendor (marketing text).
-  - A PDF archive keeps the review and certification audit trail.
-  - Its column names, and whether the export carries reviewer or certification fields, are not public.
-  - Peer-reviewed abstracts describe automated peak review in a clinical mass spectrometry laboratory and its use on a 113-drug urine panel (ENG-298, ENG-299).
-- **Chromsystems CSQUANT.** Evaluates Analyst, MultiQuant and MassLynx results. No export documentation was found.
-
 ## File shapes
 
 | Shape | Seen in | Loader need |
@@ -193,7 +183,6 @@ Windows "Unicode text" is UTF-16LE with a BOM and tab-delimited. That comes from
 - Some file details are unpublished:
   - SCIEX's export encoding and delimiter;
   - the "Transfer Results to LIMS" file format;
-  - the waters_connect MS Quan CSV columns;
-  - the contents of the hosted review service's export.
+  - the waters_connect MS Quan CSV columns.
 
   The laboratory obtains them from its own installation or supplier, under Q-04 and Q-25.

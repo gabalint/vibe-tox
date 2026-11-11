@@ -5,7 +5,7 @@ including its source, documentation, website and presentation.
 
 ## Vibe coded, with documented effort
 
-Vibe Toxicology LIS is **vibe coded**: developed with substantial assistance from
+OpenBGA Tox is **vibe coded**: developed with substantial assistance from
 AI coding tools. Reasonable effort has been put into research, planning, analysis,
 review and testing, with evidence and limitations recorded in this repository.
 That effort does not guarantee correctness, completeness, security, regulatory
@@ -20,18 +20,18 @@ validation, qualified review and approval of its configured system and procedure
 
 ## License, warranty and liability
 
-The project's own material is licensed under the [GNU General Public License, version 3 only](../../LICENSE) (`GPL-3.0-only`);
+The project's own material is licensed under the [GNU Affero General Public License, version 3 only](../../LICENSE) (`AGPL-3.0-only`);
 the [README](../../README.md#license-and-development-disclaimer) and
-[ADR 0017](../architecture/decisions/0017-gplv3-license.md) state the license terms.
+[ADR 0021](../architecture/decisions/0021-agplv3-license.md) state the license terms.
 
 The work is provided **as is**, with the warranty disclaimers and limitations of
-liability in GPLv3 sections 15–17. Those provisions include exceptions for
+liability in AGPLv3 sections 15–17. Those provisions include exceptions for
 applicable law and written agreements; they do not guarantee immunity from every
 claim or liability. No availability, support or maintenance commitment is made by
 this disclaimer.
 
 This notice describes the development approach and current readiness. It does not
-modify GPLv3 or add restrictions to the rights the license grants.
+modify AGPLv3 or add restrictions to the rights the license grants.
 
-ADR 0017 records the accepted license and disclaimer, source evidence and remaining
+ADR 0021 records the accepted license and disclaimer, source evidence and remaining
 governance questions.

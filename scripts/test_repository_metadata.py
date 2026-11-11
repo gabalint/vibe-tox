@@ -58,11 +58,11 @@ class MetadataTests(unittest.TestCase):
         self.assertEqual(check_markdown(self.root, [".ai/example/SKILL.md"])[0], [])
 
     def license_fixture(self):
-        self.write("Cargo.toml", '[workspace]\nmembers=["crates/*"]\n[workspace.package]\nlicense="GPL-3.0-only"\n')
+        self.write("Cargo.toml", '[workspace]\nmembers=["crates/*"]\n[workspace.package]\nlicense="AGPL-3.0-only"\n')
         self.write("crates/example/Cargo.toml", '[package]\nname="example"\nlicense.workspace=true\n')
-        self.write_json("package.json", {"license": "GPL-3.0-only"})
-        self.write_json("package-lock.json", {"packages": {"": {"license": "GPL-3.0-only"}}})
-        self.write_json("src-tauri/tauri.conf.json", {"bundle": {"license": "GPL-3.0-only", "licenseFile": "../LICENSE"}})
+        self.write_json("package.json", {"license": "AGPL-3.0-only"})
+        self.write_json("package-lock.json", {"packages": {"": {"license": "AGPL-3.0-only"}}})
+        self.write_json("src-tauri/tauri.conf.json", {"bundle": {"license": "AGPL-3.0-only", "licenseFile": "../LICENSE"}})
         self.write("LICENSE", "Fixture license\n")
 
     def test_matching_metadata_passes(self):
@@ -76,7 +76,7 @@ class MetadataTests(unittest.TestCase):
 
     def test_wrong_tauri_license_path_fails(self):
         self.license_fixture()
-        self.write_json("src-tauri/tauri.conf.json", {"bundle": {"license": "GPL-3.0-only", "licenseFile": "LICENSE"}})
+        self.write_json("src-tauri/tauri.conf.json", {"bundle": {"license": "AGPL-3.0-only", "licenseFile": "LICENSE"}})
         self.assertEqual(len(check_licenses(self.root)), 1)
 
 

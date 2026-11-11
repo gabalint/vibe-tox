@@ -39,7 +39,7 @@ impl Inhibitor {
                 .display(false)
                 .sleep(false)
                 .reason(REASON)
-                .app_name("Vibe Toxicology LIS")
+                .app_name("OpenBGA Tox")
                 .app_reverse_domain("org.vibetox.lis")
                 .create()
                 .map(|guard| Box::new(guard) as Guard)

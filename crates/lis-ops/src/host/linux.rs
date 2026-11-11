@@ -327,26 +327,26 @@ mod tests {
 
     #[test]
     fn local_disk_and_network_types_are_classified_by_the_deepest_mount() {
-        assert_eq!(classify("/var/lib/vibe-tox"), Some(false));
-        assert_eq!(classify("/home/lab/.local/share/vibe-tox"), Some(true));
+        assert_eq!(classify("/var/lib/openbga-tox"), Some(false));
+        assert_eq!(classify("/home/lab/.local/share/openbga-tox"), Some(true));
         assert_eq!(classify("/mnt/share/data"), Some(true));
-        assert_eq!(classify("/mnt/remote/vibe-tox"), Some(true));
-        assert_eq!(classify("/mnt/gvfs/inner/vibe-tox"), Some(false));
+        assert_eq!(classify("/mnt/remote/openbga-tox"), Some(true));
+        assert_eq!(classify("/mnt/gvfs/inner/openbga-tox"), Some(false));
     }
 
     #[test]
     fn octal_escaped_mount_points_match_their_decoded_path() {
-        assert_eq!(classify("/home/lab/local disk/vibe-tox"), Some(false));
-        assert_eq!(classify("/home/lab/local\\040disk/vibe-tox"), Some(true));
+        assert_eq!(classify("/home/lab/local disk/openbga-tox"), Some(false));
+        assert_eq!(classify("/home/lab/local\\040disk/openbga-tox"), Some(true));
     }
 
     // NFR-31/NFR-32, D15: an unlisted type under a local root must not read as local.
     #[test]
     fn fuse_tmpfs_and_unlisted_types_are_unknown_not_local() {
         for path in [
-            "/mnt/gvfs/vibe-tox",
-            "/mnt/odd/vibe-tox",
-            "/run/user/1000/vibe-tox",
+            "/mnt/gvfs/openbga-tox",
+            "/mnt/odd/openbga-tox",
+            "/run/user/1000/openbga-tox",
         ] {
             assert_eq!(classify(path), None, "{path}");
         }
@@ -358,7 +358,7 @@ mod tests {
         for fs_type in ["ext4", "xfs", "btrfs", "zfs", "ntfs3", "fuseblk"] {
             assert_eq!(network_fs_type(fs_type), Some(false), "{fs_type}");
         }
-        assert_eq!(classify("/media/usb/vibe-tox"), Some(false));
+        assert_eq!(classify("/media/usb/openbga-tox"), Some(false));
     }
 
     #[test]

@@ -154,12 +154,12 @@ mod tests {
     #[test]
     fn drive_letters_come_from_plain_and_canonical_drive_paths() {
         assert_eq!(drive_letter(r"c:\Users\Lab\AppData\Local"), Some('C'));
-        assert_eq!(drive_letter(r"\\?\d:\VibeTox"), Some('D'));
-        assert_eq!(drive_letter(r"\\.\Z:\VibeTox"), Some('Z'));
+        assert_eq!(drive_letter(r"\\?\d:\OpenBGATox"), Some('D'));
+        assert_eq!(drive_letter(r"\\.\Z:\OpenBGATox"), Some('Z'));
         for other in [
             r"\\server\share",
             r"\\?\UNC\server\share",
-            r"\\?\Volume{01234567-89ab-cdef-0123-456789abcdef}\VibeTox",
+            r"\\?\Volume{01234567-89ab-cdef-0123-456789abcdef}\OpenBGATox",
             "1:\\x",
             "C",
         ] {
@@ -193,7 +193,7 @@ mod tests {
     #[test]
     fn unc_paths_are_network_locations() {
         for network in [
-            r"\\server\share\VibeTox",
+            r"\\server\share\OpenBGATox",
             r"\\?\UNC\server\share",
             "//server/share",
         ] {

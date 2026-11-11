@@ -99,11 +99,11 @@ fn an_oru_has_every_segment_in_order_with_exact_values() {
     assert_eq!(
         segments,
         [
-            "MSH|^~\\&|VIBETOX LIS|Synthetic Tox Lab^00D0000000^CLIA||CLINIC-A|20261104102000-0600||ORU^R01^ORU_R01|01a1a000-0000-7000-8000-000000000011|P|2.5.1|||NE|NE||UNICODE UTF-8",
+            "MSH|^~\\&|OPENBGA TOX|Synthetic Tox Lab^00D0000000^CLIA||CLINIC-A|20261104102000-0600||ORU^R01^ORU_R01|01a1a000-0000-7000-8000-000000000011|P|2.5.1|||NE|NE||UNICODE UTF-8",
             "PID|1||MRN-00000^^^CLINIC-A^MR||Doe^Jane||19800101|F",
             "PV1|1|U|LOC-1^^^^^^^^Main office",
-            "ORC|RE|ORD-000124|A26000005-UR-1^VIBETOX LIS|||||||||1234567893^Test^Doctor^^^^^^^^^^NPI|||||||||Clinic A^^^^^^^^^CLINIC-A",
-            "OBR|1|ORD-000124|A26000005-UR-1^VIBETOX LIS|CA-AMPH-CONF^Amphetamines Panel^L|||20261103083000-0500|||||||||1234567893^Test^Doctor^^^^^^^^^^NPI||||||20261104101500-0600|||C",
+            "ORC|RE|ORD-000124|A26000005-UR-1^OPENBGA TOX|||||||||1234567893^Test^Doctor^^^^^^^^^^NPI|||||||||Clinic A^^^^^^^^^CLINIC-A",
+            "OBR|1|ORD-000124|A26000005-UR-1^OPENBGA TOX|CA-AMPH-CONF^Amphetamines Panel^L|||20261103083000-0500|||||||||1234567893^Test^Doctor^^^^^^^^^^NPI||||||20261104101500-0600|||C",
             "OBX|1|NM|CA-AMP^Amphetamine^L^12345-6^^LN|1|152.40|ng/mL^^UCUM|||||C||||||||||||Synthetic Tox Lab^^^^^^^^^00D0000000",
             "OBX|2|SN|CA-MAMP^Methamphetamine^L|1|<^0.50|ng/mL^^UCUM|||||C||||||||||||Synthetic Tox Lab^^^^^^^^^00D0000000",
             "SPM|1|^A26000005||UR^Urine^L|||||||||||||20261103083000-0500|20261103120000-0600",

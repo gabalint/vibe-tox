@@ -3,12 +3,12 @@
 use super::*;
 
 const ORU: &[u8] =
-    b"MSH|^~\\&|VIBETOX LIS|LAB|SYN-EMR|HOSP-B|20261105101500||ORU^R01|MSG-0001|P|2.5.1\r\
+    b"MSH|^~\\&|OPENBGA TOX|LAB|SYN-EMR|HOSP-B|20261105101500||ORU^R01|MSG-0001|P|2.5.1\r\
 PID|1||MRN-00042^^^HOSP-B^MR||Doe^Jane\r";
 
 fn ack(code: &str, control_id: &str, rest: &str) -> Vec<u8> {
     format!(
-        "MSH|^~\\&|SYN-EMR|HOSP-B|VIBETOX LIS|LAB|20261105101501||ACK^R01|ACK-1|P|2.5.1\r\
+        "MSH|^~\\&|SYN-EMR|HOSP-B|OPENBGA TOX|LAB|20261105101501||ACK^R01|ACK-1|P|2.5.1\r\
          MSA|{code}|{control_id}{rest}\r"
     )
     .into_bytes()
