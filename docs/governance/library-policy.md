@@ -19,7 +19,7 @@ The project's own workspace packages use GPL-3.0-only ([ADR 0017](../architectur
 
 | Crate | Version | Purpose | Used by |
 | --- | --- | --- | --- |
-| `rusqlite` (`bundled`, `hooks`) | 0.40.2 | SQLite access with the same SQLite (3.53.2) on every OS; explicit SQL. `hooks` provides the authorizer that guards transaction control | store, domain crates |
+| `rusqlite` (`bundled`, `hooks`) | 0.41.1 | SQLite access with the same SQLite (3.54.1) on every OS; explicit SQL. `hooks` provides the authorizer that guards transaction control; it is registered on the connection before each store transaction begins, disarmed, and armed only for the callback ([ENG-309](../research/sources-engineering.md#sqlite-advisory-sources-2026-11-11)) | store, domain crates |
 | `rust_decimal` | 1.43 | Exact decimal comparison and arithmetic behind lexical decimal types | core |
 | `jiff` | 0.2.38 | Instants, offsets and IANA time zones; the one datetime library | core and up |
 | `uuid` (`v7`) | 1.28 | Time-ordered record identifiers | core |

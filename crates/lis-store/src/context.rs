@@ -6,7 +6,7 @@ use rusqlite::{Connection, Transaction, TransactionBehavior};
 
 use crate::error::StoreError;
 use crate::outbox::{self, OutboxItem, OutboxItemId};
-use crate::transaction_guard::TransactionControlGuard;
+use crate::transaction_guard::TransactionControl;
 
 /// A command's view of its `BEGIN IMMEDIATE` transaction (NFR-01).
 ///
@@ -96,10 +96,11 @@ where
     F: FnOnce(&mut CommandContext<'_>) -> Result<T, E>,
     E: From<StoreError>,
 {
+    let control = TransactionControl::install(connection).map_err(E::from)?;
     let tx = connection
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(StoreError::from)?;
-    let guard = TransactionControlGuard::install(&tx).map_err(E::from)?;
+    let guard = control.guard(&tx);
     let result = command(&mut CommandContext {
         tx: &tx,
         principal,
@@ -108,7 +109,7 @@ where
         correlation_id,
         granted: Vec::new(),
     });
-    if guard.finish().map_err(E::from)? {
+    if guard.finish() {
         return Err(StoreError::TransactionEnded.into());
     }
     if tx.is_autocommit() {

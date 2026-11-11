@@ -17,7 +17,7 @@ use sha2::{Digest, Sha256};
 
 use crate::database::built_in_schemas;
 use crate::error::{MigrationProblem, StoreError};
-use crate::transaction_guard::TransactionControlGuard;
+use crate::transaction_guard::TransactionControl;
 
 /// Creates the migration ledger. Its shape is fixed forever, so it is not itself a migration.
 pub(crate) const BOOTSTRAP_SQL: &str = "CREATE TABLE IF NOT EXISTS store_migrations (
@@ -206,11 +206,12 @@ fn apply_checked(
     migration: &Migration,
     now: UtcTimestamp,
 ) -> Result<(), StoreError> {
+    let control = TransactionControl::install(conn)?;
     let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
     let before = foreign_key_violations(&tx)?;
-    let guard = TransactionControlGuard::install(&tx)?;
+    let guard = control.guard(&tx);
     let result = tx.execute_batch(migration.sql);
-    if guard.finish()? {
+    if guard.finish() {
         return Err(StoreError::TransactionEnded);
     }
     result?;
