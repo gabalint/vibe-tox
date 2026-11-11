@@ -60,7 +60,7 @@ mandate; reuse of covered project code in it carries the AGPL terms, including s
 ## Evidence and release review
 
 The license text was downloaded from the publisher on 2026-11-11 and copied unchanged into
-`LICENSE`. Sources are ENG-308–ENG-310 in the
+`LICENSE`. Sources are ENG-320–ENG-322 in the
 [engineering source ledger](../../research/sources-engineering.md#license-sources), with the
 GNU FAQ (ENG-271) and Apache License (ENG-273) entries that apply equally to AGPLv3. They
 establish license terms and publisher explanations, not a US or state-law enforceability
