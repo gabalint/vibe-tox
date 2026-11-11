@@ -150,9 +150,9 @@ Changes to results before release create attributable revisions where needed for
 Proposed 2026-10-12. Definitive LC-MS/MS results are normally integrated and reviewed before they reach the LIS. That review happens in one of two places:
 
 - **Vendor quantitation software.** Examples advertise reviewer roles, locked results, exception flags, e-signatures, audit trails and LIS/LIMS connectors.
-- **A hosted review platform.** At least one is advertised as a hosted service with lab-SOP rules, exception-based batch review and "certified" results, delivered as lab-specific CSV/XML.
+- **A hosted review platform.** A service that applies laboratory rules to batch review and delivers laboratory-specific CSV/XML.
 
-[ENG-60–62](../research/sources-engineering.md), [DOM-020–023](../research/sources-domain.md). The LIS models this layer explicitly instead of treating an export file as raw instrument truth.
+[ENG-61/62](../research/sources-engineering.md), [DOM-020–023](../research/sources-domain.md). The LIS models this layer explicitly instead of treating an export file as raw instrument truth.
 
 - **UpstreamReviewSystem.** Records the registered product, version/build, hosting model, method/rule-set versions, export template and supplier-agreement reference. Analytical operations owns it; the technical lead and quality approve it. It belongs to the adapter compatibility record.
 - **ProcessingRevision.** One exported processing state of a batch or run. It records batch/run ID, integration/processing revision, export sequence, template version and file digest. Batch files also carry calibrator, control and blank results. Those rows feed QC/calibration evidence and never become patient observations.
@@ -203,7 +203,7 @@ Proposed concepts under the requirements (REQ-ORD-005–007, REQ-SPC-008, REQ-RE
 | ReportedPointOfCareResult | Catalog and orders (clinical context) | Client point-of-care result with its device/test as supplied and its source. It is never displayed or exported as a laboratory observation. It informs reflex provenance (REG-030). |
 | ClientArrangementReference | Identity and organizations. The compliance officer holds the source. | Minimal reference only: item/service type (supplies, placed collector, courier, interface/portal, discount, client-bill terms), client, effective dates and an approval reference. No referral-volume or sales-compensation reporting (REG-032). |
 
-**Billing intake:** reusable patient coverage/subscriber and guarantor records and a versioned order billing context extend the order's bill-to attribute. Accessioning verifies that context and supplies actual collection facts; clinical order evidence stays separate from eligibility, authorization and financial-notice evidence. The [billing intake contract](reporting-contract.md#billing-intake) defines the records; external claims ownership and laboratory policy remain Q-16/Q-21. Basis: DOM-175–180 and SR-146–152.
+**Billing intake:** reusable patient coverage/subscriber and guarantor records and a versioned order billing context extend the order's bill-to attribute. Accessioning verifies that context and supplies actual collection facts; clinical order evidence stays separate from eligibility, authorization and financial-notice evidence. The [billing intake contract](reporting-contract.md#billing-intake) defines the records; external claims ownership and laboratory policy remain Q-16/Q-21. Basis: DOM-177–179 and SR-146–152.
 
 ### Interpretation, validity and report display
 
