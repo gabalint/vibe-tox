@@ -6,7 +6,7 @@ use rusqlite::{Connection, Transaction, TransactionBehavior};
 
 use crate::error::StoreError;
 use crate::outbox::{self, OutboxItem, OutboxItemId};
-use crate::transaction_guard::TransactionControl;
+use crate::transaction_guard::with_authorizer;
 
 /// A command's view of its `BEGIN IMMEDIATE` transaction (NFR-01).
 ///
@@ -96,27 +96,28 @@ where
     F: FnOnce(&mut CommandContext<'_>) -> Result<T, E>,
     E: From<StoreError>,
 {
-    let control = TransactionControl::install(connection).map_err(E::from)?;
-    let tx = connection
-        .transaction_with_behavior(TransactionBehavior::Immediate)
-        .map_err(StoreError::from)?;
-    let guard = control.guard(&tx);
-    let result = command(&mut CommandContext {
-        tx: &tx,
-        principal,
-        clock,
-        now: clock.now(),
-        correlation_id,
-        granted: Vec::new(),
-    });
-    if guard.finish() {
-        return Err(StoreError::TransactionEnded.into());
-    }
-    if tx.is_autocommit() {
-        return Err(StoreError::TransactionEnded.into());
-    }
-    // On `Err`, `tx` drops here and rolls back.
-    let value = result?;
-    tx.commit().map_err(StoreError::from)?;
-    Ok(value)
+    with_authorizer(connection, |connection, control| {
+        let tx = connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)
+            .map_err(StoreError::from)?;
+        let guard = control.protect(&tx);
+        let result = command(&mut CommandContext {
+            tx: &tx,
+            principal,
+            clock,
+            now: clock.now(),
+            correlation_id,
+            granted: Vec::new(),
+        });
+        if guard.finish() {
+            return Err(StoreError::TransactionEnded.into());
+        }
+        if tx.is_autocommit() {
+            return Err(StoreError::TransactionEnded.into());
+        }
+        // On `Err`, `tx` drops here and rolls back.
+        let value = result?;
+        tx.commit().map_err(StoreError::from)?;
+        Ok(value)
+    })
 }

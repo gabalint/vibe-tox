@@ -215,7 +215,7 @@ impl Engine {
             let db = Arc::clone(&self.db);
             let zone = blocking(move || lab_zone(&db)).await?;
             let (date, time) = stamp(now, zone.as_ref());
-            let name = format!("vibetox-test-{date}-{time}.{extension}");
+            let name = format!("openbga-tox-test-{date}-{time}.{extension}");
             let key = self.data_key().await.ok();
             let db = Arc::clone(&self.db);
             let outcome =

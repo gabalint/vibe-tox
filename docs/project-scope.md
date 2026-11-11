@@ -4,7 +4,7 @@ Status: **confirmed initial scope: US clinical toxicology on one laboratory comp
 
 ## Mission
 
-Make a free, open-source toxicology LIS that a small laboratory runs on one computer. It should manage the laboratory journey from authorized order to traceable specimen, controlled analysis, reviewed report, delivery, clinical billing handoff and operational follow-up. It should leave the laboratory in control of its data, including a complete export. AI assistance should accelerate development while retaining inspectable decisions, reproducible evidence, and human responsibility for laboratory operation.
+Build OpenBGA/tox, a free, open-source toxicology LIS that a small laboratory runs on one computer. It should manage the laboratory journey from authorized order to traceable specimen, controlled analysis, reviewed report, delivery, clinical billing handoff and operational follow-up. It should leave the laboratory in control of its data, including a complete export. AI assistance accelerates development alongside sustained human work in requirements analysis, architecture review, implementation review and testing. The [engineering standards](governance/engineering-standards.md#human-direction-and-review) require inspectable decisions and verification evidence; qualified humans retain responsibility for laboratory acceptance and operation.
 
 "Complete" describes the intended capability map. It does not mean every specialty can share one undifferentiated workflow, or that all capabilities belong in the first release.
 

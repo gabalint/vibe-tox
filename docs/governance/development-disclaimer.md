@@ -5,9 +5,13 @@ including its source, documentation, website and presentation.
 
 ## Vibe coded, with documented effort
 
-Vibe Toxicology LIS is **vibe coded**: developed with substantial assistance from
-AI coding tools. Reasonable effort has been put into research, planning, analysis,
-review and testing, with evidence and limitations recorded in this repository.
+OpenBGA/tox is **vibe coded**: developed with substantial assistance from
+AI coding tools, alongside sustained human effort in research, requirements
+analysis, architecture review, code review, test design, hands-on testing and
+revision. The [engineering standards](engineering-standards.md#human-direction-and-review)
+describe human responsibilities and how review and verification are recorded.
+Required review, completed checks and outstanding gaps must remain distinguishable.
+
 That effort does not guarantee correctness, completeness, security, regulatory
 compliance or suitability for any particular use. AI-generated and human-reviewed
 material can still contain errors, omissions and unsafe behavior.

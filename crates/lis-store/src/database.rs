@@ -15,7 +15,7 @@ use crate::error::StoreError;
 use crate::migrate::migrate;
 use crate::snapshot::{Snapshot, pre_migration_snapshot, snapshot};
 use crate::threads::{ConnectionThreads, Job};
-use crate::transaction_guard::TransactionControl;
+use crate::transaction_guard::with_authorizer;
 
 /// Database file name inside the data directory.
 pub const DATABASE_FILE: &str = "lis.sqlite3";
@@ -235,19 +235,20 @@ where
     F: FnOnce(&Connection) -> Result<T, E>,
     E: From<StoreError>,
 {
-    let control = TransactionControl::install(connection).map_err(E::from)?;
-    let tx = connection
-        .transaction()
-        .map_err(|error| E::from(StoreError::from(error)))?;
-    let guard = control.guard(&tx);
-    let result = query(&tx);
-    if guard.finish() {
-        return Err(StoreError::TransactionEnded.into());
-    }
-    if tx.is_autocommit() {
-        return Err(StoreError::TransactionEnded.into());
-    }
-    result
+    with_authorizer(connection, |connection, control| {
+        let tx = connection
+            .transaction()
+            .map_err(|error| E::from(StoreError::from(error)))?;
+        let guard = control.protect(&tx);
+        let result = query(&tx);
+        if guard.finish() {
+            return Err(StoreError::TransactionEnded.into());
+        }
+        if tx.is_autocommit() {
+            return Err(StoreError::TransactionEnded.into());
+        }
+        result
+    })
 }
 
 /// A unit of work for the single writer: it runs inside one `BEGIN IMMEDIATE`

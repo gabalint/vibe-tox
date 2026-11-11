@@ -10,7 +10,7 @@ use rusqlite::{Connection, OptionalExtension, params};
 use super::connections::person;
 use super::error::PartnerError;
 
-/// The public key in OpenSSH form, such as `ssh-ed25519 AAAA… vibetox-lis`, once made.
+/// The public key in OpenSSH form, such as `ssh-ed25519 AAAA… openbga-tox`, once made.
 pub fn sftp_public_key(conn: &Connection) -> Result<Option<String>, PartnerError> {
     conn.query_row("SELECT public_key FROM ifc_sftp_identity", [], |row| {
         row.get(0)

@@ -19,7 +19,7 @@ The project's own workspace packages use GPL-3.0-only ([ADR 0017](../architectur
 
 | Crate | Version | Purpose | Used by |
 | --- | --- | --- | --- |
-| `rusqlite` (`bundled`, `hooks`) | 0.41.1 | SQLite access with the same SQLite (3.54.1) on every OS; explicit SQL. `hooks` provides the authorizer that guards transaction control; it is registered on the connection before each store transaction begins, disarmed, and armed only for the callback ([ENG-309](../research/sources-engineering.md#sqlite-advisory-sources-2026-11-11)) | store, domain crates |
+| `rusqlite` (`bundled`, `hooks`) | 0.41.1 | SQLite access with the same SQLite (3.54.1) on every OS; explicit SQL. `hooks` provides the authorizer that guards transaction control | store, domain crates |
 | `rust_decimal` | 1.43 | Exact decimal comparison and arithmetic behind lexical decimal types | core |
 | `jiff` | 0.2.38 | Instants, offsets and IANA time zones; the one datetime library | core and up |
 | `uuid` (`v7`) | 1.28 | Time-ordered record identifiers | core |
@@ -62,6 +62,20 @@ from the preceding locked patch versions. The normal advisory gate still applies
 | --- | --- | --- |
 | `ctutils` (transitive) | 0.4.4 | Minimum patch for RUSTSEC-2026-0385: constant-time mask generation and 32-bit `u128` comparisons (ENG-303/304). |
 | `tokio` | 1.53.3 | Minimum forward patch from 1.53.2 for RUSTSEC-2026-0386. It deprecates the affected `AsyncFd` constructors in favor of explicit unsafe registration; it does not repair misuse in callers. Project-owned source does not use `AsyncFd`; transitive callers retain their own safety obligations (ENG-306/307). |
+
+### SQLite security update — 2026-11-11
+
+`rusqlite` 0.41.1 and `libsqlite3-sys` 0.39.1 replace the affected SQLite bundle
+for RUSTSEC-2026-0459. The advisory concerns stale page-cache data when opening
+an attacker-controlled database with a mismatched WAL; it does not establish
+exploitation in this application. The locked bundle is SQLite 3.54.1, beyond
+the advisory's 3.54.0 fix. The existing `bundled` and `hooks` features and MIT
+licenses remain; no additional package enters the lockfile. The Rust 1.89
+minimum fits the project's pinned toolchain. Reviewed release notes and package
+sources are recorded as ENG-308/309 in the
+[source ledger](../research/sources-engineering.md#sqlite-security-update-sources-2026-11-11).
+The full platform build/test and dependency-policy gates apply; this update
+does not replace database recovery or clinical qualification.
 
 ### Additional installed crates
 

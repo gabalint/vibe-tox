@@ -1,4 +1,4 @@
-# Cargo workspace for the Vibe Toxicology LIS engine and desktop shell.
+# Cargo workspace for the OpenBGA/tox engine and desktop shell.
 # Dependency admission: docs/governance/library-policy.md. Add a crate here only
 # after it is approved there; member crates reference it with `{ workspace = true }`.
 

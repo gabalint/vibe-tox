@@ -22,9 +22,9 @@ const STEP_SECONDS: u64 = 30;
 const SKEW_STEPS: u16 = 1;
 /// 160 bits, the RFC 4226 recommendation.
 const SECRET_BYTES: usize = 20;
-/// Issuer shown in authenticator apps, URI-encoded. The product name is a
-/// placeholder until the publisher is chosen (Q-19).
-const ISSUER: &str = "Vibe%20Tox%20LIS";
+/// Product label shown for new authenticator enrollments, URI-encoded.
+/// Existing enrollments keep their label; the issuer does not affect code verification.
+const ISSUER: &str = "OpenBGA%2Ftox";
 
 /// A TOTP shared secret, held in memory only while it is needed.
 #[derive(Clone)]
@@ -199,8 +199,8 @@ mod tests {
         assert_eq!(enrollment.secret_base32, "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ");
         assert_eq!(
             enrollment.otpauth_uri,
-            "otpauth://totp/Vibe%20Tox%20LIS:jsmith?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ\
-             &issuer=Vibe%20Tox%20LIS&algorithm=SHA1&digits=6&period=30"
+            "otpauth://totp/OpenBGA%2Ftox:jsmith?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ\
+             &issuer=OpenBGA%2Ftox&algorithm=SHA1&digits=6&period=30"
         );
         assert!(enrollment.qr_svg.contains("<svg"));
         assert_eq!(format!("{enrollment:?}"), "TotpEnrollment([redacted])");
