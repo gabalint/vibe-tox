@@ -29,6 +29,7 @@ mod au_session;
 mod audit_records;
 mod commands;
 mod error;
+mod folder_path;
 mod instrument_commands;
 mod listener;
 mod model;
@@ -51,6 +52,7 @@ use lis_core::{Migration, ModuleSchema};
 pub use artifact_references::{ARTIFACT_COLUMNS, referenced_artifacts};
 pub use audit_records::{audit_record_label, audit_record_search};
 pub use error::{InterfaceError, ListenerErrorCode};
+pub use folder_path::without_verbatim_prefix;
 pub use instrument_commands::{
     register_instrument, set_instrument_enabled, set_result_folder, update_instrument_connection,
 };
