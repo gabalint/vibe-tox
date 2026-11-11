@@ -413,7 +413,7 @@
         },
         {
           "name": "Copy LIS public key",
-          "does": "Copies the LIS's public SSH key, such as ssh-ed25519 AAAA… vibetox-lis, to the clipboard. The first use makes this installation's key; its private key stays sealed on this computer and is never shown.",
+          "does": "Copies the LIS's public SSH key, such as ssh-ed25519 AAAA… openbga-tox, to the clipboard. An existing key keeps its original comment and remains usable. The first use makes this installation's key; its private key stays sealed on this computer and is never shown.",
           "availableWhen": "SFTP with SSH key sign-in. Making the key needs the installation key to be available.",
           "result": "Send the key to the partner's IT to allow for the username. If the clipboard cannot be used, the key is shown to copy by hand. Making the key is recorded in the audit trail; the same key is returned every time."
         },
@@ -473,7 +473,7 @@
         },
         {
           "name": "Send test message",
-          "does": "Writes a synthetic file with no patient data to the folder or SFTP server now: vibetox-test-<date>-<time>.hl7, an ORU^R01 with processing ID T, a synthetic patient and its own control ID (MSH-10: TEST- and a new ID each time), for HL7 Results; a one-page PDF for Report PDF; a .json file for Billing JSON. Over MLLP, the synthetic ORU^R01 is sent to the partner and its acknowledgement read.",
+          "does": "Writes a synthetic file with no patient data to the folder or SFTP server now: openbga-tox-test-<date>-<time>.hl7, an ORU^R01 with processing ID T, a synthetic patient and its own control ID (MSH-10: TEST- and a new ID each time), for HL7 Results; a one-page PDF for Report PDF; a .json file for Billing JSON. Over MLLP, the synthetic ORU^R01 is sent to the partner and its acknowledgement read.",
           "availableWhen": "A saved connection that sends, stopped or not verified too; an HL7 Orders connection has none, as the LIS sends it nothing.",
           "result": "The file name, or the problem, shows; over MLLP the partner's answer, such as ✓ Synthetic test message sent; the partner accepted it (AA), or ✗ … the partner found an error (AE): <its reason>. The test appears in Logs with a Test badge once Show test messages is on, and on the connection's Logs tab. A failed test is not retried."
         },
@@ -881,6 +881,7 @@
     "crates/lis-interfaces/src/partner/sftp_identity.rs",
     "crates/lis-engine/src/partner_delivery/sftp.rs",
     "crates/lis-engine/src/commands/partner/sftp.rs",
+    "crates/lis-engine/tests/scenarios/partner_sftp.rs",
     "ui/src/features/interfaces/connections/IntakeSections.tsx",
     "ui/src/features/interfaces/connections/intakeForm.ts",
     "ui/src/features/interfaces/intakeLabels.ts",

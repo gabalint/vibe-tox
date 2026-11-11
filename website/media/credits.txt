@@ -1,16 +1,21 @@
-Vibe Toxicology LIS — presentation credits and source notices
+OpenBGA/tox — presentation credits and source notices
 
-Presentation: the original demo-video/out/vibe-tox-overview.mp4.
+OpenBGA/tox branding edit, 2026-11-11: the opening and closing title cards, recorded app header and window title, and two spoken product-name phrases were updated. The workflow actions, synthetic data and other narration are retained from the supplied demonstration. The poster and website stills come from the edited video.
+
+Presentation: openbga-tox-overview.mp4, derived from the supplied demo-video/out/vibe-tox-overview.mp4.
 The original screen recording uses the real React interface with a mocked engine and synthetic data. The narrated final was assembled by demo-video/mix.mjs from the silent recording, generated voice clips and original instrumental music.
 
 Narration
 Generated locally with Kokoro v1.0, voice af_heart, speed 1.0, through kokoro-onnx. This provenance is recorded in demo-video/README.md, audio/narration.json and audio/tts.py. Kokoro-82M is an Apache-2.0 model:
 https://huggingface.co/hexgrad/Kokoro-82M
 https://huggingface.co/hexgrad/Kokoro-82M/blob/main/LICENSE
+The replacement product-name phrases use the same Kokoro v1.0 model and af_heart voice through kokoro-onnx 0.6.1, at speed 0.95. Explicit English phonemes pronounce the letters B, G and A; the name is spoken as “Open B G A tox.” Model and voice files were obtained from the maintainer’s model-files-v1.1 release, checked 2026-11-11:
+https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.1
+https://github.com/thewh1teagle/kokoro-onnx
 The narration is synthetic; it is not a recording of a laboratory employee or patient.
 
 Music
-Original instrumental composition created in demo-video/audio/make_music.py and rendered with FluidSynth using the MuseScore General soundfont. The source script and harness README identify the composition as original, with no third-party music recording used.
+Original instrumental composition created in demo-video/audio/make_music.py and rendered with FluidSynth using the MuseScore General soundfont. The source script and harness README identify the composition as original, with no third-party music recording used. The branding edit preserves the original soundtrack except the two name phrases; short instrumental-only passages from that same recording are blended beneath the replacement speech.
 
 Soundfont
 MuseScore General, version 0.2 (13 May 2020). The complete source notice is reproduced below with line endings and trailing whitespace normalized, including the acknowledgements for Frank Wen, Michael Cowgill, S. Christian Collins, Ethan Winer and Michael Schorsch, and the MIT permission and warranty text.
@@ -18,7 +23,7 @@ https://musescore.org/en/handbook/3/soundfonts-and-sfz-files
 https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General_License.md
 
 Caption and transcript preparation
-The original narration script and production timeline were reused. Phrase boundaries were aligned using the existing local mlx-whisper installation and its cached whisper-small-mlx model. Automated word timings were checked against the source words and clip boundaries; they remain estimates of speech timing.
+The original narration script and production timeline were reused. Phrase boundaries were aligned using the existing local mlx-whisper installation and its cached whisper-small-mlx model. Automated word timings were checked against the source words and clip boundaries; they remain estimates of speech timing. The replacement name phrases were timed from their generated clips. The edited video was encoded with FFmpeg as H.264 video and AAC stereo audio, with the original duration and 30 fps frame rate retained.
 
 Complete MuseScore General notice follows (all source wording preserved)
 ================================================================

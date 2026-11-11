@@ -54,9 +54,9 @@ with the same terms because GitHub search and the repository page index it. A JS
 block in `index.html` describes the application (`SoftwareApplication`: free offer,
 platforms, GPL-3.0-only) and the presentation (`VideoObject`). Keep its facts in step with
 the visible copy. Google shows a software rich result only with ratings or reviews; the
-project has none and must not invent them (WEB-07). The video's `uploadDate` is the first
-Pages deployment, 2026-10-20 15:42 UTC; change it and `duration` only when a different
-recording is published.
+project has none and must not invent them (WEB-07). The video's `uploadDate` is the publication date of the current branding edit,
+2026-11-11. Update it when a different recording is published, and keep `duration`
+matched to that file.
 
 A project site at `openbga.github.io/tox/` is a subdirectory of the host. Google
 reads `robots.txt` only from the host root and does not support site names for
@@ -69,20 +69,23 @@ The website inherits the application's blue/neutral palette and system typograph
 from `ui/src/styles/tokens.css`, with larger type and spacing for reading. It uses
 native tables and a video player, clear focus indicators, and responsive layouts.
 The hero's workflow illustration describes real stages; it is not an application
-screenshot. The workflow section shows six stills cropped from the supplied recording
+screenshot. The workflow section shows six stills cropped from the edited recording
 described below; the note beneath them labels them as demo data from a mocked engine.
 Keep it with the stills. The build-from-source
 commands follow the [developer guide](README.md#build-and-run); update both together.
 No analytics, contact form, account, clinical interface, or JavaScript runtime is used.
 
-The site serves the supplied `vibe-tox-overview.mp4` and its poster. It is a 121.233-second
+The site serves `openbga-tox-overview.mp4` and its poster. It is a 121.233-second
 recording of the actual React interface with a mocked engine and synthetic data,
 with narration and music. It demonstrates a workflow, not end-to-end clinical
 execution or validation.
 
-The recording and its poster still show the earlier name, Vibe Toxicology LIS.
-Label that fact beside the player; keep captions and scene descriptions faithful
-to the recording until the media is replaced. Current page copy uses OpenBGA/tox.
+The title cards, app header, window title and two spoken product-name phrases
+use OpenBGA/tox. The workflow footage, synthetic data and remaining narration
+come from the supplied demonstration. The replacement phrases use Kokoro v1.0
+with the same `af_heart` voice; the name is pronounced “Open B G A tox.” The
+[media credits](../../website/media/credits.txt) record the editing and audio
+provenance. The poster and stills come from this edited recording.
 
 English captions, a descriptive transcript and audio credits accompany the video.
 Keep development status and platform verification limits accurate when changing
@@ -95,9 +98,9 @@ the page or choosing a later recording.
 | `website/index.html` | Public content, search metadata and structured data, navigation, native player and links |
 | `website/styles.css`, `website/responsive.css` | Presentation styles and responsive adaptations |
 | `website/favicon.png` | Application test-tube icon, reused from `src-tauri/icons/128x128.png` |
-| `website/media/vibe-tox-overview.mp4` | Supplied narrated H.264/AAC application walkthrough; progressive playback |
-| `website/media/vibe-tox-overview-poster.jpg` | Supplied title poster, unchanged |
-| `website/media/vibe-tox-overview.en.vtt` | English captions for the narration and music |
+| `website/media/openbga-tox-overview.mp4` | Narrated H.264/AAC application walkthrough with current branding; progressive playback |
+| `website/media/openbga-tox-overview-poster.jpg` | Title poster from the edited recording |
+| `website/media/openbga-tox-overview.en.vtt` | English captions for the narration and music |
 | `website/media/transcript.txt` | Narration and descriptions of the application scenes |
 | `website/media/credits.txt` | Narration/music provenance and the supplied soundfont license notice |
 | `website/media/screens/*.webp` | Six application stills from the recording, 960 and 1600 pixels wide; each links to its full-size file |
@@ -117,7 +120,7 @@ the described screen without a dialog, highlight or transition. The current stil
 `audit-trail` 98. From the repository root, with FFmpeg and `cwebp`:
 
 ```bash
-ffmpeg -ss 18.5 -i website/media/vibe-tox-overview.mp4 -frames:v 1 \
+ffmpeg -ss 18.5 -i website/media/openbga-tox-overview.mp4 -frames:v 1 \
   -vf "crop=1804:948:58:111" /tmp/orders.png
 for width in 960 1600; do
   cwebp -q 82 -m 6 -resize "$width" 0 /tmp/orders.png \

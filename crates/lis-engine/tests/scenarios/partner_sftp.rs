@@ -144,7 +144,7 @@ async fn the_lis_key_is_made_once_and_kept() {
     t.admin_session().await;
     let key = t.engine.get_lis_sftp_key().await.unwrap();
     assert!(key.starts_with("ssh-ed25519 "), "{key}");
-    assert!(key.ends_with(" vibetox-lis"), "{key}");
+    assert!(key.ends_with(" openbga-tox"), "{key}");
     assert_eq!(t.engine.get_lis_sftp_key().await.unwrap(), key);
     let private: Vec<u8> = t
         .conn()
