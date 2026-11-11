@@ -4,5 +4,5 @@ contact_links:
     url: https://github.com/openbga/tox/security/advisories/new
     about: Report vulnerabilities privately. Do not open a public issue.
   - name: Documentation
-    url: https://github.com/openbga/tox/blob/main/docs/README.md
+    url: https://github.com/openbga/tox/blob/develop/docs/README.md
     about: Product overview, operator and developer guides, architecture and open questions.
