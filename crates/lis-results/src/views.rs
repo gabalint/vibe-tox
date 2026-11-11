@@ -63,6 +63,11 @@ pub struct ImportAttemptSummary {
     pub origin: Option<FileOrigin>,
     /// When the message or file began to arrive; a retry keeps its receipt's time.
     pub received_at: UtcTimestamp,
+    /// For a `duplicate` attempt, the latest attempt of the identical earlier
+    /// receipt, which holds its rows. Absent until that receipt is imported.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub duplicate_of_attempt_id: Option<ImportAttemptId>,
 }
 
 /// One quarantined source row. Its clinical text is returned only by the audited detail query.

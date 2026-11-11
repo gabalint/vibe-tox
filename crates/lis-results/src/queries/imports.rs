@@ -4,14 +4,18 @@ use super::*;
 
 /// The columns [`attempt_summary`] reads, in order, from `res_import_attempts`
 /// (not aliased); the origin and received time come from the interfaces module's
-/// published views.
+/// published views, and a duplicate's earlier attempt is the latest one of the
+/// receipt it repeats.
 pub(crate) const ATTEMPT_SUMMARY_COLUMNS: &str = "id, receipt_id, attempt_no, instrument_id, \
      outcome, failure_code, rows_total, rows_new, rows_duplicate, rows_reprocessed, rows_qc, \
      rows_quarantined, rows_not_result, rows_set_aside, rows_retained, processed_at, \
      (SELECT o.origin FROM ifc_v_receipt_origins o \
       WHERE o.receipt_id = res_import_attempts.receipt_id), \
      (SELECT a.received_at FROM ifc_v_receipt_arrivals a \
-      WHERE a.receipt_id = res_import_attempts.receipt_id)";
+      WHERE a.receipt_id = res_import_attempts.receipt_id), \
+     (SELECT d.id FROM res_import_attempts d \
+      WHERE d.receipt_id = res_import_attempts.duplicate_of_receipt_id \
+      ORDER BY d.attempt_no DESC LIMIT 1)";
 
 /// Gets one import attempt with its file facts and its quarantined and
 /// set-aside clinical rows. The engine audits this read.
@@ -26,7 +30,7 @@ pub fn get_import_attempt(
                  FROM res_import_attempts WHERE id = ?1"
             ),
             [id],
-            |row| Ok((attempt_summary(row)?, row.get(18)?)),
+            |row| Ok((attempt_summary(row)?, row.get(19)?)),
         )
         .optional()?
         .ok_or(ResultError::NotFound("import attempt"))?;
@@ -100,6 +104,7 @@ pub(crate) fn attempt_summary(row: &rusqlite::Row<'_>) -> rusqlite::Result<Impor
         processed_at: row.get(15)?,
         origin: row.get(16)?,
         received_at: row.get(17)?,
+        duplicate_of_attempt_id: row.get(18)?,
     })
 }
 

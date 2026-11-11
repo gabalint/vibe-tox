@@ -63,7 +63,7 @@ These are independent acceptance expectations for duplicate, correction and part
 
 | Input | Expected outcome |
 | --- | --- |
-| Byte-identical receipt | Mark the duplicate receipt; do not enqueue a second import. |
+| Byte-identical receipt | Mark the duplicate receipt and list it as an import attempt with outcome `duplicate`: no rows read, no evidence, quarantine or clinical change, linked to the latest attempt of the receipt it repeats. Retry import applies to that earlier receipt, not to the duplicate. |
 | Redelivered import work item | The receipt/attempt key makes processing a no-op. |
 | Identical rows in new bytes | Count duplicate rows without adding evidence. |
 | Changed row with an approved ASTM correction indicator | Add a processing revision and new measurement with supersession. If that measurement supplied the selected result, advance its result revision and invalidate the old review. |

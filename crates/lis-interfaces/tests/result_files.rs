@@ -339,16 +339,16 @@ fn files_need_an_enabled_result_file_instrument() {
     assert_eq!(count(&t.db, "SELECT COUNT(*) FROM ifc_receipts"), 0);
 }
 
-// F12: identical bytes from the same instrument give a duplicate receipt and no
-// second import, whatever the file is called.
+// F12: identical bytes from the same instrument give a duplicate receipt, whatever
+// the file is called. It is queued too, to be listed as an attempt that imports nothing.
 #[test]
-fn identical_bytes_give_a_duplicate_receipt_without_an_import() {
+fn identical_bytes_give_a_duplicate_receipt() {
     let t = TestDatabase::open(&[SCHEMA]).unwrap();
     let instrument = watched(&t.db, "LCMS-1");
     let first = pick_up(&t.db, &instrument, "batch-001.csv", EXPORT);
     let renamed = pick_up(&t.db, &instrument, "batch-001-copy.csv", EXPORT);
     assert_eq!(renamed.duplicate_of, Some(first.id));
-    assert_eq!(import_items(&t.db), 1);
+    assert_eq!(import_items(&t.db), 2);
     let other = watched(&t.db, "LCMS-2");
     assert_eq!(
         pick_up(&t.db, &other, "batch-001.csv", EXPORT).duplicate_of,
@@ -388,7 +388,7 @@ fn a_file_already_picked_up_is_refused_and_a_manual_reload_is_a_duplicate() {
         b"Sample Name\nC00000124\n",
     );
     assert_eq!(changed.duplicate_of, None);
-    assert_eq!(import_items(&t.db), 2);
+    assert_eq!(import_items(&t.db), 3);
 }
 
 // F14: a file over the limit is an aborted receipt with no artifact and no

@@ -167,7 +167,7 @@ Proposed 2026-10-12. Definitive LC-MS/MS results are normally integrated and rev
 
 | Upstream situation | LIS representation |
 | --- | --- |
-| Byte-identical re-export | Same digest; reconcile once with no new evidence. |
+| Byte-identical re-export | Same digest; reconcile once with no new evidence. The duplicate receipt gets an import attempt with outcome `duplicate` that links to the earlier receipt's attempt. |
 | Re-export after reprocessing (peak edit, re-integration, recalibration) | New ProcessingRevision linked to its predecessor. Affected measurements are superseded for selection. Reviews bound to the earlier revision are invalidated for the affected scope. If the earlier revision was already released, open impact assessment (WF-08). |
 | Partial re-export (subset of samples/analytes) | Changes only included rows. Omission is not deletion, cancellation or a negative finding. Ambiguous scope is quarantined. |
 | Upstream rejection or withdrawal of a sample/analyte | Explicit withdrawn-evidence state when the format carries it; otherwise reconciliation by lab staff. Never inferred from absence. |

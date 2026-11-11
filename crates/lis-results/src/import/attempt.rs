@@ -10,22 +10,32 @@ pub(super) struct Attempt {
     pub(super) instrument_id: InstrumentId,
     pub(super) registration: Option<lis_analytical::SourceRegistrationId>,
     pub(super) parser_version: &'static str,
+    /// The identical earlier receipt of a `duplicate` attempt.
+    pub(super) duplicate_of: Option<ReceiptId>,
 }
 
 impl Attempt {
     /// The attempt of `input`; the parser follows the source's format.
     pub(super) fn of(input: &ImportReceiptInput) -> Self {
-        let parser_version = match &input.source {
-            ImportSource::Extracted(_) | ImportSource::Malformed(_) => ASTM_PARSER_VERSION,
-            ImportSource::Au { .. } => AU_PARSER_VERSION,
-            ImportSource::File(_) | ImportSource::UnregisteredFile => FILE_PARSER_VERSION,
+        // Nothing in a duplicate is read, so it names no registration.
+        let (parser_version, duplicate_of) = match &input.source {
+            ImportSource::Extracted(_) | ImportSource::Malformed(_) => (ASTM_PARSER_VERSION, None),
+            ImportSource::Au { .. } => (AU_PARSER_VERSION, None),
+            ImportSource::File(_) | ImportSource::UnregisteredFile => (FILE_PARSER_VERSION, None),
+            ImportSource::Duplicate(earlier) => (NOT_READ_PARSER_VERSION, Some(*earlier)),
         };
+        let registration = input
+            .registration
+            .as_ref()
+            .filter(|_| duplicate_of.is_none())
+            .map(|item| item.registration_id);
         Self {
             receipt_id: input.receipt_id,
             attempt_no: input.attempt_no,
             instrument_id: input.instrument_id,
-            registration: input.registration.as_ref().map(|item| item.registration_id),
+            registration,
             parser_version,
+            duplicate_of,
         }
     }
 }
@@ -92,6 +102,28 @@ pub(super) fn supersede_prior_quarantine(
     )?)
 }
 
+/// A message identical to an earlier receipt: listed with no rows, no
+/// registration and no clinical effect, naming the earlier receipt whose
+/// attempts hold its rows (REQ-INT-003, NFR-02). The earlier receipt is the
+/// first complete one with these bytes, so it is never a duplicate itself.
+pub(super) fn record_duplicate_attempt(
+    ctx: &mut CommandContext<'_>,
+    attempt: &Attempt,
+) -> Result<ImportAttemptSummary, ResultError> {
+    if attempt.duplicate_of == Some(attempt.receipt_id) {
+        return Err(ResultError::WrongState("duplicate receipt"));
+    }
+    let summary = insert_attempt(
+        ctx,
+        ImportAttemptId::generate(),
+        attempt,
+        None,
+        &Counts::default(),
+    )?;
+    audit_attempt(ctx, &summary, 0)?;
+    Ok(summary)
+}
+
 /// A whole-attempt failure: nothing in the source is imported, and every
 /// row read counts as quarantined.
 pub(super) fn record_failed_attempt(
@@ -122,17 +154,22 @@ pub(super) fn insert_attempt(
     failure: Option<ImportFailureCode>,
     counts: &Counts,
 ) -> Result<ImportAttemptSummary, ResultError> {
-    let outcome = counts.outcome(failure.is_some());
+    let outcome = if attempt.duplicate_of.is_some() {
+        ImportOutcome::Duplicate
+    } else {
+        counts.outcome(failure.is_some())
+    };
     ctx.tx().execute(
         "INSERT INTO res_import_attempts (id, receipt_id, attempt_no, instrument_id, registration_id, \
          outcome, failure_code, rows_total, rows_new, rows_duplicate, rows_reprocessed, rows_qc, \
          rows_quarantined, rows_not_result, rows_set_aside, rows_retained, parser_version, \
-         processed_at) \
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)",
+         processed_at, duplicate_of_receipt_id) \
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19)",
         params![id, attempt.receipt_id, attempt.attempt_no, attempt.instrument_id,
             attempt.registration, outcome, failure, counts.total, counts.new, counts.duplicate,
             counts.reprocessed, counts.qc, counts.quarantined, counts.not_result,
-            counts.set_aside, counts.retained, attempt.parser_version, ctx.now()],
+            counts.set_aside, counts.retained, attempt.parser_version, ctx.now(),
+            attempt.duplicate_of],
     )?;
     attempt_by_key(ctx.tx(), attempt.receipt_id, attempt.attempt_no)?
         .ok_or(ResultError::NotFound("import attempt"))
@@ -166,6 +203,9 @@ pub(super) fn audit_attempt(
     }
     if let Some(failure) = summary.failure_code {
         event = event.detail("failure_code", AuditDetail::code(failure.as_str()));
+    }
+    if let Some(earlier) = summary.duplicate_of_attempt_id {
+        event = event.detail("duplicate_of_attempt", AuditDetail::id(earlier));
     }
     ctx.audit(event)?;
     Ok(())

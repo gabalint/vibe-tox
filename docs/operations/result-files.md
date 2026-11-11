@@ -83,7 +83,7 @@ A word that reads as a positive number cannot be mapped.
 
 ## 5. Load a file
 
-- **By hand:** **Review › Result imports › Load results file**. Choose the instrument, then the file. A file already received says so and is not imported again. A file over 20 MiB is not read.
+- **By hand:** **Review › Result imports › Load results file**. Choose the instrument, then the file. A file already received says so and is not imported again; Result imports lists it as **Duplicate – not imported**, linked to the earlier import attempt. A file over 20 MiB is not read.
 - **Watched folder:** the LIS waits until a file has stopped changing (two checks at least 10 s apart), then reads it. A refused or oversized file shows in instrument health.
 
 The import attempt shows:

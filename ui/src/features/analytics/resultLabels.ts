@@ -178,11 +178,17 @@ const IMPORT_OUTCOMES: Record<ImportOutcome, Status> = {
   processed: { label: "Processed", tone: "success" },
   processed_with_quarantine: { label: "Processed, some rows quarantined", tone: "warning" },
   quarantined: { label: "Quarantined", tone: "danger" },
+  // Routine: the earlier identical message holds the rows.
+  duplicate: { label: "Duplicate – not imported", tone: "neutral" },
 };
 
 export function importStatus(outcome: ImportOutcome): Status {
   return IMPORT_OUTCOMES[outcome];
 }
+
+/** Whether an import quarantined rows or the whole message: something to fix and retry. */
+export const isQuarantinedImport = (outcome: ImportOutcome) =>
+  outcome === "quarantined" || outcome === "processed_with_quarantine";
 
 /** Why nothing was imported, and what to do next (result files brief §5, F12). */
 const FAILURES: Record<ImportFailureCode, string> = {

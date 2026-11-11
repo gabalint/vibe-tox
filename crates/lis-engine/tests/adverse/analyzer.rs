@@ -286,7 +286,8 @@ async fn garbage_and_partial_frames_store_nothing_and_the_next_session_imports()
 }
 
 /// VAL-04, M2 brief §3.5: the same message sent five times is one receipt and four
-/// linked duplicates, with one import attempt and no extra evidence.
+/// linked duplicates, with one import and no extra evidence; each duplicate is listed as
+/// an attempt that imports nothing (#4577).
 #[tokio::test]
 async fn a_burst_of_identical_messages_imports_once() {
     let lab = Lab::start(RevisionIndicator::None).await;
@@ -297,12 +298,38 @@ async fn a_burst_of_identical_messages_imports_once() {
     }
 
     assert_eq!(duplicates, [false, true, true, true, true]);
-    let imported = attempts(lab.t().data_dir(), 1).await;
+    let imported = attempts(lab.t().data_dir(), 5).await;
+    let mut outcomes: Vec<_> = imported
+        .iter()
+        .map(|(outcome, ..)| outcome.as_str())
+        .collect();
+    outcomes.sort_unstable();
+    assert_eq!(
+        outcomes,
+        [
+            "duplicate",
+            "duplicate",
+            "duplicate",
+            "duplicate",
+            "processed"
+        ],
+        "{imported:?}"
+    );
+    assert!(
+        imported
+            .iter()
+            .filter(|(outcome, ..)| outcome == "duplicate")
+            .all(
+                |(_, new, qc, duplicate, quarantined)| (*new, *qc, *duplicate, *quarantined)
+                    == (0, 0, 0, 0)
+            ),
+        "{imported:?}"
+    );
     // A dispatcher poll (2 s) passes, so a wrong second import would have run.
     tokio::time::sleep(Duration::from_millis(2_500)).await;
     assert_eq!(
         count(lab.t().data_dir(), "res_import_attempts"),
-        1,
+        5,
         "{imported:?}"
     );
     assert_eq!(count(lab.t().data_dir(), "res_measurements"), PATIENT_ROWS);

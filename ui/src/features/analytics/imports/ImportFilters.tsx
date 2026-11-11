@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Button } from "@/components/Button";
+import { Checkbox } from "@/components/Checkbox";
 import { DayFilter } from "@/components/DayFilter";
 import { FindField } from "@/components/FindField";
 import { Select } from "@/components/Select";
@@ -21,8 +22,9 @@ interface ImportFiltersProps {
 }
 
 /**
- * The search, as a find after a pause in typing, and the instrument and outcome, applied when
- * chosen; the received days under More filters. Every filter combines with the others and
+ * The search, as a find after a pause in typing, the instrument and outcome, applied when
+ * chosen, and Hide duplicates, which leaves out messages identical to an earlier one; the
+ * received days under More filters. Every filter combines with the others and
  * Clear filters removes them all. The engine applies them before the list is paged.
  */
 export function ImportFilters({
@@ -101,6 +103,13 @@ export function ImportFilters({
           onApply({ ...filter, outcome: choiceOf(OUTCOME_FILTERS, next) ?? undefined })
         }
       />
+      <Checkbox
+        name="duplicates"
+        isSelected={filter.duplicates === "hidden"}
+        onChange={(hidden) => onApply({ ...filter, duplicates: hidden ? "hidden" : undefined })}
+      >
+        Hide duplicates
+      </Checkbox>
     </Toolbar>
   );
 }

@@ -34,6 +34,10 @@ pub struct ListImportAttemptsInput {
     #[serde(default)]
     #[ts(optional = nullable)]
     pub search: Option<String>,
+    /// Leaves out messages identical to an earlier one (outcome `duplicate`).
+    #[serde(default)]
+    #[ts(as = "Option<_>", optional)]
+    pub hide_duplicates: bool,
 }
 
 impl Engine {
@@ -54,6 +58,7 @@ impl Engine {
                 received_from: input.received_from,
                 received_before: input.received_before,
                 search: input.search,
+                hide_duplicates: input.hide_duplicates,
             };
             let page = move |conn: &rusqlite::Connection| {
                 lis_results::list_import_attempts_page(

@@ -162,7 +162,14 @@ async fn au_tcp_reaches_specimen_result_and_replay_keeps_one_import() {
     let result = line(&results, "SYN-MOR").current.as_ref().unwrap();
     assert_eq!(result.units.as_deref(), Some("ng/mL"));
     assert_eq!(result.magnitude.as_deref(), Some("75.0"));
-    assert_eq!(lab.attempts().await.len(), 1);
+    // The repeated message is listed as a duplicate that imports nothing.
+    let duplicate = lab.attempt(receipts[1].0, 1).await;
+    assert_eq!(duplicate.outcome, ImportOutcome::Duplicate);
+    assert_eq!(
+        duplicate.duplicate_of_attempt_id,
+        Some(attempt.import_attempt_id)
+    );
+    assert_eq!(lab.attempts().await.len(), 2);
     let raw: (String, Option<String>) = lab
         .t()
         .conn()
