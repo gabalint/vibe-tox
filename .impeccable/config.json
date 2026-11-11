@@ -19,7 +19,7 @@
           "website/index.html"
         ],
         "createdAt": "2026-10-21T12:55:45.995Z",
-        "reason": "Agent review: the only uppercase paragraph is the short license label Free and open source · GPL-3.0-only, not body prose; present unchanged in HEAD."
+        "reason": "Agent review: the only uppercase paragraph is the short license label Free and open source · AGPL-3.0-only, not body prose; present unchanged in HEAD."
       },
       {
         "rule": "side-tab",

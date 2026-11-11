@@ -13,7 +13,7 @@ A dependency is added only when all of these hold. They extend the [dependency-a
 
 **To request a package**, a worker stops and reports `BLOCKED: dependency request` with the need, the alternatives considered (std, approved packages, own code), license, maintenance evidence and footprint. The coordinator decides and records the result here. Adjusting features or patch versions of an approved crate in the root manifest is allowed, with a note in the handoff.
 
-The project's own workspace packages use GPL-3.0-only ([ADR 0017](../architecture/decisions/0017-gplv3-license.md)). `deny.toml` permits that license only through named exceptions for those packages; GPL is not on the external-dependency allow-list. A passing license check does not replace the release license inventory or corresponding-source review ([engineering standards](engineering-standards.md#release-and-maintenance)).
+The project's own workspace packages use AGPL-3.0-only ([ADR 0021](../architecture/decisions/0021-agplv3-license.md)). `deny.toml` permits that license only through named exceptions for those packages; neither GPL nor AGPL is on the external-dependency allow-list. A passing license check does not replace the release license inventory or corresponding-source review ([engineering standards](engineering-standards.md#release-and-maintenance)).
 
 ## Rust crates
 
