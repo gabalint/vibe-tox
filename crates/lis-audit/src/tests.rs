@@ -3,8 +3,11 @@
 //! append-only triggers first, then change rows with plain SQL.
 
 mod anchors;
+mod changes;
+mod list;
 mod record_events;
 mod seals;
+mod search;
 
 use lis_core::{
     Capability, CorrelationId, InstrumentId, Principal, SessionId, UserId, UtcTimestamp,
@@ -347,82 +350,4 @@ fn verify_cannot_detect_full_recomputation_or_tail_truncation_without_anchors() 
     .unwrap();
     recompute_hash(&conn, 2);
     assert!(verify(&conn, Stream::Clinical).unwrap().is_intact());
-}
-
-#[test]
-fn list_pages_newest_first_with_filters() {
-    let (_dir, mut conn) = open();
-    append_clinical(&mut conn, 5);
-    let filter = |before_seq, record_id| crate::EventFilter {
-        stream: Stream::Clinical,
-        before_seq,
-        limit: 2,
-        action: Some("specimen.receive"),
-        record_type: None,
-        record_id,
-        self_approvals_only: false,
-    };
-    let seqs = |events: Vec<crate::StoredEvent>| events.iter().map(|e| e.seq).collect::<Vec<_>>();
-    assert_eq!(
-        seqs(crate::list(&conn, &filter(None, None)).unwrap()),
-        [5, 4]
-    );
-    assert_eq!(
-        seqs(crate::list(&conn, &filter(Some(4), None)).unwrap()),
-        [3, 2]
-    );
-    assert_eq!(
-        seqs(crate::list(&conn, &filter(None, Some("specimen-2"))).unwrap()),
-        [2]
-    );
-    let first = &crate::list(&conn, &filter(Some(2), None)).unwrap()[0];
-    assert_eq!(
-        (
-            first.principal_kind.as_str(),
-            first.outcome.as_str(),
-            first.authority.as_deref()
-        ),
-        ("user", "succeeded", Some("accession"))
-    );
-    let mut other = filter(None, None);
-    other.stream = Stream::Security;
-    assert!(crate::list(&conn, &other).unwrap().is_empty());
-}
-
-#[test]
-fn list_can_show_only_self_approvals() {
-    let (_dir, mut conn) = open();
-    append_clinical(&mut conn, 2);
-    let principal = user();
-    let attribution = Attribution {
-        principal: &principal,
-        occurred_at: at("2026-10-12T11:00:00.000000000Z"),
-        recorded_at: at("2026-10-12T11:00:00.000000001Z"),
-        correlation_id: CorrelationId::generate(),
-        authority: &[Capability::ApproveConfiguration],
-    };
-    let tx = conn
-        .transaction_with_behavior(TransactionBehavior::Immediate)
-        .unwrap();
-    let marked = AuditEvent::new(
-        Stream::Clinical,
-        "catalog.approve_method_version",
-        Outcome::Succeeded,
-    )
-    .record("method_version", "method-1")
-    .self_approval();
-    append(&tx, &attribution, &marked).unwrap();
-    tx.commit().unwrap();
-    let filter = |self_approvals_only| crate::EventFilter {
-        stream: Stream::Clinical,
-        before_seq: None,
-        limit: 10,
-        action: None,
-        record_type: None,
-        record_id: None,
-        self_approvals_only,
-    };
-    let seqs = |events: Vec<crate::StoredEvent>| events.iter().map(|e| e.seq).collect::<Vec<_>>();
-    assert_eq!(seqs(crate::list(&conn, &filter(false)).unwrap()), [3, 2, 1]);
-    assert_eq!(seqs(crate::list(&conn, &filter(true)).unwrap()), [3]);
 }

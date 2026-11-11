@@ -1,0 +1,6 @@
+/* Each acceptance test case on its own line. */
+.cases {
+  margin: var(--space-2) 0;
+  padding: 0;
+  list-style: none;
+}

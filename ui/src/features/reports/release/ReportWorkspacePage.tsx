@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { Facts } from "@/components/Facts";
 import { Page, PageHeader } from "@/components/Page";
@@ -17,10 +18,11 @@ import {
   GET_REPORT_WORKSPACE,
   PREPARE_REPORT_CANDIDATE,
   type ReportWorkspace,
+  type RevisionSummary,
   type WorkspaceReport,
 } from "../contract";
 import { AVAILABILITY, COMPLETENESS, RELATIONSHIP, revisionText } from "../labels";
-import { candidatePath, reportPath, workspacePath } from "../paths";
+import { candidatePath, reportPath, revisionPath, workspacePath } from "../paths";
 import { CandidateSummary } from "./CandidateSummary";
 import { PrepareCandidateDialog } from "./PrepareCandidateDialog";
 
@@ -97,9 +99,15 @@ function Workspace({ workspace }: { workspace: ReportWorkspace }) {
   const { specimenId, report, preview, openCandidate } = workspace;
   const canDeliver = useHasCapability("deliver_reports");
   const canReviewQuality = useHasCapability("manage_quality");
+  const canRead = canDeliver || canReviewQuality;
+  const upToDate = upToDateRevision(workspace);
   return (
     <div className={styles.stack}>
-      <ReleaseBlocked gates={preview.gates} />
+      {report && upToDate ? (
+        <UpToDate report={report} revision={upToDate} canRead={canRead} />
+      ) : (
+        <ReleaseBlocked gates={preview.gates} />
+      )}
       {workspace.unavailableCandidateId && (
         <Section title="Open candidate unavailable">
           <p role="alert">
@@ -108,7 +116,7 @@ function Workspace({ workspace }: { workspace: ReportWorkspace }) {
             prepare a new candidate when its gates pass. The damaged candidate and incident remain
             preserved.
           </p>
-          {report && (canDeliver || canReviewQuality) && (
+          {report && canRead && (
             <Link to={reportPath(report.reportId)}>View report and preservation incidents</Link>
           )}
         </Section>
@@ -119,11 +127,7 @@ function Workspace({ workspace }: { workspace: ReportWorkspace }) {
           { label: "Specimen type", value: workspace.specimenTypeCode },
           {
             label: "Report",
-            value: report ? (
-              <ReportLink report={report} canRead={canDeliver || canReviewQuality} />
-            ) : (
-              "Not yet issued"
-            ),
+            value: report ? <ReportLink report={report} canRead={canRead} /> : "Not yet issued",
           },
         ]}
       />
@@ -147,6 +151,15 @@ function Workspace({ workspace }: { workspace: ReportWorkspace }) {
       <Section title="Content as it would print">
         {preview.content ? (
           <ReportContent content={preview.content} />
+        ) : upToDate ? (
+          <p className={styles.hint}>
+            Nothing new to print: revision {upToDate.revisionNo} is the issued content.{" "}
+            {canRead && (
+              <Link to={revisionPath(upToDate.revisionId)}>
+                View revision {upToDate.revisionNo} as issued
+              </Link>
+            )}
+          </p>
         ) : (
           <p className={styles.hint}>
             Nothing can be shown yet: the engine lists above what is missing.
@@ -154,6 +167,38 @@ function Workspace({ workspace }: { workspace: ReportWorkspace }) {
         )}
       </Section>
     </div>
+  );
+}
+
+/**
+ * The current revision when the engine's only gate is that nothing changed since it: the
+ * revision already holds this content, so there is nothing to release rather than a block.
+ * Right after a release the workspace is in this state.
+ */
+function upToDateRevision({ report, preview }: ReportWorkspace): RevisionSummary | undefined {
+  const onlyNothingChanged =
+    preview.gates.length > 0 && preview.gates.every((gate) => gate.code === "nothing_changed");
+  if (!onlyNothingChanged || report?.availability !== "current") return undefined;
+  return report.currentRevision ?? undefined;
+}
+
+interface UpToDateProps {
+  report: WorkspaceReport;
+  revision: RevisionSummary;
+  canRead: boolean;
+}
+
+/** The neutral state of an up-to-date report, leading to the report and its delivery. */
+function UpToDate({ report, revision, canRead }: UpToDateProps) {
+  return (
+    <Alert tone="info" title={`Revision ${revision.revisionNo} is current`}>
+      <p>
+        Nothing new to release: nothing changed since {report.reportNumber} revision{" "}
+        {revision.revisionNo} was released. A new revision can be prepared once the results or
+        report details change.
+      </p>
+      {canRead && <Link to={reportPath(report.reportId)}>View report and delivery</Link>}
+    </Alert>
   );
 }
 

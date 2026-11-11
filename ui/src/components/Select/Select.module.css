@@ -11,6 +11,18 @@
   color: var(--color-text-muted);
 }
 
+/*
+ * React Aria marks the select, not its trigger, invalid: the trigger takes the invalid
+ * border here, and a "Select…" placeholder still showing turns red with it.
+ */
+[data-invalid] > .trigger {
+  border-color: var(--tone-danger-border);
+}
+
+[data-invalid] > .trigger > .value[data-placeholder] {
+  color: var(--tone-danger-text);
+}
+
 .chevron {
   width: var(--icon-size);
   height: var(--icon-size);

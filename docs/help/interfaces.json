@@ -1,0 +1,922 @@
+{
+  "id": "interfaces",
+  "title": "Interfaces",
+  "summary": "Receive HL7 orders from a clinic's EMR and send HL7 results, report PDFs and billing handoff files to outside systems, through a folder or the partner's SFTP server, or HL7 over MLLP with a partner on the lab network; map codes between the LIS and each partner, follow every message in Logs, and decide on messages no connection matched.",
+  "reviewedOn": "2026-11-10",
+  "routes": [
+    "/interfaces/connections",
+    "/interfaces/connections/:connectionId/:tab?",
+    "/interfaces/logs/:tab?",
+    "/interfaces/unrouted"
+  ],
+  "sections": [
+    {
+      "title": "How to use this area",
+      "paragraphs": [
+        "HL7 Orders connections bring orders in: the LIS reads OML^O21 (or ORM^O01) files a clinic's EMR leaves in a folder or on the clinic's SFTP server, or listens over MLLP – LIS listens, on an address of this computer on the lab network, for the EMR to send them. Each message becomes an order in Received status, which the laboratory accepts or rejects in Orders as any other order; until its patient is registered with the identifier it carries, it waits. A message from another sending facility, with an unknown test code or that cannot be read is refused: its file moves to Failed, or over MLLP the EMR's interface reads AR or AE with the reason. Every read file moves to Processed or Failed, by year and month; over MLLP each message is answered only once it is saved.",
+        "A connection says which messages go to an outside system, where, and when. Four message types go out or come in. HL7 Results: an HL7 v2.5.1 ORU^R01 result message with the partner's codes, made when a report revision is released. Report PDF: the issued report PDF, made at the same time. Billing JSON: the billing handoff file, made when a billing handoff is created. Files are written to a folder on this computer or on the lab network, which the partner's system reads, or uploaded to the partner's SFTP server over an encrypted connection the LIS opens; the LIS never accepts connections for them. HL7 Results can also go over MLLP – LIS connects: the LIS opens a connection to the partner's interface on the lab network, sends each message as it is and waits for the partner's acknowledgement. The only connections the LIS accepts are those of an HL7 Orders connection over MLLP – LIS listens, and only from the partner addresses it allows. MLLP is not encrypted, so every MLLP address must be on the lab network, or reached through the lab's VPN. Analyzers are not set up here; they stay in Laboratory setup › Instruments.",
+        "An HL7 Results connection sends each test and analyte with the partner's code, from its Code mappings. A result whose test or analyte has no approved mapping, or whose unit is not the mapping's UCUM unit, is held: it is never sent with a guessed code or a converted unit. Mapping changes are drafts until a second person approves them as a new version, which applies to messages not written yet.",
+        "When a report is released or a handoff is created, the LIS checks it against the routing rules of every connection of its type in the same step. It goes to each connection whose rules all match. If no connection matches, it waits in Unrouted messages. If the laboratory has no connection of the type at all, nothing is made, and files are exported by hand as before.",
+        "A report's later revision, a correction or a supplement, goes first to every Report PDF connection that had an earlier revision, even if its rules no longer match, and is written before other waiting messages. An earlier revision not written yet is replaced and never written. When a report is withdrawn, its withdrawal notice goes to every connection an earlier revision was written to. A revision whose impact review is open waits until the review is done.",
+        "The LIS writes a connection's messages, or reads and receives its orders, only while it is started, a destination check covers its current folder, SFTP server or MLLP address, and its interface contract is approved with acceptance tests that passed for the connection as it is now. The contract records what the partner and the laboratory agreed; a second person approves each version. The acceptance tests are the LIS's own synthetic checks of the connection's messages; a new contract version, a new code mapping version or a change to the settings that shape the messages makes them run again. It tries every 10 seconds, at the sign-in screen too, but not while the app is closed. Logs show every message with what the folder or server can prove: written (uploaded, for SFTP; sent, for MLLP), failed or not sent. A folder or SFTP server never confirms that the other system used the file, so a written file always shows Outcome unknown, never Delivered. An MLLP partner answers each message: Accepted (AA), or Rejected (AE or AR) with its reason; until it answers, the message shows Awaiting application ACK and is sent again, the same message with the same control ID."
+      ]
+    },
+    {
+      "title": "Good practice",
+      "paragraphs": [
+        "Save a new connection stopped, test the folder or server, send a test message, and have the partner confirm they received it. Then have a second person record the destination check. Draft the interface contract with the terms agreed with the partner's IT, have a second person approve it, run the acceptance tests, and start the connection.",
+        "For SFTP, get the server's fingerprint from the partner's IT through a channel you trust, such as a call-back, and prefer SSH key sign-in: the LIS's public key can be shared freely, and no password needs to be kept.",
+        "For MLLP, agree the partner's address and port and what its acknowledgements mean with the partner's IT; an address outside the lab network needs the lab's VPN. Send a test message: the partner's answer shows at once. For MLLP – LIS listens, give the EMR's IT this computer's lab-network address and the port, ask for the address its interface connects from, and allow only that address.",
+        "For HL7 Orders, agree with the clinic which identifier PID-3 carries (with its assigning authority and type) and register patients with it; map every order code the clinic sends, with the test's sequence role from the contract, before starting the connection.",
+        "Keep rules specific. A billing file with patients of several clients goes only to a connection whose rules accept every one of those clients, so one client's billing company never receives another client's patients. A rule on Test likewise needs every test on the report or handoff to meet it.",
+        "The partner receiving patient data must be covered by a business associate agreement. That is the laboratory's responsibility; the LIS shows it as a reminder when the destination check is recorded."
+      ]
+    },
+    {
+      "title": "If you cannot continue",
+      "paragraphs": [
+        "A connection in Error could not write its latest message, or for HL7 Orders could not read its folder or server. Its Overview names the problem. Fix the folder, the server or the permissions, then use Send again on the failed message in Logs; it was retried automatically up to 5 times. A message that matched no connection waits in Unrouted messages until someone decides. A rejected message stays under Logs › Rejected until someone uses Mark resolved… on it."
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "title": "Connections",
+      "routes": ["/interfaces/connections"],
+      "purpose": "See every connection to an outside system, how it is working, and add a connection.",
+      "access": "Manage configuration is required to see the Interfaces menu and every action on it.",
+      "fields": [
+        {
+          "name": "Active connections / With errors / Waiting for acknowledgement / Unrouted messages",
+          "meaning": "Counts that need attention: started connections working normally, started connections whose latest attempt failed, messages sent that wait for the partner's acknowledgement, and messages waiting for a decision.",
+          "values": "Whole numbers; … while loading. With errors shows in red, the other two in amber, when not zero.",
+          "rules": "Read-only. Only an MLLP partner answers: Waiting for acknowledgement counts messages sent over MLLP – LIS connects that the partner has not acknowledged yet, and shows only while at least one such connection exists; a folder or SFTP server never answers, and an MLLP – LIS listens connection sends the acknowledgements itself. Unrouted messages also shows beside the menu entry."
+        },
+        {
+          "name": "All / Orders in / Results out / Report PDFs / Billing",
+          "meaning": "Which kind of exchange the list shows, with its number of connections.",
+          "values": "All; Orders in (HL7 Orders connections); Results out (HL7 Results connections); Report PDFs (Report PDF connections); Billing (Billing JSON connections).",
+          "rules": "The tab stays in the address (?type=)."
+        },
+        {
+          "name": "Name, Partner, Message, Dir., Protocol, Destination",
+          "meaning": "What the connection carries and where: its name, the client, clinic or billing company, the message type, the direction (Out: the LIS sends), the protocol and the destination.",
+          "values": "As saved on the connection. Protocol: Folder, SFTP, MLLP – LIS connects or MLLP – LIS listens. Destination: the folder; for SFTP the server and remote folder, such as sftp.clinic-a.example:/inbound/results, with the port after the server when it is not 22; for MLLP – LIS connects the partner's address and port, such as 10.20.0.15:6661; for MLLP – LIS listens LAN and the address and port the LIS listens on, such as LAN 192.168.1.20:6660.",
+          "rules": "Read-only. Open the row to change it."
+        },
+        {
+          "name": "Status",
+          "meaning": "Whether the connection works now.",
+          "values": "Active: started, and its latest attempt worked or none was made. Stopped: a person stopped it. Error: started, but its latest attempt failed; for MLLP – LIS connects, also when the partner did not acknowledge in time; for HL7 Orders read from a folder or SFTP server, when its latest reading failed (the folder or server could not be read, or a file could not be read, saved or moved); for MLLP – LIS listens, also when the LIS cannot listen on its address and port. A refused order message does not put the connection in Error: it shows under Logs › Rejected.",
+          "rules": "A stopped connection writes and reads nothing, and a stopped listener closes its port; its messages wait."
+        },
+        {
+          "name": "Destination check",
+          "meaning": "Whether someone recorded how the current folder, SFTP server, MLLP partner or listener was confirmed as the partner's.",
+          "values": "Verified; Not verified.",
+          "rules": "Patient data is never written to a destination that is not verified, and the LIS does not listen for one. Another folder, for SFTP another server, port, username, remote folder or server fingerprint, for MLLP – LIS connects another partner address or port, or for MLLP – LIS listens another address, port or allowed partner address, needs a new check. Changing only the sign-in, the password, a partner's note, the ACK timeout or the idle timeout does not."
+        },
+        {
+          "name": "Last attempt, Waiting, Awaiting ACK, Errors",
+          "meaning": "When the LIS last tried to write or send a message (for HL7 Orders, when it last read the folder or server, else the last message received), how many messages wait to be written (for HL7 Orders, wait for a patient or are held), how many sent over MLLP wait for the partner's acknowledgement, and how many have failed attempts (for HL7 Orders, were refused).",
+          "values": "A time or None yet; whole numbers.",
+          "rules": "Synthetic test messages are not counted. A message awaiting its acknowledgement is not counted in Errors; it is sent again at its next attempt. Awaiting ACK counts only for MLLP – LIS connects; it is — for a folder, SFTP or MLLP – LIS listens connection, which awaits no acknowledgement."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Add connection",
+          "does": "Opens the Add connection dialog.",
+          "availableWhen": "Manage configuration.",
+          "result": "See Add or change a connection below."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reloads the list.",
+          "availableWhen": "Always.",
+          "result": "Shows the latest status and counts."
+        },
+        {
+          "name": "Open record",
+          "does": "Opens the record the message was made from: the report revision sent, the withdrawn report, or the billing handoff.",
+          "availableWhen": "A click on the Record link; not on a test message or a received order.",
+          "result": "Nothing changes. The report or handoff page needs its own rights and records the read as it does from Reports or Billing."
+        },
+        {
+          "name": "Open row",
+          "does": "Opens the connection's page.",
+          "availableWhen": "A listed connection.",
+          "result": "Overview, Rules, Logs and History of that connection."
+        }
+      ],
+      "restrictions": [
+        "This release sends HL7 results, report PDFs and Billing JSON files to a folder or to the partner's SFTP server, and HL7 results over MLLP – LIS connects to a partner on the lab network; it reads HL7 orders from a folder or an SFTP server, or receives them over MLLP – LIS listens from a partner on the lab network. No acknowledgement is sent back for orders read from files.",
+        "Connections are stopped, never deleted, so their history and messages stay."
+      ],
+      "workflow": [
+        "Add the connection and Save as stopped.",
+        "On its page, use Test connection, then Send test message, and ask the partner to confirm the test file.",
+        "Have a second person use Record destination check.",
+        "On Overview, open Interface contract and use Draft v1 with the agreed terms; have a second person use Approve v1, then Run acceptance tests until they pass.",
+        "Start the connection. New released reports or billing handoffs are then written to the folder or server."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A connection shows Error",
+          "recovery": "Open it: Overview's Last connection names the latest problem, such as Folder not found, This computer may not write there, or for SFTP The server did not answer. Fix the folder or server, use Test connection, then send the failed messages again from Logs › Failed. An HL7 Orders connection is Active again after its next reading that works; files not read stay in the input folder and are read then."
+        },
+        {
+          "problem": "An MLLP – LIS listens connection shows Error, or Not listening on its page",
+          "recovery": "Its Overview says why, such as The port is in use by another program or connection, or The address is not one of this computer's addresses. Close the other program or choose another port, or use this computer's current lab-network address; Edit the connection and use Test listener. The LIS tries again every 5 seconds, so it listens as soon as the port is free. A changed address or port needs the destination check again, and the EMR's IT must send to the new one."
+        },
+        {
+          "problem": "Awaiting ACK does not go down",
+          "recovery": "The MLLP partner received nothing it answered: check with the partner's IT that its interface is running and answers with an application ACK. The LIS sends the same message again, with the same control ID, at each retry; after the fifth attempt it fails and waits for Send again in Logs."
+        },
+        {
+          "problem": "Waiting does not go down",
+          "recovery": "Check that the connection is started, that its destination check is Verified, that its Interface contract line says acceptance tests passed, and its schedule. Logs show the reason on each waiting message, such as Interface contract not approved, or its acceptance tests not passed: open Interface contract on Overview, approve a version and run the tests, fixing what a failed case names (often a code mapping without a UCUM unit); a report revision also waits while its impact review is open, and an HL7 result while its patient has no identifier (Held: the patient has no identifier). Nothing is written while a recovery reconciliation after a restore is open."
+        }
+      ]
+    },
+    {
+      "title": "Add or change a connection",
+      "routes": ["/interfaces/connections/:connectionId/:tab?"],
+      "purpose": "Set what a connection carries, its folder, SFTP server, MLLP partner or MLLP listener, its routing rules or what it accepts, and when it writes; then manage, test and check it.",
+      "access": "Manage configuration. Recording the destination check follows the laboratory's separation-of-duties policy.",
+      "fields": [
+        {
+          "name": "Name",
+          "meaning": "How staff recognize the connection.",
+          "values": "Free text, such as Billing - RCM.",
+          "rules": "Required; up to 80 characters; no two connections may share a name (case is ignored)."
+        },
+        {
+          "name": "Partner (client)",
+          "meaning": "The client, clinic or billing company that receives the files; for HL7 Orders, the laboratory's client the orders are for.",
+          "values": "Free text, such as the clinic's or billing company's name. For HL7 Orders, one of the laboratory's active clients, chosen from the list (code – name).",
+          "rules": "Required; up to 80 characters. Every order an HL7 Orders connection receives is for this client."
+        },
+        {
+          "name": "Message",
+          "meaning": "What the connection carries, which also fixes the direction and when a message is made.",
+          "values": "HL7 Orders (OML^O21 / ORM, v2.5.1): order messages a clinic's EMR writes, read in. HL7 Results (ORU^R01, v2.5.1): the released results with the partner's codes, sent out when a report revision is released. Report PDF: the issued report PDF, exactly as released, sent out at the same time. Billing JSON: the billing handoff file (format bil-handoff-v2), sent out when a billing handoff is created.",
+          "rules": "Required; nothing is preselected. It cannot change after saving; add another connection instead. An HL7 Orders connection has no routing rules, schedule or file name; section 4 is What to accept."
+        },
+        {
+          "name": "Direction",
+          "meaning": "Whether the LIS sends or receives on this connection.",
+          "values": "In – LIS receives (HL7 Orders); Out – LIS sends (the other types).",
+          "rules": "Read-only; the message type fixes it."
+        },
+        {
+          "name": "Input folder, Processed folder, Failed folder",
+          "meaning": "For HL7 Orders over a folder: where the LIS reads new files, and where each read file then moves: Processed, or Failed when it was refused.",
+          "values": "Folders chosen with Choose folder…; they cannot be typed.",
+          "rules": "Required. Only complete files are read: names ending in .hl7 (any case), not hidden and not .tmp; at most 20 per reading. A read file moves into a year and month subfolder, such as Processed › 2026 › 11; a name already there gets -1, -2 and so on, so nothing is replaced. Logs show the full path."
+        },
+        {
+          "name": "Check every",
+          "meaning": "For HL7 Orders over a folder or SFTP: how often the input folder is read, and messages waiting for their patient are tried again.",
+          "values": "Seconds, 10 to 3600. Default 30.",
+          "rules": "Required. It is read while the app is open, at the sign-in screen too. Not shown for MLLP – LIS listens, which receives each message as the EMR sends it; its messages waiting for their patient are tried again every 30 seconds unless the connection kept another value from a folder or SFTP."
+        },
+        {
+          "name": "Remote input folder, Remote processed folder, Remote failed folder",
+          "meaning": "For HL7 Orders over SFTP: the folders on the clinic's server the LIS reads from and moves files to.",
+          "values": "Paths from the server's root, such as /outbound/orders, /outbound/processed, /outbound/failed.",
+          "rules": "Required; each starts with /, has no .. part and is up to 1024 characters. Year and month subfolders are made as needed."
+        },
+        {
+          "name": "Accept messages from",
+          "meaning": "For HL7 Orders: the sending facility (MSH-4) the clinic's messages carry.",
+          "values": "Text as the clinic's EMR sends it, such as CLINIC-A.",
+          "rules": "Required; up to 180 characters; compared exactly. A message from another sending facility is refused and its file moves to Failed; over MLLP it is answered AR. It also scopes a patient identifier without an assigning authority."
+        },
+        {
+          "name": "Unknown patient",
+          "meaning": "For HL7 Orders: what happens when no registered patient has an identifier the message carries (PID-3, by assigning authority and type).",
+          "values": "Hold until the patient is registered (default): the message waits and becomes an order at the first reading after the patient is registered with the identifier; over MLLP it is answered AA, as it is kept. Move to Failed and log (over MLLP, Reject with AE and log): it is refused.",
+          "rules": "The LIS never creates a patient from a message. A patient found whose family name or birth date differs from the message is held for review; identifiers that belong to two patients too."
+        },
+        {
+          "name": "Unknown test code",
+          "meaning": "For HL7 Orders: what happens to an order code (OBR-4) with no approved code mapping.",
+          "values": "Move to Failed and log; over MLLP, Reject with AE and log.",
+          "rules": "Fixed. A code is never guessed."
+        },
+        {
+          "name": "Protocol",
+          "meaning": "How messages travel, chosen among cards. Section 3 shows the folder, the SFTP server, the MLLP partner or the MLLP listener to match.",
+          "values": "Folder: shared folder on the lab network. SFTP: the partner's server, over the internet, encrypted; the LIS connects to it. MLLP – LIS connects: real-time HL7 to the partner's interface on the lab network, for HL7 Results only; the LIS connects to it. MLLP – LIS listens: the partner's interface connects to the LIS on the lab network only, for HL7 Orders only.",
+          "rules": "Folder is selected for a new connection. A card the chosen message cannot travel by is not offered. A saved connection may change protocol; its new destination then needs a new destination check."
+        },
+        {
+          "name": "Output folder",
+          "meaning": "For the Folder protocol: where the LIS writes the files, for the partner's system to read.",
+          "values": "A folder chosen with Choose folder…; it cannot be typed.",
+          "rules": "Required. The LIS writes each file under a temporary .tmp name and renames it only when complete. It never replaces a file: a name already taken by other content gets -1, -2 and so on before the extension."
+        },
+        {
+          "name": "Server",
+          "meaning": "For SFTP: the partner's SFTP server.",
+          "values": "A server name or IP address only, such as sftp.clinic-a.example; no user, path or spaces.",
+          "rules": "Required; up to 253 characters."
+        },
+        {
+          "name": "Port",
+          "meaning": "For SFTP: the server's port. For MLLP – LIS connects: the port of the partner's interface. For MLLP – LIS listens: the port the LIS listens on, which the partner's interface connects to.",
+          "values": "1 to 65535. SFTP default 22; MLLP has no default, as it is agreed with the partner's IT, such as 6661, or 6660 for a listener.",
+          "rules": "Required. This computer must be allowed to connect out to it; for a listener, its firewall must let the partner's address in, and no other program may use the port. Many computers let only administrators listen on ports below 1024."
+        },
+        {
+          "name": "Listen on address",
+          "meaning": "For MLLP – LIS listens: this computer's IP address on the lab network, where the LIS listens for the partner.",
+          "values": "An IPv4 or IPv6 address of this computer on the lab network: private (10.x.x.x, 172.16–31.x.x, 192.168.x.x), link-local or 127.0.0.1 for a partner on this computer, such as 192.168.1.20; not a server name.",
+          "rules": "Required. An internet address, and 0.0.0.0 (every address), are refused: the LIS never listens on an internet address. An address this computer does not have shows as a problem on the connection, and Test listener says so."
+        },
+        {
+          "name": "Partner addresses allowed to connect",
+          "meaning": "For MLLP – LIS listens: the addresses the partner's interface connects from; only they are let in.",
+          "values": "1 to 20 IP addresses on the lab network, comma separated, each with an optional note in brackets, such as 192.168.1.50 (Hospital B interface engine). Notes are up to 80 characters on one line.",
+          "rules": "Required; each address once. A connection from any other address is closed at once, without an answer; it is counted and recorded in the audit trail at most once a minute per address. Adding or removing an address needs a new destination check; a changed note does not."
+        },
+        {
+          "name": "Partner address",
+          "meaning": "For MLLP – LIS connects: the IP address of the partner's interface, which receives the HL7 results.",
+          "values": "An IPv4 or IPv6 address on the lab network: private (10.x.x.x, 172.16–31.x.x, 192.168.x.x), link-local or this computer (127.0.0.1), such as 10.20.0.15; not a server name.",
+          "rules": "Required. An internet address is refused: MLLP is not encrypted, so a partner outside the lab network is reached through the lab's VPN, or uses SFTP. The address is checked again before every connection."
+        },
+        {
+          "name": "Acknowledgement",
+          "meaning": "For MLLP – LIS connects: what the LIS waits for after each message. For MLLP – LIS listens: what the LIS answers each message with.",
+          "values": "Application ACK (AA / AE / AR). Connects: the partner's answer on the same connection, AA accepted, AE an error in the message, AR rejected. Listens: the LIS's answer once the message is saved: AA when it is kept, as an order, waiting for its patient or held for review; AE when its content is refused, such as an unknown test code, ordering provider or location, or an unknown patient set to Reject; AR when it comes from another sending facility, cannot be read, is not an OML^O21 or ORM^O01, has no control ID (MSH-10) or is not a new order. AE and AR carry the reason in words (MSA-3). A replay gets the answer the first one got.",
+          "rules": "The only choice. An answer with another code, such as a commit acknowledgement (CA), or for another message, is not taken as an acknowledgement. A listener answers only after the message is saved: a message that could not be saved gets no answer, so the partner sends it again."
+        },
+        {
+          "name": "Character set",
+          "meaning": "For MLLP – LIS listens: how the bytes of each message are read.",
+          "values": "UTF-8, the only choice.",
+          "rules": "A message that is not UTF-8 text is answered AR."
+        },
+        {
+          "name": "Idle timeout (s)",
+          "meaning": "For MLLP – LIS listens: how long a partner's connection may send nothing before the LIS closes it.",
+          "values": "10 to 3600 seconds; default 300.",
+          "rules": "Required. The partner connects again for its next message. At most 4 partner connections are served at once per listener; a message larger than 1 MiB, or bytes that are not MLLP frames, close the connection without an answer."
+        },
+        {
+          "name": "ACK timeout (s)",
+          "meaning": "For MLLP: how long the LIS waits for the partner's acknowledgement.",
+          "values": "1 to 300 seconds; default 30.",
+          "rules": "Required. Without an ACK in time, the message shows Awaiting application ACK and is sent again at the next retry, the same message with the same control ID, so the partner can recognize it; after the fifth attempt it fails."
+        },
+        {
+          "name": "Username",
+          "meaning": "For SFTP: the account the partner's IT made for the laboratory, such as vibetox_lab.",
+          "values": "Free text.",
+          "rules": "Required; up to 64 characters."
+        },
+        {
+          "name": "Sign-in",
+          "meaning": "For SFTP: how the LIS proves who it is.",
+          "values": "SSH key (recommended; default): the LIS's own key, whose public key the partner's IT allows for the username (Copy LIS public key). Password: the account's password.",
+          "rules": "Required. One LIS key serves every SFTP connection of this installation."
+        },
+        {
+          "name": "Password",
+          "meaning": "For SFTP with Password sign-in: the account's password.",
+          "values": "Typed, masked.",
+          "rules": "Kept sealed with the installation key on this computer; never shown again or sent anywhere but this server. Required for a new connection, and again when the server, port or username changes. Otherwise leave it empty to keep the saved password."
+        },
+        {
+          "name": "Server fingerprint",
+          "meaning": "For SFTP: the fingerprint of the server's key, which proves it is the partner's server.",
+          "values": "SHA256: and 43 characters, as OpenSSH prints it, such as SHA256:8Zq3… from the partner's IT.",
+          "rules": "Required. The LIS refuses to connect when the server presents another key; Test connection then shows the fingerprint it presented. The server must offer an Ed25519 or ECDSA key; a server with only an RSA key cannot be used."
+        },
+        {
+          "name": "Remote folder",
+          "meaning": "For SFTP: the folder on the server the files go to.",
+          "values": "A path from the server's root, such as /inbound/results.",
+          "rules": "Required; starts with /; no .. part; up to 1024 characters; it must exist on the server. Files are uploaded under a temporary .tmp name and renamed when complete. An existing file is never replaced: a name taken by other content gets -1, -2 and so on before the extension."
+        },
+        {
+          "name": "Routing rules",
+          "meaning": "Which messages go to this connection. A rule is a field, a condition and a value.",
+          "values": "Field: Client (client code), Practitioner (NPI), Location (client location code), Test (orderable code). An HL7 Results connection names them by the HL7 fields that carry them: ORC-21 Ordering facility, OBR-16 Ordering provider (NPI), PV1-3 Location, OBR-4 Test (LIS code); the values are still the LIS codes. For a report, these are the order's client, practitioner and location and the tests on the report's specimen. Condition: equals; is one of (codes separated by commas, up to 50); starts with.",
+          "rules": "Up to 20 rules; values up to 200 characters; codes are compared exactly. All rules must match, and a rule matches only when every value of its field in the message meets it; a message with no value for the field does not match. With no rules, every message of the type goes to the connection. A message goes to every connection whose rules match. A report's later revision or withdrawal notice goes to the connections that had the report whatever their rules."
+        },
+        {
+          "name": "Send when",
+          "meaning": "What makes a message.",
+          "values": "Results released (HL7 Results: when the report revision with them is released); Report released (Report PDF); Billing handoff created (Billing JSON).",
+          "rules": "The message type fixes it, so the list offers only its one choice. For HL7 Results and Report PDF, a note says that corrections and withdrawals go first, to every connection that received the earlier revision; HL7 sends them with the corrected status."
+        },
+        {
+          "name": "Schedule, Minutes, Time",
+          "meaning": "When waiting messages are written.",
+          "values": "Immediately (within about 10 seconds); Every N minutes (1 to 1440, at multiples of N minutes since midnight UTC); Daily at a time (HH:MM, in the laboratory's time zone).",
+          "rules": "The schedule applies to a message's first attempt; retries do not wait for it. A daily schedule needs the laboratory profile's time zone."
+        },
+        {
+          "name": "File name",
+          "meaning": "The name pattern of each file.",
+          "values": "Letters, digits, '.', '_', '-' and the placeholders of the message type. HL7 Results and Report PDF: {report} (the report number: the accession number and the specimen type code, such as A26000010-UR), {accession} (the accession number alone, such as A26000010) and {revision} (the revision number; a withdrawal reads <n>-withdrawn). Billing JSON: {handoff} (the handoff number). All: {date} (YYYYMMDD) and {time} (HHMMSS), in the laboratory's time zone, from when the message was queued for this connection. Default: {report}_r{revision}_{date}.hl7, {report}_r{revision}_{date}.pdf or billing-{handoff}_{date}.json, filled in when the message is chosen.",
+          "rules": "Required; up to 120 characters; may not start with a dot. HL7 Results: must contain {report} and {revision} and end in .hl7; {accession} is optional, since two specimens of one accession share it. Report PDF: the same, ending in .pdf. A pattern saved when {accession} stood for the report number reads {report}, so its files keep their names and its acceptance tests stay current. Billing JSON: must contain {handoff} and end in .json. Not shown for MLLP, where a message travels as it is, without a file."
+        },
+        {
+          "name": "Reason",
+          "meaning": "Why the connection is changed, started or stopped.",
+          "values": "Free text up to 500 characters.",
+          "rules": "Required for Edit, Start and Stop; recorded in History and the audit trail."
+        },
+        {
+          "name": "How it was confirmed",
+          "meaning": "How the current folder, the SFTP server with its username, remote folder and fingerprint, the MLLP partner's address and port, or the listener's address, port and allowed partner addresses, was confirmed as the partner's.",
+          "values": "Free text up to 500 characters, such as a call-back to the partner's IT.",
+          "rules": "Required to record the destination check."
+        },
+        {
+          "name": "Overview: Connection and Checks and contract",
+          "meaning": "Connection: partner, message, protocol and folder, send when and schedule, file name and rules. For SFTP, Protocol shows the server and port, then Remote folder, and Sign-in with the username and the server fingerprint shortened, such as SSH key as vibetox_lab · fingerprint SHA256:8Zq3...f1Kx. For MLLP, Protocol shows the partner, such as MLLP – LIS connects – 10.20.0.15:6661, and Acknowledgement shows Application ACK (AA / AE / AR) · timeout 30 seconds; there is no file name, and the page's description reads such as Sends an HL7 ORU result message with the partner's codes to CLINIC-B's interface over MLLP when results are released. An HL7 Orders connection shows its input folder, Processed and Failed folders, Check every, Accept messages from and Unknown patient instead of send when, file name and rules; the page's description reads such as Reads HL7 order messages from CLINIC-A's folder every 30 seconds. Over MLLP – LIS listens, Protocol shows where the LIS listens, such as MLLP – LIS listens – 192.168.1.20:6660, then Partners allowed, Acknowledgement (Application ACK (AA / AE / AR), after the message is saved · idle timeout 300 seconds) and Listener: Listening since <time>; Not listening: <why> (since <time>); tried again every 5 seconds; or Not listening: the connection is stopped, not checked, or its acceptance tests have not passed. It has no folders or Check every, and the description reads such as Receives HL7 order messages from CLINIC-B over MLLP on 192.168.1.20:6660. Checks and contract: who verified the destination, when and how; the interface contract, as v<n> · acceptance tests passed <time> (or failed <time>, out of date, not run), or Not approved: no patient data goes or comes until it is approved and tested, which opens the contract; the last connection and its result, as <time> · OK or <time> · <problem> (for HL7 Orders read from a folder or SFTP server, the latest reading and its first problem, such as Folder not found or A file could not be read; it stays in the input folder; after the app starts, the last message received until the first reading; over MLLP – LIS listens, the last message received); messages awaiting the partner's application acknowledgement; the last change with its reason.",
+          "values": "As recorded. Awaiting application ACK, for MLLP – LIS connects only, counts messages sent that the partner has not acknowledged yet; it is not shown for a folder or SFTP server, which never answer, or for MLLP – LIS listens, which sends the acknowledgements itself. HL7 Results and HL7 Orders connections also show their Code mappings card below, read-only. On the Rules tab, an HL7 Orders connection shows What to accept.",
+          "rules": "Read-only, but the Interface contract line, which opens the contract."
+        },
+        {
+          "name": "Interface contract: In force, Draft, Acceptance tests",
+          "meaning": "What the partner and the laboratory agreed for this connection (REQ-INT-001): the version in force with who approved it, when and why; the next version drafted and waiting for approval; and the latest run of the acceptance tests, each case with ✓ or ✗ and why it failed.",
+          "values": "Acceptance tests passed (the latest run, for the connection as it is now, passed), failed, out of date (the contract, the code mappings or the settings that shape the messages changed since), or not run. HL7 Results cases: code mappings approved, each analyte with a UCUM unit; the message header (partner, ORU^R01, 2.5.1); the patient's identifier sent in PID-3; the patient's sex sent as an HL7 table 0001 code; the partner's codes and unit sent; a censored value sent as SN with no interpretation; a correction with status C; a withdrawal with status W; over MLLP, the partner asked to answer each message. File connections: the file name pattern makes a valid name. HL7 Orders cases: a mapped order code makes an order in Received status; an exact replay makes no second order; the same message ID with changed content is held; an unknown test code and another sending facility are refused; an unknown patient waits or is refused, as set; over MLLP, each with the acknowledgement it should get (AA, AE or AR).",
+          "rules": "Patient data waits until a version is approved and the latest run passed. The tests use synthetic messages, the connection's settings and its approved code mappings; nothing is sent, and the order tests register a synthetic patient and provider and make orders in a transaction that is undone, so nothing they make is kept. They prove the LIS's side only: what the partner does with the messages is qualified with the partner."
+        },
+        {
+          "name": "Contract fields: Message and profile, Acknowledgements, Corrections and withdrawals, Between the LIS and the partner, Interface engine, Who answers for it, Agreed deviations",
+          "meaning": "The terms agreed with the partner's IT, in the laboratory's words.",
+          "values": "One line of text each. Message and profile, such as HL7 v2.5.1 ORU^R01, LRI Edition 5 based (up to 200 characters); Acknowledgements, what the partner's AA, AE and AR mean or how it confirms a file; Corrections and withdrawals, how the partner applies them; Between the LIS and the partner: The LIS itself, or The laboratory's interface engine, then Interface engine names it and its version (up to 120); Who answers for it, by role, at the partner and at the laboratory; Agreed deviations from the profile, empty for none (each up to 500).",
+          "rules": "All required but Agreed deviations, and Interface engine only when one sits between. A draft starts from the current draft or the version in force; saving another draft replaces it. Never enter patient data or credentials."
+        },
+        {
+          "name": "Approve interface contract: Reason",
+          "meaning": "Why the draft becomes the next version, such as terms confirmed with the partner's IT.",
+          "values": "Free text up to 500 characters.",
+          "rules": "Required; recorded in History and the audit trail. The person who drafted it may approve only if the laboratory's separation-of-duties policy allows and they confirm it."
+        },
+        {
+          "name": "Rules, Code mappings, Logs, History",
+          "meaning": "The routing rules; code mappings to a partner's codes; this connection's messages; every change with who, when, the settings changed and the reason or method.",
+          "values": "As recorded, newest first. Code mappings is empty for Report PDF and Billing JSON, whose files carry the LIS's own codes. History also lists each approved code mapping version and each approved interface contract version, with its reason.",
+          "rules": "Read-only, except Code mappings of an HL7 Results connection, and on Logs a row's ⋯ menu (Send again, Reject…, Mark resolved…, as on the Logs page); an outgoing message opens its details beside the list, as on the Logs page, without the connection link; a received order opens nothing, as its connection is already open. History is never edited."
+        },
+        {
+          "name": "Code mappings of an HL7 Orders connection: LIS test, Partner code, Sequence role, Status",
+          "meaning": "Each order code the clinic's EMR sends (OBR-4) with the LIS test it asks for and that test's sequence role.",
+          "values": "Sequence role: First line or Confirmation, as the partner's contract defines the code. Status as for results.",
+          "rules": "Add mapping asks for Partner code, LIS test and Sequence role, all required; a second person approves. An order whose code has no approved mapping is refused; the role is never inferred."
+        },
+        {
+          "name": "Code mappings: LIS test / analyte, Partner code, LOINC, Unit (UCUM), Status",
+          "meaning": "For an HL7 Results connection, the partner's code for each LIS test (sent in OBR-4) and analyte (sent in OBX-3), with its LOINC code and the UCUM unit of its results.",
+          "values": "LOINC shows from catalog when the mapping leaves it empty: the analyte's LOINC code in the catalog is sent, if it has one. Status: Approved v<n>; Draft – awaiting approval; Draft: remove – awaiting approval; Not mapped – held (a waiting message needs it).",
+          "rules": "A row with a draft shows the draft's values. A result is held while its test or analyte has no approved mapping, or while its quantity's unit is not the mapping's unit; nothing is converted."
+        },
+        {
+          "name": "Add mapping: Maps, LIS test or LIS analyte, Partner code, LOINC, Unit (UCUM)",
+          "meaning": "One mapping change, saved as a draft.",
+          "values": "Maps: Test (OBR-4) or Analyte (OBX-3). LIS test or analyte: chosen from the catalog by name or code. Partner code: up to 50 characters. LOINC: such as 12345-6, or empty to use the catalog's. Unit (UCUM): analytes only, up to 30 characters without spaces, such as ng/mL.",
+          "rules": "Partner code is required. For an existing row, the test or analyte cannot change."
+        },
+        {
+          "name": "Approve mappings: Reason",
+          "meaning": "Why the drafts are approved, such as codes confirmed with the partner's IT.",
+          "values": "Free text up to 500 characters.",
+          "rules": "Required; recorded in History and the audit trail."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Choose folder…",
+          "does": "Opens the system folder dialog.",
+          "availableWhen": "In the Add or Edit dialog, for the Folder protocol.",
+          "result": "The folder shows in Output folder. Cancelling the dialog changes nothing."
+        },
+        {
+          "name": "Test folder / Test folders / Test connection",
+          "does": "Creates, writes and removes a small probe file in the folder. For SFTP, Test connection connects to the server, checks its fingerprint and the sign-in, then writes and removes the probe file in the remote folder. In the dialog it tests the server as entered, with the typed password or, when changing a connection, its saved one for the same server and username. For HL7 Orders, Test folders (or Test connection over SFTP) only lists the input folder, never touching the clinic's files, and writes and removes the probe file in Processed and Failed. For MLLP, Test connection only connects to the partner's address and port and closes; it sends nothing.",
+          "availableWhen": "A chosen folder (for HL7 Orders, all three), SFTP server fields filled in, an MLLP partner address and port, or a saved connection.",
+          "result": "Says whether the LIS can write there, such as ✓ Connected, fingerprint matches, test file written and removed; or for MLLP ✓ 10.20.0.15:6661 takes a connection; nothing was sent (on the connection's page: The partner's interface takes a connection; nothing was sent); or the problem, with the fingerprint the server presented when it is not the one entered. Nothing is saved, no message is made and nothing is logged."
+        },
+        {
+          "name": "Test listener",
+          "does": "For MLLP – LIS listens: checks that the LIS can listen on the address and port, by opening the port for a moment and closing it. In the dialog it tests the address and port as entered; on the connection's page, the saved ones. When the connection's own listener already listens there, the test passes.",
+          "availableWhen": "The listener's address, port and allowed partner addresses filled in, or a saved MLLP – LIS listens connection.",
+          "result": "In the dialog ✓ Port 6660 free on 192.168.1.20.; on the page ✓ The LIS can listen on 192.168.1.20:6660.; or ✗ Cannot listen: <why>, such as The port is in use by another program or connection. Nothing is saved and nothing is logged; no partner is contacted."
+        },
+        {
+          "name": "Copy LIS public key",
+          "does": "Copies the LIS's public SSH key, such as ssh-ed25519 AAAA… openbga-tox, to the clipboard. An existing key keeps its original comment and remains usable. The first use makes this installation's key; its private key stays sealed on this computer and is never shown.",
+          "availableWhen": "SFTP with SSH key sign-in. Making the key needs the installation key to be available.",
+          "result": "Send the key to the partner's IT to allow for the username. If the clipboard cannot be used, the key is shown to copy by hand. Making the key is recorded in the audit trail; the same key is returned every time."
+        },
+        {
+          "name": "+ Add rule / × (Remove rule)",
+          "does": "Adds a rule line (field, condition, value) or removes one.",
+          "availableWhen": "In the dialog; up to 20 rules.",
+          "result": "Saved with the connection."
+        },
+        {
+          "name": "Cancel / Save as stopped / Save",
+          "does": "Cancel closes without saving; Save as stopped adds the connection stopped; Save adds it started, or saves the change.",
+          "availableWhen": "Valid fields; Save as stopped only when adding.",
+          "result": "The connection's page opens. A new connection writes no patient data until its destination check is recorded."
+        },
+        {
+          "name": "Interface contract (the Overview line)",
+          "does": "Opens the interface contract: the version in force, the draft and the acceptance tests.",
+          "availableWhen": "On a saved connection's Overview.",
+          "result": "The contract dialog, with Run acceptance tests, Approve v<n>, Draft v<n> (Change draft v<n> when a draft exists) and Close."
+        },
+        {
+          "name": "Draft v<n> / Change draft v<n>, then Save draft",
+          "does": "Records the next contract version as a draft.",
+          "availableWhen": "Always; the required fields filled in.",
+          "result": "The draft shows under Draft v<n>, waiting for approval. Nothing else changes until it is approved."
+        },
+        {
+          "name": "Approve v<n>, then Approve",
+          "does": "Makes the draft the connection's next contract version, with a reason.",
+          "availableWhen": "A draft waits. A second person approves; the drafter only where the separation-of-duties policy allows and they confirm it.",
+          "result": "In force shows v<n> and History Interface contract approved. The acceptance tests are out of date until they run again, and patient data waits."
+        },
+        {
+          "name": "Run acceptance tests",
+          "does": "Runs the synthetic acceptance cases of the connection as it is now and records the run with what it covers. Sends nothing and keeps nothing the tests make.",
+          "availableWhen": "A contract version is approved.",
+          "result": "Each case shows ✓ or ✗ with why it failed, and the Overview line passed or failed with the time. When they pass, waiting messages are written at the next pass, files are read, and a listener starts. A run is refused if the connection changed while it ran; run it again."
+        },
+        {
+          "name": "Record destination check",
+          "does": "Records how the current folder, SFTP server, MLLP partner or MLLP listener was confirmed. The dialog names what the check covers: the folder; for SFTP the server and remote folder, the username and the full fingerprint; for MLLP – LIS connects the partner's address and port; for MLLP – LIS listens the address and port, such as LAN 192.168.1.20:6660, and the allowed partner addresses.",
+          "availableWhen": "No check covers the current destination. The person who chose it may record it only if the laboratory's separation-of-duties policy allows and they confirm it.",
+          "result": "Destination check shows Verified; waiting messages are written if the connection is started, and a started MLLP – LIS listens connection starts listening at once."
+        },
+        {
+          "name": "Edit",
+          "does": "Opens the dialog with the current settings.",
+          "availableWhen": "Always; a reason is required.",
+          "result": "A new folder, for SFTP a new server, port, username, remote folder or fingerprint, for MLLP – LIS connects a new partner address or port, or for MLLP – LIS listens a new address, port or allowed partner address, makes the check Not verified until it is recorded again; a listener then stops listening until it is. Changed rules apply to new messages and to Retry routing. A listener whose other settings change, such as its idle timeout, restarts at once with them; a partner connected then connects again."
+        },
+        {
+          "name": "Stop / Start",
+          "does": "Stops or starts writing, reading or listening, with a reason.",
+          "availableWhen": "Always.",
+          "result": "A stopped connection writes and reads nothing; its messages wait and are written after Start. A stopped HL7 Orders connection leaves its files in the folder, read after Start. A stopped MLLP – LIS listens connection closes its port at once, after the message it is answering; a partner's interface normally keeps the messages it could not send and sends them again once the LIS listens, after Start with a recorded destination check."
+        },
+        {
+          "name": "Send test message",
+          "does": "Writes a synthetic file with no patient data to the folder or SFTP server now: openbga-tox-test-<date>-<time>.hl7, an ORU^R01 with processing ID T, a synthetic patient and its own control ID (MSH-10: TEST- and a new ID each time), for HL7 Results; a one-page PDF for Report PDF; a .json file for Billing JSON. Over MLLP, the synthetic ORU^R01 is sent to the partner and its acknowledgement read.",
+          "availableWhen": "A saved connection that sends, stopped or not verified too; an HL7 Orders connection has none, as the LIS sends it nothing.",
+          "result": "The file name, or the problem, shows; over MLLP the partner's answer, such as ✓ Synthetic test message sent; the partner accepted it (AA), or ✗ … the partner found an error (AE): <its reason>. The test appears in Logs with a Test badge once Show test messages is on, and on the connection's Logs tab. A failed test is not retried."
+        },
+        {
+          "name": "Add mapping / Change / Remove / Discard draft",
+          "does": "On Code mappings: proposes a mapping, changes one (a click on the row too), proposes removing an approved one, or drops a draft.",
+          "availableWhen": "An HL7 Results connection; Remove only for an approved mapping without a draft; Discard draft only for a draft.",
+          "result": "The row shows the draft until it is approved. Nothing is sent differently before approval."
+        },
+        {
+          "name": "Approve mappings",
+          "does": "Makes every draft part of the next version, with a reason.",
+          "availableWhen": "At least one draft waits. A second person approves; the person who drafted a change may approve it only if the laboratory's separation-of-duties policy allows and they confirm it.",
+          "result": "Status shows Approved v<n>; held messages are written at the next pass if their mappings are now complete. Messages already written never change."
+        }
+      ],
+      "restrictions": [
+        "The message type cannot change after saving.",
+        "A routing rule compares codes exactly; it does not search names.",
+        "Acceptance tests are the LIS's own synthetic checks: they do not send messages to the partner or prove the partner's processing, and they claim no profile conformance. Profile conformance and the partner's acceptance are qualified with the partner, as the contract records.",
+        "HL7 messages carry no abnormal flags and no interpretation: values are sent as stored, a censored value as a comparator and number (SN), never as an exact number.",
+        "SFTP: the LIS only connects out to the partner's server; it never accepts connections. Its own key is an Ed25519 key; a server offering only an RSA key cannot be used.",
+        "MLLP – LIS connects: HL7 Results only, to an IP address on the lab network; MLLP is not encrypted, and there is no MLLP over TLS. The LIS waits for an application acknowledgement on the same connection; acknowledgements sent later on another connection are not read.",
+        "MLLP – LIS listens: HL7 Orders only, on an address of this computer on the lab network, for at most 20 allowed partner addresses; not encrypted, and no MLLP over TLS. It answers on the same connection, original acknowledgement mode only; enhanced mode (commit acknowledgements) is not supported. It listens while the app is open, at the sign-in screen too, and not while a recovery reconciliation after a restore is open; while the app is closed, as when an update installs, the partner's messages wait at the partner.",
+        "HL7 Orders: only new orders (ORC-1 NW) are read; changes and cancellations are refused. The LIS sends no acknowledgement file back for files, and reads none from a partner; the outcome shows in Logs. An order arrives without signature evidence, billing responsibility or medications, as an HL7 order carries none; diagnoses (DG1) are kept as supplied."
+      ],
+      "workflow": [
+        "Fill in General, choose the folder and test it; or for SFTP fill in the server, port, username and the fingerprint from the partner's IT, use Copy LIS public key for the partner's IT to allow, and Test connection; or for MLLP – LIS connects fill in the partner's address and port, the ACK timeout, and Test connection.",
+        "Add rules if only some reports or handoffs belong to this partner.",
+        "Choose the schedule and file name, and save stopped.",
+        "Send a test message, have a second person record the destination check, draft the interface contract, have a second person approve it, run the acceptance tests, then Start.",
+        "For HL7 Results, add the partner's code for each test and analyte under Code mappings and have a second person approve them; held messages are then written.",
+        "For HL7 Orders: choose the client, the input, Processed and Failed folders (or the server's), Check every and What to accept; Test folders; map every order code with its sequence role and have a second person approve; record the destination check; Start. Received orders then appear in Orders as Received.",
+        "For HL7 Orders over MLLP – LIS listens: choose the client and MLLP – LIS listens; enter this computer's lab-network address, the agreed port and the EMR interface's address with a note; Test listener; fill in What to accept and Save as stopped. Map every order code and have a second person approve; record the destination check; Start. Ask the EMR's IT to send a synthetic order: Logs show it as Received with ACK AA returned to <its address>."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "An incoming order shows Waiting for patient in Logs",
+          "recovery": "Register the patient (or add the identifier to the registered patient) with the assigning authority and type the message carries in PID-3; the next reading makes the order."
+        },
+        {
+          "problem": "An incoming order shows Held for review",
+          "recovery": "The same message ID came with other content, or the registered patient's name or birth date differs from the message. Check with the clinic; enter the order by hand if it is right. Nothing was ordered."
+        },
+        {
+          "problem": "An incoming order shows Rejected",
+          "recovery": "Details give the reason, such as an unknown test code or ordering provider NPI, or another sending facility. Fix the mapping, the provider or the connection's settings and ask the clinic to send the order again; the file stays in Failed. Over MLLP, the EMR got AE or AR with the reason; an exact resend is a replay and gets the same answer, so the EMR must send it as a new message, with a new control ID. Then use Mark resolved… on its row in Logs, with what was done, so it leaves the Rejected tab."
+        },
+        {
+          "problem": "The EMR says the LIS does not answer, or closes the connection",
+          "recovery": "Check that the connection is started, its destination check is Verified and its page says Listening. The EMR must connect from an allowed partner address: Logs show nothing for a refused address, but the audit trail records interfaces.reject_partner_connection. A message larger than 1 MiB, or bytes not framed as MLLP, close the connection; a message the LIS could not save gets no answer and should be sent again."
+        },
+        {
+          "problem": "Choose the folder again",
+          "recovery": "The chosen folder is kept only for your session and the last 8 choices. Use Choose folder… again and save."
+        },
+        {
+          "problem": "An HL7 message stays Not sent with Held: the patient has no identifier; add one on the patient's page",
+          "recovery": "HL7 v2.5.1 requires the patient identifier (PID-3), so the result is not sent without one; the report stays released. On the patient's page use Add identifier with the value, assigning authority and type agreed with the partner. This changes the patient's record after release, so the row then shows Paused while the report's impact review is open: on the report, use Record impact assessment with No impact on the released report (or issue a correction). The message goes at the next pass, with the identifier."
+        },
+        {
+          "problem": "An HL7 message stays Not sent with Held: a test or analyte has no approved code mapping",
+          "recovery": "Open the connection's Code mappings: rows marked Not mapped – held need a mapping. Add it, check the UCUM unit matches the result's unit, and have a second person use Approve mappings."
+        },
+        {
+          "problem": "Record destination check is refused for you",
+          "recovery": "You chose the folder, and the laboratory's policy needs a second person. Ask another person with Manage configuration to record it."
+        },
+        {
+          "problem": "This connection was changed by someone else",
+          "recovery": "Reload the page and make the change again on the current settings."
+        },
+        {
+          "problem": "Test connection says Folder not found or This computer may not write there",
+          "recovery": "Check that the folder or network share is reachable from this computer and that the app's user may create and delete files there. For SFTP, check the remote folder exists and the account may create, rename and delete files in it."
+        },
+        {
+          "problem": "Test connection says the server's fingerprint is SHA256:…, not the one entered",
+          "recovery": "Do not copy the presented fingerprint: it may be another server. Ask the partner's IT, through a channel you trust, whether the server's key changed. If they confirm it, Edit the connection with the new fingerprint; a new destination check is then needed."
+        },
+        {
+          "problem": "Test connection says the server refused the username, key or password",
+          "recovery": "For SSH key sign-in, check that the partner's IT allowed the LIS public key (Copy LIS public key) for this username. For Password sign-in, type the password again."
+        },
+        {
+          "problem": "Test connection says the server did not answer",
+          "recovery": "Check the server name and port, and that this computer's network allows connecting out to that port. A server offering only an RSA key also ends this way."
+        },
+        {
+          "problem": "Saving or testing MLLP says to use an address on the lab network",
+          "recovery": "Enter the partner interface's IP address on the lab network, not a server name or an internet address. A partner outside the lab network is reached through the lab's VPN, at the address the VPN gives it; or use SFTP."
+        },
+        {
+          "problem": "Test connection says the partner did not answer",
+          "recovery": "Check the address and port with the partner's IT, that its interface is running, and that the network or VPN lets this computer connect out to that port."
+        },
+        {
+          "problem": "Test connection says no usable sign-in on this computer",
+          "recovery": "For SSH key sign-in, use Copy LIS public key once to make the LIS's key. For Password sign-in, type the password again. If it persists, the installation key may be unavailable on this computer; System › Recovery kit shows whether it is usable."
+        }
+      ]
+    },
+    {
+      "title": "Logs",
+      "routes": ["/interfaces/logs/:tab?"],
+      "purpose": "Follow every message sent to or received from an outside system, with what the transport can prove and what the other system confirmed, or what a received order became.",
+      "access": "Manage configuration.",
+      "fields": [
+        {
+          "name": "Period (Today)",
+          "meaning": "How far back the rows go.",
+          "values": "Today (default, from midnight in the laboratory's time zone); Last 7 days; Last 30 days; All time.",
+          "rules": "The newest 500 rows are shown; narrow the period to see older ones."
+        },
+        {
+          "name": "Connection (All connections)",
+          "meaning": "One connection's rows only.",
+          "values": "All connections, or one by name.",
+          "rules": "Unrouted messages belong to no connection and show only under All connections."
+        },
+        {
+          "name": "Direction (In and out)",
+          "meaning": "Messages received, sent, or both.",
+          "values": "In and out (default); Out; In.",
+          "rules": "In shows the order messages HL7 Orders connections received; Out everything sent."
+        },
+        {
+          "name": "Outcome (All outcomes)",
+          "meaning": "Narrow by what the transport can prove.",
+          "values": "All outcomes (default); Written (uploaded to an SFTP server, or sent over MLLP, included); Failed; Not sent (not written yet, unrouted messages included); Received (incoming order messages).",
+          "rules": "Combines with the tab; the tabs count what the other filters leave."
+        },
+        {
+          "name": "Show test messages (off)",
+          "meaning": "Whether the synthetic messages of Send test message are listed.",
+          "values": "Off (default): test messages are left out of the list, the tab counts and Export CSV. On: they are listed with a Test badge in Record.",
+          "rules": "Kept in the address. A connection's own Logs tab always lists its test messages."
+        },
+        {
+          "name": "Search (Search report, handoff, file…)",
+          "meaning": "Narrow the rows.",
+          "values": "Part of a report or accession number, such as A26000009, a handoff number (digits only, exact), a whole control ID (MSH-10) of an outgoing message, such as the one a partner quotes, in any letter case, or part of a file name or folder. Several values separated by commas, such as A26000009, A26000022, show the rows of any of them.",
+          "rules": "Optional; kept in the address."
+        },
+        {
+          "name": "All / Failed / Rejected / Awaiting ACK / Outcome unknown / Duplicates",
+          "meaning": "Which rows the tab shows, with their number.",
+          "values": "Failed: a write failed and is retried or given up. Rejected: an incoming order the LIS refused, its file in Failed, or a message an MLLP partner did not accept (AE or AR), until a person resolves it with Mark resolved…; then it shows only under All. Awaiting ACK: sent over MLLP and waiting for the partner's answer; it is sent again. Outcome unknown: written to a folder or uploaded to an SFTP server, which never confirm. Duplicates: an incoming order read again with the same content, which had no effect.",
+          "rules": "Only MLLP partners answer; a folder or SFTP server never does. The tab is part of the address."
+        },
+        {
+          "name": "Check column (Select all rows)",
+          "meaning": "The rows to export.",
+          "values": "Click a row's check box or press Space on it; the header's check box selects or clears every row shown. The bar above the list says how many are selected; Clear unselects them.",
+          "rules": "Checking a row does not open it. Rows that a tab, filter or search no longer shows are unselected, and the bar says so."
+        },
+        {
+          "name": "Time, Dir., Connection, Message, Record",
+          "meaning": "When the row last changed (written, tried, made or received), the direction (In for a received order), the connection (None matched for an unrouted message), the message type and the record: the report number and revision (such as A26000005-U r2), the report's withdrawal notice, the billing handoff, a Test badge for a message of Send test message, or for a received order its placer order number (the file name when it could not be read; Order message over MLLP).",
+          "values": "As recorded.",
+          "rules": "Read-only. The record is a link: a report revision opens that revision of the report, the revision that was sent; a withdrawal notice opens the report; a billing handoff opens the handoff. A test message or a received order has no link."
+        },
+        {
+          "name": "Transport",
+          "meaning": "Did it leave: what the folder, SFTP server or MLLP connection can prove.",
+          "values": "Written (to a folder); Uploaded (to an SFTP server); Sent (over MLLP, also while its acknowledgement is awaited); Failed; Not sent (not written yet, or replaced by a newer revision and never written); Received (an incoming order message read from a file or received over MLLP, and stored).",
+          "rules": "Never Delivered."
+        },
+        {
+          "name": "Application",
+          "meaning": "Did the other system accept it.",
+          "values": "Outcome unknown for a written or uploaded file: a folder or SFTP server never confirms. Over MLLP, the partner's acknowledgement: Accepted (AA); Rejected (AE), an error in the message; Rejected (AR), the message or its sender not accepted; or Awaiting application ACK until it answers. An acknowledgement never proves that a clinician saw the result. For an incoming order: Order created (in Received status, for the laboratory to accept); Waiting for patient; Held for review; Duplicate – ignored; Rejected, or Rejected – unknown test. — otherwise.",
+          "rules": "The billing company's acknowledgement or rejection is recorded on the billing handoff page, by people with Billing. A written report PDF does not count as a staff-attested delivery on the report's page."
+        },
+        {
+          "name": "Details",
+          "meaning": "Why the row stands where it does.",
+          "values": "Written as <folder and file> (for SFTP, the remote folder and file); over MLLP Sent to <address:port>, followed by · Partner: <its reason> when it did not accept the message; <problem>; attempt N of 5 at <time>, such as No acknowledgement in time; attempt 2 of 5 at 11:20; <problem>; not written (over MLLP, not acknowledged) after 5 attempts; Connection stopped; Destination check not recorded; Interface contract not approved, or its acceptance tests not passed; Waiting for the connection's schedule; Written at the next pass; Paused while the report's impact review is open; Held: a test or analyte has no approved code mapping; Held: the patient has no identifier; add one on the patient's page (HL7 Results only: PID-3 is required, so it is never sent empty); Replaced by a newer revision; never written; No connection rule matched; or the decision on an unrouted message. A report's later revision or withdrawal notice sent to a connection that had the report starts with Replaces r<n>, sent first or Withdrawal notice, sent first. A received order shows why it waits, is held or was refused (Exact replay; no second order for a duplicate), and Moved to <Processed or Failed folder › year › month › file>, or over MLLP the answer it got, such as ACK AA returned to 192.168.1.50; an order created once its patient was registered shows Waited until the patient was registered. A resolved rejection ends with · Resolved by <person>, <time>: <note>; a message a person rejected shows Rejected by <person>, <time>: <reason>.",
+          "rules": "Read-only."
+        },
+        {
+          "name": "Message details: Connection, Control ID (MSH-10), Partner's answer",
+          "meaning": "The side panel an outgoing message opens in: its connection (a link to its page, except on the connection's own Logs tab), the message's control ID as sent in MSH-10, and what the partner answered.",
+          "values": "Control ID: the ID the partner quotes, or — until the message is made, and for a report PDF or billing file. Partner's answer over MLLP: Accepted (AA), Rejected (AE) or Rejected (AR) with the partner's reason as received (ERR-8, else MSA-3); No answer: <problem>, such as No acknowledgement in time, when it did not answer; None yet. For a folder or SFTP server: None, as they never answer.",
+          "rules": "Read-only. The panel's heading shows the record, the message type and the Transport badge. Opening it reads the message, which holds patient data: each opening is recorded in the audit trail (interfaces.get_message) and needs Manage configuration."
+        },
+        {
+          "name": "Message as sent",
+          "meaning": "The HL7 Results message exactly as the partner received it, one segment per line (MSH, PID, ORC, OBR, OBX, SPM…).",
+          "values": "Matches what was sent: the copy the LIS kept when it made the message, checked against the digest recorded then; every attempt sent these bytes, so a retry is the same message with the same control ID. Not made yet: the message is made at its first attempt, once every test and analyte has an approved code mapping. A report PDF or billing file is not an HL7 message: open it from its report or billing handoff. When the kept copy is missing or no longer matches its digest, a red notice says so and nothing is shown: the LIS never shows a message made again in its place, as it could differ from the one sent. A test message shows its synthetic content, with no patient data.",
+          "rules": "Read-only; lines are not wrapped, so scroll sideways for long segments. The panel widens while a message is shown."
+        },
+        {
+          "name": "Attempts",
+          "meaning": "Each attempt to send the message, oldest first, with its time and outcome.",
+          "values": "Written (to a folder or SFTP server); Sent; the partner answered AA, AE or AR (over MLLP); Failed: <problem>, such as No acknowledgement in time. None yet before the first attempt. A test message: Sent once when the test ran; a test message is never sent again.",
+          "rules": "Read from the audit trail; Send again does not remove earlier attempts."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Send again",
+          "does": "Puts a message whose attempts all failed back in the queue with 5 new attempts.",
+          "availableWhen": "From the row's ⋯ menu, on a failed message that is not a test message.",
+          "result": "It is written at the next pass if the connection is started and verified. The same file is sent; no new message or report is made. A report revision replaced by a newer one is never sent again."
+        },
+        {
+          "name": "Reject…",
+          "does": "Opens Reject <order number>: a required Reason (1–500 characters), such as the clinic cancelled the order by phone; Reject message records it, Cancel leaves the message as it is.",
+          "availableWhen": "From the row's ⋯ menu, on a received order message that waits for its patient or is held for review.",
+          "result": "The message becomes Rejected and no order is made from it, even if its patient is registered later. The reason resolves it, so it does not stay under Rejected; Details show Rejected by <person>, <time>: <reason>. The clinic is not told (over MLLP its EMR got AA when the message arrived): tell its staff by the laboratory's agreed route. Recorded in the audit trail."
+        },
+        {
+          "name": "Mark resolved…",
+          "does": "Opens Resolve the rejection of <record>: a required What was done (1–500 characters), such as the clinic corrected the test code and sent the order again; Mark resolved records it, Cancel leaves it under Rejected.",
+          "availableWhen": "From the row's ⋯ menu, on an incoming order the LIS refused or a message an MLLP partner rejected (AE or AR), not resolved yet.",
+          "result": "It leaves the Rejected tab and stays under All; Details end with Resolved by <person>, <time>: <note>. Nothing is sent and nothing changes at the partner. A rejection is resolved once. Recorded in the audit trail."
+        },
+        {
+          "name": "Export CSV / Export N selected",
+          "does": "With no row checked, Export CSV saves the rows shown, with the current tab and filters. With rows checked, the button reads Export N selected, such as Export 3 selected, and saves only those rows.",
+          "availableWhen": "At least one row is shown and the Downloads folder is available.",
+          "result": "An interface-log-<date>.csv file in your Downloads folder, with codes as stored. The export is recorded in the audit trail. Columns follow the page: transport is written, uploaded (SFTP) or sent (MLLP), failed, not_sent or received; application is the partner's acknowledgement code (AA, AE, AR) with its reason in ack_text, awaiting_ack, outcome_unknown for a written file, or what a received order became; failed_attempts counts only failed attempts; file is the file written or, over MLLP, the partner's address and port."
+        },
+        {
+          "name": "Open row",
+          "does": "Click a row, or press Enter on it. An outgoing message opens its details beside the list (Previous and Next step through the outgoing messages shown; Close or Escape closes it); an unrouted message opens Unrouted messages; a received order opens its connection.",
+          "availableWhen": "A listed row. The open message is kept in the address (?open=), so Back closes it.",
+          "result": "Nothing changes. Opening a message's details is recorded in the audit trail."
+        }
+      ],
+      "restrictions": [
+        "Failed writes are retried automatically after 1, 2, 4 and 8 minutes; after the fifth failure the message waits for Send again and appears in the Interface messages not written work queue.",
+        "Only HL7 Results messages show their content here, in the message panel. A report PDF is opened from Reports, and the billing handoff file from Billing › Billing handoffs, by people with those rights; the Record link opens the report or billing handoff. Opening them is audited. A received order's content is not shown here."
+      ],
+      "workflow": [
+        "Check the Failed and Rejected tabs daily.",
+        "Fix the cause shown in Details, then use Send again on a failed message.",
+        "For a rejection, act on its reason with the partner or the clinic, then use Mark resolved… with what was done.",
+        "Confirm with the partner when Outcome unknown matters, and record the billing outcome on the handoff."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "A row stays Not sent with Destination check not recorded",
+          "recovery": "Open the connection and have a second person use Record destination check."
+        },
+        {
+          "problem": "Send again is missing",
+          "recovery": "It appears only after all 5 attempts failed. While a retry is planned, Details shows the time of the next attempt."
+        },
+        {
+          "problem": "Reject… or Mark resolved… is missing",
+          "recovery": "Reject… appears only on a received order message that waits for its patient or is held; one already made into an order, a duplicate or a rejected one cannot be rejected. Mark resolved… appears only on a rejection not resolved yet; a resolved one shows who resolved it in Details."
+        },
+        {
+          "problem": "A partner quotes a control ID and searching finds nothing",
+          "recovery": "Type the whole control ID, as the partner's MSH-10 or MSA-2 shows it, and choose All time in Period: the search does not match part of a control ID. A control ID the LIS did not send, such as the ID of an order the partner sent, is not found."
+        },
+        {
+          "problem": "Message as sent says the kept copy is missing or no longer matches its digest",
+          "recovery": "The message file kept on this computer was removed or damaged, so it is not shown; the attempts and the partner's answer still stand. Tell your system administrator, who can check the data folder and the backups (System › Backups). The partner can also look up the message by its control ID."
+        },
+        {
+          "problem": "Export CSV says the Downloads folder is not available",
+          "recovery": "The operating system reports no Downloads folder for this user; ask the computer's administrator to restore it."
+        }
+      ]
+    },
+    {
+      "title": "Unrouted messages",
+      "routes": ["/interfaces/unrouted"],
+      "purpose": "Decide on outgoing messages that matched no connection's rules. Nothing is lost: each waits here until someone decides.",
+      "access": "Manage configuration.",
+      "fields": [
+        {
+          "name": "Waiting since, Message, Record, Client, Practitioner, Reason, Next action",
+          "meaning": "When the message was made and how long it has waited, its type, the report revision or billing handoff, the clients and practitioners in it, why it is here and what to do.",
+          "values": "As recorded, such as 2026-11-03 10:40 (3 h); Reason is No rule matched; Next action is Send to a connection.",
+          "rules": "Oldest first. A row shows its details below the table; the oldest is shown until you choose another. The count also shows beside the menu entry and in the Unrouted interface messages work queue. A report revision leaves the list when a newer revision or the withdrawal of the same report is released; the newer one is routed on its own."
+        },
+        {
+          "name": "Created, Checked against, Client, Closest rule",
+          "meaning": "The chosen message's details: when it was made (at release, or at handoff creation), how many connections of its type its rules were checked against, its clients, and the rule of the closest connection it does not meet.",
+          "values": "As recorded; Closest rule as field, condition and value (did not match), or None when no connection has rules.",
+          "rules": "Read-only. The closest rule is computed from the rules as they are now."
+        },
+        {
+          "name": "Send to",
+          "meaning": "The connection for Send once.",
+          "values": "Send to: <connection> for each connection that carries the message's type; the closest connection is offered first.",
+          "rules": "Required for Send once."
+        },
+        {
+          "name": "How it was delivered / Reason",
+          "meaning": "For Deliver another way, how the file was delivered; for Dismiss, why it is not delivered.",
+          "values": "Free text up to 500 characters.",
+          "rules": "Required for those actions; recorded in the audit trail."
+        }
+      ],
+      "actions": [
+        {
+          "name": "Send once",
+          "does": "Sends this message once to the chosen connection, without changing its rules.",
+          "availableWhen": "A connection is chosen.",
+          "result": "It is written under the connection's usual checks: started, verified and its schedule. It leaves this list and shows in Logs."
+        },
+        {
+          "name": "Add a rule for <client>",
+          "does": "Opens the closest connection's Rules tab, or Connections when there is none.",
+          "availableWhen": "Always.",
+          "result": "After changing a rule with Edit, come back and use Retry routing."
+        },
+        {
+          "name": "Retry routing",
+          "does": "Checks the message against every connection's rules as they are now.",
+          "availableWhen": "Always.",
+          "result": "It goes to every connection whose rules match, or stays here with a message that no rule matches yet."
+        },
+        {
+          "name": "Deliver another way…",
+          "does": "Records that the file was delivered outside the LIS, such as by fax.",
+          "availableWhen": "Always; the method is required.",
+          "result": "It leaves this list and Logs show Delivery recorded another way, so it is still reconciled. The LIS writes no file."
+        },
+        {
+          "name": "Dismiss with reason",
+          "does": "Leaves the message undelivered.",
+          "availableWhen": "Always; a reason is required.",
+          "result": "It leaves this list; Logs show it as Dismissed."
+        }
+      ],
+      "restrictions": [
+        "Every decision is final and audited.",
+        "A message here was made because at least one connection of its type existed; without any connection of the type, no message is made."
+      ],
+      "workflow": [
+        "Open the oldest message.",
+        "Read the closest rule to see why it did not match.",
+        "Fix the rule and use Retry routing, or Send once when the partner is right this time only.",
+        "Use Deliver another way or Dismiss only when the file should not go through a connection."
+      ],
+      "troubleshooting": [
+        {
+          "problem": "Retry routing says no connection's rules match yet",
+          "recovery": "Change the rule first (Add a rule, then Edit on the connection), or use Send once."
+        },
+        {
+          "problem": "This message is no longer waiting",
+          "recovery": "Someone already decided, or a newer revision of the report replaced it. Refresh the list; Logs show the decision or the replacement."
+        }
+      ]
+    }
+  ],
+  "reviewSources": [
+    "ui/src/features/interfaces/connections/ConnectionsPage.tsx",
+    "ui/src/features/interfaces/connections/connectionColumns.tsx",
+    "ui/src/features/interfaces/connections/ConnectionDialog.tsx",
+    "ui/src/features/interfaces/connections/ConnectionSections.tsx",
+    "ui/src/features/interfaces/connections/ProtocolCards.tsx",
+    "ui/src/features/interfaces/connections/connectionForm.ts",
+    "ui/src/features/interfaces/connections/FolderFields.tsx",
+    "ui/src/features/interfaces/connections/SftpFields.tsx",
+    "ui/src/features/interfaces/connections/RuleFields.tsx",
+    "ui/src/features/interfaces/connections/ConnectionPage.tsx",
+    "ui/src/features/interfaces/connections/ConnectionActions.tsx",
+    "ui/src/features/interfaces/connections/ConnectionOverview.tsx",
+    "ui/src/features/interfaces/connections/ConnectionHistory.tsx",
+    "ui/src/features/interfaces/connections/CheckDialog.tsx",
+    "ui/src/features/interfaces/logs/LogsPage.tsx",
+    "ui/src/features/interfaces/logs/MessagesSection.tsx",
+    "ui/src/features/interfaces/logs/messageColumns.tsx",
+    "ui/src/features/interfaces/logs/MessagePanel.tsx",
+    "ui/src/features/interfaces/logs/useMessagePanel.tsx",
+    "crates/lis-interfaces/src/partner/message_detail.rs",
+    "crates/lis-engine/src/commands/partner/message_detail.rs",
+    "ui/src/features/interfaces/unrouted/UnroutedPage.tsx",
+    "ui/src/features/interfaces/unrouted/UnroutedDetails.tsx",
+    "ui/src/features/interfaces/unrouted/AnotherWayDialog.tsx",
+    "ui/src/features/interfaces/labels.ts",
+    "crates/lis-interfaces/src/partner/settings.rs",
+    "crates/lis-interfaces/src/partner/rules.rs",
+    "crates/lis-interfaces/src/partner/connections.rs",
+    "crates/lis-interfaces/src/partner/messages.rs",
+    "crates/lis-interfaces/src/partner/delivery.rs",
+    "crates/lis-interfaces/src/partner/message_queries.rs",
+    "crates/lis-interfaces/src/partner/message_filter.rs",
+    "crates/lis-interfaces/src/partner/message_repo.rs",
+    "crates/lis-interfaces/src/partner/unrouted_queries.rs",
+    "crates/lis-engine/src/commands/partner/routing.rs",
+    "crates/lis-engine/src/commands/partner/folders.rs",
+    "crates/lis-reporting/src/queries/outbound.rs",
+    "crates/lis-interfaces/src/partner/hl7.rs",
+    "crates/lis-interfaces/src/partner/mappings.rs",
+    "crates/lis-engine/src/partner_delivery/hl7_message.rs",
+    "crates/lis-engine/src/partner_delivery/hl7_payload.rs",
+    "crates/lis-engine/src/commands/partner/mappings.rs",
+    "ui/src/features/interfaces/connections/mappings/CodeMappingsSection.tsx",
+    "ui/src/features/interfaces/connections/mappings/MappingDialog.tsx",
+    "ui/src/features/interfaces/connections/mappings/ApproveMappingsDialog.tsx",
+    "crates/lis-engine/src/partner_delivery.rs",
+    "crates/lis-engine/src/partner_delivery/folder_write.rs",
+    "crates/lis-engine/src/commands/partner/folder_choices.rs",
+    "crates/lis-engine/src/commands/partner/messages.rs",
+    "crates/lis-interfaces/src/partner/sftp_settings.rs",
+    "crates/lis-interfaces/src/partner/sftp_identity.rs",
+    "crates/lis-engine/src/partner_delivery/sftp.rs",
+    "crates/lis-engine/src/commands/partner/sftp.rs",
+    "crates/lis-engine/tests/scenarios/partner_sftp.rs",
+    "ui/src/features/interfaces/connections/IntakeSections.tsx",
+    "ui/src/features/interfaces/connections/intakeForm.ts",
+    "ui/src/features/interfaces/intakeLabels.ts",
+    "crates/lis-interfaces/src/partner/hl7_order.rs",
+    "crates/lis-interfaces/src/partner/intake_settings.rs",
+    "crates/lis-interfaces/src/partner/received.rs",
+    "crates/lis-interfaces/src/partner/received_queries.rs",
+    "crates/lis-engine/src/partner_intake.rs",
+    "crates/lis-engine/src/partner_intake/decide.rs",
+    "crates/lis-engine/src/partner_intake/inbox.rs",
+    "crates/lis-engine/src/partner_intake/order_input.rs",
+    "ui/src/features/interfaces/connections/MllpFields.tsx",
+    "ui/src/features/interfaces/connections/ListenerFields.tsx",
+    "ui/src/features/interfaces/connections/listenerForm.ts",
+    "ui/src/features/interfaces/mllpLabels.ts",
+    "crates/lis-interfaces/src/partner/mllp_settings.rs",
+    "crates/lis-interfaces/src/partner/mllp_listener_settings.rs",
+    "crates/lis-interfaces/src/partner/mllp_answer.rs",
+    "crates/lis-interfaces/src/partner/mllp_rejections.rs",
+    "crates/lis-engine/src/partner_listener.rs",
+    "crates/lis-engine/src/partner_listener/serve.rs",
+    "crates/lis-engine/src/commands/partner/mllp.rs",
+    "crates/lis-engine/src/commands/partner/connections.rs",
+    "ui/src/features/interfaces/connections/contract/ContractLine.tsx",
+    "ui/src/features/interfaces/connections/contract/ContractDialog.tsx",
+    "ui/src/features/interfaces/connections/contract/DraftContractDialog.tsx",
+    "ui/src/features/interfaces/connections/contract/ApproveContractDialog.tsx",
+    "ui/src/features/interfaces/connections/contract/contractLabels.ts",
+    "crates/lis-interfaces/src/partner/contracts.rs",
+    "crates/lis-interfaces/src/partner/acceptance.rs",
+    "crates/lis-interfaces/src/partner/acceptance_cases.rs",
+    "crates/lis-engine/src/partner_intake/acceptance.rs",
+    "crates/lis-engine/src/commands/partner/contracts.rs",
+    "ui/src/features/interfaces/logs/FollowUpDialog.tsx",
+    "crates/lis-interfaces/src/partner/rejections.rs",
+    "crates/lis-engine/src/partner_intake/readings.rs"
+  ]
+}

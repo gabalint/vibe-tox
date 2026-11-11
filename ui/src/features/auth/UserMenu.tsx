@@ -1,8 +1,10 @@
-import { ChevronDown, Info, KeyRound, Lock, LogOut, UserRound } from "lucide-react";
+import { Check, ChevronDown, Copy, Info, KeyRound, Lock, LogOut, UserRound } from "lucide-react";
 import { useState } from "react";
 import {
+  Header,
   Menu,
   MenuItem,
+  MenuSection,
   MenuTrigger,
   Popover,
   Separator,
@@ -10,21 +12,27 @@ import {
 } from "react-aria-components";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/Button";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/components/Toast";
+import type { AppInfo } from "@/generated/AppInfo";
 import type { CommandError } from "@/generated/CommandError";
 import type { SessionInfo } from "@/generated/SessionInfo";
+import { APPEARANCES, type Appearance, useAppearance } from "@/lib/appearance";
 import { useCommandMutation, useCommandQuery } from "@/lib/commands";
 import { toUserMessage } from "@/lib/errors";
 import type { AuthenticationStatus } from "@/lib/securityKey";
+import { unsavedFormNames } from "@/lib/unsavedForms";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
 import { SecurityKeysDialog } from "./SecurityKeysDialog";
 import { UnlockPinDialog } from "./UnlockPinDialog";
 import styles from "./UserMenu.module.css";
 
 /**
- * The signed-in person's menu: change password, lock, sign out, and "About this app" (the app
- * and web engine versions). Lock and sign-out clear every cached engine result, so nothing
- * from this session is shown to the next person (REQ-IDN-004).
+ * The signed-in person's menu: change password, lock, sign out, Appearance (light, dark or the
+ * system's setting, applied at once), "About this app" (the app and web engine versions) and, last, the
+ * running version with Copy (ticket #4584). Lock and sign-out clear every cached engine result, so nothing
+ * from this session is shown to the next person (REQ-IDN-004). Sign out asks first while a page form has
+ * unsaved input (ticket #4585).
  */
 export function UserMenu({ session }: { session: SessionInfo }) {
   const toast = useToast();
@@ -32,6 +40,8 @@ export function UserMenu({ session }: { session: SessionInfo }) {
   const [changingPassword, setChangingPassword] = useState(false);
   const [managingKeys, setManagingKeys] = useState(false);
   const [managingPin, setManagingPin] = useState(false);
+  const [leavingForms, setLeavingForms] = useState<string[]>([]);
+  const [appearance, chooseAppearance] = useAppearance(session.userId);
   const authentication = useCommandQuery<AuthenticationStatus>("get_authentication_status");
   const lock = useCommandMutation<null>("lock_session", { invalidates: "all" });
   const signOut = useCommandMutation<null>("sign_out", { invalidates: "all" });
@@ -41,6 +51,10 @@ export function UserMenu({ session }: { session: SessionInfo }) {
       title: "The session did not change",
       description: toUserMessage(error),
     });
+  const signOutNow = () => {
+    setLeavingForms([]);
+    signOut.mutate({}, { onError });
+  };
 
   return (
     <>
@@ -90,11 +104,46 @@ export function UserMenu({ session }: { session: SessionInfo }) {
             <MenuItem
               className={styles.item}
               textValue="Sign out"
-              onAction={() => signOut.mutate({}, { onError })}
+              onAction={() => {
+                const forms = unsavedFormNames();
+                if (forms.length > 0) setLeavingForms(forms);
+                else signOutNow();
+              }}
             >
               <LogOut aria-hidden="true" className={styles.icon} />
               Sign out
             </MenuItem>
+            <Separator className={styles.separator} />
+            <MenuSection
+              selectionMode="single"
+              disallowEmptySelection
+              selectedKeys={[appearance]}
+              onSelectionChange={(keys) => {
+                const [key] = keys === "all" ? [] : keys;
+                if (key !== undefined) chooseAppearance(key as Appearance);
+              }}
+            >
+              <Header className={styles.header}>Appearance</Header>
+              {APPEARANCES.map((option) => (
+                <MenuItem
+                  key={option.id}
+                  id={option.id}
+                  className={styles.item}
+                  textValue={option.label}
+                >
+                  {({ isSelected }) => (
+                    <>
+                      <Check
+                        aria-hidden="true"
+                        className={styles.icon}
+                        visibility={isSelected ? "visible" : "hidden"}
+                      />
+                      {option.label}
+                    </>
+                  )}
+                </MenuItem>
+              ))}
+            </MenuSection>
             <Separator className={styles.separator} />
             <MenuItem
               className={styles.item}
@@ -104,6 +153,7 @@ export function UserMenu({ session }: { session: SessionInfo }) {
               <Info aria-hidden="true" className={styles.icon} />
               About this app
             </MenuItem>
+            <VersionItem />
           </Menu>
         </Popover>
       </MenuTrigger>
@@ -112,6 +162,58 @@ export function UserMenu({ session }: { session: SessionInfo }) {
         <SecurityKeysDialog session={session} onClose={() => setManagingKeys(false)} />
       )}
       {managingPin && <UnlockPinDialog onClose={() => setManagingPin(false)} />}
+      <ConfirmDialog
+        title="Leave without saving?"
+        isOpen={leavingForms.length > 0}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setLeavingForms([]);
+        }}
+        confirmLabel="Sign out without saving"
+        onConfirm={signOutNow}
+      >
+        <p>
+          You have unsaved changes in {leavingForms.join(", ")}. If you sign out, what you typed is
+          lost.
+        </p>
+      </ConfirmDialog>
+    </>
+  );
+}
+
+/**
+ * The running version, from the same `app_info` query as About this app. A menu holds only items,
+ * so the whole row is the Copy action; it stays open to show "Copied".
+ */
+function VersionItem() {
+  const info = useCommandQuery<AppInfo>("app_info");
+  const [copy, setCopy] = useState<"Copy" | "Copied" | "Not copied">("Copy");
+  const version = info.data?.appVersion;
+  if (version === undefined) return null;
+  return (
+    <>
+      <Separator className={styles.separator} />
+      <MenuItem
+        className={styles.item}
+        textValue={`Version ${version}`}
+        aria-label={`Version ${version}, ${copy}`}
+        shouldCloseOnSelect={false}
+        onAction={() =>
+          void navigator.clipboard.writeText(version).then(
+            () => setCopy("Copied"),
+            () => setCopy("Not copied"),
+          )
+        }
+      >
+        <span className={styles.version}>Version {version}</span>
+        <span className={styles.copy}>
+          {copy === "Copied" ? (
+            <Check aria-hidden="true" className={styles.icon} />
+          ) : (
+            <Copy aria-hidden="true" className={styles.icon} />
+          )}
+          {copy}
+        </span>
+      </MenuItem>
     </>
   );
 }

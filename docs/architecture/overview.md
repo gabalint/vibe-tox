@@ -59,7 +59,7 @@ Modules own their writes. A shared SQLite transaction allows the engine to coord
 | HL7 v2/FHIR partner exchange | [ADR 0007](decisions/0007-integration-edge-and-interface-engines.md) | Local analyzer/file intake does not qualify an EHR route or its partner mapping. |
 | LAN workstations | Q-28, REQ-OPS-011 | No remote workstation service is implemented; database-file sharing is excluded. |
 | Incremental and write-once backups | [ADR 0014](decisions/0014-incremental-backups.md), [ADR 0008](decisions/0008-tamper-evident-audit-and-immutable-recovery.md) | Current backups use full `vtbk1` copies to folder targets. Immutable off-host custody remains an operational/qualification obligation. |
-| Signed distribution and updates | [Deployment](deployment.md), [packaging](../development/packaging.md) | Unsigned test-bundle configuration and local approval records exist; publishing, signing and updater deployment need explicit authorization. |
+| Signed distribution and updates | [Deployment](deployment.md), [packaging](../development/packaging.md), [ADR 0020](decisions/0020-in-app-updates.md) | Development releases without OS code signing and local approval records exist. The in-app updater with Minisign-signed packages is implemented and accepted (ADR 0020); it works once the signing secret and public key are configured. OS code signing and a signed manifest need explicit authorization. |
 
 ## Current local contracts
 

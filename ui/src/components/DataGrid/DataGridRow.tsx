@@ -16,8 +16,8 @@ interface DataGridRowProps<Row extends RowData> {
   columns: readonly DataGridColumn<Row>[];
   /** Column template and minimum width, shared by every row. */
   layout: CSSProperties;
-  /** Selection state; absent when the grid has no check column. */
-  isSelected: boolean | undefined;
+  /** Selection state; null when the row may not be selected, absent without a check column. */
+  isSelected: boolean | null | undefined;
   /** The row's record is open, beside or after the list. */
   isOpen: boolean;
   /** The column holding the grid's tab stop, when this row has it. */
@@ -50,7 +50,7 @@ function GridRow<Row extends RowData>(props: DataGridRowProps<Row>) {
       ref={measureRef}
       role="row"
       aria-rowindex={index + 2}
-      aria-selected={isSelected}
+      aria-selected={isSelected ?? undefined}
       aria-current={props.isOpen || undefined}
       data-index={index}
       data-wrap={measureRef ? true : undefined}
@@ -59,7 +59,7 @@ function GridRow<Row extends RowData>(props: DataGridRowProps<Row>) {
     >
       {isSelected !== undefined && (
         <GridCell role="gridcell" className={styles.checkCell} {...cell(0)}>
-          <CheckMark state={isSelected ? "checked" : "unchecked"} />
+          {isSelected !== null && <CheckMark state={isSelected ? "checked" : "unchecked"} />}
         </GridCell>
       )}
       {columns.map((column, col) => {

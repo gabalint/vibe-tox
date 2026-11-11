@@ -12,3 +12,12 @@
 .empty {
   color: var(--color-text-muted);
 }
+
+.list[aria-invalid] > .legend,
+.error {
+  color: var(--tone-danger-text);
+}
+
+.error {
+  font-size: var(--font-size-sm);
+}

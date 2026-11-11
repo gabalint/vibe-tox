@@ -1,20 +1,28 @@
 //! The audit viewer: paging, filters, access events and chain verification.
 
 use lis_auth::RoleCode;
-use lis_core::ErrorCode;
-use lis_engine::{AuditStream, ListAuditEventsInput, VerifyAuditChainInput};
+use lis_core::{Clock, ErrorCode};
+use lis_engine::{
+    AuditActorKind, AuditCursor, AuditEventView, AuditOutcome, AuditStream, ListAuditEventsInput,
+    VerifyAuditChainInput,
+};
 
 use crate::fixture::{TestEngine, code_of};
 
-fn page(stream: AuditStream, before_seq: Option<i64>, limit: u32) -> ListAuditEventsInput {
+fn page(stream: AuditStream, limit: u32) -> ListAuditEventsInput {
     ListAuditEventsInput {
-        stream,
-        before_seq,
+        stream: Some(stream),
         limit,
-        action: None,
-        record_type: None,
-        record_id: None,
-        self_approvals_only: None,
+        ..ListAuditEventsInput::default()
+    }
+}
+
+/// Where the page after `event` starts.
+fn after(event: &AuditEventView) -> AuditCursor {
+    AuditCursor {
+        recorded_at: event.recorded_at,
+        stream: event.stream,
+        seq: event.seq,
     }
 }
 
@@ -31,7 +39,7 @@ async fn auditor_pages_newest_first_and_each_read_is_recorded() {
     let total = t.events("security").len();
     let first = t
         .engine
-        .list_audit_events(page(AuditStream::Security, None, 3))
+        .list_audit_events(page(AuditStream::Security, 3))
         .await
         .unwrap();
     let seqs: Vec<i64> = first.iter().map(|event| event.seq).collect();
@@ -41,7 +49,10 @@ async fn auditor_pages_newest_first_and_each_read_is_recorded() {
     assert_eq!(first[0].principal_kind, "system");
     let next = t
         .engine
-        .list_audit_events(page(AuditStream::Security, Some(newest - 2), 500))
+        .list_audit_events(ListAuditEventsInput {
+            before: Some(after(&first[2])),
+            ..page(AuditStream::Security, 500)
+        })
         .await
         .unwrap();
     assert_eq!(next.len(), total - 3);
@@ -71,7 +82,7 @@ async fn auditor_pages_newest_first_and_each_read_is_recorded() {
             .contains(&("user".to_owned(), "User".to_owned()))
     );
     assert_eq!(created.authority.as_deref(), Some("manage_users"));
-    let mut filtered = page(AuditStream::Security, None, 50);
+    let mut filtered = page(AuditStream::Security, 50);
     filtered.action = Some("auth.mfa_enroll".into());
     assert_eq!(t.engine.list_audit_events(filtered).await.unwrap().len(), 2);
 
@@ -94,13 +105,134 @@ async fn auditor_pages_newest_first_and_each_read_is_recorded() {
 }
 
 #[tokio::test]
+async fn every_stream_reads_newest_first_with_a_stable_cursor() {
+    let t = TestEngine::start().await;
+    auditor_session(&t).await;
+    let stored = t.events("security").len() + t.events("clinical").len();
+    let every = |limit| ListAuditEventsInput {
+        limit,
+        ..ListAuditEventsInput::default()
+    };
+    // Each read below is a second later, so its access event is the newest.
+    t.advance(1);
+    let all = t.engine.list_audit_events(every(500)).await.unwrap();
+    assert_eq!(all.len(), stored);
+    let code = |stream| match stream {
+        AuditStream::Clinical => "clinical",
+        AuditStream::Security => "security",
+        AuditStream::Access => "access",
+    };
+    let order: Vec<_> = all
+        .iter()
+        .map(|event| (event.recorded_at, code(event.stream), event.seq))
+        .collect();
+    assert!(order.windows(2).all(|pair| pair[0] > pair[1]), "{order:?}");
+    assert!(
+        all.iter()
+            .any(|event| event.stream == AuditStream::Security)
+    );
+
+    t.advance(1);
+    let first = t.engine.list_audit_events(every(2)).await.unwrap();
+    assert_eq!(first[0].stream, AuditStream::Access);
+    assert_eq!(first[0].action, "audit.list_events");
+    assert_eq!(first[0].record_id.as_deref(), Some("all"));
+    // The access event of the first page, appended later, does not shift the next page.
+    t.advance(1);
+    let rest = t
+        .engine
+        .list_audit_events(ListAuditEventsInput {
+            before: Some(after(&first[1])),
+            ..every(500)
+        })
+        .await
+        .unwrap();
+    assert_eq!(first.len() + rest.len(), stored + 1);
+    assert!(rest.iter().all(|event| !first.contains(event)));
+    let details: String = t
+        .conn()
+        .query_row(
+            "SELECT details FROM audit_events WHERE stream = 'access' AND seq = 3",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert!(details.contains("\"before_stream\""), "{details}");
+}
+
+#[tokio::test]
+async fn filters_by_time_principal_and_outcome_in_the_query() {
+    let t = TestEngine::start().await;
+    t.admin_session().await;
+    let auditor = t.create_user("auditor1", &[RoleCode::Auditor]).await;
+    t.first_sign_in("auditor1").await;
+    t.advance(60);
+    // An auditor may not list users: one denied security event, a minute later.
+    assert_eq!(code_of(t.engine.list_users().await), ErrorCode::Forbidden);
+    let read = |change: fn(&mut ListAuditEventsInput)| {
+        let mut input = page(AuditStream::Security, 500);
+        change(&mut input);
+        t.engine.list_audit_events(input)
+    };
+    let denied = read(|input| input.outcome = Some(AuditOutcome::Denied))
+        .await
+        .unwrap();
+    assert_eq!(denied.len(), 1);
+    assert_eq!(denied[0].outcome, "denied");
+    let system = read(|input| input.by_kind = Some(AuditActorKind::System))
+        .await
+        .unwrap();
+    assert!(!system.is_empty());
+    assert!(system.iter().all(|event| event.principal_kind != "user"));
+    let people = read(|input| input.by_kind = Some(AuditActorKind::People))
+        .await
+        .unwrap();
+    assert!(people.iter().all(|event| event.principal_kind == "user"));
+    let every = read(|_| ()).await.unwrap();
+    assert_eq!(people.len() + system.len(), every.len());
+    let mut by_auditor = page(AuditStream::Security, 500);
+    by_auditor.by_user = Some(auditor.user_id);
+    let by_auditor = t.engine.list_audit_events(by_auditor).await.unwrap();
+    assert!(by_auditor.iter().any(|event| event.outcome == "denied"));
+    assert!(
+        by_auditor
+            .iter()
+            .all(|event| event.principal_id == auditor.user_id.to_string())
+    );
+    assert!(
+        by_auditor[0]
+            .available_users
+            .as_ref()
+            .unwrap()
+            .contains(&(auditor.user_id.to_string(), "Test auditor1".to_owned()))
+    );
+    // Recorded from the denial's instant on: the denial, not the sign-ins a minute before.
+    let since = t.clock.now();
+    let mut recent = page(AuditStream::Security, 500);
+    recent.recorded_from = Some(since);
+    let recent = t.engine.list_audit_events(recent).await.unwrap();
+    assert!(recent.iter().any(|event| event.outcome == "denied"));
+    assert!(recent.iter().all(|event| event.recorded_at >= since));
+    assert!(recent.len() < every.len());
+    let mut earlier = page(AuditStream::Security, 500);
+    earlier.recorded_before = Some(since);
+    let earlier = t.engine.list_audit_events(earlier).await.unwrap();
+    assert!(earlier.iter().all(|event| event.recorded_at < since));
+    let mut empty = page(AuditStream::Security, 500);
+    empty.recorded_from = Some(since);
+    empty.recorded_before = Some(since);
+    let error = t.engine.list_audit_events(empty).await.unwrap_err();
+    assert_eq!(error.code(), ErrorCode::Validation);
+}
+
+#[tokio::test]
 async fn page_size_is_validated() {
     let t = TestEngine::start().await;
     auditor_session(&t).await;
     for limit in [0, 501] {
         let error = t
             .engine
-            .list_audit_events(page(AuditStream::Access, None, limit))
+            .list_audit_events(page(AuditStream::Access, limit))
             .await
             .unwrap_err();
         assert_eq!(error.code(), ErrorCode::Validation);
@@ -151,7 +283,7 @@ async fn administrator_cannot_read_the_audit_trail() {
     assert_eq!(
         code_of(
             t.engine
-                .list_audit_events(page(AuditStream::Security, None, 10))
+                .list_audit_events(page(AuditStream::Security, 10))
                 .await
         ),
         ErrorCode::Forbidden

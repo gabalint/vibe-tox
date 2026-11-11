@@ -1,4 +1,4 @@
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { FieldList } from "@/components/FieldList";
 import { ChoiceInput, TextInput } from "@/components/FormFields";
 import type { SpecimenTypeView } from "@/generated/SpecimenTypeView";
@@ -13,6 +13,7 @@ export function SpecimenList({ specimenTypes }: { specimenTypes: readonly Specim
   const typeOptions = specimenTypes.map((type) => ({ id: type.code, label: type.name }));
   return (
     <FieldList
+      name="specimens"
       legend="Specimens received"
       emptyText="Add each specimen received."
       items={specimens.fields}
@@ -34,20 +35,49 @@ export function SpecimenList({ specimenTypes }: { specimenTypes: readonly Specim
             format={COUNT_FORMAT}
             isRequired
           />
-          <TextInput name={`specimens.${index}.volume`} label="Volume" format={VOLUME_FORMAT} />
-          <TextInput
-            name={`specimens.${index}.volumeUnit`}
-            label="Volume unit"
-            description="Such as mL"
-          />
-          <ChoiceInput
-            name={`specimens.${index}.volumeKind`}
-            label="Volume is"
-            options={VOLUME_KINDS}
-            isRequired
-          />
+          <SpecimenVolume index={index} />
         </>
       )}
     />
+  );
+}
+
+/**
+ * How the volume was obtained comes first: Measured or Estimated needs the volume and its
+ * unit, and Unknown leaves both empty (REQ-SPC-003). Nothing is chosen for the user.
+ */
+function SpecimenVolume({ index }: { index: number }) {
+  const { control, setValue, clearErrors } = useFormContext<AccessionFormValues>();
+  const kind = useWatch({ control, name: `specimens.${index}.volumeKind` });
+  const known = kind === "measured" || kind === "estimated";
+  return (
+    <>
+      <ChoiceInput
+        name={`specimens.${index}.volumeKind`}
+        label="Volume is"
+        options={VOLUME_KINDS}
+        isRequired
+        onChange={(value) => {
+          if (value !== "unknown") return;
+          setValue(`specimens.${index}.volume`, "");
+          setValue(`specimens.${index}.volumeUnit`, "");
+          clearErrors([`specimens.${index}.volume`, `specimens.${index}.volumeUnit`]);
+        }}
+      />
+      <TextInput
+        name={`specimens.${index}.volume`}
+        label="Volume"
+        format={VOLUME_FORMAT}
+        isRequired={known}
+        isDisabled={kind === "unknown"}
+      />
+      <TextInput
+        name={`specimens.${index}.volumeUnit`}
+        label="Volume unit"
+        description="Such as mL"
+        isRequired={known}
+        isDisabled={kind === "unknown"}
+      />
+    </>
   );
 }

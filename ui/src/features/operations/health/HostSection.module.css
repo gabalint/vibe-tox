@@ -1,0 +1,4 @@
+/* Room between the short facts, so each label and value reads as one. */
+.facts > dl[data-layout="compact"] {
+  gap: var(--space-3) var(--space-8);
+}

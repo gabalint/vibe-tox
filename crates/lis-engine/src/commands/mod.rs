@@ -12,6 +12,7 @@ pub(crate) mod catalog;
 // catalog: end
 // interfaces: begin
 pub(crate) mod interfaces;
+pub(crate) mod partner;
 // interfaces: end
 // orders: begin
 pub(crate) mod orders;
@@ -27,6 +28,7 @@ pub(crate) mod analytical;
 pub(crate) mod results;
 // results: end
 // reporting: begin
+pub(crate) mod report_layouts;
 pub(crate) mod reporting;
 // reporting: end
 // billing: begin

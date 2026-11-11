@@ -109,6 +109,12 @@ describe("InstrumentsPage (REQ-INT-005)", { timeout: WALKTHROUGH_TIMEOUT_MS }, (
     expect(router.state.location.search).toBe(`?open=${added.id}`);
     const notice = await within(panel).findByText(/The analyzer listeners restarted/);
     expect(notice.closest("[role=status]")?.textContent).toContain("Synthetic analyzer 3 saved");
+    // The next step in Bench setup; setting it in service needs manage_quality.
+    const next = within(notice.closest("[role=status]") as HTMLElement);
+    expect(next.getByRole("link", { name: "Register source" }).getAttribute("href")).toBe(
+      `/bench/setup/instruments?open=${added.id}`,
+    );
+    expect(next.queryByRole("link", { name: "Set in service" })).toBeNull();
     expect(register).toHaveBeenCalledWith({
       input: {
         code: "SYN-AN3",
@@ -209,7 +215,7 @@ describe("InstrumentsPage (REQ-INT-005)", { timeout: WALKTHROUGH_TIMEOUT_MS }, (
     await openRowWithEnter(user, "SYN-AN2");
     const panel = await screen.findByRole("region", { name: "SYN-AN2" });
     expect(router.state.location.search).toBe(`?open=${SERIAL.id}`);
-    expect(within(panel).getByText("Serial /dev/ttyUSB0, 9600 baud, 8N1")).toBeTruthy();
+    expect(within(panel).getByText("/dev/ttyUSB0")).toBeTruthy();
     expect(within(panel).getByRole("button", { name: "Enable listening" })).toBeTruthy();
     await expectNoA11yViolations(container);
     await user.click(within(panel).getByRole("heading", { name: "SYN-AN2" }));

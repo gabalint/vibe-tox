@@ -94,7 +94,13 @@ const TARGETS: Readonly<Record<WorkItemKind, (item: ItemRef) => ItemTarget>> = {
   health_check: panel("/operations/health"),
   app_run: panel("/operations/health/history"),
   recovery_reconciliation: (item) => ({ recordId: item.itemId, path: "/operations/recovery" }),
-  app_version: panel("/operations/versions"),
+  app_version: panel("/operations/versions/installed"),
+  // Interfaces (REQ-RPT-003): an unrouted message in its panel; a message not written, in
+  // the log's Failed tab, where it is sent again.
+  unrouted_message: panel("/interfaces/unrouted"),
+  failed_delivery: (item) => ({ recordId: item.itemId, path: "/interfaces/logs/failed" }),
+  // A lot expiring soon (#4557), in Bench setup › Lots, where its replacement is registered.
+  lot: panel("/bench/setup/lots"),
 };
 
 function billingWork(item: ItemRef): ItemTarget {

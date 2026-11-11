@@ -39,6 +39,8 @@ export const ANALYTES: AnalyteView[] = [
     name: "Synthetic amphetamine",
     loincCode: null,
     drugClassCode: "SYN-STIM",
+    active: true,
+    revision: 1,
   },
   {
     id: "00000000-0000-7000-8000-000000000b02",
@@ -46,6 +48,8 @@ export const ANALYTES: AnalyteView[] = [
     name: "Synthetic creatinine",
     loincCode: null,
     drugClassCode: null,
+    active: true,
+    revision: 1,
   },
 ];
 

@@ -34,4 +34,13 @@ rowsRetained: number, processedAt: string,
  * How a result file arrived: loaded by hand or picked up from the
  * watched folder (result files brief §7). Absent for an ASTM receipt.
  */
-origin?: ResultFileOrigin, };
+origin?: ResultFileOrigin, 
+/**
+ * When the message or file began to arrive; a retry keeps its receipt's time.
+ */
+receivedAt: string, 
+/**
+ * For a `duplicate` attempt, the latest attempt of the identical earlier
+ * receipt, which holds its rows. Absent until that receipt is imported.
+ */
+duplicateOfAttemptId?: string, };

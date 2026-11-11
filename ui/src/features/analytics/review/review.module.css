@@ -11,6 +11,11 @@
   background: var(--color-surface-sunken);
 }
 
+/* The header note that replaces Approve, centred on the buttons beside it. */
+.headerNote {
+  align-self: center;
+}
+
 /* A short code, such as an analyte's, never split across lines. */
 .keepTogether {
   white-space: nowrap;

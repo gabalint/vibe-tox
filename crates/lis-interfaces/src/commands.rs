@@ -165,7 +165,8 @@ fn complete_receipt_from(
         audit = audit.detail("recovered_at_startup", AuditDetail::boolean(true));
     }
     ctx.audit(audit)?;
-    if duplicate_of.is_none() && crate::au_evidence::needs_import(ctx.tx(), &receipt)? {
+    // A duplicate is queued too: the import lists it without reading it again.
+    if crate::au_evidence::needs_import(ctx.tx(), &receipt)? {
         enqueue_import(ctx, receipt_id)?;
     }
     Ok(Receipt {
@@ -287,8 +288,8 @@ pub(crate) fn interrupt_receipt(
     Ok(())
 }
 
-/// Queues the import of a complete receipt that is not a duplicate (REQ-INT-009:
-/// semantic processing only after the durable receipt commits).
+/// Queues the import of a complete receipt (REQ-INT-009: semantic processing
+/// only after the durable receipt commits). A duplicate's import only lists it.
 pub(crate) fn enqueue_import(
     ctx: &mut CommandContext<'_>,
     receipt_id: ReceiptId,

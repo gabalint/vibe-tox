@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LotView } from "@/generated/LotView";
 import { expectNoA11yViolations } from "@/lib/test/a11y";
@@ -134,6 +134,50 @@ describe("BenchSetupPage (REQ-ANA-003, REQ-ANA-007)", { timeout: WALKTHROUGH_TIM
     });
   });
 
+  it("shows configuration staff the connection, linked to its settings", async () => {
+    const { user } = renderPage("/bench/setup", ["manage_configuration"], {
+      list_instruments: () => [
+        {
+          id: INSTRUMENT.instrumentId,
+          code: "SYN-AN1",
+          name: INSTRUMENT.name,
+          enabled: true,
+          revision: 1,
+          connection: {
+            kind: "astm_tcp",
+            bindAddress: "10.0.0.5",
+            port: 5000,
+            allowedPeers: ["10.0.0.21"],
+          },
+        },
+      ],
+    });
+    await openRow(user, INSTRUMENT.name);
+    const instrument = within(panel(INSTRUMENT.name));
+    expect(await instrument.findByText("TCP 10.0.0.5:5000, from 10.0.0.21")).toBeTruthy();
+    expect(instrument.getByRole("link", { name: "Connection settings" }).getAttribute("href")).toBe(
+      `/configuration/instruments?open=${INSTRUMENT.instrumentId}`,
+    );
+  });
+
+  it("hides the connection from staff who cannot configure it", async () => {
+    const { user } = renderPage("/bench/setup", ["manage_quality"]);
+    await openRow(user, INSTRUMENT.name);
+    expect(within(panel(INSTRUMENT.name)).queryByText("Connection settings")).toBeNull();
+  });
+
+  it("starts the step a new analyzer's confirmation asked for, once", async () => {
+    const { router } = renderPage("/bench/setup", ["manage_quality"]);
+    await screen.findByRole("grid", { name: "Instruments" });
+    await router.navigate(`/bench/setup/instruments?open=${INSTRUMENT.instrumentId}`, {
+      state: { benchStep: "set_instrument_status" },
+    });
+    expect(
+      await screen.findByRole("dialog", { name: `Set status of ${INSTRUMENT.name}` }),
+    ).toBeTruthy();
+    expect(router.state.location.state).toBeNull();
+  });
+
   it("requires a status and a reason", async () => {
     const setStatus = vi.fn();
     const { user } = renderPage("/bench/setup", ["manage_quality"], {
@@ -233,6 +277,39 @@ describe("BenchSetupPage (REQ-ANA-003, REQ-ANA-007)", { timeout: WALKTHROUGH_TIM
     });
   });
 
+  it("shows the engine's refusal of an empty test-code map on the Test codes list", async () => {
+    const message = "Map at least one source test code.";
+    const register = vi.fn(() =>
+      Promise.reject(
+        engineError("validation", "Check the highlighted fields.", {
+          fieldErrors: [{ field: "testCodes", code: "required", message }],
+        }),
+      ),
+    );
+    const { user } = renderPage("/bench/setup", ["manage_configuration"], {
+      register_source: register,
+    });
+    await openRow(user, INSTRUMENT.name);
+    await user.click(
+      within(panel(INSTRUMENT.name)).getByRole("button", { name: "Register source" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByRole("textbox", { name: /^Sender name/ }), "SYN-SENDER");
+    await user.type(within(dialog).getByRole("textbox", { name: /^Sender version/ }), "2.0");
+    await chooseWithKeyboard(user, /Sample ID is read from$/, "Specimen ID field");
+    await chooseWithKeyboard(
+      user,
+      /Corrected results$/,
+      "Corrections carry a corrected result status",
+    );
+    await chooseWithKeyboard(user, /Reports final concentration after dilution$/, "No");
+    await user.click(within(dialog).getByRole("button", { name: "Register source" }));
+    const list = await within(dialog).findByRole("group", { name: "Test codes" });
+    await waitFor(() => expect(list.getAttribute("aria-invalid")).toBe("true"));
+    expect(within(list).getByText(message)).toBeTruthy();
+    expect(register).toHaveBeenCalledOnce();
+  });
+
   it("offers a result-file instrument a new file template instead of a source", async () => {
     const { user, router } = renderPage("/bench/setup", ["manage_configuration"], {
       list_instrument_readiness: () => [INSTRUMENT, FILE_INSTRUMENT],
@@ -290,6 +367,15 @@ describe("BenchSetupPage (REQ-ANA-003, REQ-ANA-007)", { timeout: WALKTHROUGH_TIM
     expect(screen.getByText("Withdrawn")).toBeTruthy();
   });
 
+  it("marks an active lot that expires soon with how many days are left", async () => {
+    renderPage("/bench/setup/lots", ["perform_analysis"], {
+      list_lots: () => [{ ...CONTROL_LOT, daysLeft: 3, expiringSoon: true }],
+    });
+    const grid = await screen.findByRole("grid", { name: "Lots" });
+    expect(within(grid).getByText("Expires in 3 days")).toBeTruthy();
+    expect(within(grid).queryByText("Active")).toBeNull();
+  });
+
   it("says when the filter hides every lot, and clears it", async () => {
     const { user } = renderPage("/bench/setup/lots", ["perform_analysis"], {
       list_lots: () => [REAGENT_LOT, WITHDRAWN_LOT],
@@ -335,6 +421,25 @@ describe("BenchSetupPage (REQ-ANA-003, REQ-ANA-007)", { timeout: WALKTHROUGH_TIM
     expect(withdraw).toHaveBeenCalledWith({
       input: { lotId: CONTROL_LOT.lotId, expectedRevision: 1, reason: "Contaminated" },
     });
+  });
+
+  it("asks for a sample label on controls and calibrators only", async () => {
+    const register = vi.fn(() => CONTROL_LOT);
+    const { user } = renderPage("/bench/setup/lots", ["manage_quality"], {
+      register_lot: register,
+    });
+    await user.click(await screen.findByRole("button", { name: "Register lot" }));
+    const dialog = await screen.findByRole("dialog");
+    await chooseWithKeyboard(user, /Material$/, "Reagent");
+    expect(within(dialog).queryByRole("textbox", { name: /^Sample label/ })).toBeNull();
+
+    await chooseWithKeyboard(user, /Material$/, "Control");
+    await user.type(within(dialog).getByRole("textbox", { name: /^Product/ }), "AMP control");
+    await user.type(within(dialog).getByRole("textbox", { name: /^Lot number/ }), "LOT-TEST-2");
+    await user.type(within(dialog).getByRole("textbox", { name: /^Expires on/ }), "2027-02-28");
+    await user.click(within(dialog).getByRole("button", { name: "Register lot" }));
+    expect(await within(dialog).findByText("Enter sample label.")).toBeTruthy();
+    expect(register).not.toHaveBeenCalled();
   });
 
   it("offers no withdrawal of a withdrawn lot, and none to analysts", async () => {

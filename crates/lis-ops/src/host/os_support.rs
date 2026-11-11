@@ -51,6 +51,62 @@ pub fn assess(os: &OsIdentity) -> OsSupport {
     }
 }
 
+/// The operating system in parts, as "This computer" shows it; the support check's product
+/// text joins the same parts.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OsName {
+    /// The product, such as "Windows 11", "macOS" or "Ubuntu".
+    pub name: String,
+    /// The release, such as "24H2 (build 26100)", "26.1" or "24.04.1 LTS".
+    pub version: String,
+    /// The Windows `EditionID`, such as "Professional".
+    pub edition: Option<String>,
+}
+
+/// `os` split into product name, release and Windows edition.
+#[must_use]
+pub fn describe(os: &OsIdentity) -> OsName {
+    match os {
+        OsIdentity::Windows(version) => windows_name(version),
+        OsIdentity::Macos(version) => OsName {
+            name: "macOS".to_owned(),
+            version: version.product_version.clone(),
+            edition: None,
+        },
+        OsIdentity::Linux(release) => linux_name(release),
+    }
+}
+
+/// "Windows 10" or "Windows 11" by build, the release with its build, and the edition.
+fn windows_name(version: &WindowsVersion) -> OsName {
+    let family = if version.build >= 22000 { 11 } else { 10 };
+    OsName {
+        name: format!("Windows {family}"),
+        version: match &version.display_version {
+            Some(display) => format!("{display} (build {})", version.build),
+            None => format!("(build {})", version.build),
+        },
+        edition: Some(version.edition_id.clone()),
+    }
+}
+
+/// `NAME` and the rest of `PRETTY_NAME` ("Ubuntu", "24.04.1 LTS"), else `ID` and `VERSION_ID`.
+fn linux_name(release: &LinuxRelease) -> OsName {
+    let name = release.name.clone().unwrap_or_else(|| release.id.clone());
+    let version = release
+        .pretty_name
+        .as_deref()
+        .and_then(|pretty| pretty.strip_prefix(name.as_str()))
+        .map(str::trim)
+        .filter(|rest| !rest.is_empty())
+        .map_or_else(|| release.version_id.clone(), str::to_owned);
+    OsName {
+        name,
+        version,
+        edition: None,
+    }
+}
+
 /// Windows edition classes by `EditionID`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Edition {
@@ -97,19 +153,9 @@ const WINDOWS_10_BUILD: u32 = 19045;
 const WINDOWS_10_ESU_LAST: Date = date(2028, 10, 10);
 
 fn windows(version: &WindowsVersion) -> OsSupport {
-    let family = if version.build >= 22000 { 11 } else { 10 };
-    let product = format!(
-        "Windows {family} {} {}(build {})",
-        version.edition_id,
-        version
-            .display_version
-            .as_deref()
-            .map(|display| format!("{display} "))
-            .unwrap_or_default(),
-        version.build
-    );
+    let name = windows_name(version);
     OsSupport {
-        product,
+        product: format!("{} {} {}", name.name, version.edition_id, name.version),
         status: windows_status(version.build, edition(&version.edition_id)),
     }
 }
@@ -275,6 +321,61 @@ mod tests {
         );
     }
 
+    #[test]
+    fn this_computer_parts_join_into_the_support_checks_product() {
+        let windows = OsIdentity::Windows(WindowsVersion {
+            build: 19045,
+            display_version: Some("22H2".into()),
+            edition_id: "Enterprise".into(),
+        });
+        let name = describe(&windows);
+        assert_eq!(
+            (name.name.as_str(), name.version.as_str()),
+            ("Windows 10", "22H2 (build 19045)")
+        );
+        assert_eq!(name.edition.as_deref(), Some("Enterprise"));
+        assert_eq!(
+            assess(&windows).product,
+            "Windows 10 Enterprise 22H2 (build 19045)"
+        );
+        let old = describe(&OsIdentity::Windows(WindowsVersion {
+            build: 17763,
+            display_version: None,
+            edition_id: "EnterpriseS".into(),
+        }));
+        assert_eq!(old.version, "(build 17763)");
+        let mac = describe(&OsIdentity::Macos(MacosVersion {
+            product_version: "26.1".into(),
+            major: 26,
+        }));
+        assert_eq!((mac.name.as_str(), mac.version.as_str()), ("macOS", "26.1"));
+        assert_eq!(mac.edition, None);
+    }
+
+    #[test]
+    fn linux_parts_split_the_pretty_name_after_the_name() {
+        let release = |name: Option<&str>, pretty: Option<&str>| {
+            describe(&OsIdentity::Linux(LinuxRelease {
+                id: "ubuntu".into(),
+                version_id: "24.04".into(),
+                name: name.map(Into::into),
+                pretty_name: pretty.map(Into::into),
+            }))
+        };
+        let full = release(Some("Ubuntu"), Some("Ubuntu 24.04.1 LTS"));
+        assert_eq!(
+            (full.name.as_str(), full.version.as_str()),
+            ("Ubuntu", "24.04.1 LTS")
+        );
+        let other = release(Some("Ubuntu"), Some("Custom build"));
+        assert_eq!(other.version, "24.04");
+        let bare = release(None, None);
+        assert_eq!(
+            (bare.name.as_str(), bare.version.as_str()),
+            ("ubuntu", "24.04")
+        );
+    }
+
     fn mac(major: u32) -> SupportStatus {
         let version = MacosVersion {
             product_version: format!("{major}.1"),
@@ -299,6 +400,7 @@ mod tests {
         let release = LinuxRelease {
             id: id.into(),
             version_id: version_id.into(),
+            name: None,
             pretty_name: None,
         };
         assess(&OsIdentity::Linux(release)).status

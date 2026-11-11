@@ -2,7 +2,7 @@
   "id": "patients",
   "title": "Patients and registration",
   "summary": "Find a patient, review identifying details and check possible matches before registration.",
-  "reviewedOn": "2026-10-15",
+  "reviewedOn": "2026-11-09",
   "routes": ["/patients", "/patients/register", "/patients/:subjectId"],
   "sections": [
     {
@@ -94,7 +94,7 @@
         {
           "name": "Find by name: Family name / Given names / Birth date",
           "meaning": "Searches name prefixes, optionally restricted by birth date.",
-          "values": "Family-name prefix when used alone; complete family name plus a given-name prefix when both are entered; optional real birth date in YYYY-MM-DD format.",
+          "values": "Family-name prefix when used alone; complete family name plus a given-name prefix when both are entered; optional real birth date in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field, which offers no day after today.",
           "rules": "Family name is required for detailed name search; names up to 200 characters. A similar name is a candidate, not identity confirmation."
         },
         {
@@ -193,14 +193,14 @@
         {
           "name": "Birth date",
           "meaning": "Supplied patient date of birth.",
-          "values": "A real date in YYYY-MM-DD format.",
+          "values": "A real date in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field, which offers no day after today.",
           "rules": "Required; an unknown or partial date is not accepted by this form."
         },
         {
           "name": "Administrative sex",
           "meaning": "Administrative sex code exactly as supplied.",
           "values": "Free text, up to 64 characters; no fixed choice list.",
-          "rules": "Optional; do not infer from name, appearance or other records."
+          "rules": "Optional; do not infer from name, appearance or other records. The record keeps the text as typed. HL7 result messages send it in PID-8 as its HL7 table 0001 code: Female or F as F, Male or M as M, and likewise Ambiguous (A), Not applicable (N), Other (O) and Unknown (U), in any letter case; any other text is sent as U, and none recorded leaves PID-8 empty."
         },
         {
           "name": "Source of these details",
@@ -212,7 +212,7 @@
           "name": "Identifiers: Identifier / Assigning authority / Identifier type",
           "meaning": "Each supplied patient identifier and its issuing namespace.",
           "values": "Source-supplied identifier, authority and type, each up to 64 characters.",
-          "rules": "Adding identifiers is optional, but all three fields are required in each added row. Duplicate triples and identifiers owned by another patient are refused."
+          "rules": "Adding identifiers is optional, but all three fields are required in each added row. Duplicate triples and identifiers owned by another patient are refused. HL7 result messages carry them in PID-3, which HL7 requires: a result for a patient with no identifier waits in Interfaces › Logs until one is added."
         },
         {
           "name": "Details to register",
@@ -359,7 +359,7 @@
         {
           "name": "Guarantor birth date / Subscriber birth date",
           "meaning": "Birth date supplied for that party.",
-          "values": "A real calendar date in YYYY-MM-DD format.",
+          "values": "A real calendar date in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field, which offers no day after today.",
           "rules": "Optional. It does not change the clinical patient birth date."
         },
         {
@@ -401,13 +401,13 @@
         {
           "name": "Coverage starts / Coverage ends",
           "meaning": "Coverage effective period from the source.",
-          "values": "Real dates in YYYY-MM-DD format.",
+          "values": "Real dates in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field.",
           "rules": "Each optional; end cannot precede start."
         },
         {
           "name": "Coverage checked on",
           "meaning": "Date the source says the coverage was checked.",
-          "values": "Real date in YYYY-MM-DD format.",
+          "values": "Real date in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field.",
           "rules": "Optional. A recorded check date is not a promise of payment."
         },
         {
@@ -467,7 +467,7 @@
         {
           "name": "Valid from / Valid until",
           "meaning": "The dates over which the source states this evidence applies.",
-          "values": "Real dates in YYYY-MM-DD format.",
+          "values": "Real dates in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field.",
           "rules": "Each optional; an end date cannot precede the start date."
         },
         {
@@ -479,7 +479,7 @@
         {
           "name": "Related provider NPI",
           "meaning": "The provider identified by this evidence.",
-          "values": "A valid ten-digit NPI with a valid check digit.",
+          "values": "A valid ten-digit NPI with a valid check digit. The field hint reads “10 digits. The last digit is checked automatically.” Fewer or more than ten digits shows “The NPI must be exactly 10 digits.”; a failed check digit shows “This NPI is not valid. Please check the number for a typo.”",
           "rules": "Required for Provider enrollment; optional for other evidence. For order enrollment evidence it must identify the ordering practitioner."
         },
         {
@@ -551,7 +551,7 @@
         {
           "name": "Correct demographics: family name, given names, birth date, administrative sex",
           "meaning": "A new source-backed assertion; existing values are shown for correction.",
-          "values": "Family name required, maximum200characters; given names optional maximum200; complete calendar birth date YYYY-MM-DD; administrative sex as supplied.",
+          "values": "Family name required, maximum200characters; given names optional maximum200; complete calendar birth date YYYY-MM-DD; administrative sex as supplied. Type it, or pick it from the calendar button in the field, which offers no day after today.",
           "rules": "Quality authority required. Never fabricate a date. Earlier assertions remain in demographic history. Unknown or partial birth information goes to Incomplete identity intake."
         },
         {
@@ -593,7 +593,7 @@
         {
           "name": "Standing authority: first and last valid collection date",
           "meaning": "Inclusive collection-date validity, not the UTC intake date.",
-          "values": "Required YYYY-MM-DD; end on or after start.",
+          "values": "Required YYYY-MM-DD; end on or after start. Type it, or pick it from the calendar button in the field.",
           "rules": "Date-only evidence keeps its calendar date. A timestamp uses its original supplied offset. Unknown dates block testing/release; correction re-evaluates validity even after quality assessment."
         },
         {

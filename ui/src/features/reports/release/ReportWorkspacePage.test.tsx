@@ -212,6 +212,70 @@ describe("ReportWorkspacePage (REQ-RPT-001, REQ-RPT-005)", () => {
     expect(screen.queryByRole("button", { name: "Prepare candidate" })).toBeNull();
   });
 
+  it("shows an up-to-date report as current, not blocked, with links to the issued revision", async () => {
+    mockCommands({
+      current_session: () => sessionWith(["release_reports", "deliver_reports"]),
+      get_report_workspace: (): ReportWorkspace => ({
+        ...WORKSPACE,
+        report: {
+          reportId: REPORT_ID,
+          reportNumber: "A26000001-URN",
+          currentRevision: REVISION,
+          availability: "current",
+        },
+        preview: {
+          ...WORKSPACE.preview,
+          content: null,
+          relationship: null,
+          gates: [
+            { code: "nothing_changed", message: "Nothing changed since the current revision." },
+          ],
+        },
+        allowedActions: [],
+      }),
+    });
+    const { container } = renderRoutes([ROUTE], `/reports/specimens/${SPECIMEN_ID}`);
+    const status = (await screen.findByText("Revision 1 is current")).closest("[role=status]");
+    if (!(status instanceof HTMLElement)) throw new Error("Revision 1 is current is not a status");
+    expect(status.textContent).toContain("Nothing new to release");
+    expect(
+      await within(status).findByRole("link", { name: "View report and delivery" }),
+    ).toBeTruthy();
+    expect(screen.queryByText("Release is blocked until these are resolved")).toBeNull();
+    expect(screen.queryByText(/Nothing can be shown yet/)).toBeNull();
+    expect(screen.getByText(/Nothing new to print: revision 1 is the issued content/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "View revision 1 as issued" })).toBeTruthy();
+    await expectNoA11yViolations(container, { wholePage: true });
+  });
+
+  it("still shows the block when another gate stands beside nothing changed", async () => {
+    renderPage({
+      get_report_workspace: (): ReportWorkspace => ({
+        ...WORKSPACE,
+        report: {
+          reportId: REPORT_ID,
+          reportNumber: "A26000001-URN",
+          currentRevision: REVISION,
+          availability: "current",
+        },
+        preview: {
+          ...WORKSPACE.preview,
+          content: null,
+          relationship: null,
+          gates: [
+            { code: "nothing_changed", message: "Nothing changed since the current revision." },
+            { code: "identity_hold_open", message: "An identity hold is open for this patient." },
+          ],
+        },
+        allowedActions: [],
+      }),
+    });
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Release is blocked until these are resolved");
+    expect(screen.queryByText(/is current$/)).toBeNull();
+    expect(screen.getByText(/Nothing can be shown yet/)).toBeTruthy();
+  });
+
   it("shows the engine's refusal to prepare when a hold appeared since the preview", async () => {
     const { user } = renderPage({
       prepare_report_candidate: () =>

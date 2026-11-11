@@ -18,6 +18,9 @@ pub enum ResultError {
     /// The record state refuses this action.
     #[error("The {0} is not in a state that allows this action.")]
     WrongState(&'static str),
+    /// Every selected result revision already has a current approved review.
+    #[error("These results are already approved. Nothing new to review.")]
+    AlreadyApproved,
     /// One or more safety gates block approval.
     #[error("This action is blocked by one or more review gates.")]
     GateBlocked(Vec<GateReason>),
@@ -51,7 +54,9 @@ impl ResultError {
         match self {
             Self::Invalid(_) => ErrorCode::Validation,
             Self::NotFound(_) => ErrorCode::NotFound,
-            Self::RevisionConflict | Self::WrongState(_) => ErrorCode::Conflict,
+            Self::RevisionConflict | Self::WrongState(_) | Self::AlreadyApproved => {
+                ErrorCode::Conflict
+            }
             Self::GateBlocked(_) => ErrorCode::GateBlocked,
             Self::UserRequired => ErrorCode::Forbidden,
             Self::Analytical(error) => error.code(),
@@ -74,6 +79,7 @@ impl ResultError {
             Self::NotFound(_)
             | Self::RevisionConflict
             | Self::WrongState(_)
+            | Self::AlreadyApproved
             | Self::GateBlocked(_)
             | Self::UserRequired
             | Self::Catalog(_)
@@ -94,6 +100,7 @@ impl ResultError {
             | Self::NotFound(_)
             | Self::RevisionConflict
             | Self::WrongState(_)
+            | Self::AlreadyApproved
             | Self::UserRequired
             | Self::Catalog(_)
             | Self::Interfaces(_)

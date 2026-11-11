@@ -54,19 +54,21 @@ pub struct SetLaboratoryProfile {
 
 /// Sets the laboratory profile as a new version (L15: one signed-in user
 /// with `manage_configuration` and a reason). The expected version must be
-/// the current one, so two edits cannot silently overwrite each other.
+/// the current one, so two edits cannot silently overwrite each other, and a
+/// version must change at least one value.
 pub fn set_laboratory_profile(
     ctx: &mut CommandContext<'_>,
     input: SetLaboratoryProfile,
 ) -> Result<LaboratoryProfileView, IdentityError> {
     ctx.require(Capability::ManageConfiguration)?;
     let actor = ActorRef::user(ctx.principal())?;
-    let current = repo::current_profile(ctx.tx())?.map(|profile| profile.version);
+    let previous = repo::current_profile(ctx.tx())?;
+    let current = previous.as_ref().map(|profile| profile.version);
     if current != input.expected_version {
         return Err(IdentityError::RevisionConflict);
     }
     let version = current.unwrap_or(0) + 1;
-    let profile = LaboratoryProfileView {
+    let mut profile = LaboratoryProfileView {
         profile_id: LaboratoryProfileId::generate(),
         version,
         name: required_text("name", &input.name, NAME_MAX)?,
@@ -77,11 +79,15 @@ pub fn set_laboratory_profile(
         time_zone: time_zone(&input.time_zone)?,
         billing_npi: billing_npi(input.billing_npi.as_deref())?,
         tax_id: tax_id(input.tax_id.as_deref())?,
-        reason: change_reason(version, input.reason.as_deref())?,
+        reason: None,
         set_by: actor.id,
         set_by_display: None,
         set_at: ctx.now(),
     };
+    if previous.is_some_and(|previous| same_values(&previous, &profile)) {
+        return Err(IdentityError::NothingChanged);
+    }
+    profile.reason = change_reason(version, input.reason.as_deref())?;
     repo::insert_profile(ctx.tx(), &profile)?;
     let mut event = AuditEvent::new(
         Stream::Clinical,
@@ -98,6 +104,29 @@ pub fn set_laboratory_profile(
     }
     ctx.audit(event)?;
     Ok(profile)
+}
+
+/// A version that repeats every value of the current one would record no change.
+fn same_values(current: &LaboratoryProfileView, next: &LaboratoryProfileView) -> bool {
+    (
+        &current.name,
+        &current.address_lines,
+        &current.clia_id,
+        &current.director,
+        &current.phone,
+        &current.time_zone,
+        &current.billing_npi,
+        &current.tax_id,
+    ) == (
+        &next.name,
+        &next.address_lines,
+        &next.clia_id,
+        &next.director,
+        &next.phone,
+        &next.time_zone,
+        &next.billing_npi,
+        &next.tax_id,
+    )
 }
 
 fn address_lines(lines: &[String]) -> Result<Vec<String>, IdentityError> {
@@ -154,8 +183,7 @@ fn billing_npi(text: Option<&str>) -> Result<Option<String>, IdentityError> {
     let Some(text) = text.filter(|text| !text.trim().is_empty()) else {
         return Ok(None);
     };
-    let npi = Npi::parse(text)
-        .map_err(|_| invalid("billingNpi", "invalid_npi", "Enter a valid 10-digit NPI."))?;
+    let npi = Npi::parse_field("billingNpi", text)?;
     Ok(Some(npi.as_str().to_owned()))
 }
 
@@ -269,8 +297,12 @@ mod tests {
         );
         assert_eq!(billing_npi(None).unwrap(), None);
         assert_eq!(
-            field_code(billing_npi(Some("1234567890")).unwrap_err()).0,
-            "billingNpi"
+            field_code(billing_npi(Some("1234567890")).unwrap_err()),
+            ("billingNpi".to_owned(), "npi_check_digit".to_owned())
+        );
+        assert_eq!(
+            field_code(billing_npi(Some("123456789")).unwrap_err()),
+            ("billingNpi".to_owned(), "npi_length".to_owned())
         );
     }
 

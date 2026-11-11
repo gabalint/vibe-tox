@@ -2,7 +2,7 @@
   "id": "work-queues",
   "title": "Work queues",
   "summary": "Find work that needs attention and open the record where it can be resolved.",
-  "reviewedOn": "2026-10-15",
+  "reviewedOn": "2026-11-09",
   "routes": ["/work-queues", "/work-queues/:queue"],
   "sections": [
     {
@@ -11,6 +11,13 @@
         "The overview groups outstanding work into queues. Open a queue to see its items, age and current status, then open an item to reach the appropriate record. Some items have no record screen; use their displayed next action to identify where follow-up belongs.",
         "Use the queue’s refresh control when you need the latest view. Work queues collect different kinds of unfinished work, so an item’s presence does not by itself identify the action you should take.",
         "Each queue lists a record workspace once, even when it contains several pending events. For example, one import can contain many quarantined analyte rows, and one accession can contain several specimens or failed label jobs. Open the workspace to review every underlying issue; queue counts are not patient, specimen or analyte totals."
+      ]
+    },
+    {
+      "title": "Counts in the navigation",
+      "paragraphs": [
+        "The navigation shows a queue’s count beside its entry, for example Result imports 2, and the total of every queue you can see beside Work queues. A number followed by + means at least that many; ? means the count is unknown. No number means nothing is waiting, or the counts could not be read. Counts refresh about once a minute.",
+        "Work areas such as Front desk, Review and Billing are closed when you sign in. Select an area’s name to open or close it. A closed area shows the total of its entries’ counts: 2 in Result review and 2 in Result imports show 4 beside Review. When you open the area, the total disappears and each entry shows its own count. Areas you open or close stay that way until you sign out or the app locks; every sign-in or unlock starts with all areas closed. Going to a page opens its area."
       ]
     },
     {
@@ -43,13 +50,19 @@
     "ui/src/features/workqueues/ageText.ts",
     "ui/src/features/workqueues/contract.ts",
     "ui/src/features/workqueues/itemPath.ts",
+    "ui/src/features/workqueues/lotColumns.tsx",
+    "crates/lis-engine/src/commands/work_queues/lot_items.rs",
+    "crates/lis-analytical/src/queries/lot_list.rs",
     "ui/src/lib/WorkQueueList.tsx",
     "crates/lis-engine/src/commands/work_queues/mod.rs",
     "crates/lis-engine/src/commands/work_queues/catalog.rs",
     "crates/lis-engine/src/commands/work_queues/review_items.rs",
     "ui/src/lib/useWorkQueueItems.ts",
     "ui/src/lib/useBoundedQueue.ts",
-    "ui/src/lib/QueueScanControls.tsx"
+    "ui/src/lib/QueueScanControls.tsx",
+    "ui/src/app/SideNav.tsx",
+    "ui/src/app/NavGroup.tsx",
+    "ui/src/app/NavItem.tsx"
   ],
   "pages": [
     {
@@ -67,19 +80,19 @@
         {
           "name": "Queue: analytical and review",
           "meaning": "Groups unfinished analysis and result decisions.",
-          "values": "QC requiring review; Open deviations; Results ready for review; Stale result reviews; Result review blocked; Open import quarantine; Performed but not ordered; Results expected from analyzers.",
+          "values": "QC requiring review; Open deviations; Lots expiring soon; Results ready for review; Stale result reviews; Result review blocked; Open import quarantine; Performed but not ordered; Results expected from analyzers.",
           "rules": "Read-only list filtered by quality, result-review or analysis authority."
         },
         {
           "name": "Queue: reporting and delivery",
           "meaning": "Groups release, report quality and delivery work.",
           "values": "Reports ready for release; Report release blocked; Partial reports outstanding; Report impact review; Report corrections due; Report delivery work; Reports without a destination; Delivery destinations to verify or replace; Report preservation incidents.",
-          "rules": "Read-only list filtered by release, quality, delivery or configuration authority."
+          "rules": "Read-only list filtered by release, quality, delivery or configuration authority. Reports without a destination leaves out a revision that goes to an Interfaces connection."
         },
         {
           "name": "Queue: billing and operations",
           "meaning": "Groups administrative follow-up.",
-          "values": "Billing work; Outbox dead letters; Health checks needing attention; Listening gaps to acknowledge; Recovery reconciliation after a restore; Version awaiting acceptance.",
+          "values": "Billing work; Outbox dead letters; Unrouted interface messages; Interface messages not written; Health checks needing attention; Listening gaps to acknowledge; Recovery reconciliation after a restore; Version awaiting acceptance.",
           "rules": "Read-only list filtered by billing, configuration, analysis, quality or configuration-approval authority."
         },
         {
@@ -92,7 +105,7 @@
           "name": "Oldest item waiting",
           "meaning": "Shows the age and start time of the oldest queued item.",
           "values": "Recorded age and since timestamp; — when none waits or a historical review count has not been computed.",
-          "rules": "Read-only; age reflects the latest screen render, not a promised turnaround deadline."
+          "rules": "Read-only; age reflects the latest screen render, not a promised turnaround deadline. The overview opens sorted by this column with the most recent first; queues showing — stay at the bottom in either direction."
         },
         {
           "name": "Next action",
@@ -108,6 +121,12 @@
         }
       ],
       "actions": [
+        {
+          "name": "Sort a column",
+          "does": "Reorders the queues by Queue, Items or Oldest item waiting. Each click on Oldest item waiting moves from most recent first to oldest first, then to the standard queue order.",
+          "availableWhen": "The overview lists at least one queue. Next action is not sortable.",
+          "result": "Only the order on screen changes; reopening the overview starts with the most recent first again."
+        },
         {
           "name": "Open queue row",
           "does": "Opens the queue’s oldest waiting items.",
@@ -190,6 +209,12 @@
           "rules": "Read-only; follow the stated action even when the item has no direct record screen."
         },
         {
+          "name": "Lots expiring soon: Lot, Product, Material, Sample label, Expires, Days left",
+          "meaning": "In the Lots expiring soon queue, each item is an active lot that expires within the laboratory's Warning before a lot expires setting (System › Operations settings, 14 days by default). These columns replace Item, State and Waiting.",
+          "values": "The lot number, product name, material (Control, Calibrator, Reagent or Internal standard), sample label (— when none), last day of use and Expires today, Expires in 1 day or Expires in N days. Next action is Register a new lot.",
+          "rules": "Read-only; requires Manage quality. Days are counted by UTC date. An expired or withdrawn lot leaves the queue; an expired lot stays blocked for new runs as before. Registering the replacement does not remove the old lot until it expires or is withdrawn."
+        },
+        {
           "name": "Shown / total / Updated",
           "meaning": "Distinguishes loaded items from the full or capped count.",
           "values": "Loaded workspaces; known count or lower bound where available; candidate specimens checked for review queues; last read time.",
@@ -199,7 +224,7 @@
       "actions": [
         {
           "name": "Open item row",
-          "does": "Navigates to the owning order, accession, QC, result, report, delivery, billing or operations record.",
+          "does": "Navigates to the owning order, accession, QC, result, report, delivery, billing, lot or operations record. A lot opens in its panel in Bench setup › Lots.",
           "availableWhen": "The item kind has an implemented target screen and your account can access it.",
           "result": "Opens the record, sometimes its matching panel. Previous/Next there follow distinct records of the same item kind in this queue."
         },
@@ -210,9 +235,9 @@
           "result": "Starts a fresh check at the beginning; earlier loaded pages and cursors are cleared. Updated records may have moved or left the queue."
         },
         {
-          "name": "All queues",
+          "name": "Work queues breadcrumb",
           "does": "Returns to the overview.",
-          "availableWhen": "The page is open.",
+          "availableWhen": "Above the queue's title, as Work queues › the queue's name.",
           "result": "Shows every queue available to your account."
         },
         {
@@ -256,7 +281,7 @@
         },
         {
           "problem": "The queue is not permitted or is unknown.",
-          "recovery": "Return to All queues and open a queue actually offered to the signed-in account."
+          "recovery": "Return to Work queues with the breadcrumb and open a queue actually offered to the signed-in account."
         },
         {
           "problem": "The linked delivery obligation is not loaded.",

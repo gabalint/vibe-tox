@@ -14,6 +14,7 @@ import { renderWithProviders } from "@/lib/test/render";
 import { renderRoutes } from "@/lib/test/router";
 import { DetailLayout } from "./DetailLayout";
 import { DetailPanel } from "./DetailPanel";
+import { useWidePanel } from "./usePanelWidth";
 
 interface Analyte {
   code: string;
@@ -37,8 +38,17 @@ const COLUMNS: readonly DataGridColumn<Analyte>[] = [
   { id: "name", header: "Name", cell: (row) => row.name },
 ];
 
+/** Content that asks for a wide panel while it is shown, like a correction history. */
+function WideContent() {
+  const [shown, setShown] = useState(false);
+  useWidePanel(shown);
+  return (
+    <Button onPress={() => setShown((value) => !value)}>{shown ? "Hide" : "Show"} table</Button>
+  );
+}
+
 /** A directory screen as the standards compose it: list, open record in `?open=`, panel. */
-function Directory() {
+function Directory({ wide = false }: { wide?: boolean }) {
   const record = useOpenRecord();
   const open = ANALYTES.find((row) => row.code === record.openId);
   return (
@@ -59,6 +69,7 @@ function Directory() {
             onNext={record.next}
           >
             <p>{open.name}</p>
+            {wide && <WideContent />}
           </DetailPanel>
         )
       }
@@ -77,8 +88,8 @@ function Directory() {
   );
 }
 
-const renderDirectory = (path = "/analytes?q=syn") =>
-  renderRoutes([{ path: "/analytes", element: <Directory /> }], path);
+const renderDirectory = (path = "/analytes?q=syn", wide = false) =>
+  renderRoutes([{ path: "/analytes", element: <Directory wide={wide} /> }], path);
 const panel = (code: string) => screen.getByRole("region", { name: code });
 const cell = (name: string) => screen.getByRole("gridcell", { name });
 
@@ -265,5 +276,59 @@ describe("DetailPanel body", () => {
     expect(
       within(panel("SYN-A")).getByText("Synthetic analyte one").closest("[tabindex]"),
     ).toBeNull();
+  });
+});
+
+describe("DetailPanel width", () => {
+  const splitter = () => screen.getByRole("separator", { name: "Width of SYN-A" });
+  const width = () => Number(splitter().getAttribute("aria-valuenow"));
+
+  // A 2000px layout: the panel goes from 22rem (352px) to 64rem (1024px), 34rem (544px) by default.
+  beforeEach(() => {
+    localStorage.clear();
+    mockGridLayout();
+    stubResizeObserver(2000);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("resizes from its left edge with the keyboard and remembers the width for the page", async () => {
+    const { user, unmount } = renderDirectory();
+    await openRow(user, "SYN-A");
+    expect(width()).toBe(544);
+    splitter().focus();
+    await user.keyboard("{ArrowLeft}");
+    expect(width()).toBe(576);
+    await user.keyboard("{End}");
+    expect(width()).toBe(1024);
+    await user.keyboard("{Home}{ArrowLeft}");
+    expect(width()).toBe(384);
+    unmount();
+
+    renderDirectory("/analytes?open=SYN-A");
+    await waitFor(() => expect(width()).toBe(384));
+  });
+
+  it("keeps the list its 38rem beside the panel", async () => {
+    stubResizeObserver(1008);
+    const { user } = renderDirectory();
+    await openRow(user, "SYN-A");
+    splitter().focus();
+    await user.keyboard("{End}");
+    // 1008px less the 38rem list and the 1rem gap.
+    expect(width()).toBe(384);
+  });
+
+  it("widens while its content asks, then returns to the width chosen before", async () => {
+    const { user } = renderDirectory("/analytes?open=SYN-A", true);
+    splitter().focus();
+    await user.keyboard("{ArrowRight}");
+    expect(width()).toBe(512);
+    await user.click(screen.getByRole("button", { name: "Show table" }));
+    expect(width()).toBe(1024);
+    splitter().focus();
+    await user.keyboard("{ArrowRight}");
+    expect(width()).toBe(992);
+    await user.click(screen.getByRole("button", { name: "Hide table" }));
+    expect(width()).toBe(512);
   });
 });

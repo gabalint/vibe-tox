@@ -139,13 +139,14 @@ pub use model::{
     QcConflictState, QcObservationId, QcOutcome, QcRole, QcScope, QcStatus, RegistrationState,
     RevisionIndicator, RunId, RunState, SampleIdField, SourceRegistrationId,
 };
+pub use queries::lot_list::{ExpiringLot, list_lots, lots_expiring_soon};
 pub use queries::preparation::{ListPrepBatchesInput, PrepBatchSummary, list_prep_batches};
 pub use queries::qc::get_run_qc;
 pub use queries::queues::{component_executions, get_deviation, open_deviations, qc_work_queue};
 pub use queries::runs::{ListRunsPageInput, get_run, list_runs, list_runs_page, run_created_at};
 pub use queries::{
     active_registration, execution_components, execution_dilution_factor,
-    execution_laboratory_profile, list_instrument_readiness, list_lots, list_source_registrations,
+    execution_laboratory_profile, list_instrument_readiness, list_source_registrations,
     list_worklist, position_by_sample_label, prep_batch, run_laboratory_profile,
     source_registration,
 };
@@ -198,6 +199,11 @@ pub const MIGRATIONS: &[Migration] = &[
         version: 8,
         name: "qc_scope_lookup",
         sql: include_str!("../migrations/0008_qc_scope_lookup.sql"),
+    },
+    Migration {
+        version: 9,
+        name: "qc_receipt_positions",
+        sql: include_str!("../migrations/0009_qc_receipt_positions.sql"),
     },
 ];
 

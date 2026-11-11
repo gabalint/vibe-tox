@@ -2,13 +2,13 @@
   "id": "bench-setup",
   "title": "Bench setup",
   "summary": "Review instrument readiness, result sources and material lots before analytical work.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-11-09",
   "routes": ["/bench/setup/:tab?"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
-        "The Instruments tab shows service status and result-source registrations. Open an instrument to inspect its readiness and use the source actions offered for your role. For result-file instruments, the template actions lead to drafting or checking a file template.",
+        "The Instruments tab shows service status and result-source registrations. Open an instrument to inspect its readiness and use the source actions offered for your role. With configuration rights its panel also shows the connection in one line, with a Connection settings link to the same instrument under Laboratory setup › Instruments. For result-file instruments, the template actions lead to drafting or checking a file template.",
         "The Lots tab lists laboratory materials. Authorized quality staff can register a lot and use the available lot actions. Runs record the lots used rather than relying only on what is currently listed here."
       ]
     },
@@ -29,12 +29,14 @@
   "reviewSources": [
     "crates/lis-engine/src/commands/analytical/names.rs",
     "ui/src/lib/person.ts",
+    "ui/src/lib/instrumentPages.ts",
     "ui/src/features/analytics/bench/BenchSetupPage.tsx",
     "ui/src/features/analytics/bench/InstrumentsTab.tsx",
     "ui/src/features/analytics/bench/InstrumentPanel.tsx",
     "ui/src/features/analytics/bench/InstrumentSources.tsx",
     "ui/src/features/analytics/bench/InstrumentStatusDialog.tsx",
     "ui/src/features/analytics/bench/RegisterSourceDialog.tsx",
+    "ui/src/features/analytics/bench/AuSourceFacts.tsx",
     "ui/src/features/analytics/bench/ApproveSource.tsx",
     "ui/src/features/analytics/bench/LotsTab.tsx",
     "ui/src/features/analytics/bench/LotPanel.tsx",
@@ -42,7 +44,10 @@
     "ui/src/features/analytics/bench/WithdrawLotDialog.tsx",
     "ui/src/features/analytics/labels.ts",
     "crates/lis-analytical/src/commands/readiness.rs",
+    "crates/lis-analytical/src/commands/au_sources.rs",
+    "crates/lis-analytical/src/au_profile.rs",
     "crates/lis-analytical/src/commands/lots.rs",
+    "crates/lis-analytical/src/queries/lot_list.rs",
     "crates/lis-analytical/src/commands/mod.rs",
     "ui/src/components/SelfApprovalConfirm/SelfApprovalConfirm.tsx",
     "ui/src/features/analytics/contract.ts",
@@ -74,6 +79,12 @@
           "rules": "Read-only; supplied by the current record."
         },
         {
+          "name": "Instrument panel: Connection",
+          "meaning": "How the instrument's results reach the LIS, as saved under Laboratory setup › Instruments.",
+          "values": "One line, such as AU400 / AU640 · Serial COM10, 9600 baud, 8N1; TCP address:port, from the allowed addresses; Result files; Checking; Connection unavailable.",
+          "rules": "Read-only. Shown only with configuration-management authority, the right that opens Laboratory setup › Instruments."
+        },
+        {
           "name": "Set status: Status",
           "meaning": "Records current readiness.",
           "values": "In service or Out of service.",
@@ -87,27 +98,27 @@
         },
         {
           "name": "Register source: Sender name",
-          "meaning": "Matches the sender named in the analyzer message header.",
-          "values": "Exact source identity supplied by the analyzer.",
+          "meaning": "Matches the sender named in the analyzer message header. AU400 / AU640 messages carry no sender name, so for an AU analyzer it is the device identity the laboratory declares.",
+          "values": "Exact source identity supplied by the analyzer; for AU, the declared analyzer model, such as AU640.",
           "rules": "Required, trimmed 1–200 characters. Confirm against the actual source."
         },
         {
           "name": "Register source: Sender version",
-          "meaning": "Identifies the source software version.",
-          "values": "Version text supplied by the analyzer.",
+          "meaning": "Identifies the source software version. For an AU analyzer it is the declared software version, since AU messages carry none.",
+          "values": "Version text supplied by the analyzer, or declared for AU.",
           "rules": "Required, trimmed 1–200 characters."
         },
         {
           "name": "Sample ID is read from",
           "meaning": "Chooses which analyzer identifier carries the container label.",
           "values": "Specimen ID field or Instrument specimen ID field.",
-          "rules": "Required; no default."
+          "rules": "Required; no default. Not asked for an AU analyzer: an AU source always matches the sample ID of the AU message to the container barcode, shown as a fact in the dialog."
         },
         {
           "name": "Corrected results",
           "meaning": "Declares how this source identifies corrections.",
           "values": "The analyzer does not mark corrections; Corrections carry a corrected result status.",
-          "rules": "Required; must describe the actual source behavior."
+          "rules": "Required; must describe the actual source behavior. Not asked for an AU analyzer: an AU source is always recorded as The analyzer does not mark corrections."
         },
         {
           "name": "Reports final concentration after dilution",
@@ -118,14 +129,26 @@
         {
           "name": "Test codes: Source test code",
           "meaning": "Maps an analyzer test identifier to the catalog.",
-          "values": "Exact source code.",
-          "rules": "At least one mapping required. Each code is 1–64 characters, unique, and must have no surrounding spaces."
+          "values": "Exact source code; for AU, the analyzer's two-digit test number, 01–99.",
+          "rules": "At least one mapping required. Each code is 1–64 characters, unique, and must have no surrounding spaces. For AU, the form refuses anything but two digits from 01 to 99 before sending. Map only numeric AU assays; leave out LIH (serum index) tests, which stay held."
         },
         {
           "name": "Test codes: Analyte",
           "meaning": "Chooses the analyte reported by that source code.",
-          "values": "Configured catalog analytes, by name and code.",
+          "values": "Active catalog analytes, by name and code; retired analytes are not offered, and the engine refuses them.",
           "rules": "Required for every test-code row."
+        },
+        {
+          "name": "Test codes: Unit (AU only)",
+          "meaning": "Declares the unit of that numeric AU assay. AU messages carry no units, so imported values take this declared unit; result evidence still shows that no unit was reported.",
+          "values": "Unit text as the laboratory declares it, such as ng/mL; empty declares a unitless assay.",
+          "rules": "Optional; at most 64 characters, no surrounding spaces. Shown only for AU analyzers. Approved with the source; check it against the assay's actual reporting unit."
+        },
+        {
+          "name": "AU wire settings (AU only)",
+          "meaning": "Shows the AU framing and format settings the source restates from the analyzer's connection.",
+          "values": "Transmission class, start and end codes, BCC, sample ID width and result width, from Laboratory setup › Instruments.",
+          "rules": "Read-only; copied when the dialog opens. They must still equal the connection when the source is approved, so a connection change in between blocks approval; register a new source then."
         },
         {
           "name": "Result sources: State / Registered / Approved",
@@ -134,9 +157,9 @@
           "rules": "Read-only. Approval activates a draft and retires the previous active source."
         },
         {
-          "name": "Result sources: Sample ID read from / Corrections / Reports final concentration / Test codes",
-          "meaning": "Shows the stored mapping and source declarations.",
-          "values": "Recorded choices and source-code → analyte mappings.",
+          "name": "Result sources: Sample ID read from / Corrections / AU wire settings / Reports final concentration / Test codes",
+          "meaning": "Shows the stored mapping and source declarations, so the approver sees exactly what approval activates.",
+          "values": "Recorded choices and source-code → analyte mappings. An AU source also shows its wire settings and each code's declared unit, or no unit for a unitless assay.",
           "rules": "Read-only; file sources show their result-file shape and open in the template workspace."
         },
         {
@@ -173,19 +196,19 @@
           "name": "Sample label",
           "meaning": "Identifies the control/calibrator label sent by the analyzer.",
           "values": "Exact label text.",
-          "rules": "Required for Control and Calibrator, despite the form not marking it required; 1–64 characters. Leave blank for Reagent and Internal standard."
+          "rules": "Shown and required (*) only for Control and Calibrator; trimmed 1–64 characters. Hidden for Reagent and Internal standard, which have no sample label."
         },
         {
           "name": "Expires on / Expires",
           "meaning": "Records the stated expiry date.",
-          "values": "Valid calendar date in YYYY-MM-DD format.",
+          "values": "Valid calendar date in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field.",
           "rules": "Required; expired lots cannot be used for new analytical work."
         },
         {
           "name": "Lot Status / Registered",
           "meaning": "Shows eligibility and registration time.",
-          "values": "Active, Expired or Withdrawn; recorded date/time.",
-          "rules": "Read-only; withdrawal takes precedence in the display. Runs retain historical lot associations."
+          "values": "Active, Expires today / Expires in N days (warning), Expired or Withdrawn; recorded date/time.",
+          "rules": "Read-only; withdrawal takes precedence in the display. Expires in N days marks an active lot inside the laboratory's Warning before a lot expires setting (System › Operations settings, 14 days by default); it is still usable through its expiry date, and it is also listed in the Lots expiring soon work queue. Runs retain historical lot associations."
         },
         {
           "name": "Source approval: Confirm self-approval",
@@ -200,6 +223,18 @@
           "does": "Shows the record’s facts and actions.",
           "availableWhen": "A row is present.",
           "result": "Opens a panel with Previous, Next and Close."
+        },
+        {
+          "name": "Connection settings link",
+          "does": "Opens the same instrument under Laboratory setup › Instruments, where its connection is read and changed.",
+          "availableWhen": "An instrument panel is open, with configuration-management authority.",
+          "result": "Laboratory setup › Instruments opens with the instrument's panel."
+        },
+        {
+          "name": "Next step from a new analyzer",
+          "does": "Set in service or Register source in the confirmation of Register analyzer, under Laboratory setup › Instruments, opens the analyzer here and starts that action.",
+          "availableWhen": "The action's own authority: quality management for Set status, configuration management for Register source or New file template.",
+          "result": "The instrument's panel opens with the Set status or Register source dialog, or the file template page for a result-file instrument. Going back later does not start it again."
         },
         {
           "name": "Set status",
@@ -259,7 +294,7 @@
       "restrictions": [
         "Service readiness does not configure serial, network or watched-folder connections; those are in Laboratory setup.",
         "Source approval does not approve patient results. Self-approval is possible only when the laboratory separation-of-duties policy allows it and the author explicitly confirms it.",
-        "The generic source form has no AU wire-profile fields; an AU-specific profile requirement cannot be satisfied by inventing ASTM settings.",
+        "An AU source cannot have its own wire settings: they come from the analyzer's connection, which is changed only in Laboratory setup › Instruments.",
         "There is no lot-edit or restore-withdrawn-lot action here. Record material identity accurately before registration."
       ],
       "workflow": [
@@ -275,6 +310,14 @@
         {
           "problem": "The author cannot approve a source.",
           "recovery": "Use an authorized independent approver, or follow an already approved laboratory policy that permits and explicitly confirms self-approval."
+        },
+        {
+          "problem": "Registering or approving an AU source says the source format must match the instrument connection and its exact AU wire settings.",
+          "recovery": "The analyzer's connection changed after the dialog opened or after registration. Close the dialog, reopen Bench setup and register the source again so it restates the current settings."
+        },
+        {
+          "problem": "Register source says the AU tests must match the source analyte map.",
+          "recovery": "Each test-code row is one numeric AU test; remove duplicate codes and any LIH test, then register again."
         },
         {
           "problem": "No active lot is listed.",

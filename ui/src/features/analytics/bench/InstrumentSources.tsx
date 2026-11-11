@@ -18,6 +18,7 @@ import { REVISION_INDICATORS, registrationStatus, SAMPLE_ID_FIELDS } from "../la
 import { fileSourcePath } from "../paths";
 import { useAnalyteName } from "../useAnalyteName";
 import { ApproveSource } from "./ApproveSource";
+import { auWireText } from "./AuSourceFacts";
 
 /**
  * The sources registered for one instrument (REQ-ANA-003): an analyzer's ASTM sender, or a
@@ -79,6 +80,13 @@ function SourceItem({ source, instrumentName, analyteName }: SourceItemProps) {
           { label: "Corrections", value: labelOf(REVISION_INDICATORS, source.revisionIndicator) },
         ]
       : [{ label: "Result file", value: shapeText(layout.shape) }];
+  const au = source.auProfile;
+  // An AU message carries no units: the approver checks each declared one here.
+  const unitOf = (code: string) => {
+    if (!au) return "";
+    const unit = au.tests.find((test) => test.testCode === code)?.unit;
+    return ` · ${unit ?? "no unit"}`;
+  };
   return (
     <Inset as="li">
       <Toolbar>
@@ -99,6 +107,7 @@ function SourceItem({ source, instrumentName, analyteName }: SourceItemProps) {
       <Facts
         items={[
           ...kindFacts,
+          ...(au ? [{ label: "AU wire settings", value: auWireText(au.protocol) }] : []),
           {
             label: "Reports final concentration",
             value: source.reportsFinalConcentration ? "Yes" : "No",
@@ -121,6 +130,7 @@ function SourceItem({ source, instrumentName, analyteName }: SourceItemProps) {
           <li key={code.sourceTestCode}>
             <span className={styles.code}>{code.sourceTestCode}</span> →{" "}
             {analyteName(code.analyteId)}
+            {unitOf(code.sourceTestCode)}
           </li>
         ))}
       </ul>

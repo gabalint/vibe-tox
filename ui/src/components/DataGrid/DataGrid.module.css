@@ -81,8 +81,10 @@
   justify-content: flex-end;
 }
 
-/* `text-overflow` needs a block box, so data cells are blocks, centred by line height. */
+/* `text-overflow` needs a block box, so data cells are blocks, centred by line height. In a
+   row another cell's wrapped text made taller, every other cell sits in its middle. */
 .cell {
+  align-self: center;
   min-width: 0;
   padding: 0 var(--space-2);
   overflow: hidden;
@@ -93,6 +95,15 @@
 
 .cell > * {
   vertical-align: middle;
+}
+
+/* A status badge (`StatusBadge`, marked by `data-tone`) alone in its cell takes the cell's
+   width, at most 16rem, its label centred, so a column of statuses lines up. Counts aligned to
+   the end keep their own width. It stays inline, so the cell still centres it on its line. */
+.cell:not([data-align="end"]) > [data-tone]:only-child {
+  width: 100%;
+  max-width: 16rem;
+  justify-content: center;
 }
 
 .cell[data-align="end"] {

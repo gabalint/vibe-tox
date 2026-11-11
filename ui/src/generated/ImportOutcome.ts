@@ -3,4 +3,4 @@
 /**
  * Overall import disposition.
  */
-export type ImportOutcome = "processed" | "processed_with_quarantine" | "quarantined";
+export type ImportOutcome = "processed" | "processed_with_quarantine" | "quarantined" | "duplicate";

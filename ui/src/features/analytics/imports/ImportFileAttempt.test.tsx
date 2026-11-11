@@ -40,6 +40,7 @@ const FILE_ATTEMPT: ImportAttemptDetail = {
   rowsSetAside: 2,
   rowsRetained: 2,
   processedAt: "2026-10-13T10:00:02Z",
+  receivedAt: "2026-10-13T10:00:02Z",
   registrationId: FILE_SOURCE.registrationId,
   file: FILE,
   quarantine: [
@@ -53,6 +54,9 @@ const FILE_ATTEMPT: ImportAttemptDetail = {
       reason: "malformed_value",
       state: "open",
       revision: 1,
+      runId: null,
+      specimenId: null,
+      matchingRuns: [],
     },
   ],
   setAside: [
@@ -139,11 +143,12 @@ describe("Import attempt of a result file (result files brief §7)", {
       ...FILE_ATTEMPT,
       outcome: "quarantined",
       failureCode: "layout_mismatch",
+      rowsQuarantined: 9,
       file: { ...FILE, origin: "folder", loadedBy: null },
       quarantine: [],
       setAside: [],
     };
-    renderPage(`/review/imports/${ATTEMPT_ID}/set-aside`, failed);
+    const { user } = renderPage(`/review/imports/${ATTEMPT_ID}/set-aside`, failed);
     expect(
       await screen.findByText(
         "The file's columns differ from the approved template. Fix the export or approve a new template version, then use Retry import.",
@@ -151,6 +156,11 @@ describe("Import attempt of a result file (result files brief §7)", {
     ).toBeTruthy();
     expect(screen.getByText("Picked up from the watched folder")).toBeTruthy();
     expect(screen.getByText("No rows were set aside.")).toBeTruthy();
+    // Every row of the refused file counts as quarantined, without a row of its own (#4388).
+    await user.click(screen.getByRole("tab", { name: "Quarantined (9)" }));
+    expect(
+      await screen.findByText("The whole file was held: 9 rows. See File failure above."),
+    ).toBeTruthy();
   });
 
   it("names the person who loaded the file", async () => {

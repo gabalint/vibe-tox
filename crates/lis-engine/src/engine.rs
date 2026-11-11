@@ -1,7 +1,7 @@
 //! The engine: composition root, startup and shutdown (M4 design brief §6.4).
 
 use std::path::PathBuf;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 
 use lis_auth::{AuthError, ChallengeSlot, DataKey, EndReason, SecurityPolicy};
@@ -16,12 +16,17 @@ use tokio::sync::watch;
 use tokio::task::JoinHandle;
 
 use crate::commands::file_templates::LayoutSamples;
+use crate::commands::operations::RestartedListeners;
 use crate::keep_awake::Inhibitor;
 use crate::keys::KeyProvider;
-use crate::ops_worker::{Loops, Operations, locked, startup};
+use crate::ops_worker::startup::{self, start_listeners};
+use crate::ops_worker::{Loops, Operations, locked};
 use crate::outbox_worker::{Dispatcher, TopicHandler};
+use crate::partner_intake::PartnerReadings;
+use crate::partner_listener::PartnerListeners;
 use crate::pipeline::Failure;
-use crate::result_folders::{FolderPoller, ResultFolders};
+use crate::poller::Poller;
+use crate::result_folders::ResultFolders;
 use crate::session::SessionState;
 
 mod error;
@@ -83,6 +88,8 @@ pub struct Engine {
     pub(crate) key_ceremonies: crate::commands::security_keys::KeyCeremonies,
     /// Sample files open on the file template page, for the signed-in session only.
     pub(crate) layout_samples: LayoutSamples,
+    /// Connection folders chosen in the native dialog, for the signed-in session only.
+    pub(crate) folder_choices: crate::commands::partner::FolderChoices,
     pub(crate) keys: KeyProvider,
     /// Laboratory or demo, as opened (proposed REQ-OPS-016).
     pub(crate) installation_kind: InstallationKind,
@@ -94,7 +101,17 @@ pub struct Engine {
     pub(crate) listeners: Arc<ListenerSupervisor>,
     /// The watched-folder poller of result-file instruments, beside the listeners (F13).
     pub(crate) result_folders: Arc<ResultFolders>,
-    folder_poller: Mutex<Option<FolderPoller>>,
+    /// The MLLP listeners of HL7 Orders connections, whose state shows on each connection.
+    pub(crate) partner_listeners: Arc<PartnerListeners>,
+    /// What the incoming-order reader's latest reading of each folder or server found.
+    pub(crate) partner_readings: Arc<PartnerReadings>,
+    /// The watched-folder poller, the partner delivery poller, the incoming-order reader and
+    /// the partner listener supervisor.
+    pollers: Mutex<Vec<Poller>>,
+    /// Set from `stop_listeners_for_update` until a failed installation restarts them.
+    pub(crate) listeners_stopped_for_update: AtomicBool,
+    /// After the first start of a new version, the listeners it opened and could not open.
+    pub(crate) listeners_after_update: Option<RestartedListeners>,
     /// The runtime the engine started on. The shell calls [`Engine::start_operations`] from
     /// its setup hook, outside any runtime context, so the loops are spawned through it.
     runtime: tokio::runtime::Handle,
@@ -118,8 +135,9 @@ impl Engine {
     ///    quarantine, before anything lists or prunes sets;
     /// 9. record the app run (`ops.app_start`: unclean previous stop, gap, version and
     ///    web-engine change) and mark interrupted backups, restore tests and exports;
-    /// 10. reconcile analyzer receipts, start the listeners and the watched-folder poller,
-    ///     whose first scan runs now;
+    /// 10. reconcile analyzer receipts, start the listeners, the watched-folder poller, the
+    ///     partner delivery poller, the incoming-order reader and the partner listener
+    ///     supervisor, whose first passes run now;
     /// 11. start the outbox dispatcher, which holds label printing while a recovery
     ///     reconciliation is open.
     ///
@@ -146,26 +164,13 @@ impl Engine {
                 Ok((workstation_id, lis_auth::end_abandoned_sessions(ctx)?))
             })
             .await?;
-        let key = {
-            let (db, keys) = (Arc::clone(&db), config.keys.clone());
-            tokio::task::spawn_blocking(move || crate::keys::resolve(&db, &keys))
-                .await
-                .map_err(|_| EngineError::StartupTask)?
-                .map_err(|error| EngineError::InstallationKey(error.to_string()))?
-        };
+        let key = crate::keys::resolve_at_start(&db, &config.keys).await?;
         crate::commands::operations::reconcile_key_restores(&db, key.state).await?;
         startup::reconcile_published_sets(&db, key.usable().ok()).await;
-        let run = startup::start_run(&db, config.webview.clone()).await?;
+        let (run, version_changed) = startup::start_run(&db, config.webview.clone()).await?;
         let policy = db.read(lis_auth::current_security_policy).await?;
-        let listeners = Arc::new(ListenerSupervisor::new(Arc::clone(&db)));
-        start_listeners(Arc::clone(&db), Arc::clone(&listeners)).await?;
+        let (listeners, listeners_after_update) = start_listeners(&db, version_changed).await?;
         let (result_folders, folder_poller) = ResultFolders::start(&db, &config.clock, &listeners);
-        let dispatcher = start_dispatcher(
-            &db,
-            config.outbox_handlers,
-            config.printer_destinations,
-            crate::demo::label_marking(config.installation_kind),
-        );
         tracing::info!(
             %workstation_id,
             abandoned_sessions = abandoned,
@@ -181,6 +186,13 @@ impl Engine {
             config.webview.clone(),
             key,
         ));
+        let (partner_listeners, partner_readings, partner_pollers) = start_partner_workers(&ops);
+        let dispatcher = start_dispatcher(
+            &db,
+            config.outbox_handlers,
+            config.printer_destinations,
+            crate::demo::label_marking(config.installation_kind),
+        );
         Ok(Self {
             db,
             clock: config.clock,
@@ -192,6 +204,7 @@ impl Engine {
             challenges: ChallengeSlot::default(),
             key_ceremonies: crate::commands::security_keys::KeyCeremonies::default(),
             layout_samples: LayoutSamples::default(),
+            folder_choices: crate::commands::partner::FolderChoices::default(),
             keys: config.keys,
             installation_kind: config.installation_kind,
             printer_destinations: config.printer_destinations,
@@ -200,7 +213,11 @@ impl Engine {
             loops: Mutex::new(None),
             listeners,
             result_folders,
-            folder_poller: Mutex::new(Some(folder_poller)),
+            partner_listeners,
+            partner_readings,
+            pollers: Mutex::new([folder_poller].into_iter().chain(partner_pollers).collect()),
+            listeners_stopped_for_update: AtomicBool::new(false),
+            listeners_after_update,
             runtime: tokio::runtime::Handle::current(),
         })
     }
@@ -236,7 +253,7 @@ impl Engine {
 
     /// Stops in the reverse order of [`start`](Self::start): the operations loops (a
     /// running job ends `interrupted`) and the inhibitor, the dispatcher after its
-    /// current item, the watched-folder poller after its current scan, the analyzer
+    /// current item, the pollers after their current pass, the analyzer
     /// listeners, then records `ops.app_stop` and ends the open
     /// session as `app_exit`. The database closes when the engine is dropped. Calling it
     /// again does nothing more.
@@ -251,13 +268,9 @@ impl Engine {
         }
         self.ops.cancel.store(true, Ordering::SeqCst);
         self.stop_dispatcher().await;
-        let folder_poller = self
-            .folder_poller
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .take();
-        if let Some(folder_poller) = folder_poller {
-            folder_poller.stop(&self.result_folders).await;
+        let pollers = std::mem::take(&mut *locked(&self.pollers));
+        for poller in pollers {
+            poller.stop().await;
         }
         let listeners = Arc::clone(&self.listeners);
         match tokio::task::spawn_blocking(move || listeners.stop_all()).await {
@@ -330,6 +343,21 @@ pub(crate) fn artifact_columns() -> Vec<(&'static str, &'static str)> {
     .concat()
 }
 
+/// Starts the partner delivery poller, which opens SFTP sign-ins with the installation key
+/// the operations hold, the incoming-order reader and the partner listener supervisor.
+fn start_partner_workers(
+    ops: &Arc<Operations>,
+) -> (Arc<PartnerListeners>, Arc<PartnerReadings>, [Poller; 3]) {
+    let listeners = Arc::new(PartnerListeners::new(ops));
+    let readings = Arc::new(PartnerReadings::default());
+    let pollers = [
+        crate::partner_delivery::start(ops),
+        crate::partner_intake::start(ops, &readings),
+        crate::partner_listener::start(&listeners),
+    ];
+    (listeners, readings, pollers)
+}
+
 /// Starts the outbox dispatcher with the built-in handlers; labels go only to
 /// printers `printer_destinations` admits, with the installation's `label_marking`.
 fn start_dispatcher(
@@ -353,30 +381,6 @@ fn start_dispatcher(
     // results: end
     let dispatcher = Dispatcher::new(Arc::clone(db), handlers).spawn(stopped);
     (stop, dispatcher)
-}
-
-/// Recovers or marks interrupted the receipts a previous run left open, then
-/// starts every enabled analyzer listener (REQ-OPS-013, REQ-INT-009). Both
-/// block on the database, so they run off the async runtime. A listener that
-/// cannot open is reported in its status, not as a startup failure.
-async fn start_listeners(
-    db: Arc<Database>,
-    listeners: Arc<ListenerSupervisor>,
-) -> Result<(), EngineError> {
-    tokio::task::spawn_blocking(move || {
-        let reconciled = lis_interfaces::reconcile_receipts(&db)?;
-        tracing::info!(
-            recovered = reconciled.recovered,
-            interrupted = reconciled.interrupted,
-            "receipt reconciliation finished"
-        );
-        if let Err(error) = listeners.start_all() {
-            tracing::warn!(%error, "some analyzer listeners did not start; see listener status");
-        }
-        Ok(())
-    })
-    .await
-    .map_err(|_| EngineError::StartupTask)?
 }
 
 /// D15: the app starts only when the probe says the data folder is on a local volume; a

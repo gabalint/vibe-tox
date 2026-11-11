@@ -4,7 +4,7 @@
 //! quality manager. Values follow `fixtures/astm/m2/README.md`. Synthetic
 //! data only.
 
-use std::net::{IpAddr, Ipv4Addr, TcpListener};
+use std::net::{IpAddr, Ipv4Addr};
 
 use lis_analytical::{
     InstrumentStatus, LotId, MaterialKind, RevisionIndicator, SampleIdField, SourceTestCodeInput,
@@ -24,6 +24,7 @@ use lis_engine::{
     SetInstrumentStatusInput, SpecimenTypeId,
 };
 use lis_interfaces::ConnectionSettings;
+use lis_store::testing::local_port;
 
 use crate::m2_lab::{Desk, Role};
 
@@ -121,7 +122,7 @@ pub(crate) async fn register_analyzer(
     indicator: RevisionIndicator,
 ) -> (InstrumentId, u16) {
     let e = desk.engine();
-    let port = free_port();
+    let port = local_port();
     let instrument = e
         .register_instrument(RegisterInstrument {
             code: code.to_owned(),
@@ -379,12 +380,4 @@ async fn control_lot(e: &Engine, level: &str, sample_label: &str) -> LotId {
     .await
     .unwrap()
     .lot_id
-}
-
-fn free_port() -> u16 {
-    TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
 }

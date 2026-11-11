@@ -13,7 +13,7 @@ export function VersionNotice({ version }: { version: HealthCheckView }) {
       title={version.label}
       onDismiss={() => setDismissed(true)}
     >
-      {version.summary} <Link to="/operations/versions">Versions and updates</Link>
+      {version.summary} <Link to="/operations/versions/installed">Versions and updates</Link>
     </Alert>
   );
 }

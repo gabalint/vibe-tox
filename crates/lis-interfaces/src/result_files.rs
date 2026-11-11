@@ -57,9 +57,7 @@ pub fn receive_result_file(
             )
             .detail("duplicate", AuditDetail::boolean(duplicate_of.is_some())),
     )?;
-    if duplicate_of.is_none() {
-        enqueue_import(ctx, receipt.id)?;
-    }
+    enqueue_import(ctx, receipt.id)?;
     Ok(receipt)
 }
 

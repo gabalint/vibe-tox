@@ -8,6 +8,30 @@ Every substantive change identifies its problem, affected requirement/risk/decis
 
 Risk determines review depth. A documentation typo needs a local check. Patient matching, numerical semantics, authorization, QC/release, report corrections, retention and migrations need independent technical review plus the appropriate laboratory/quality or privacy owner. Clinical rule changes require approved specifications and independently supplied expected outcomes. Operational gates are defined in [validation](../quality/validation-plan.md).
 
+## Human direction and review
+
+OpenBGA/tox combines substantial AI assistance with sustained human effort.
+People direct the work through research, requirements analysis, architecture
+review, code review, test design, hands-on testing and iterative correction.
+Agents can help with each activity, including proposing alternatives and finding
+defects. Human decisions and the evidence supporting them remain attributable.
+
+| Work | Human responsibility | Inspectable record |
+| --- | --- | --- |
+| Requirements analysis | Define the problem and scope, challenge assumptions, resolve conflicting needs and identify decisions requiring laboratory input | [Workflows](../requirements/workflows.md), [requirements and acceptance criteria](../requirements/functional-requirements.md), [open questions](../planning/open-questions.md) |
+| Architecture review | Assess alternatives, boundaries, failure behavior, security and operational consequences before accepting consequential design choices | [Architecture](../architecture/overview.md), [decision records](../architecture/decisions/README.md), [risk register](../planning/risk-register.md) |
+| Implementation review | Examine changes against their requirements and invariants; apply independent review at the depth their consequences require | Review records tied to the change, under the [coding standards](coding-standards.md#definition-of-done) |
+| Testing and analysis | Select meaningful expected outcomes and adverse cases, inspect failures, exercise workflows and decide whether further work is needed | Executed checks and limitations under the [quality-gate policy](../../.ai/skills/quality-gate/SKILL.md), with remaining gaps in [quality guidance](../quality/README.md) |
+
+This table defines responsibilities, not a claim that every required review or
+validation has been completed. Distinguish tool-generated analysis, human review,
+executed automated checks and manual testing in the change record. Name the
+reviewer and scope when claiming human review; retain unresolved findings and
+record checks that were skipped. An agent's review is useful evidence but does
+not satisfy a requirement for independent human or laboratory approval. Clinical
+acceptance remains with the qualified people identified by the laboratory under
+the [validation plan](../quality/validation-plan.md).
+
 ## Implementation principles
 
 - Use supported dependency/runtime versions, reproducible lockfiles, explicit module ownership, type checking and consistent formatting/linting. Do not maintain competing toolchains without need.
@@ -49,7 +73,7 @@ A future release record identifies source revision, dependency/SBOM inventory, b
 
 - **Platform packages.** Qualify the configured NSIS, macOS application/DMG, and Linux Debian/AppImage packages on clean supported hosts. Additional formats need their own scope and verification. Apply the signing and notarization requirements in the [packaging release criteria](../development/packaging.md#other-release-requirements).
 - **Signing route.** The publisher name, Windows signing route and Apple Developer account are decided under Q-19 and Q-34 (RISK-53).
-- **Updater (unimplemented proposal).** After Q-19/Q-34 resolve the channel, require authenticated, expiring metadata, rollback/freeze protection, laboratory approval and a verified pre-update snapshot (NFR-21/24). The application currently records update approval and acceptance only; see [Updates](../operations/updates.md).
+- **Updater ([ADR 0020](../architecture/decisions/0020-in-app-updates.md), accepted).** The shell installs only newer, Minisign-signed packages with signature-bound versions, after a recorded approval of that package and a verified pre-update backup, on request and never on a schedule. Authenticated, expiring metadata and freeze protection remain required before a supported release (NFR-21/24, Q-19/Q-34); see [Updates](../operations/updates.md).
 - **SBOM and provenance.** Every release artifact must have a signed SBOM with the CISA minimum elements and signed build provenance: `cargo-cyclonedx` for the Rust dependency graph, `cargo-auditable` to embed the dependency list in each binary, `npm sbom` (or the package manager's equivalent) for the UI, plus entries for sidecars and any bundled WebView2 runtime. Release verification must reject unverifiable artifacts (NFR-21). Any bundled sidecar binary is pinned, hash-checked, signed with the app and listed in the SBOM.
 - **Dependency gates.** `cargo-deny` runs in CI; the release pipeline adds `cargo-audit` and `cargo-vet` audits or trusted imports for every third-party crate.
 - **Patch cadence.** Maintainers watch RustSec, Tauri, npm and sidecar advisories, and the OS web engines' security releases. Security-relevant fixes ship as an expedited Class 1 release that the lab still approves. Never silent (RISK-54). Web-engine updates arrive through the OS outside our releases; release notes say which engine versions were tested.

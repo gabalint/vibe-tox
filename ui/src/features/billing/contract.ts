@@ -14,6 +14,8 @@ export const GET_CLASS_MAPPING_VERSION = "get_class_mapping_version";
 export const LIST_BILLING_WORK = "list_billing_work";
 /** `get_service_derivation({input:{derivationId}}) → DerivationView` (audited read). */
 export const GET_SERVICE_DERIVATION = "get_service_derivation";
+/** `list_billing_handoffs({input:{limit, search, beforeHandoffNo}}) → BillingHandoffSummary[]`. */
+export const LIST_BILLING_HANDOFFS = "list_billing_handoffs";
 /** `get_billing_handoff({input:{handoffId}}) → HandoffView` (audited read). */
 export const GET_BILLING_HANDOFF = "get_billing_handoff";
 /** Catalog read (any signed-in session): analyte names for the mapping entries. */
@@ -32,6 +34,7 @@ export const DERIVATION_QUERIES: readonly CommandName[] = [
 ];
 export const HANDOFF_QUERIES: readonly CommandName[] = [
   LIST_BILLING_WORK,
+  LIST_BILLING_HANDOFFS,
   GET_SERVICE_DERIVATION,
   GET_BILLING_HANDOFF,
 ];

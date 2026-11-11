@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { expectNoA11yViolations } from "@/lib/test/a11y";
 import { renderWithProviders } from "@/lib/test/render";
@@ -11,11 +11,24 @@ describe("RefreshControl", () => {
     const { user, container } = renderWithProviders(
       <RefreshControl query={{ dataUpdatedAt, isFetching: false, refetch }} />,
     );
-    // Read today, so only the time shows, in UTC without a laboratory zone.
-    expect(screen.getByRole("status").textContent).toMatch(/^Updated \d{2}:\d{2} UTC$/);
+    // Read today, so only the time shows, to the second, in UTC without a laboratory zone.
+    expect(screen.getByRole("status").textContent).toMatch(/^Updated \d{2}:\d{2}:\d{2} UTC$/);
     await user.click(screen.getByRole("button", { name: "Refresh" }));
     expect(refetch).toHaveBeenCalledOnce();
     await expectNoA11yViolations(container);
+  });
+
+  it("shows a fast refresh as running for a moment, then the time again", async () => {
+    const { user } = renderWithProviders(
+      <RefreshControl query={{ dataUpdatedAt: Date.now(), isFetching: false, refetch: vi.fn() }} />,
+    );
+    await user.click(screen.getByRole("button", { name: "Refresh" }));
+    expect(screen.getByRole("status").textContent).toBe("Refreshing…");
+    expect(screen.getByRole("button", { name: "Refresh" }).hasAttribute("data-pending")).toBe(true);
+    await waitFor(() => expect(screen.getByRole("status").textContent).toMatch(/^Updated /));
+    expect(screen.getByRole("button", { name: "Refresh" }).hasAttribute("data-pending")).toBe(
+      false,
+    );
   });
 
   it("shows the date of an older read, and nothing before the first", () => {
@@ -26,13 +39,13 @@ describe("RefreshControl", () => {
     rerender(
       <RefreshControl
         query={{
-          dataUpdatedAt: Date.parse("2026-01-02T03:04:00Z"),
+          dataUpdatedAt: Date.parse("2026-01-02T03:04:05Z"),
           isFetching: false,
           refetch: vi.fn(),
         }}
       />,
     );
-    expect(screen.getByRole("status").textContent).toBe("Updated 2026-01-02 03:04 UTC");
+    expect(screen.getByRole("status").textContent).toBe("Updated 2026-01-02 03:04:05 UTC");
   });
 
   it("blocks repeated presses while a refresh runs", async () => {

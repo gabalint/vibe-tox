@@ -2,7 +2,7 @@
   "id": "laboratory-directory",
   "title": "Laboratory and ordering directories",
   "summary": "Set the laboratory profile and register the clients and practitioners referenced by orders.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-11-06",
   "routes": [
     "/configuration/laboratory",
     "/configuration/clients",
@@ -38,6 +38,12 @@
       "purpose": "Maintain performing-laboratory details printed on reports and the time zone used throughout the app.",
       "access": "Any signed-in person may read the profile; Manage configuration is required to save a new version.",
       "fields": [
+        {
+          "name": "Billing is held",
+          "meaning": "Warning at the top of the page while Billing NPI or Tax ID is not set: “Billing derivations are held until Billing NPI and Tax ID are set.”",
+          "values": "Shown or absent; with a Change profile button for people with Manage configuration.",
+          "rules": "Read-only. It disappears once both are set. Setting them does not release held derivations by itself: in Billing work, open each held derivation and use Derive again."
+        },
         {
           "name": "Laboratory name / Name",
           "meaning": "Performing laboratory’s report name.",
@@ -84,13 +90,13 @@
           "name": "Billing NPI",
           "meaning": "Performing laboratory’s billing identifier.",
           "values": "Ten digits with a valid NPI check digit, or blank.",
-          "rules": "Optional in the profile; other billing workflows may flag missing billing identity."
+          "rules": "Optional, so a laboratory that does not bill through the LIS can still save its profile. While Billing NPI or Tax ID is blank, every billing derivation is held with the blocking flag “Laboratory billing NPI or TIN missing”. A value that is not exactly ten digits is refused with “The NPI must be exactly 10 digits.”; ten digits whose last (check) digit does not match the other nine is refused with “This NPI is not valid. Please check the number for a typo.”"
         },
         {
           "name": "Tax ID",
           "meaning": "Tax identification number used for billing identity.",
           "values": "Nine digits, optionally entered as NN-NNNNNNN, or blank.",
-          "rules": "Optional; stored without the hyphen."
+          "rules": "Optional; stored without the hyphen. While it or Billing NPI is blank, billing derivations are held."
         },
         {
           "name": "Version and Set",
@@ -108,15 +114,15 @@
       "actions": [
         {
           "name": "Set laboratory profile / Change profile",
-          "does": "Open the form, prefilled from the current profile where present.",
+          "does": "Open the form, prefilled from the current profile where present. The Billing is held warning has its own Change profile button that opens the same form.",
           "availableWhen": "Manage configuration.",
           "result": "Save profile appends a new version; Cancel closes without saving."
         },
         {
           "name": "Save profile",
           "does": "Persist the complete laboratory details.",
-          "availableWhen": "Valid required values and the current profile revision.",
-          "result": "The new version becomes current and the display time zone refreshes."
+          "availableWhen": "Valid required values, at least one value different from the current version, and the current profile revision.",
+          "result": "The new version becomes current and the display time zone refreshes. When every value equals the current version, nothing is saved: no new version and no audit event."
         }
       ],
       "restrictions": [
@@ -131,11 +137,19 @@
       "troubleshooting": [
         {
           "problem": "Time zone or NPI is refused",
-          "recovery": "Use a recognized IANA name or the supplied ten-digit NPI with correct check digit; do not substitute a guessed value."
+          "recovery": "Use a recognized IANA name or the supplied ten-digit NPI with correct check digit; do not substitute a guessed value. “This NPI is not valid” means the ten digits fail the check-digit test, usually a typo: compare each digit with the source."
+        },
+        {
+          "problem": "Billing is held",
+          "recovery": "Change profile, enter the laboratory’s supplied Billing NPI and Tax ID, give a reason and save. Then derive the held billing derivations again in Billing work. A laboratory that does not bill through the LIS can leave both blank and ignore the warning."
         },
         {
           "problem": "Another profile version was saved meanwhile",
           "recovery": "Reload the profile and compare the latest details before retrying your change."
+        },
+        {
+          "problem": "Nothing was changed",
+          "recovery": "A new version must change at least one value; a reason alone is not a change. Spaces around values and letter case in the CLIA number do not count. Change the value the approved details support, or Cancel."
         }
       ]
     },
@@ -330,14 +344,14 @@
         {
           "name": "Open location row / Correct location / Correct client / Save correction",
           "does": "Opens current facts and submits a versioned correction or retirement.",
-          "availableWhen": "Manage configuration, current revision, unique code and required evidence-backed reason.",
+          "availableWhen": "Manage configuration, current revision, unique code, at least one changed Code, Name or Availability value, and required evidence-backed reason.",
           "result": "Updates the same identity and appends immutable history and audit. New order selections exclude retired records; accepted orders and issued PDFs remain retained."
         },
         {
           "name": "Show correction history / Hide correction history",
           "does": "Loads or hides the selected record’s retained revision history.",
           "availableWhen": "The client or practitioner detail or location panel is open.",
-          "result": "Shows all saved versions in revision order; opening history changes no records."
+          "result": "Shows all saved versions in revision order; opening history changes no records. In a side panel, the panel widens as far as the window allows while keeping the list at least 38rem wide, so all columns fit; you can still drag its left edge. Hide correction history returns the panel to its earlier width. A value shortened with … shows its full text when you point at it."
         },
         {
           "name": "Cancel",
@@ -366,6 +380,10 @@
           "recovery": "This preview hides retired addresses. Check Delivery destinations with Show retired before registering a replacement."
         },
         {
+          "problem": "Nothing was changed",
+          "recovery": "A correction must change at least one value; the engine saves nothing, so no revision or history entry is added. Change the value the evidence supports, or Cancel."
+        },
+        {
           "problem": "The record changed, or a retired source is refused for a new order",
           "recovery": "Reload and inspect the current record/history before resubmitting a correction. Select an active source only when supported by the ordering evidence; do not substitute another organization or practitioner to bypass retirement."
         }
@@ -386,8 +404,8 @@
         {
           "name": "NPI",
           "meaning": "Practitioner identifier used to distinguish ordering professionals.",
-          "values": "Exactly ten digits with a valid NPI check digit.",
-          "rules": "Required and unique. Format validation does not verify licensing, enrollment or authorization to order."
+          "values": "Exactly ten digits with a valid NPI check digit. The field hint reads “10 digits. The last digit is checked automatically.”",
+          "rules": "Required and unique. Fewer or more than ten digits, or any other character, shows “The NPI must be exactly 10 digits.” Ten digits whose last (check) digit does not match the other nine shows “This NPI is not valid. Please check the number for a typo.” Format validation does not verify licensing, enrollment or authorization to order."
         },
         {
           "name": "Family name",
@@ -436,14 +454,14 @@
         {
           "name": "Correct practitioner / Save correction",
           "does": "Records corrected supplied names/NPI or availability on the same practitioner identity.",
-          "availableWhen": "Manage configuration, current revision, valid unique NPI and required reason.",
+          "availableWhen": "Manage configuration, current revision, valid unique NPI, at least one changed NPI, name or Availability value, and required reason.",
           "result": "Appends immutable prior/current facts and actor audit. Retired practitioners disappear from new order choices; historical lookup and accepted orders remain."
         },
         {
           "name": "Show correction history / Hide correction history",
           "does": "Loads or hides the selected record’s retained revision history.",
           "availableWhen": "The client or practitioner detail or location panel is open.",
-          "result": "Shows all saved versions in revision order; opening history changes no records."
+          "result": "Shows all saved versions in revision order; opening history changes no records. In a side panel, the panel widens as far as the window allows while keeping the list at least 38rem wide, so all columns fit; you can still drag its left edge. Hide correction history returns the panel to its earlier width. A value shortened with … shows its full text when you point at it."
         },
         {
           "name": "Cancel",
@@ -468,8 +486,12 @@
           "recovery": "Open the existing practitioner and confirm identity."
         },
         {
-          "problem": "NPI check fails",
-          "recovery": "Check the supplied digits with the source; a ten-digit string can still have an invalid check digit."
+          "problem": "This NPI is not valid. Please check the number for a typo.",
+          "recovery": "The number has ten digits, but its last (check) digit does not match the other nine, which usually means a mistyped or swapped digit. Compare each digit with the source and correct it; do not change digits only to make the check pass."
+        },
+        {
+          "problem": "Nothing was changed",
+          "recovery": "A correction must change at least one value; the engine saves nothing, so no revision or history entry is added. Change the value the evidence supports, or Cancel."
         },
         {
           "problem": "The record changed, or a retired source is refused for a new order",

@@ -16,7 +16,9 @@ use lis_engine::{
     InstallationKind, Instrument, KeyProvider, LoadOutcome, LoadResultFileInput,
     PrinterDestinations, RegisterInstrument, ResultFolderInput, SetInstrumentEnabled,
 };
-use lis_interfaces::{ConnectionSettings, ListenerState, MAX_RESULT_FILE_BYTES};
+use lis_interfaces::{
+    ConnectionSettings, ListenerState, MAX_RESULT_FILE_BYTES, without_verbatim_prefix,
+};
 use lis_ops::health::CheckCode;
 use lis_store::{DATABASE_FILE, Database};
 use tempfile::TempDir;
@@ -81,10 +83,11 @@ impl Watched {
         assert_eq!(chosen.present_files, 0, "an empty folder");
         let instrument = chosen.instrument;
         let canonical = fs::canonicalize(folder.path()).unwrap();
+        let stored = without_verbatim_prefix(canonical.to_str().unwrap());
         assert_eq!(
             instrument.result_folder.as_deref(),
-            canonical.to_str(),
-            "the canonical folder is stored"
+            Some(stored.as_str()),
+            "the canonical folder is stored without the Windows \\\\?\\ prefix"
         );
         Self {
             t,

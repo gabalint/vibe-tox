@@ -78,6 +78,11 @@ pub(crate) const APPROVE_SERVICE_DERIVATION: CommandSpec = spec(
 );
 pub(crate) const CREATE_BILLING_HANDOFF: CommandSpec =
     spec("create_billing_handoff", "billing.create_handoff", BILLING);
+pub(crate) const LIST_BILLING_HANDOFFS: CommandSpec = spec(
+    "list_billing_handoffs",
+    "billing.list_billing_handoffs",
+    BILLING,
+);
 pub(crate) const GET_BILLING_HANDOFF: CommandSpec =
     spec("get_billing_handoff", "billing.get_handoff", BILLING);
 pub(crate) const EXPORT_BILLING_HANDOFF: CommandSpec =

@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+import { Link } from "react-router";
 import type { DataGridColumn } from "@/components/DataGrid";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Timestamp } from "@/components/Timestamp";
@@ -9,6 +11,22 @@ export const orderPath = (orderId: string) => `/orders/${orderId}`;
 
 const patientName = (order: OrderSummary) =>
   subjectName({ familyName: order.patientFamilyName, givenNames: order.patientGivenNames });
+
+const sampleBarcodes = (order: OrderSummary) => order.sampleBarcodes.join("; ");
+
+const accessionNumbers = (order: OrderSummary) =>
+  order.accessions.map((accession) => accession.accessionNumber).join(", ");
+
+/** Each accession of the order, linked to its page, or that none is received yet. */
+function Accessions({ order }: { order: OrderSummary }) {
+  if (order.accessions.length === 0) return "Not received yet";
+  return order.accessions.map((accession, index) => (
+    <Fragment key={accession.accessionId}>
+      {index > 0 && ", "}
+      <Link to={`/accessions/${accession.accessionId}`}>{accession.accessionNumber}</Link>
+    </Fragment>
+  ));
+}
 
 /** Patient identity and source context remain visible before opening an order. */
 export const ORDER_COLUMNS: readonly DataGridColumn<OrderSummary>[] = [
@@ -34,6 +52,20 @@ export const ORDER_COLUMNS: readonly DataGridColumn<OrderSummary>[] = [
     cell: (order) => order.placerOrderId ?? "Not supplied",
     sortValue: (order) => order.placerOrderId ?? "",
     width: 130,
+  },
+  {
+    id: "sampleBarcodes",
+    header: "Sample barcode",
+    cell: (order) => sampleBarcodes(order) || "None received",
+    sortValue: sampleBarcodes,
+    width: 150,
+  },
+  {
+    id: "accessions",
+    header: "Accession",
+    cell: (order) => <Accessions order={order} />,
+    sortValue: accessionNumbers,
+    width: 150,
   },
   {
     id: "client",

@@ -76,6 +76,7 @@ function CategoryList() {
   const rows = useFieldArray({ control, name: "categories" });
   return (
     <FieldList
+      name="categories"
       legend="Categories"
       emptyText="Add at least one category."
       items={rows.fields}

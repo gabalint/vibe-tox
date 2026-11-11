@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { Button } from "@/components/Button";
 import { DataGrid } from "@/components/DataGrid";
 import { DetailLayout } from "@/components/DetailPanel";
 import { FindCount } from "@/components/FindField";
 import { QueryContent } from "@/components/QueryContent";
-import { Section } from "@/components/Section";
 import { Toolbar } from "@/components/Toolbar";
 import type { InstalledVersionView } from "@/generated/InstalledVersionView";
 import { allowedActionItems, allowedRowActions } from "@/lib/allowedActions";
@@ -40,7 +38,6 @@ export function InstalledVersions() {
       : [];
   const actionsOf = (row: InstalledVersionView) =>
     allowedActionItems(ACTIONS, allowed(row), () => setAccepting(row));
-  const running = query.data?.find((row) => row.running);
   const rowActions = allowedRowActions(ACTIONS, {
     label: (row: InstalledVersionView) => `version ${row.version}`,
     allowed,
@@ -63,23 +60,6 @@ export function InstalledVersions() {
   );
   return (
     <>
-      {running && (
-        <Section
-          title={`Running version ${running.version}`}
-          actions={
-            allowed(running).length > 0 && (
-              <Button variant="primary" onPress={() => setAccepting(running)}>
-                Accept running version
-              </Button>
-            )
-          }
-        >
-          <p>
-            This version is detected automatically. Acceptance records the laboratory’s checks for
-            the app already installed; it needs a note and identity confirmation.
-          </p>
-        </Section>
-      )}
       <DetailLayout panel={panel}>
         <Toolbar
           variant="collection"

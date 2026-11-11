@@ -78,7 +78,7 @@ pub(super) fn probe_time_sync() -> Option<bool> {
     )?)
 }
 
-/// `ID` and `VERSION_ID` (required) and `PRETTY_NAME` from os-release text.
+/// `ID` and `VERSION_ID` (required), `NAME` and `PRETTY_NAME` from os-release text.
 pub(super) fn parse_os_release(text: &str) -> Option<LinuxRelease> {
     let field = |name: &str| {
         text.lines().find_map(|line| {
@@ -89,6 +89,7 @@ pub(super) fn parse_os_release(text: &str) -> Option<LinuxRelease> {
     Some(LinuxRelease {
         id: field("ID").filter(|id| !id.is_empty())?,
         version_id: field("VERSION_ID").filter(|version| !version.is_empty())?,
+        name: field("NAME"),
         pretty_name: field("PRETTY_NAME"),
     })
 }
@@ -231,6 +232,7 @@ mod tests {
             (release.id.as_str(), release.version_id.as_str()),
             ("ubuntu", "24.04")
         );
+        assert_eq!(release.name.as_deref(), Some("Ubuntu"));
         assert_eq!(release.pretty_name.as_deref(), Some("Ubuntu 24.04.1 LTS"));
         let rhel = "NAME='Red Hat Enterprise Linux'\nID=\"rhel\"\nVERSION_ID=\"9.4\"\n";
         assert_eq!(parse_os_release(rhel).unwrap().version_id, "9.4");

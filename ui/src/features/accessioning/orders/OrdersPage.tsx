@@ -2,6 +2,7 @@ import { useNavigate } from "react-router";
 import { Button } from "@/components/Button";
 import { DataGrid } from "@/components/DataGrid";
 import { EmptyState } from "@/components/EmptyState";
+import { FindField, NoResults } from "@/components/FindField";
 import { ListCount } from "@/components/ListLimit";
 import { Page, PageHeader } from "@/components/Page";
 import { QueryContent } from "@/components/QueryContent";
@@ -10,8 +11,9 @@ import { Select } from "@/components/Select";
 import { Toolbar } from "@/components/Toolbar";
 import type { OrderFilter } from "@/generated/OrderFilter";
 import type { OrderSummary } from "@/generated/OrderSummary";
-import { choiceOf } from "@/lib/choices";
+import { choiceOf, optionalText } from "@/lib/choices";
 import { useCommandPages } from "@/lib/commands";
+import { useFindParam } from "@/lib/findParam";
 import { IdentityBanner } from "@/lib/IdentityBanner";
 import { useOpenRecordPage } from "@/lib/recordSequence";
 import { useSearchParam } from "@/lib/searchParam";
@@ -25,16 +27,20 @@ const ORDER_LIMIT = 200;
 
 /**
  * Orders newest first, filtered by what they need (REQ-ORD-001), each named by patient,
- * order number and client. The filter, and the patient when opened from a patient record,
- * stay in the address. Each listing is an audited access, so it refreshes on request.
+ * order number and client. The engine finds orders by the start of a patient's name, a sample
+ * barcode, an accession, the order number or the client, so a scanned barcode finds its order.
+ * The filter, the find text (`?q=`), and the patient when opened from a patient record, stay
+ * in the address. Each listing is an audited access, so it refreshes on request.
  */
 export function OrdersPage() {
   const navigate = useNavigate();
   const [filterParam, setFilter] = useSearchParam("filter");
   const [subjectId, setSubjectId] = useSearchParam("subjectId");
   const filter = choiceOf(ORDER_FILTERS, filterParam) ?? "all";
+  const [search, setSearch] = useFindParam();
+  const searched = optionalText(search);
   const orders = useCommandPages<OrderSummary, string>(LIST_ORDERS, {
-    key: { filter, subjectId },
+    key: { filter, subjectId, search: searched },
     pageArgs: (beforeOrderId) => ({
       input: {
         filter,
@@ -42,6 +48,7 @@ export function OrdersPage() {
         limit: ORDER_LIMIT,
         beforeReceivedAt: null,
         beforeOrderId: beforeOrderId ?? null,
+        search: searched,
       },
     }),
     nextCursor: (page) => (page.length === ORDER_LIMIT ? page.at(-1)?.orderId : undefined),
@@ -71,6 +78,13 @@ export function OrdersPage() {
           )
         }
       >
+        <FindField
+          label="Find orders by patient, sample barcode, accession, order number or client"
+          placeholder="Patient, barcode, accession, order no., client"
+          isWide
+          value={search}
+          onChange={setSearch}
+        />
         <Select
           label="Show orders"
           layout="inline"
@@ -100,7 +114,13 @@ export function OrdersPage() {
               )}
             </>
           ) : (
-            <NoOrders filter={filter} subjectId={subjectId} onShowAll={() => setFilter("all")} />
+            <NoOrders
+              filter={filter}
+              subjectId={subjectId}
+              searched={searched}
+              onShowAll={() => setFilter("all")}
+              onClearSearch={() => setSearch("")}
+            />
           )
         }
       </QueryContent>
@@ -117,19 +137,23 @@ const NONE: Record<OrderFilter, string> = {
 };
 
 /**
- * Nothing at all yet, or nothing in the chosen part of the worklist. The engine answers only
- * the filter asked for, so an empty filter is said as such, never as a search that matched
- * nothing.
+ * Nothing at all yet, nothing in the chosen part of the worklist, or nothing matching the
+ * find text. The engine answers only the filter asked for, so an empty filter is said as such.
  */
 function NoOrders({
   filter,
   subjectId,
+  searched,
   onShowAll,
+  onClearSearch,
 }: {
   filter: OrderFilter;
   subjectId: string | null;
+  searched: string | null;
   onShowAll: () => void;
+  onClearSearch: () => void;
 }) {
+  if (searched) return <NoResults noun="orders" query={searched} onClear={onClearSearch} />;
   const showAll = filter !== "all" && <Button onPress={onShowAll}>Show all orders</Button>;
   const description =
     filter !== "all"

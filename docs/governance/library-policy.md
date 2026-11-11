@@ -19,7 +19,7 @@ The project's own workspace packages use GPL-3.0-only ([ADR 0017](../architectur
 
 | Crate | Version | Purpose | Used by |
 | --- | --- | --- | --- |
-| `rusqlite` (`bundled`, `hooks`) | 0.40.2 | SQLite access with the same SQLite (3.53.2) on every OS; explicit SQL. `hooks` provides the authorizer that guards transaction control | store, domain crates |
+| `rusqlite` (`bundled`, `hooks`) | 0.41.1 | SQLite access with the same SQLite (3.54.1) on every OS; explicit SQL. `hooks` provides the authorizer that guards transaction control | store, domain crates |
 | `rust_decimal` | 1.43 | Exact decimal comparison and arithmetic behind lexical decimal types | core |
 | `jiff` | 0.2.38 | Instants, offsets and IANA time zones; the one datetime library | core and up |
 | `uuid` (`v7`) | 1.28 | Time-ordered record identifiers | core |
@@ -48,6 +48,8 @@ The project's own workspace packages use GPL-3.0-only ([ADR 0017](../architectur
 | `tauri-plugin-single-instance` | 2.5 | One running instance per database (REQ-OPS-013) | shell |
 | `unicode-normalization` | 0.1.25 | NFC comparison keys for identity matching (already a transitive dependency) | identity |
 | `csv` | 1.4 | RFC 4180 reading of laboratory result files, with our own size, row, column and field limits around it (already a transitive dependency through Typst). See the [result files contract](../planning/result-files-design-brief.md) | results |
+| `russh` (default features off, `ring` only) | =0.65.1 | SSH client for Interfaces SFTP connections: server key pinned by SHA-256 fingerprint, ed25519 or ECDSA keys and passwords; no RSA keys. See the [admission below](#sftp-client-admission--2026-11-04) | engine |
+| `russh-sftp` | =3.0.1 | SFTP client on a `russh` channel: upload as `.tmp`, rename without replacing, remove | engine |
 
 Dev-only: `proptest` 1.12 (property tests), `tempfile` 3.27 (temporary databases and directories), `insta` 1.49 (snapshots of codec and render outputs only, never of UI DOM; declared in the workspace, not yet used by any crate). Exception: `lis-store` may depend on `tempfile` optionally, behind its `testing` feature, which other crates enable only from `[dev-dependencies]`.
 
@@ -61,6 +63,20 @@ from the preceding locked patch versions. The normal advisory gate still applies
 | `ctutils` (transitive) | 0.4.4 | Minimum patch for RUSTSEC-2026-0385: constant-time mask generation and 32-bit `u128` comparisons (ENG-303/304). |
 | `tokio` | 1.53.3 | Minimum forward patch from 1.53.2 for RUSTSEC-2026-0386. It deprecates the affected `AsyncFd` constructors in favor of explicit unsafe registration; it does not repair misuse in callers. Project-owned source does not use `AsyncFd`; transitive callers retain their own safety obligations (ENG-306/307). |
 
+### SQLite security update — 2026-11-11
+
+`rusqlite` 0.41.1 and `libsqlite3-sys` 0.39.1 replace the affected SQLite bundle
+for RUSTSEC-2026-0459. The advisory concerns stale page-cache data when opening
+an attacker-controlled database with a mismatched WAL; it does not establish
+exploitation in this application. The locked bundle is SQLite 3.54.1, beyond
+the advisory's 3.54.0 fix. The existing `bundled` and `hooks` features and MIT
+licenses remain; no additional package enters the lockfile. The Rust 1.89
+minimum fits the project's pinned toolchain. Reviewed release notes and package
+sources are recorded as ENG-308/309 in the
+[source ledger](../research/sources-engineering.md#sqlite-security-update-sources-2026-11-11).
+The full platform build/test and dependency-policy gates apply; this update
+does not replace database recovery or clinical qualification.
+
 ### Additional installed crates
 
 | Package | Purpose | Used by |
@@ -70,6 +86,7 @@ from the preceding locked patch versions. The normal advisory gate still applies
 | `fs4` 1.1, `sync` feature only | Free/total disk space for backup preflight and host health (REQ-OPS-008) | Operations |
 | `chacha20poly1305` 0.11 | Authenticated encryption for secrets and backup packages | Authentication, operations |
 | `qrcode` 0.14, `svg` feature only | Authenticator enrollment QR code | Authentication |
+| `tauri-plugin-updater` 2.14, features `rustls-tls` and `system-proxy` only | Admitted by [ADR 0020](../architecture/decisions/0020-in-app-updates.md), accepted 2026-10-27. Checks, downloads and installs Minisign-signed updates from the project's GitHub releases, on request only. Rust calls it; the UI receives no `updater:` permission. It brings `reqwest` 0.13 with `rustls`, `ring` and the platform certificate verifier, used only for update requests. The `zip` feature, needed only for legacy compressed update archives, stays off: it brings `zip` 4.6 with RUSTSEC-2026-0367, -0368 and -0369. The workflow publishes uncompressed packages. Plugin license Apache-2.0 OR MIT; `cargo deny check` passed for the resulting tree on 2026-10-27. Maintained by the Tauri project in `tauri-apps/plugins-workspace`, checked 2026-10-27. | Desktop shell |
 
 Windows durable artifact replacement remains an open implementation decision (G2-11). Direct `windows-sys` filesystem calls would require a reviewed exception to the unsafe-code policy; this document does not admit them. Folder backups use the built-in `vtbk1` format. A third-party backup sidecar or write-once bucket backend requires a scoped decision under Q-30/Q-31 and dependency review.
 
@@ -117,6 +134,10 @@ The touch-only policy uses the same pinned public verifier APIs, with separately
 
 Companion registry checks on 2026-10-15 confirmed: [`url` 2.5.8](https://crates.io/api/v1/crates/url/2.5.8), published by Manishearth on 2026-01-05, MIT/Apache-2.0; [`ciborium` 0.2.2](https://crates.io/api/v1/crates/ciborium/0.2.2), published by rjzak on 2024-01-24, Apache-2.0; [`async-trait` 0.1.92](https://crates.io/api/v1/crates/async-trait/0.1.92), published by dtolnay on 2026-08-08, MIT/Apache-2.0; and [`subtle` 2.6.1](https://crates.io/api/v1/crates/subtle/2.6.1), published by isislovecruft on 2024-06-24, BSD-3-Clause. Admission is scoped to the purposes above.
 
+### SFTP client admission — 2026-11-04
+
+Admitted by the user for ticket #4555, step 3 (SFTP connections in Interfaces). **Need:** SSH transport, key exchange and SFTP are far beyond 100 lines and the standard library has none. **Alternatives:** `ssh2` (bindings to the C library libssh2, slow releases) and `openssh` (drives the system `ssh` program; no connection multiplexing on Windows) were rejected. **Identity:** [`russh` 0.65.1](https://crates.io/api/v1/crates/russh) published by Eugeny on 2026-11-03 from `warp-tech/russh`, Apache-2.0, minimum Rust 1.89; [`russh-sftp` 3.0.1](https://crates.io/api/v1/crates/russh-sftp) published by AspectUnk on 2026-09-28, Apache-2.0; checked 2026-11-04. **Health:** both release monthly; the one `russh` advisory, [RUSTSEC-2026-0154](https://rustsec.org/advisories/RUSTSEC-2026-0154.html) (unbounded allocation), is fixed from 0.60.3. **Footprint:** about 54 new packages on Linux, almost all RustCrypto (Apache-2.0/MIT, `curve25519-dalek` and `ed25519-dalek` BSD-3-Clause), plus `dashmap` (MIT) and, on Windows, `pageant`. The `ring` backend reuses the crate the updater already brings, instead of the default `aws-lc-rs` and its C build. The `rsa` feature stays off: it brings the `rsa` crate with the unfixed RUSTSEC-2023-0071, so RSA keys are not supported. `russh` requires the pre-release `ssh-key` 0.7.0-rc.11 exactly; revisit when a stable release replaces it. `cargo deny check` runs in CI.
+
 ## Tools
 
 | Tool | Purpose |
@@ -138,7 +159,7 @@ Companion registry checks on 2026-10-15 confirmed: [`url` 2.5.8](https://crates.
 | `anyhow`, `eyre` | Typed errors are required | `thiserror` |
 | `log` macros, `env_logger` | One logging facade | `tracing` |
 | `lazy_static`, `once_cell`, `parking_lot`, `crossbeam` | The standard library or `tokio` covers them | `std::sync::{LazyLock, OnceLock, Mutex}`, `tokio::sync` |
-| HTTP clients (`reqwest` and others) | The local application makes no HTTP calls; optional hosted services ([ADR 0010](../architecture/decisions/0010-optional-cloud-services.md)) need their own scope decision | Not needed |
+| HTTP clients (`reqwest` and others) as direct dependencies | The engine makes no HTTP calls. The shell's only HTTP use is the updater's own client for in-app updates ([ADR 0020](../architecture/decisions/0020-in-app-updates.md)). Optional hosted services ([ADR 0010](../architecture/decisions/0010-optional-cloud-services.md)) need their own scope decision | `tauri-plugin-updater` for updates; nothing else |
 | Redux, Zustand, MobX, Jotai | Engine state lives in TanStack Query and local state in React | Command hooks, `useState` |
 | MUI, Ant, Chakra, Mantine, shadcn/ui, Tailwind, CSS-in-JS | One design system, minimal tooling | `react-aria-components` with CSS Modules and tokens |
 | moment, dayjs, date-fns, lodash, ramda, axios | Not needed: `Intl`, built-ins, and no HTTP from the UI | Platform APIs |

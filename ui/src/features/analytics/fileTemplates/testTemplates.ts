@@ -153,6 +153,8 @@ export const MORPHINE = {
   name: "Synthetic morphine",
   loincCode: null,
   drugClassCode: null,
+  active: true,
+  revision: 1,
 };
 
 export const FENTANYL = {
@@ -161,6 +163,8 @@ export const FENTANYL = {
   name: "Synthetic fentanyl",
   loincCode: null,
   drugClassCode: null,
+  active: true,
+  revision: 1,
 };
 
 /** The long template as the page builds it from the steps the tests take. */

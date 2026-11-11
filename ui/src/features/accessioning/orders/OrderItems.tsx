@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Alert } from "@/components/Alert";
 import { DataGrid, type DataGridColumn } from "@/components/DataGrid";
 import { ReasonConfirmDialog } from "@/components/ReasonConfirmDialog";
 import { Section } from "@/components/Section";
@@ -22,18 +23,26 @@ const STATE_TONES: Record<ItemState, Tone> = {
   cancelled: "neutral",
 };
 
+/** The four columns after Test share one width; Test takes the rest. */
+const DETAIL_WIDTH = 250;
+
 function itemColumns(references: OrderReferences): DataGridColumn<OrderItemView>[] {
   const test = orderedTestName;
   return [
     { id: "test", header: "Test", cell: test, sortValue: test },
-    { id: "kind", header: "Kind", cell: (item) => labelOf(ITEM_KINDS, item.kind), width: 110 },
+    {
+      id: "kind",
+      header: "Kind",
+      cell: (item) => labelOf(ITEM_KINDS, item.kind),
+      width: DETAIL_WIDTH,
+    },
     {
       id: "role",
       header: "Sequence role",
       // Items migrated from before sequence roles were recorded have none; never assume one.
       cell: (item) =>
         item.sequenceRole === null ? "Not recorded" : labelOf(SEQUENCE_ROLES, item.sequenceRole),
-      width: 150,
+      width: DETAIL_WIDTH,
     },
     {
       id: "state",
@@ -41,7 +50,7 @@ function itemColumns(references: OrderReferences): DataGridColumn<OrderItemView>
       cell: (item) => (
         <StatusBadge tone={STATE_TONES[item.state]}>{labelOf(ITEM_STATES, item.state)}</StatusBadge>
       ),
-      width: 140,
+      width: DETAIL_WIDTH,
     },
     {
       id: "reflex",
@@ -53,6 +62,7 @@ function itemColumns(references: OrderReferences): DataGridColumn<OrderItemView>
           .join(", ");
         return scope ? `${authorization}: ${scope}` : authorization;
       },
+      width: DETAIL_WIDTH,
     },
   ];
 }
@@ -117,6 +127,9 @@ interface DecideFollowOnProps {
 function DecideFollowOn({ item, test, decision, onClose }: DecideFollowOnProps) {
   const decide = useOrderCommand<DecideFollowOnInput>("decide_follow_on");
   const accepting = decision === "accept";
+  // The engine accepts an add-on only with its authority evidence, and the reference cannot
+  // be added to a recorded request.
+  const missingAuthority = accepting && item.kind === "add_on" && !item.authorityReference?.trim();
   return (
     <ReasonConfirmDialog
       title={`${accepting ? "Accept" : "Decline"} the request for ${test}?`}
@@ -132,11 +145,17 @@ function DecideFollowOn({ item, test, decision, onClose }: DecideFollowOnProps) 
       successTitle={`Request ${accepting ? "accepted" : "declined"}`}
       onClose={onClose}
     >
-      <p>
-        {accepting
-          ? "The test is added to the order and can be performed on suitable material."
-          : "The test is not performed. The request and this decision are kept."}
-      </p>
+      {missingAuthority ? (
+        <Alert tone="warning" title="This add-on has no authority reference">
+          Decline it and record a new request with the document or call that authorizes it.
+        </Alert>
+      ) : (
+        <p>
+          {accepting
+            ? "The test is added to the order and can be performed on suitable material."
+            : "The test is not performed. The request and this decision are kept."}
+        </p>
+      )}
     </ReasonConfirmDialog>
   );
 }

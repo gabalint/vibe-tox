@@ -9,6 +9,7 @@ export function PocResultList() {
   const results = useFieldArray({ control, name: "pointOfCareResults" });
   return (
     <FieldList
+      name="pointOfCareResults"
       legend="Point-of-care results"
       emptyText="No point-of-care results entered. They are context only and never become laboratory results."
       items={results.fields}

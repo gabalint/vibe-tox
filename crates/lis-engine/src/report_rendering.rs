@@ -14,11 +14,13 @@
 //!   intent, then the export is recorded ([`export_file`]). Bytes are never
 //!   regenerated.
 
+pub(crate) mod csv;
 mod export_file;
 
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use lis_auth::Attempt;
 use lis_core::{Capability, CommandError, ErrorCode};
 use lis_reporting::{
     CandidateId, CandidateView, ExportReportPdfInput, IncidentSubject, NoticeArtifact, NoticeDraft,
@@ -30,6 +32,9 @@ use lis_store::{ArtifactDigest, CommandContext, StoreError};
 use serde::Serialize;
 use ts_rs::TS;
 
+use crate::commands::partner::{
+    ReportRoutingError, route_report_revision, route_report_withdrawal,
+};
 use crate::commands::reporting::{
     EXPORT_REPORT_PDF, PREPARE_REPORT_CANDIDATE, RELEASE_REPORT, WITHDRAW_REPORT,
 };
@@ -105,6 +110,7 @@ impl Engine {
         let marking = crate::demo::report_marking(self.installation_kind);
         tokio::task::spawn_blocking(move || {
             let pdf = lis_reporting::render::render_report(
+                &prepared.template,
                 &prepared.data_json,
                 prepared.prepared_at,
                 marking,
@@ -142,10 +148,7 @@ impl Engine {
             self.read_artifact(&call, subject, &digest, Capability::ReleaseReports)
                 .await?;
             let attempt = self
-                .write(&call, move |ctx| {
-                    ensure_outbound(ctx.tx())?;
-                    lis_reporting::release_candidate(ctx, input, &digest)
-                })
+                .write(&call, move |ctx| release(ctx, input, &digest))
                 .await?;
             accepted(attempt)
         })
@@ -329,15 +332,32 @@ fn ensure_delivery_outbound(
     }
 }
 
+/// The release transaction, with a released revision routed to the Report PDF
+/// connections in it, so a committed revision always has its message.
+fn release(
+    ctx: &mut CommandContext<'_>,
+    input: ReleaseReportInput,
+    digest: &str,
+) -> Result<Attempt<RevisionSummary>, ReportRoutingError> {
+    ensure_outbound(ctx.tx())?;
+    let attempt = lis_reporting::release_candidate(ctx, input, digest)?;
+    if let Attempt::Accepted(revision) = &attempt {
+        route_report_revision(ctx, revision.revision_id)?;
+    }
+    Ok(attempt)
+}
+
 /// The withdrawal transaction, with the access event of the report detail
-/// returned. Fresh authentication has already committed in preflight.
+/// returned and the notice routed to the connections that had the report.
+/// Fresh authentication has already committed in preflight.
 fn withdraw(
     ctx: &mut CommandContext<'_>,
     prepared: PreparedWithdrawal,
     notice: &NoticeArtifact,
-) -> Result<ReportDetail, ReportingError> {
+) -> Result<ReportDetail, ReportRoutingError> {
     let report_id = prepared.report_id();
     let detail = lis_reporting::withdraw_report(ctx, prepared, notice)?;
     ctx.audit(access(WITHDRAW_REPORT.action).record("report", report_id))?;
+    route_report_withdrawal(ctx, &detail)?;
     Ok(detail)
 }

@@ -16,6 +16,7 @@ const DETAIL: RevisionDetail = {
   summary: { ...REVISION, availability: "superseded" },
   content: CONTENT,
   provenance: {
+    layoutName: null,
     templateId: "tox-report",
     templateVersion: 2,
     templateSha256: "b2".repeat(32),

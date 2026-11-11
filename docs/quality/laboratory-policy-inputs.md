@@ -65,5 +65,6 @@ The [operations contract](../architecture/operations-contract.md) describes impl
 | M4-L11 | Session/lockout policy | Default idle timeout 15 minutes and five failures/15-minute lockout; normal session limit and authentication policy follow ADR 0019. Approve configured values and physical access controls. |
 | M4-L12 | Web-engine change | Warning pending a smoke-check attestation; qualification is required for each supported platform/runtime. |
 | M4-L13 | Restore destination | Restore requires an installation without users. Rebuilding a live host follows the documented move-aside/replacement runbook, never an in-app overwrite of live user data. |
+| M4-L14 | Lot expiry warning | Active lots are listed as expiring soon from 14 days before their expiry date by default (1–365 in Operations settings). A warning only; expired lots stay blocked for new work. Set the lead time needed to qualify and register a replacement lot. |
 
 Engineering qualification remains in [G1/G2](open-items-g1-g2.md) and the [validation plan](validation-plan.md). An implementation default does not resolve an input.

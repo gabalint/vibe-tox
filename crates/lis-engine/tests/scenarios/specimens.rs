@@ -67,6 +67,32 @@ async fn order_accession_context_is_audited_and_changes_no_clinical_state() {
     assert_eq!(linked.items[0].accession_id, Some(accession.accession_id));
     assert_eq!(linked.accessions[0].pending_receipt_count, 1);
     assert!(linked.allowed_actions.is_empty());
+    let listed = t
+        .engine
+        .list_orders(lis_orders::ListOrdersInput {
+            filter: lis_orders::OrderFilter::All,
+            subject_id: None,
+            before_received_at: None,
+            before_order_id: None,
+            search: None,
+            limit: 10,
+        })
+        .await
+        .unwrap();
+    let barcodes: Vec<_> = accession.specimens[0]
+        .containers
+        .iter()
+        .map(|container| container.label_code.clone())
+        .collect();
+    assert!(!barcodes.is_empty());
+    assert_eq!(listed[0].sample_barcodes, barcodes);
+    assert_eq!(
+        listed[0].accessions,
+        [lis_orders::OrderAccessionRef {
+            accession_id: accession.accession_id,
+            accession_number: accession.accession_number.clone(),
+        }]
+    );
     staff.admin(&t).await;
     assert_eq!(
         t.engine
@@ -83,6 +109,55 @@ async fn order_accession_context_is_audited_and_changes_no_clinical_state() {
             "denied".to_owned()
         )
     );
+    t.engine.shutdown().await;
+}
+
+#[tokio::test]
+async fn order_list_finds_by_patient_client_accession_and_barcode_without_auditing_the_text() {
+    let t = TestEngine::start().await;
+    let staff = Staff::create(&t).await;
+    let test = approved_urine_test(&t, &staff).await;
+    let (order_id, items) = accepted_order(&t, &staff, test).await;
+    let accession = t
+        .engine
+        .create_accession(accession_input(order_id, items))
+        .await
+        .unwrap();
+    let barcode = accession.specimens[0].containers[0]
+        .label_code
+        .to_lowercase();
+    let find = |text: &str| lis_orders::ListOrdersInput {
+        filter: lis_orders::OrderFilter::All,
+        subject_id: None,
+        before_received_at: None,
+        before_order_id: None,
+        search: Some(Phi::new(text.to_owned())),
+        limit: 10,
+    };
+    for (text, found) in [
+        ("patient be", true),
+        ("synthetic cl", true),
+        (accession.accession_number.as_str(), true),
+        (barcode.as_str(), true),
+        ("A99", false),
+        ("Nobody", false),
+    ] {
+        let listed = t.engine.list_orders(find(text)).await.unwrap();
+        let ids: Vec<_> = listed.iter().map(|order| order.order_id).collect();
+        let expected = if found { vec![order_id] } else { Vec::new() };
+        assert_eq!(ids, expected, "find text {text:?}");
+    }
+    let (details, searched): (String, i64) = t
+        .conn()
+        .query_row(
+            "SELECT details, json_extract(details, '$.searched') FROM audit_events \
+             WHERE action = 'order.list' ORDER BY seq DESC",
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .unwrap();
+    assert_eq!(searched, 1);
+    assert!(!details.contains("Nobody"), "{details}");
     t.engine.shutdown().await;
 }
 

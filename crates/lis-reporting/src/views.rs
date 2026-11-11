@@ -19,7 +19,9 @@ use crate::model::{
 };
 use crate::queries::destinations::DestinationState;
 
+mod layouts;
 mod preservation;
+pub use layouts::{LayoutInForce, LayoutVersionView, ReportLayoutOption, ReportLayoutsView};
 pub use preservation::{IncidentClosureView, PreservationIncidentView};
 
 /// A user named on a report record.
@@ -292,6 +294,9 @@ pub struct ReportDetail {
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct RevisionProvenance {
+    /// The report layout the template belongs to (REQ-RPT-007); `None` for
+    /// templates issued before layouts were offered.
+    pub layout_name: Option<String>,
     pub template_id: String,
     #[ts(type = "number")]
     pub template_version: i64,

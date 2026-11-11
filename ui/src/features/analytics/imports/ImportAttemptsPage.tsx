@@ -5,8 +5,6 @@ import { ListCount } from "@/components/ListLimit";
 import { Page, PageHeader } from "@/components/Page";
 import { QueryContent } from "@/components/QueryContent";
 import { RefreshControl } from "@/components/RefreshControl";
-import { Timestamp } from "@/components/Timestamp";
-import { Toolbar } from "@/components/Toolbar";
 import type { ImportAttemptSummary } from "@/generated/ImportAttemptSummary";
 import type { InstrumentReadinessView } from "@/generated/InstrumentReadinessView";
 import { useCommandPages, useCommandQuery, useHasCapability } from "@/lib/commands";
@@ -18,76 +16,39 @@ import {
   PERFORM_ANALYSIS,
 } from "../contract";
 import { IMPORTS_LIST, importAttemptPath } from "../paths";
-import { ImportOutcomeBadge } from "./ImportOutcomeBadge";
+import { attemptColumns } from "./attemptColumns";
+import { ImportFilters } from "./ImportFilters";
+import { type ImportFilter, isFiltered, useImportFilter, useImportListInput } from "./importFilter";
 import { LoadResultFileDialog } from "./LoadResultFileDialog";
-
-/** How the attempt's data arrived: a result file, by hand or from the folder, or a message. */
-function originText(row: ImportAttemptSummary): string {
-  if (row.origin === "upload") return "File loaded by hand";
-  if (row.origin === "folder") return "File from the watched folder";
-  return "Analyzer message";
-}
-
-/** The processing time identifies the attempt; a click or Enter on the row opens it. */
-function attemptColumns(
-  instrumentName: (id: string) => string,
-): DataGridColumn<ImportAttemptSummary>[] {
-  return [
-    {
-      id: "processed",
-      header: "Processed",
-      identifier: true,
-      cell: (row) => <Timestamp value={row.processedAt} />,
-      sortValue: (row) => row.processedAt,
-      width: 200,
-    },
-    {
-      id: "instrument",
-      header: "Instrument",
-      cell: (row) => instrumentName(row.instrumentId),
-      sortValue: (row) => instrumentName(row.instrumentId),
-    },
-    { id: "origin", header: "Received as", cell: originText, width: 220 },
-    {
-      id: "attempt",
-      header: "Attempt",
-      cell: (row) => row.attemptNo,
-      align: "end",
-      width: 100,
-    },
-    {
-      id: "outcome",
-      header: "Outcome",
-      cell: (row) => <ImportOutcomeBadge outcome={row.outcome} />,
-      width: 260,
-    },
-    { id: "rows", header: "Rows", cell: (row) => row.rowsTotal, align: "end", width: 90 },
-    {
-      id: "quarantined",
-      header: "Quarantined",
-      cell: (row) => row.rowsQuarantined,
-      sortValue: (row) => row.rowsQuarantined,
-      align: "end",
-      width: 130,
-    },
-  ];
-}
+import { RetryImportsDialog } from "./RetryImportsDialog";
+import { type RetrySelection, useRetrySelection } from "./retrySelection";
 
 /**
  * Each attempt to import a received analyzer message (REQ-ANA-003), newest first, with its
- * counts only. Opening one shows its quarantined rows. New messages arrive while the screen is
- * open, so the list says when it was read.
+ * counts only. Opening one shows its quarantined rows. The instrument, outcome, received days
+ * and a search by sample label, accession, container label or file name stay in the address
+ * and are applied by the engine, before the list is paged; the instrument panel under
+ * Laboratory setup links one instrument's imports with `?instrument=`. Attempts with something
+ * to retry can be checked, or all of them at once with "Select all quarantined", and retried
+ * together with one reason. New messages arrive while the screen is open, so the list says
+ * when it was read.
  */
 export function ImportAttemptsPage() {
+  const [filter, applyFilter] = useImportFilter();
+  const input = useImportListInput(filter);
   const attempts = useCommandPages<ImportAttemptSummary, string>(LIST_IMPORT_ATTEMPTS, {
-    key: { directory: true },
+    key: { directory: true, ...input },
     pageArgs: (afterImportAttemptId) => ({
-      input: { instrumentId: null, limit: LIST_LIMIT, before: null, afterImportAttemptId },
+      input: { ...input, limit: LIST_LIMIT, before: null, afterImportAttemptId },
     }),
     nextCursor: (page) =>
       page.length > LIST_LIMIT ? page[LIST_LIMIT - 1]?.importAttemptId : undefined,
   });
-  const rows = attempts.data?.pages.flatMap((page) => page.slice(0, LIST_LIMIT)) ?? [];
+  const rows = useMemo(
+    () => attempts.data?.pages.flatMap((page) => page.slice(0, LIST_LIMIT)) ?? [],
+    [attempts.data],
+  );
+  const selection = useRetrySelection(rows);
   const instruments = useCommandQuery<InstrumentReadinessView[]>(LIST_INSTRUMENT_READINESS);
   const columns = useMemo(
     () =>
@@ -99,8 +60,10 @@ export function ImportAttemptsPage() {
   return (
     <Page layout="collection">
       <PageHeader title={IMPORTS_LIST.label} actions={<LoadResultFile />} />
-      <Toolbar
-        variant="collection"
+      <ImportFilters
+        filter={filter}
+        instruments={instruments.data ?? []}
+        onApply={applyFilter}
         count={
           attempts.data && (
             <ListCount
@@ -111,9 +74,15 @@ export function ImportAttemptsPage() {
             />
           )
         }
-      >
-        <RefreshControl query={attempts} />
-      </Toolbar>
+        actions={
+          <>
+            {selection.hasRetryable && (
+              <Button onPress={selection.selectAll}>Select all quarantined</Button>
+            )}
+            <RefreshControl query={attempts} />
+          </>
+        }
+      />
       <QueryContent
         query={attempts}
         what="imports"
@@ -121,10 +90,13 @@ export function ImportAttemptsPage() {
         empty={{
           when: (data) => data.pages.flat().length === 0,
           title: "No imports",
-          description: "No analyzer message has been processed yet.",
+          description: emptyText(filter),
+          action: isFiltered(filter) && (
+            <Button onPress={() => applyFilter({})}>Clear filters</Button>
+          ),
         }}
       >
-        {() => <AttemptList answer={rows} columns={columns} />}
+        {() => <AttemptList answer={rows} columns={columns} selection={selection} />}
       </QueryContent>
       {attempts.hasNextPage && (
         <Button
@@ -138,23 +110,52 @@ export function ImportAttemptsPage() {
   );
 }
 
+function emptyText(filter: ImportFilter): string {
+  if (!isFiltered(filter)) return "No analyzer message has been processed yet.";
+  const { instrumentId, ...others } = filter;
+  return instrumentId && !isFiltered(others)
+    ? "No message from this instrument has been processed yet."
+    : "No import matches these filters.";
+}
+
 interface AttemptListProps {
   answer: readonly ImportAttemptSummary[];
   columns: readonly DataGridColumn<ImportAttemptSummary>[];
+  selection: RetrySelection;
 }
 
-function AttemptList({ answer, columns }: AttemptListProps) {
+/** The attempts, each with something to retry checkable for Retry selected. */
+function AttemptList({ answer, columns, selection }: AttemptListProps) {
   const open = useOpenRecordPage(importAttemptPath, IMPORTS_LIST.label);
-  const rows = answer;
+  const [retrying, setRetrying] = useState<readonly ImportAttemptSummary[] | null>(null);
   return (
-    <DataGrid
-      label="Imports"
-      columns={columns}
-      rows={rows}
-      getRowId={(row) => row.importAttemptId}
-      onRowAction={(row, order) => open(row.importAttemptId, order)}
-      fill
-    />
+    <>
+      <DataGrid
+        label="Imports"
+        columns={columns}
+        rows={answer}
+        getRowId={(row) => row.importAttemptId}
+        onRowAction={(row, order) => open(row.importAttemptId, order)}
+        bulk={{
+          selectedIds: selection.selectedIds,
+          onChange: selection.setSelectedIds,
+          isSelectable: selection.isSelectable,
+          actions: (
+            <Button variant="primary" onPress={() => setRetrying(selection.selected)}>
+              Retry selected
+            </Button>
+          ),
+        }}
+        fill
+      />
+      {retrying && (
+        <RetryImportsDialog
+          attempts={retrying}
+          onDone={selection.clear}
+          onClose={() => setRetrying(null)}
+        />
+      )}
+    </>
   );
 }
 

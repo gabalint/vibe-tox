@@ -157,6 +157,7 @@ const KEY_CONFIRMABLE = new Set<string>([
   "request_exit_export",
   "close_recovery_reconciliation",
   "record_update_approval",
+  "approve_downloaded_update",
   "accept_installed_version",
   "approve_reviewed_catalog",
   "revoke_security_key",

@@ -298,7 +298,7 @@ impl QcRole {
 
 /// A calendar date `YYYY-MM-DD`, such as a lot's expiry date.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct CivilDate(jiff::civil::Date);
+pub(crate) struct CivilDate(pub(crate) jiff::civil::Date);
 
 impl CivilDate {
     /// Parses `YYYY-MM-DD`; the error names `field`.

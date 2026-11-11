@@ -7,6 +7,7 @@ use jiff::tz::TimeZone;
 use lis_catalog::{ComponentPurpose, MethodCertainty, ValidityAction};
 use lis_core::{Comparator, DecimalText, UtcTimestamp};
 use lis_orders::{MedicationSource, SequenceRole};
+use lis_report::tox_v2::ToxComparisonCode;
 use lis_results::ResultOutcome;
 use lis_specimens::{CollectionPrecision, ReceiptDiscrepancyCode};
 
@@ -109,6 +110,18 @@ pub fn comparison_text(classification: &str) -> &'static str {
         "does_not_meet_cutoff" => "Does not meet cutoff",
         "not_classifiable" => "Not classifiable",
         _ => "—",
+    }
+}
+
+/// The code of [`comparison_text`]'s wording, which the layout templates
+/// colour; `None` for a code without a comparison.
+#[must_use]
+pub fn comparison_code(classification: &str) -> Option<ToxComparisonCode> {
+    match classification {
+        "meets_cutoff" => Some(ToxComparisonCode::MeetsCutoff),
+        "does_not_meet_cutoff" => Some(ToxComparisonCode::DoesNotMeetCutoff),
+        "not_classifiable" => Some(ToxComparisonCode::NotClassifiable),
+        _ => None,
     }
 }
 

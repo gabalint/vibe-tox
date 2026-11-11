@@ -50,8 +50,12 @@ export const LIST_CLIENTS = "list_clients";
 export const LIST_PRACTITIONERS = "list_practitioners";
 
 export const LIST_INSTRUMENTS = "list_instruments";
-/** Each instrument change restarts the listeners, so their status changes too. */
+/**
+ * Each instrument change restarts the listeners, so their status changes too. Bench setup lists
+ * a new or renamed instrument from its readiness.
+ */
 export const INSTRUMENT_QUERIES: readonly CommandName[] = [
   LIST_INSTRUMENTS,
   "list_listener_status",
+  "list_instrument_readiness",
 ];

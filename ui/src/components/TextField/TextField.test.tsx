@@ -42,6 +42,12 @@ describe("TextField", () => {
     const input = screen.getByRole("textbox", { name: /Accession/ });
     expect(input.getAttribute("aria-invalid")).toBe("true");
     expect(screen.getByText("Enter a value.")).toBeTruthy();
+    // The field marks its label's container, which turns the label red.
+    expect(
+      screen
+        .getByText(/Accession/, { selector: "label" })
+        .parentElement?.hasAttribute("data-invalid"),
+    ).toBe(true);
     await expectNoA11yViolations(container);
   });
 });

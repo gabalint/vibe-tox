@@ -1,8 +1,9 @@
-import { Check, ChevronDown } from "lucide-react";
-import { type KeyboardEvent, type Ref, useState } from "react";
+import { Check, ChevronDown, X } from "lucide-react";
+import { type ComponentProps, type KeyboardEvent, type Ref, useContext, useState } from "react";
 import {
   Button,
   ComboBox,
+  ComboBoxStateContext,
   Input,
   ListBox,
   ListBoxItem,
@@ -11,7 +12,6 @@ import {
   Text,
   Virtualizer,
 } from "react-aria-components";
-import findStyles from "@/components/FindField/FindField.module.css";
 import { useTypingPause } from "@/components/FindField/useTypingPause";
 import { FieldHelp } from "@/components/Form/FieldHelp";
 import { FieldLabel } from "@/components/Form/FieldLabel";
@@ -31,6 +31,10 @@ interface RecordPickerBaseProps {
   label: string;
   /** Compact collection filter; form fields keep their stacked label. */
   layout?: "inline";
+  /** Reads the label to screen readers only, as `Select`'s does. */
+  isLabelHidden?: boolean;
+  /** What to type, such as the values searched. */
+  placeholder?: string;
   /** Also the key for engine field errors shown by `Form`. */
   name: string;
   /** The records to choose from; with engine search, the answer for the typed text. */
@@ -42,6 +46,10 @@ interface RecordPickerBaseProps {
   onInputChange?: (text: string) => void;
   /** Engine search: the answer for the typed text is still loading. */
   isLoading?: boolean;
+  /** A single choice shows a clear button while it holds a record, as a filter needs. */
+  isClearable?: boolean;
+  /** `stacked` puts each option's description under its label, for long descriptions. */
+  optionLayout?: "stacked";
   isRequired?: boolean;
   isDisabled?: boolean;
   description?: string;
@@ -81,9 +89,13 @@ export function RecordPicker(props: RecordPickerProps) {
   const {
     label,
     layout,
+    isLabelHidden,
+    placeholder,
     options,
     onInputChange,
     isLoading = false,
+    isClearable = false,
+    optionLayout,
     description,
     errorMessage,
     isRequired,
@@ -123,10 +135,13 @@ export function RecordPicker(props: RecordPickerProps) {
       }}
       className={formStyles.field}
     >
-      <FieldLabel isRequired={isRequired}>{label}</FieldLabel>
-      <div className={styles.control}>
-        <Input
+      <FieldLabel isRequired={isRequired} isHidden={isLabelHidden}>
+        {label}
+      </FieldLabel>
+      <div className={styles.control} data-clearable={isClearable || undefined}>
+        <PickerInput
           ref={inputRef}
+          placeholder={placeholder}
           autoCorrect="off"
           autoCapitalize="off"
           spellCheck={false}
@@ -134,13 +149,43 @@ export function RecordPicker(props: RecordPickerProps) {
           onKeyDown={props.selectionMode === "multiple" ? keepSearchEnter : undefined}
           className={`${formStyles.control} ${styles.input}`}
         />
-        <Button className={findStyles.fieldButton}>
-          <ChevronDown aria-hidden="true" />
+        {isClearable && props.selectionMode !== "multiple" && props.value !== null && (
+          <Button
+            // Out of the ComboBox's button slot, which would make it a second list opener.
+            slot={null}
+            aria-label={`Clear ${label}`}
+            className={styles.clear}
+            onPress={() => {
+              setChosen(null);
+              props.onChange(null);
+            }}
+          >
+            <X aria-hidden="true" />
+          </Button>
+        )}
+        <Button className={styles.opener}>
+          <ChevronDown aria-hidden="true" className={selectStyles.chevron} />
         </Button>
       </div>
       <FieldHelp description={description} errorMessage={errorMessage} />
-      <OptionList isLoading={isLoading} />
+      <OptionList isLoading={isLoading} layout={optionLayout} />
     </ComboBox>
+  );
+}
+
+/**
+ * The text input; a click anywhere in it opens the full list, as the arrow and a `Select`
+ * do, and typing still narrows it. Keyboard focus alone does not open it.
+ */
+function PickerInput(props: ComponentProps<typeof Input>) {
+  const state = useContext(ComboBoxStateContext);
+  return (
+    <Input
+      {...props}
+      onClick={() => {
+        if (state && !state.isOpen) state.open(null, "manual");
+      }}
+    />
   );
 }
 
@@ -170,7 +215,7 @@ const LAYOUT_OPTIONS = { estimatedRowHeight: OPTION_HEIGHT };
  * so only the options in view are in the page and a list of 10,000 records opens and
  * narrows as quickly as a short one (NFR-33).
  */
-function OptionList({ isLoading }: { isLoading: boolean }) {
+function OptionList({ isLoading, layout }: { isLoading: boolean; layout?: "stacked" }) {
   return (
     <Popover className={`${selectStyles.popover} ${styles.popover}`}>
       <Virtualizer layout={ListLayout} layoutOptions={LAYOUT_OPTIONS}>
@@ -187,12 +232,14 @@ function OptionList({ isLoading }: { isLoading: boolean }) {
               className={`${selectStyles.option} ${styles.option}`}
             >
               <Check aria-hidden="true" className={styles.selectedIcon} />
-              <Text slot="label">{option.label}</Text>
-              {option.description && (
-                <Text slot="description" className={styles.description}>
-                  {option.description}
-                </Text>
-              )}
+              <span className={styles.texts} data-layout={layout}>
+                <Text slot="label">{option.label}</Text>
+                {option.description && (
+                  <Text slot="description" className={styles.description}>
+                    {option.description}
+                  </Text>
+                )}
+              </span>
             </ListBoxItem>
           )}
         </ListBox>

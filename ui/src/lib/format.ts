@@ -100,15 +100,62 @@ function parseCalendarDate(text: string): CalendarDate | null {
   return { year, month, day };
 }
 
-/** Today's calendar date in `timeZone` (UTC without one, or for a zone this engine lacks). */
-function calendarToday(now: Date, timeZone: string | null): CalendarDate | null {
-  let day: string;
+/** Today's `YYYY-MM-DD` in `timeZone` (UTC without one, or for a zone this engine lacks). */
+export function calendarDayToday(now: Date, timeZone: string | null): string {
   try {
-    day = zonedParts(now, timeZone ?? "UTC", false).day;
+    return zonedParts(now, timeZone ?? "UTC", false).day;
   } catch {
-    day = zonedParts(now, "UTC", false).day;
+    return zonedParts(now, "UTC", false).day;
   }
-  return parseCalendarDate(day);
+}
+
+/** Whether `text` is a real `YYYY-MM-DD` calendar date. */
+export function isCalendarDate(text: string): boolean {
+  return parseCalendarDate(text) !== null;
+}
+
+/** `timeZone`'s offset from UTC at `date`, in milliseconds. */
+function zoneOffset(date: Date, timeZone: string): number {
+  const parts = formatterFor(timeZone, true).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((each) => each.type === type)?.value);
+  const wall = Date.UTC(
+    part("year"),
+    part("month") - 1,
+    part("day"),
+    part("hour"),
+    part("minute"),
+    part("second"),
+  );
+  return wall - Math.floor(date.getTime() / 1000) * 1000;
+}
+
+/**
+ * The engine timestamp at which the `YYYY-MM-DD` day `days` after `day` begins in `timeZone`
+ * (UTC without one, or for a zone this engine lacks), or `null` for a date that is not real.
+ * `days = 1` gives the end of `day`, for a range that includes it.
+ */
+export function labDayStart(day: string, timeZone: string | null, days = 0): string | null {
+  const date = parseCalendarDate(day);
+  if (date === null) return null;
+  const midnight = Date.UTC(date.year, date.month - 1, date.day + days);
+  const startIn = (zone: string) => {
+    // The offset at UTC midnight, then at the local midnight it gives, for a day the zone
+    // changes its offset.
+    const first = midnight - zoneOffset(new Date(midnight), zone);
+    return midnight - zoneOffset(new Date(first), zone);
+  };
+  let start: number;
+  try {
+    start = startIn(timeZone ?? "UTC");
+  } catch {
+    start = midnight;
+  }
+  return new Date(start).toISOString().replace(/\.(\d{3})Z$/, ".$1000000Z");
+}
+
+function calendarToday(now: Date, timeZone: string | null): CalendarDate | null {
+  return parseCalendarDate(calendarDayToday(now, timeZone));
 }
 
 /**

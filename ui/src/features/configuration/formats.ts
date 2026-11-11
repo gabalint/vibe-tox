@@ -13,12 +13,6 @@ export const DISPLAY_SCALE_FORMAT: TextFormat = {
   description: "Decimal places shown on results",
 };
 
-export const NPI_FORMAT: TextFormat = {
-  pattern: /^\d{10}$/,
-  message: "Enter the 10-digit NPI.",
-  description: "10 digits",
-};
-
 export const WHOLE_NUMBER_FORMAT: TextFormat = {
   pattern: /^\d+$/,
   message: "Enter a whole number.",

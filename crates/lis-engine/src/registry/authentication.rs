@@ -70,10 +70,21 @@ pub(crate) const DESIGNATE_ONE_PERSON_LABORATORY: CommandSpec = spec(
 );
 pub(crate) const LIST_AUDIT_EVENTS: CommandSpec =
     spec("list_audit_events", "audit.list_events", VIEW_AUDIT);
+pub(crate) const GET_AUDIT_EVENT_CHANGES: CommandSpec =
+    spec("get_audit_event_changes", "audit.view_changes", VIEW_AUDIT);
+pub(crate) const EXPORT_AUDIT_EVENTS: CommandSpec =
+    spec("export_audit_events", "audit.export_events", VIEW_AUDIT);
+pub(crate) const FIND_AUDIT_RECORDS: CommandSpec =
+    spec("find_audit_records", "audit.find_records", VIEW_AUDIT);
 pub(crate) const VERIFY_AUDIT_CHAIN: CommandSpec =
     spec("verify_audit_chain", "audit.verify_chain", VIEW_AUDIT);
 pub(crate) const LIST_LISTENER_STATUS: CommandSpec = spec(
     "list_listener_status",
     "interfaces.listener_status",
+    Access::Public,
+);
+pub(crate) const GET_LISTENER_RESTART: CommandSpec = spec(
+    "get_listener_restart",
+    "interfaces.listener_restart",
     Access::Public,
 );

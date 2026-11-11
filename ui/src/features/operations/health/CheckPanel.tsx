@@ -5,6 +5,7 @@ import { Timestamp } from "@/components/Timestamp";
 import type { HealthCheckView } from "@/generated/HealthCheckView";
 import { Person } from "../Person";
 import { HealthBadge, NONE } from "./healthLabels";
+import { NextAction } from "./NextAction";
 
 interface CheckPanelProps {
   check: HealthCheckView;
@@ -30,7 +31,7 @@ export function CheckPanel({ check, actions, ...navigation }: CheckPanelProps) {
           { label: "Value", value: check.value ?? NONE },
           { label: "Limit", value: check.threshold ?? NONE },
           { label: "Observed", value: <Timestamp value={check.observedAt} /> },
-          { label: "Next action", value: check.nextAction ?? NONE },
+          { label: "Next action", value: <NextAction check={check} /> },
           {
             label: "Attested",
             value: attestation ? (

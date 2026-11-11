@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { DataGrid, type DataGridColumn } from "@/components/DataGrid";
 import { DetailLayout } from "@/components/DetailPanel";
 import { ListCount } from "@/components/ListLimit";
@@ -10,15 +10,18 @@ import { Toolbar } from "@/components/Toolbar";
 import type { InstrumentReadinessView } from "@/generated/InstrumentReadinessView";
 import { allowedActionItems, allowedRowActions, type OfferedAction } from "@/lib/allowedActions";
 import { useCommandQuery, useHasCapability } from "@/lib/commands";
+import { benchStepOf } from "@/lib/instrumentPages";
+import { instrumentStatus } from "@/lib/instrumentStatus";
 import { useOpenRecord } from "@/lib/openRecord";
 import { openRecordPanel } from "@/lib/openRecordPanel";
 import { LIST_INSTRUMENT_READINESS, MANAGE_CONFIGURATION, MANAGE_QUALITY } from "../contract";
-import { instrumentStatus, sourceText } from "../labels";
+import { sourceText } from "../labels";
 import { fileTemplatePath } from "../paths";
 import { InstrumentPanel } from "./InstrumentPanel";
 import { InstrumentStatusDialog } from "./InstrumentStatusDialog";
 import { RegisterSourceDialog } from "./RegisterSourceDialog";
 
+// No fixed widths: the columns share the grid's width equally.
 const COLUMNS: readonly DataGridColumn<InstrumentReadinessView>[] = [
   {
     id: "name",
@@ -34,13 +37,11 @@ const COLUMNS: readonly DataGridColumn<InstrumentReadinessView>[] = [
       const status = instrumentStatus(row.status);
       return <StatusBadge tone={status.tone}>{status.label}</StatusBadge>;
     },
-    width: 200,
   },
   {
     id: "since",
     header: "Since",
     cell: (row) => (row.since === null ? "Not recorded" : <Timestamp value={row.since} />),
-    width: 200,
   },
   { id: "source", header: "Approved result source", cell: sourceText },
 ];
@@ -65,7 +66,8 @@ type InstrumentDialog = {
  * sources. Readiness carries no `allowedActions` yet, so its actions follow the session's
  * capabilities: quality staff set the status with a reason, configuration staff draft
  * sources. The instrument's transport decides between an analyzer's source and a result-file
- * instrument's file template (result files brief §7).
+ * instrument's file template (result files brief §7). A new analyzer's confirmation under
+ * Laboratory setup opens its panel here with the next step asked for, which starts at once.
  */
 export function InstrumentsTab() {
   const navigate = useNavigate();
@@ -90,6 +92,21 @@ export function InstrumentsTab() {
     if (kind === "new_file_template") void navigate(fileTemplatePath(instrument.instrumentId));
     else setDialog({ kind, instrument });
   };
+  const { pathname, search, state } = useLocation();
+  const step = benchStepOf(state);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the step starts once, when the list has loaded; the helpers change each render.
+  useEffect(() => {
+    if (step === null || !readiness.data) return;
+    // Cleared first, so going back here later does not start it again.
+    void navigate(`${pathname}${search}`, { replace: true, state: null });
+    const instrument = readiness.data.find((row) => row.instrumentId === record.openId);
+    if (instrument === undefined) return;
+    const kind =
+      step === "register_source" && instrument.transport === "result_file"
+        ? "new_file_template"
+        : step;
+    if (allowedFor(instrument).includes(kind)) act(kind, instrument);
+  }, [step, readiness.data]);
   const panel = openRecordPanel(record, readiness.data, getRowId, (open) => (
     <InstrumentPanel
       instrument={open}

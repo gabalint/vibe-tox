@@ -36,7 +36,7 @@ ui/src/
    | Form | `Form` plus `react-hook-form` plus the field components |
    | Table of records | `DataGrid` |
    | Modal | `Dialog`, or `ConfirmDialog` for destructive or irreversible actions |
-   | Transient notice | `useToast` |
+   | Transient notice | `useToast`, shown in the top-right corner below the top bar |
    | Loading, empty, error | `LoadingState`, `EmptyState`, `ErrorState` |
    | Status | `StatusBadge` |
    | Page frame | `Page` with `PageHeader` |
@@ -96,7 +96,8 @@ Never stack two growing grids. They create nested scrollbars and push the second
 
 - Space toggles a row;
 - a bar above the grid shows how many rows are selected, the bulk actions and Clear;
-- changing the find or a filter clears the selection and says so.
+- changing the find or a filter clears the selection and says so;
+- a row the bulk action cannot take shows no check box, select all skips it, and a column says why, such as an analyte whose QC cannot be accepted with others on Run QC review.
 
 No action on one record ever requires ticking a box first, and no toolbar button waits for a selection.
 
@@ -111,6 +112,7 @@ No action on one record ever requires ticking a box first, and no toolbar button
 
 - A short change opens a dialog from the action, titled with the record, for example "Edit connection of Chem analyzer 2". A short change is up to about 8 fields, or one decision with its reason.
 - Longer edits put the record page into an edit state with Save and Cancel.
+- A dialog that still needs a lot of scrolling, such as the AU400/AU640 connection settings, is wide (`size="wide"`). Its fields sit in `FieldSection`s: each has a visible title, and its short fields sit side by side, falling back to one column on a narrow window. The title stays at the top and Save and Cancel stay at the bottom while the fields scroll. Dialogs that fit on the screen keep the default width and a single column. A dialog that is long only for some choices widens only then: Register analyzer and Edit connection stay narrow until an AU400/AU640 connection is chosen. `extra-wide` is for a wide dialog whose row of choice cards must fit on one line, such as the four protocols of Interfaces › Add connection. A long checkbox list in a wide dialog, such as Roles in Create user, uses `CheckboxGroup` with `layout="columns"`: a titled section with the options side by side.
 - Every save is one engine command that carries the record's revision. Never edit in grid cells and never save when a field loses focus. Each change to audited data is a deliberate act that can be attributed to one person. This is a project rule, consistent with the explicit-confirm rule of inline-edit guidance (ENG-164, ENG-166).
 - Closing a panel, dialog or page with unsaved input asks first.
 
@@ -136,6 +138,9 @@ Sources: ENG-161 to ENG-163, ENG-165 to ENG-167. Clinical systems use the same s
 - The open record is in the URL (`?open=<id>`).
 - Escape closes the panel when focus is in it and no menu or dialog is open, and focus returns to the row.
 - When the panel would leave the list narrower than about 40rem, it replaces the list and offers "Back to list".
+- Its left edge is a splitter, like the navigation's: drag it, or use Left and Right arrows, Home and End. The width runs from 22rem to 64rem and never leaves the list narrower than 38rem. It is remembered on this computer for each page.
+- Content too wide for the panel, such as a correction history table, asks for the widest panel while it is shown (`useWidePanel`). Hiding it returns the panel to the width chosen before.
+- A configuration record whose settings outgrow one column of facts, such as an analyzer connection, shows them read-only in the groups and order of its edit form. Each group's title collapses it. Live state and links to related screens follow the settings.
 
 ### Record page body
 
@@ -164,7 +169,8 @@ Opening a patient, order, report or audit record is an audited read ([security s
 - **Filters on one or two properties**, such as kind, state or status, are compact `Select`s placed as the page layout standard defines. They go in the URL, with "Clear filters" whenever one is set. Where records can be retired, retired records are hidden by default and a "Show retired" filter shows them.
 - **Where filtering runs.** The UI may filter and sort a collection itself when the engine returns the whole collection and the screen's data contract bounds its worst case within NFR-33 (10,000 rows). Otherwise the engine filters, sorts and pages, and the list says what it shows (`ListLimit`).
 - **Empty and no results are different states.** When nothing exists yet, say so ("No analytes yet") and offer "Add analyte". When the find or a filter excludes everything, name the search ("No analytes match 'oxy'") and offer "Clear search".
-- **Picking a reference record in a form.** Use `Select` for up to 15 fixed options. Above 15, and for any list that grows (clients, practitioners, tests, analytes), use `RecordPicker`: the person types to narrow the list and chooses one existing record (ENG-162, ENG-169, ENG-170).
+- **Picking a reference record in a form.** Use `Select` for up to 15 fixed options. Above 15, and for any list that grows (clients, practitioners, tests, analytes), use `RecordPicker`: the person types to narrow the list and chooses one existing record (ENG-162, ENG-169, ENG-170). A click anywhere in the field opens the full list, as its arrow and a `Select` do; keyboard focus alone does not open it.
+- **Picking a reference record in a form.** Use `Select` for up to 15 fixed options. Above 15, and for any list that grows (clients, practitioners, tests, analytes), use `RecordPicker`: the person types to narrow the list and chooses one existing record (ENG-162, ENG-169, ENG-170). Its arrow has the same icon, size, colour and position as a `Select`'s, so both kinds of dropdown look alike.
   - Each option shows what tells near-duplicates apart: code and name for a client, name and NPI for a practitioner.
   - Pickers start empty (REQ-ORD-005).
   - A choice that depends on another, such as a client location after the client, lists only the matching records and clears when its parent changes.
@@ -188,7 +194,7 @@ Each screen design and each feature test names which of these states apply, and 
 | --- | --- |
 | `default` | Typical data, typical role |
 | `loading` | First load, nothing cached: skeleton rows, with the page header already in place |
-| `refreshing` | Data shown, newer data loading: rows stay, "Updated hh:mm" changes |
+| `refreshing` | Data shown, newer data loading: rows stay; on Refresh, its arrows turn and "Refreshing…" shows for at least 0.7 seconds, then "Updated hh:mm:ss" changes |
 | `empty` | Nothing exists yet: say so and offer the first action |
 | `no-results` | The find or a filter excludes everything: offer to clear it |
 | `error` | The screen's main data failed: the reason and Retry, or, for `forbidden`, what to ask for |
@@ -201,7 +207,8 @@ Each screen design and each feature test names which of these states apply, and 
 ## Forms
 
 - Labels are always visible, and required fields are marked.
-- Engine field errors (`CommandError.fieldErrors`) map onto the matching fields.
+- Engine field errors (`CommandError.fieldErrors`) map onto the matching fields. Editing a field hides its engine error at once; the next submit checks it again. An error for a whole list of choices or rows, such as an empty test-code map, shows under that list's legend until the next submit. A field error that no field on the form shows, such as one about the instrument behind the form, appears in the error box above the fields; when no field is highlighted it replaces the engine's "Check the highlighted fields" message.
+- An invalid field shows its label, border and message in the danger tone until it is corrected; an empty choice also shows its "Select…" placeholder in that tone. Submitting moves focus to the first invalid field.
 - Client-side checks are limited to presence and format, for faster feedback. The engine validates everything again.
 - Submit is disabled while pending. Input is kept after an error.
 - **Barcode scanners** act as keyboards: a text field that submits on Enter. Do not use keystroke-timing heuristics.
@@ -216,6 +223,8 @@ Each screen design and each feature test names which of these states apply, and 
 - a check column only when the screen has bulk actions;
 - an optional last column for `RowActions`;
 - text that does not fit ending in "…" with the full text on hover, or wrapping for status and summary columns;
+- in a row that wrapped text made taller, every other cell centred vertically;
+- a `StatusBadge` alone in a cell at the cell's width (at most 16rem), its label centred, so a column of statuses lines up; a count aligned to the end keeps its own width, and a badge with text beside it in the cell keeps its own width too;
 - numbers aligned right with tabular digits;
 - virtualization above 100 rows.
 
@@ -234,7 +243,10 @@ It must stay smooth at 10,000 rows in WebView2, WKWebView and WebKitGTK (NFR-33)
   - a 4px spacing scale;
   - a light gray page with white panels, grids and dialogs, because a tinted page reduces glare over a long shift (ENG-176, ENG-187).
 - **Accessibility tokens.** A visible 2px focus ring. Controls at least 32px high; never below the WCAG 2.2 minimum target size of 24×24.
-- **Light theme only.** Tokens are named by role, so a dark theme can be added later without any color changing its meaning. Add one only when a requirement asks for it. Light text on a dark background is not easier to read for most people (ENG-189).
+- **Light and dark themes.** Each person chooses Light, Dark or System under Appearance in the user menu; System, the default, follows the operating system. The choice is remembered on this computer for each account and applies at once, title bar included. Light stays the reference design, because light text on a dark background is not easier to read for most people (ENG-189); dark is an option for long shifts and dim rooms (ticket #4487).
+  - The dark theme is a second set of values for the same role tokens (`:root[data-theme="dark"]` in `tokens.css`). Screens never test the theme or add their own dark colors.
+  - `color-scheme` follows the theme, so native scrollbars and controls match it.
+  - The dark values apply on screen only. Printing stays light, and the neutral scale is not themed: `--color-neutral-0` remains the white of paper behind QR codes and report thumbnails. Report PDFs and labels are rendered by the engine and never use these tokens.
 - **Motion.** No animation over 150ms. Honor `prefers-reduced-motion`. Nothing flashes or blinks (ENG-178).
 - **Rendering.** No canvas, WebGL or experimental CSS. Anything used must work in WebKitGTK 4.1.
 
@@ -270,25 +282,27 @@ The accent is blue because blue carries no hazard meaning in medical alarm and s
 
 | Tone | Means | Badge | Values | Examples |
 | --- | --- | --- | --- | --- |
-| `neutral` | Routine, finished or inactive | Plain text with a muted icon; no fill or border | Text `#3c4550` | Active, Approved, Enabled, Reviewed, Final, Current, Superseded, Retired, Withdrawn, Rejected, Closed |
+| `neutral` | Routine, finished or inactive | Quiet gray tint and border with a muted icon | Fill `#eceef2`, border `#6a7484`, text `#3c4550` | Enabled, Reviewed, Final, Current, Superseded, Retired, Withdrawn, Rejected, Closed |
 | `info` | The system is working or waiting; informational notices | Quiet tint | Fill `#edf1f6`, border `#7d8ca1`, text `#3a4b61` | Queued, Rendering, Received |
 | `warning` | A person needs to act, but nothing is blocked yet | Tint | Fill `#fff1c7`, border `#b07800`, text `#6b4500` | Draft awaiting approval, Needs a decision, Review out of date, Partial, Not connected |
 | `hold` | A hold stops release until someone resolves it | Solid | Fill `#9c1f6e` with white text; alert tint `#f8e8f3` with text `#7d1858` | Identity hold, QC hold, Clarification hold |
 | `danger` | Clinical work is stopped or has failed, or the laboratory's rules flag a result as critical | Solid | Fill `#b3221b` with white text; alert tint `#fdeceb` with text `#a3170f` | Label print failed, Out of service, Quarantined, Release blocked |
-| `success` | A check or action the person just ran has passed | Tint, only in toasts and in outcomes of a check | Fill `#e5f3e9`, border `#2f7d4a`, text `#165c31` | Saved, Restore test passed, Chain verified |
+| `success` | A check or action has passed, or a record is active or approved | Tint, in toasts, outcome columns (where it pairs with a red Failed) and the Active, Approved and Accepted statuses | Fill `#e5f3e9`, border `#2f7d4a`, text `#165c31` | Active, Approved, an accepted order, Saved, Restore test passed, Chain verified, audit Succeeded, backup Verified, import Processed |
+
+**Dark theme values.** The same roles and minimums. Surfaces get lighter as they rise: page `#15191e`, panels `#1e232a`, hover `#2a3039`. Text `#e6e9ee` (13.0:1 on panels), muted text `#a9b2bf` (8.2:1 on the page), control border `#7d8797` (4.4:1), accent `#6aa8ec` (6.3:1 on panels), row tint `#1c3250`. Text on the accent and on solid badges is dark (`--color-text-inverse` `#11151a`, 7.4:1 on the accent). Tones keep their meaning with dark tints and light text: info `#232c38`/`#c0cbdb`, warning `#362a0a`/`#f2d081`, success `#143021`/`#a3dbb4`, danger `#3d1715`/`#ffb3ad` with solid `#f08a84`, hold `#371830`/`#f7bde1` with solid `#e48ac2`, neutral `#2a3039`/`#c8ced8`. Checked on 2026-11-02 under the Machado 2009 model: hold, danger and the accent stay apart under protanopia and deuteranopia (smallest CIELAB difference 17, hold against accent under protanopia).
 
 Every text value is at least 6.6:1 on its fill, above the 4.5:1 that WCAG AA requires. Fills and borders are at least 3:1 against white, except tints, which always carry text and an icon. All values were checked on 2026-10-13 for WCAG contrast. They were also checked for separation under simulated protanopia and deuteranopia (the Machado 2009 model, ENG-190). Hold, danger and the accent stay apart under both.
 
 **Rules for using color:**
 
-- **No green for a steady state, no red for a finished one.** A record that is simply active, approved or final is neutral. A record that is withdrawn, rejected or expired and needs nothing more is neutral too, and its label says what happened.
+- **Green for Active, Approved, Accepted and passed outcomes, no red for a finished one.** Active, Approved and Accepted statuses show green, so an active, approved or accepted record, connection, lot or order stands apart from stopped, retired, withdrawn or draft ones. A record that is final is neutral. The outcome of an action or check is not a steady state: a success shows green with its ✓ icon, as a failure shows red. A record that is withdrawn, rejected or expired and needs nothing more is neutral too, and its label says what happened.
 - **A state shared by every row is plain text.** When every row of a list is in the state the list is about, such as every row of the identity-holds queue, that column shows plain text, not a column of identical badges.
-- **Alerts** (banners) use the tone's tint, a solid left edge in the tone's color, its icon and a title. Critical alerts never close on their own.
+- **Alerts** (banners) use the tone's tint, a solid left edge in the tone's color, its icon and a title. Critical alerts never close on their own. Notes that explain a form, such as what a correction keeps or why a field is locked, sit at the top of the dialog in one compact `info` alert (`<Alert tone="info" compact>`) without a title, as a short list when there are several. Use `warning` only when the person must act.
 - **Red fill is only for status.** Destructive buttons, such as Withdraw report or Reject order, use the `danger` text style on a neutral button. Their `ConfirmDialog` states the consequence.
 - **Rows.** Hover uses `--color-surface-hover`. The open or selected row uses the accent-subtle tint plus a 3px accent bar on its left edge, so the shape marks it without relying on color. There is no zebra striping.
 - **Result flags.** Flags come only from the engine, which applies the laboratory's rules. The flag's text and icon sit next to the value. A critical flag uses `danger`, and any other flag uses `warning`. A result with no flag gets no color and no "Normal" label, because a missing flag does not mean normal (ENG-180). Never color a value merely because it is positive or high; this is a project display rule.
 - **Charts** use a categorical palette that stays distinct for color-vision deficiencies (Okabe-Ito, ENG-186), never the status colors. No chart exists yet; choose the palette with the first one.
-- **Checking changes.** Any change to a color token re-runs the contrast and color-vision checks. The token test (`ui/src/styles/tokens.test.ts`) holds the pairs above.
+- **Checking changes.** Any change to a color token re-runs the contrast and color-vision checks. The token test (`ui/src/styles/tokens.test.ts`) holds the pairs above and checks them in both themes.
 
 ## Clinical display rules
 

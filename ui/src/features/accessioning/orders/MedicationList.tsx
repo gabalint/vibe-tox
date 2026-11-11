@@ -10,6 +10,7 @@ export function MedicationList() {
   const medications = useFieldArray({ control, name: "medications" });
   return (
     <FieldList
+      name="medications"
       legend="Medications"
       emptyText="No medications entered."
       items={medications.fields}

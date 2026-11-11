@@ -1,1 +1,1 @@
-export { Dialog } from "./Dialog";
+export { Dialog, type DialogSize } from "./Dialog";

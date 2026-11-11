@@ -1,0 +1,189 @@
+/* A small icon button inside a text field, like Find's clear button. */
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.trigger[data-hovered] {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.trigger[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+}
+
+.trigger svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
+
+.popover {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-overlay);
+}
+
+.dialog {
+  padding: var(--space-2);
+  outline: none;
+}
+
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.month {
+  margin: 0;
+  font-size: inherit;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* The month or year heading that opens the next level up. */
+.heading {
+  min-height: var(--space-8);
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.heading[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.heading[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+}
+
+/* Months of a year or years of a decade, three to a row. */
+.periods {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-1);
+  outline: none;
+}
+
+.period {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(var(--space-8) * 2);
+  height: var(--space-8);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  outline: none;
+}
+
+.period[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.period[data-selected] {
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+
+.period[data-disabled] {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.period[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+}
+
+.grid {
+  border-collapse: collapse;
+}
+
+.grid th {
+  padding-bottom: var(--space-1);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-semibold);
+}
+
+.day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  outline: none;
+}
+
+.day[data-outside-month] {
+  display: none;
+}
+
+.day[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.day[data-selected] {
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+
+.day[data-unavailable] {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.day[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+}
+
+.time {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.column {
+  max-height: 14rem;
+  overflow-y: auto;
+  outline: none;
+}
+
+.option {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  outline: none;
+}
+
+.option[data-focused] {
+  background: var(--color-surface-hover);
+}
+
+.option[data-selected] {
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+
+.option[data-focus-visible] {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}

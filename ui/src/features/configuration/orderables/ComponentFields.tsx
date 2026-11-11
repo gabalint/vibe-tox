@@ -16,6 +16,7 @@ export function ComponentFields({ methods }: { methods: readonly MethodView[] })
   const rows = useFieldArray({ control, name: "components" });
   return (
     <FieldList
+      name="components"
       legend="Components"
       emptyText="A test has one component; a panel has at least one."
       items={rows.fields}

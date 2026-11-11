@@ -6,6 +6,7 @@ use lis_core::{InstrumentId, Phi, UserId, UtcTimestamp};
 use rusqlite::{Connection, OptionalExtension, params};
 
 use crate::InterfaceError;
+use crate::folder_path::without_verbatim_prefix;
 use crate::model::{
     FileFacts, FileOrigin, PresentFile, Receipt, ReceiptFileView, ReceiptId, ReceiptState,
 };
@@ -187,12 +188,20 @@ pub(crate) fn result_folder_in_use(
     folder: &str,
     excluding: InstrumentId,
 ) -> Result<bool, InterfaceError> {
-    let found: i64 = conn.query_row(
-        "SELECT EXISTS(SELECT 1 FROM ifc_instruments WHERE result_folder = ?1 AND id <> ?2)",
-        params![folder, excluding],
-        |row| row.get(0),
+    // A folder chosen before the LIS kept the usual Windows form may still be stored
+    // with the verbatim prefix; it is the same folder.
+    let folder = without_verbatim_prefix(folder);
+    let mut statement = conn.prepare(
+        "SELECT result_folder FROM ifc_instruments WHERE result_folder IS NOT NULL AND id <> ?1",
     )?;
-    Ok(found != 0)
+    let mut rows = statement.query(params![excluding])?;
+    while let Some(row) = rows.next()? {
+        let watched: String = row.get(0)?;
+        if without_verbatim_prefix(&watched) == folder {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 pub(crate) fn update_result_folder(

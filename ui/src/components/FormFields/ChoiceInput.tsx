@@ -10,6 +10,8 @@ interface ChoiceInputProps {
   /** Nothing to choose yet, such as a location before its client is chosen. */
   isDisabled?: boolean;
   description?: string;
+  /** The label is read by screen readers only, such as in a row whose columns name it. */
+  isLabelHidden?: boolean;
   /** Called after the form value changes, such as to clear fields that depend on it. */
   onChange?: (value: string | null) => void;
 }
@@ -25,6 +27,7 @@ export function ChoiceInput({
   isRequired,
   isDisabled,
   description,
+  isLabelHidden,
   onChange,
 }: ChoiceInputProps) {
   const { control } = useFormContext();
@@ -46,6 +49,7 @@ export function ChoiceInput({
           }}
           isRequired={isRequired}
           isDisabled={isDisabled}
+          isLabelHidden={isLabelHidden}
           description={description}
           errorMessage={fieldState.error?.message}
         />

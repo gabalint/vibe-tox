@@ -9,24 +9,9 @@ pub(crate) use authentication::*;
 mod access;
 pub use access::Access;
 
-/// One IPC command.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct CommandSpec {
-    /// The Tauri command name.
-    pub name: &'static str,
-    /// `<module>.<verb>`, for log lines and denial events.
-    pub action: &'static str,
-    /// Who may call it.
-    pub access: Access,
-}
-
-pub(crate) const fn spec(name: &'static str, action: &'static str, access: Access) -> CommandSpec {
-    CommandSpec {
-        name,
-        action,
-        access,
-    }
-}
+mod spec;
+pub use spec::CommandSpec;
+pub(crate) use spec::spec;
 
 /// Every IPC command the window may call.
 pub const COMMANDS: &[CommandSpec] = &[
@@ -82,8 +67,12 @@ pub const COMMANDS: &[CommandSpec] = &[
     RESET_USER_CREDENTIALS,
     DESIGNATE_ONE_PERSON_LABORATORY,
     LIST_AUDIT_EVENTS,
+    GET_AUDIT_EVENT_CHANGES,
+    EXPORT_AUDIT_EVENTS,
+    FIND_AUDIT_RECORDS,
     VERIFY_AUDIT_CHAIN,
     LIST_LISTENER_STATUS,
+    GET_LISTENER_RESTART,
     // Wave 3+: each area lists its CommandSpec constants (defined in its own
     // commands module) here. Edit only your block.
     // identity: begin
@@ -109,6 +98,9 @@ pub const COMMANDS: &[CommandSpec] = &[
     crate::commands::catalog::CREATE_SPECIMEN_TYPE,
     crate::commands::catalog::LIST_ANALYTES,
     crate::commands::catalog::CREATE_ANALYTE,
+    crate::commands::catalog::analytes::UPDATE_ANALYTE,
+    crate::commands::catalog::analytes::ANALYTE_HISTORY,
+    crate::commands::catalog::analytes::ANALYTE_USAGE,
     crate::commands::catalog::LIST_METHODS,
     crate::commands::catalog::CREATE_METHOD,
     crate::commands::catalog::LIST_ORDERABLES,
@@ -146,6 +138,33 @@ pub const COMMANDS: &[CommandSpec] = &[
     crate::commands::interfaces::REGISTER_INSTRUMENT,
     crate::commands::interfaces::UPDATE_INSTRUMENT_CONNECTION,
     crate::commands::interfaces::SET_INSTRUMENT_ENABLED,
+    crate::commands::partner::LIST_PARTNER_CONNECTIONS,
+    crate::commands::partner::GET_PARTNER_CONNECTION,
+    crate::commands::partner::CHOOSE_PARTNER_FOLDER,
+    crate::commands::partner::TEST_PARTNER_FOLDER,
+    crate::commands::partner::TEST_PARTNER_SFTP,
+    crate::commands::partner::TEST_PARTNER_MLLP,
+    crate::commands::partner::GET_LIS_SFTP_KEY,
+    crate::commands::partner::CREATE_PARTNER_CONNECTION,
+    crate::commands::partner::UPDATE_PARTNER_CONNECTION,
+    crate::commands::partner::SET_PARTNER_CONNECTION_ACTIVE,
+    crate::commands::partner::RECORD_PARTNER_DESTINATION_CHECK,
+    crate::commands::partner::SEND_PARTNER_TEST_MESSAGE,
+    crate::commands::partner::LIST_PARTNER_MESSAGES,
+    crate::commands::partner::GET_PARTNER_MESSAGE,
+    crate::commands::partner::EXPORT_PARTNER_MESSAGES,
+    crate::commands::partner::LIST_UNROUTED_PARTNER_MESSAGES,
+    crate::commands::partner::RESOLVE_UNROUTED_MESSAGE,
+    crate::commands::partner::RESEND_PARTNER_DELIVERY,
+    crate::commands::partner::REJECT_RECEIVED_MESSAGE,
+    crate::commands::partner::RESOLVE_PARTNER_REJECTION,
+    crate::commands::partner::LIST_PARTNER_MAPPINGS,
+    crate::commands::partner::DRAFT_PARTNER_MAPPING,
+    crate::commands::partner::DISCARD_PARTNER_MAPPING_DRAFT,
+    crate::commands::partner::APPROVE_PARTNER_MAPPINGS,
+    crate::commands::partner::DRAFT_PARTNER_CONTRACT,
+    crate::commands::partner::APPROVE_PARTNER_CONTRACT,
+    crate::commands::partner::RUN_PARTNER_ACCEPTANCE_TESTS,
     // interfaces: end
     // orders: begin
     crate::commands::orders::REGISTER_ORDER,
@@ -249,6 +268,11 @@ pub const COMMANDS: &[CommandSpec] = &[
     crate::commands::reporting::REPLACE_DELIVERY_DESTINATION,
     crate::commands::reporting::RETIRE_DELIVERY_DESTINATION,
     crate::commands::reporting::CLOSE_PRESERVATION_INCIDENT,
+    crate::commands::report_layouts::GET_REPORT_LAYOUTS,
+    crate::commands::report_layouts::PREVIEW_REPORT_LAYOUT,
+    crate::commands::report_layouts::DRAFT_REPORT_LAYOUT,
+    crate::commands::report_layouts::APPROVE_REPORT_LAYOUT,
+    crate::commands::report_layouts::REJECT_REPORT_LAYOUT,
     // reporting: end
     crate::commands::billing_intake::GET_PATIENT_BILLING_PROFILE,
     crate::commands::billing_intake::SET_PATIENT_BILLING_PROFILE,
@@ -274,6 +298,7 @@ pub const COMMANDS: &[CommandSpec] = &[
     crate::commands::billing::GET_SERVICE_DERIVATION,
     crate::commands::billing::APPROVE_SERVICE_DERIVATION,
     crate::commands::billing::CREATE_BILLING_HANDOFF,
+    crate::commands::billing::LIST_BILLING_HANDOFFS,
     crate::commands::billing::GET_BILLING_HANDOFF,
     crate::commands::billing::EXPORT_BILLING_HANDOFF,
     crate::commands::billing::RECORD_HANDOFF_OUTCOME,
@@ -324,8 +349,14 @@ pub const COMMANDS: &[CommandSpec] = &[
     crate::commands::operations::LIST_INSTALLED_VERSIONS,
     crate::commands::operations::LIST_UPDATE_APPROVALS,
     crate::commands::operations::RECORD_UPDATE_APPROVAL,
+    crate::commands::operations::APPROVE_DOWNLOADED_UPDATE,
     crate::commands::operations::WITHDRAW_UPDATE_APPROVAL,
     crate::commands::operations::ACCEPT_INSTALLED_VERSION,
+    crate::commands::operations::CHECK_RELEASE_UPDATE,
+    crate::commands::operations::LIST_NIGHTLY_BUILDS,
+    crate::commands::operations::DOWNLOAD_UPDATE,
+    crate::commands::operations::INSTALL_UPDATE,
+    crate::commands::operations::STOP_LISTENERS_FOR_UPDATE,
     crate::commands::operations::RECORD_MEDIA_DISPOSAL,
     crate::commands::operations::LIST_MEDIA_DISPOSALS,
     crate::commands::operations::GET_INSTALLATION_KEY_STATE,

@@ -4,6 +4,11 @@
   gap: var(--space-4);
 }
 
+/* Wraps the fields for their input events; they stay the form's flex items. */
+.fields {
+  display: contents;
+}
+
 /* Fields side by side where they fit. */
 .fieldGrid {
   display: grid;
@@ -12,6 +17,36 @@
   grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
   gap: var(--space-4);
   align-items: start;
+}
+
+/* A titled group in a long form; the rule above the title separates it from the last group. */
+.fieldSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  margin: 0;
+  padding: var(--space-4) 0 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.fieldSection:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* Inside a section, a lone short field keeps its column width instead of the whole row. */
+.fieldSection .fieldGrid {
+  grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
+}
+
+.fieldSectionTitle {
+  float: left;
+  width: 100%;
+  padding: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
 }
 
 .actions {
@@ -48,8 +83,31 @@
   max-width: 100%;
 }
 
+/* An empty line the height of a label puts the button level with the inputs beside it. */
+.fieldAction {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.fieldAction::before {
+  content: "\00a0";
+  font-weight: var(--font-weight-semibold);
+}
+
 .label {
   font-weight: var(--font-weight-semibold);
+}
+
+/* A label for screen readers only, for a choice whose value names it ("All connections"). */
+.label[data-hidden] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .required {
@@ -80,6 +138,22 @@
   text-align: start;
 }
 
+/* A field with a button inside it, such as a date picker: the button sits at the end. */
+.adorned {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.adorned > .control {
+  padding-right: var(--space-8);
+}
+
+.adorned > :last-child:not(.control) {
+  position: absolute;
+  right: var(--space-1);
+}
+
 .control[data-focused],
 .control[data-focus-visible] {
   outline: var(--focus-ring-width) solid var(--color-focus);
@@ -88,6 +162,11 @@
 
 .control[data-invalid] {
   border-color: var(--tone-danger-border);
+}
+
+/* An invalid field's name turns red with its border and message, so it stands out in long forms. */
+.field[data-invalid] > .label {
+  color: var(--tone-danger-text);
 }
 
 .control[data-disabled] {

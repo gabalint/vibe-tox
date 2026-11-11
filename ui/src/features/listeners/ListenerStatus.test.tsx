@@ -42,6 +42,20 @@ describe("ListenerStatus (REQ-OPS-013)", () => {
     await expectNoA11yViolations(container);
   });
 
+  it("after an update, says how many analyzers listen again and why others did not", async () => {
+    mockCommands({
+      list_listener_status: () => [ANALYZER],
+      get_listener_restart: () => ({
+        listening: 4,
+        failed: [{ ...ANALYZER, instrumentName: "AU-SER", state: "error", detail: "open_failed" }],
+      }),
+    });
+    const { container } = renderWithProviders(<ListenerStatus />);
+    expect(await screen.findByText(/4 analyzers listening again/)).toBeTruthy();
+    expect(screen.getByText("AU-SER: Could not open the connection")).toBeTruthy();
+    await expectNoA11yViolations(container);
+  });
+
   it("says when a watched folder cannot be read or has files waiting (result files §6)", async () => {
     mockCommands({
       list_listener_status: () => [
@@ -138,6 +152,22 @@ describe("ListenerSummary (REQ-OPS-013)", () => {
     expect(within(dialog).getByText("Synthetic Analyzer 3")).toBeTruthy();
     expect(within(dialog).getByText("Connection failed")).toBeTruthy();
     expect(within(dialog).getAllByText("2026-10-12 14:03 UTC")).toHaveLength(2);
+  });
+
+  it("shows Connected in the same badge style as Listening (ticket #4484)", async () => {
+    mockCommands({
+      list_listener_status: () => [
+        { ...ANALYZER, state: "listening" },
+        { ...ANALYZER, instrumentId: "00000000-0000-7000-8000-0000000000a2", state: "connected" },
+        { ...ANALYZER, instrumentId: "00000000-0000-7000-8000-0000000000a3", state: "disabled" },
+      ],
+    });
+    renderWithProviders(<ListenerStatus />);
+    const tone = async (label: string) =>
+      (await screen.findByText(label)).closest("[data-tone]")?.getAttribute("data-tone");
+    expect(await tone("Listening")).toBe("info");
+    expect(await tone("Connected")).toBe("info");
+    expect(await tone("Disabled")).toBe("neutral");
   });
 
   it("names one analyzer in the singular", async () => {

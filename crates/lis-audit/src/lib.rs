@@ -5,7 +5,9 @@
 //!   IMMEDIATE` transaction, with the next per-stream sequence number, the
 //!   predecessor's hash and a SHA-256 over the versioned canonical
 //!   serialization documented in [`chain`] (`sha256-v1`).
-//! - [`list`] pages through a stream, newest first, for the audit viewer.
+//! - [`list`] pages through one stream or every stream, newest first, for the
+//!   audit viewer; [`audit_records`] finds the records it can filter by, from the
+//!   IDs owner modules match with [`RecordSearch`].
 //! - [`verify`] recomputes a stream's chain and reports edited, deleted,
 //!   inserted and reordered events, and seals that disagree with the chain,
 //!   as [`Finding`]s.
@@ -29,7 +31,7 @@
 //! Most commands do not call [`append`] directly: `lis-store`'s
 //! `CommandContext::audit` fills in the [`Attribution`].
 //! [`AuditDetail`] is the only details value API; it admits typed IDs, codes,
-//! integers, booleans, validated digests and machine identifiers, plus an
+//! integers, booleans, timestamps, validated digests and machine identifiers, plus an
 //! explicitly classified workforce username, never arbitrary strings or JSON
 //! values.
 //!
@@ -37,19 +39,25 @@
 
 mod anchor;
 pub mod chain;
+mod changes;
 mod labels;
 mod list;
 mod model;
 mod record_events;
 mod repo;
 mod seal;
+mod search;
 mod verify;
 
 use lis_core::{Migration, ModuleSchema};
 
 pub use anchor::{Anchor, AnchorStatus, compare_anchors, parse_line, to_line};
-pub use labels::{action_label, record_type_label};
-pub use list::{EventFilter, StoredEvent, actions, list, record_types};
+pub use changes::{
+    ChangeQuery, EventFacts, FieldChange, RecordChanges, detail_text, differing, event_facts,
+    revision_details,
+};
+pub use labels::{action_label, detail_label, record_type_label};
+pub use list::{ByFilter, EventCursor, EventFilter, StoredEvent, actions, list, record_types};
 pub use model::{
     Attribution, AuditDetail, AuditError, AuditEvent, ChainLink, MAX_DETAILS_BYTES,
     MAX_MACHINE_TOKEN_BYTES, Outcome, Stream,
@@ -57,6 +65,7 @@ pub use model::{
 pub use record_events::{RecordEvent, succeeded_record_events};
 pub use repo::{append, event_recorded_at, heads};
 pub use seal::{Seal, last_seal, seal, seals};
+pub use search::{AuditRecord, RecordRef, RecordSearch, audit_records};
 pub use verify::{Finding, VerifyReport, verify};
 
 /// This module's migrations, in version order.
@@ -75,6 +84,11 @@ pub const MIGRATIONS: &[Migration] = &[
         version: 3,
         name: "record_event_lookup",
         sql: include_str!("../migrations/0003_record_event_lookup.sql"),
+    },
+    Migration {
+        version: 4,
+        name: "events_by_time",
+        sql: include_str!("../migrations/0004_events_by_time.sql"),
     },
 ];
 

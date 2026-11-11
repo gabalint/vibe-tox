@@ -216,6 +216,18 @@ impl InstallationKey {
     }
 }
 
+/// [`resolve`] on a blocking thread, for engine start (§6.4 step 7).
+pub(crate) async fn resolve_at_start(
+    db: &Arc<Database>,
+    keys: &KeyProvider,
+) -> Result<InstallationKey, crate::EngineError> {
+    let (db, keys) = (Arc::clone(db), keys.clone());
+    tokio::task::spawn_blocking(move || resolve(&db, &keys))
+        .await
+        .map_err(|_| crate::EngineError::StartupTask)?
+        .map_err(|error| crate::EngineError::InstallationKey(error.to_string()))
+}
+
 /// Loads the key at startup and decides its state. Blocking. A key is created only when
 /// the store has none and nothing in the database is bound to a key.
 pub(crate) fn resolve(db: &Database, keys: &KeyProvider) -> Result<InstallationKey, KeyError> {

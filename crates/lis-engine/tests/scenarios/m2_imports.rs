@@ -107,10 +107,9 @@ async fn fixture_rows_that_cannot_be_placed_are_quarantined_with_their_reason() 
     let first_page = lab
         .engine()
         .list_import_attempts(ListImportAttemptsInput {
-            after_import_attempt_id: None,
             instrument_id: Some(lab.instrument),
             limit: 1,
-            before: None,
+            ..ListImportAttemptsInput::default()
         })
         .await
         .unwrap();
@@ -139,11 +138,16 @@ async fn rows_outside_the_order_or_matching_two_positions_are_quarantined() {
         ]))
         .await;
     assert_eq!((scope.rows_new, scope.rows_quarantined), (1, 1));
-    let (reason, _, value, _) = quarantined(&lab.detail(&scope).await);
+    let scope_detail = lab.detail(&scope).await;
+    let (reason, _, value, _) = quarantined(&scope_detail);
     assert_eq!(
         (reason, value.as_str()),
         (QuarantineReason::NotInOrderedScope, "70.0")
     );
+    // Where to fix it: the run and the specimen the row matched.
+    let placed = &scope_detail.quarantine[0];
+    assert!(placed.run_id.is_some() && placed.specimen_id.is_some());
+    assert!(placed.matching_runs.is_empty());
 
     place_rerun_on_second_run(&lab, 1).await;
     let ambiguous = lab
@@ -154,11 +158,21 @@ async fn rows_outside_the_order_or_matching_two_positions_are_quarantined() {
         ]))
         .await;
     assert_eq!(ambiguous.outcome, ImportOutcome::Quarantined);
-    let (reason, label, _, _) = quarantined(&lab.detail(&ambiguous).await);
+    let ambiguous_detail = lab.detail(&ambiguous).await;
+    let (reason, label, _, _) = quarantined(&ambiguous_detail);
     assert_eq!(
         (reason, label.as_str()),
         (QuarantineReason::AmbiguousSample, "C00000002")
     );
+    // Where to fix it: both open runs that hold the label.
+    let runs: Vec<_> = ambiguous_detail.quarantine[0]
+        .matching_runs
+        .iter()
+        .map(|run| run.run_id)
+        .collect();
+    assert_eq!(runs.len(), 2, "{runs:?}");
+    assert!(runs.contains(&lab.run));
+    assert_eq!(ambiguous_detail.quarantine[0].run_id, None);
     assert!(lab.results(1).await.lines.is_empty());
 }
 
@@ -249,4 +263,38 @@ async fn a_correction_without_the_registration_indicator_waits_in_quarantine() {
     assert_eq!(current.magnitude.as_deref(), Some("148.90"));
     assert!(mor.gates.is_empty(), "{:?}", mor.gates);
     lab.approve(0, vec![current.revision_id]).await.unwrap();
+}
+
+/// The import list filters by outcome and searches the labels each attempt
+/// brought in the engine query, before the page is cut (REQ-ANA-003).
+#[tokio::test]
+async fn the_import_list_finds_an_attempt_by_a_quarantined_label() {
+    let lab = Lab::start(RevisionIndicator::None).await;
+    let unknown = lab.import(UNKNOWN_SAMPLE).await;
+    lab.sign_in(Role::Reviewer).await;
+    let list = |outcome, search: &str| ListImportAttemptsInput {
+        instrument_id: Some(lab.instrument),
+        outcome: Some(outcome),
+        search: Some(search.to_owned()),
+        limit: 10,
+        ..ListImportAttemptsInput::default()
+    };
+    let found = lab
+        .engine()
+        .list_import_attempts(list(ImportOutcome::Quarantined, " c9999 "))
+        .await
+        .unwrap();
+    assert_eq!(
+        found
+            .iter()
+            .map(|a| a.import_attempt_id)
+            .collect::<Vec<_>>(),
+        [unknown.import_attempt_id]
+    );
+    let processed = lab
+        .engine()
+        .list_import_attempts(list(ImportOutcome::Processed, "C99999999"))
+        .await
+        .unwrap();
+    assert!(processed.is_empty(), "{processed:?}");
 }

@@ -11,14 +11,15 @@ use std::thread;
 use std::time::Duration;
 
 use lis_analytical::RevisionIndicator;
-use lis_core::Comparator;
+use lis_core::{Comparator, ErrorCode};
 use lis_engine::{
-    ConfigureLabelPrinterInput, GetAccessionInput, ListReviewQueueInput, PrintLabelsInput,
-    RetryImportInput, ReviewQueueFilter,
+    ConfigureLabelPrinterInput, GetAccessionInput, ListImportAttemptsInput, ListReviewQueueInput,
+    PrintLabelsInput, RetryImportInput, ReviewQueueFilter,
 };
 use lis_results::{ImportOutcome, ResultCause, ResultLineView, ResultOutcome, ReviewStatus};
 use lis_specimens::{LabelJobKind, LabelOutcome, PrinterTransport};
 
+use crate::fixture::code_of;
 use crate::m2_lab::{Lab, Role};
 use crate::m2_steps::{CORRECTION, JOURNEY, JOURNEY_DUPLICATE, PARTIAL, gate_codes, line};
 
@@ -297,29 +298,47 @@ async fn journey_lines(lab: &Lab) -> Vec<Vec<ResultLineView>> {
     lines
 }
 
-/// Brief §3.5, NFR-02: a byte-identical message is a duplicate receipt with
-/// no import attempt; a reviewer's retry of a processed receipt is a new
-/// attempt that adds no evidence.
+/// Brief §3.5, NFR-02: a byte-identical message is a duplicate receipt whose
+/// attempt imports nothing, names the first attempt and is left out by Hide
+/// duplicates; only the first receipt can be retried. A reviewer's retry of a
+/// processed receipt is a new attempt that adds no evidence, and a duplicate
+/// then names that latest attempt.
 #[tokio::test]
-async fn a_byte_identical_message_creates_no_import_attempt_or_evidence() {
+async fn a_byte_identical_message_is_listed_as_a_duplicate_with_no_evidence() {
     let lab = Lab::start(RevisionIndicator::None).await;
     let first = lab.import(JOURNEY).await;
     let before = journey_lines(&lab).await;
 
-    let duplicate = lab.deliver(JOURNEY_DUPLICATE).await;
-    assert_eq!(duplicate.duplicate_of, Some(first.receipt_id));
-    let queued: i64 = lab
-        .t()
-        .conn()
-        .query_row(
-            "SELECT count(*) FROM store_outbox WHERE dedup_key = ?1",
-            [duplicate.receipt_id.to_string()],
-            |row| row.get(0),
-        )
+    let delivered = lab.deliver(JOURNEY_DUPLICATE).await;
+    assert_eq!(delivered.duplicate_of, Some(first.receipt_id));
+    let duplicate = lab.attempt(delivered.receipt_id, 1).await;
+    assert_eq!(duplicate.outcome, ImportOutcome::Duplicate);
+    assert_eq!((duplicate.rows_total, duplicate.failure_code), (0, None));
+    assert_eq!(
+        duplicate.duplicate_of_attempt_id,
+        Some(first.import_attempt_id)
+    );
+    assert_eq!(lab.attempts().await.len(), 2);
+    let shown = lab
+        .engine()
+        .list_import_attempts(ListImportAttemptsInput {
+            instrument_id: Some(lab.instrument),
+            limit: 100,
+            hide_duplicates: true,
+            ..ListImportAttemptsInput::default()
+        })
+        .await
         .unwrap();
-    assert_eq!(queued, 0, "a duplicate receipt queues no import");
-    assert_eq!(lab.attempts().await.len(), 1);
+    assert_eq!(shown, std::slice::from_ref(&first));
     assert_eq!(journey_lines(&lab).await, before);
+    let refused = lab
+        .engine()
+        .retry_import(RetryImportInput {
+            receipt_id: delivered.receipt_id,
+            reason: "Synthetic retry".to_owned(),
+        })
+        .await;
+    assert_eq!(code_of(refused), ErrorCode::Conflict);
 
     let attempt_no = lab
         .engine()
@@ -340,6 +359,11 @@ async fn a_byte_identical_message_creates_no_import_attempt_or_evidence() {
         (0, 0, 0)
     );
     assert_eq!(journey_lines(&lab).await, before);
+    let relisted = lab.attempt(delivered.receipt_id, 1).await;
+    assert_eq!(
+        relisted.duplicate_of_attempt_id,
+        Some(retry.import_attempt_id)
+    );
 }
 
 /// Brief §3.5: a partial re-export processes only its rows; omission never

@@ -7,7 +7,6 @@
 use lis_core::{Clock, CommandError, ErrorCode};
 use lis_engine::{
     CandidateView, CloseDeviationInput, RecordImpactAssessmentInput, RevisionSummary,
-    SubmitTechnicalReviewInput,
 };
 use lis_reporting::{CandidateState, ImpactDecision};
 use lis_store::{ArtifactStore, MAX_ARTIFACT_BYTES};
@@ -294,21 +293,7 @@ async fn a_closed_deviation_and_rereview_do_not_erase_released_impact() {
         })
         .await
         .unwrap();
-    bench.sign_in(Staff::Desk(Role::Reviewer)).await;
-    bench
-        .lab()
-        .engine()
-        .submit_technical_review(SubmitTechnicalReviewInput {
-            specimen_id: bench.sample().specimen_id,
-            result_revision_ids: vec![
-                bench.revision("SYN-MOR").await,
-                bench.revision("SYN-OXY").await,
-            ],
-            decision: lis_results::ReviewDecision::Approved,
-            reason: None,
-        })
-        .await
-        .unwrap();
+    bench.desk().await.approve_all(bench.index).await.unwrap();
     let report = bench.report(Staff::Releaser).await;
     assert!(open_keys(&report).contains(&key));
     assert!(

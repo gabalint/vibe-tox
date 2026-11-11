@@ -53,6 +53,8 @@ interface DirectoryProps<Row extends object> {
   filters?: DirectoryFilters<Row>;
   /** "Add …" in the header for `manage_configuration`, its dialog, and the empty state's text. */
   add: { label: string; emptyText: string; dialog: (onClose: () => void) => ReactNode };
+  /** More header buttons for `manage_configuration`, before "Add …". */
+  actions?: ReactNode;
   onRowAction: (row: Row, order: readonly string[]) => void;
   /** The "⋯" menu of each row, from the record's `allowedActions`. */
   rowActions?: GridRowActions<Row>;
@@ -101,9 +103,18 @@ export function Directory<Row extends object>(props: DirectoryProps<Row>) {
       {add.label}
     </Button>
   );
+  const headerActions =
+    canManage && props.actions ? (
+      <>
+        {props.actions}
+        {addButton}
+      </>
+    ) : (
+      addButton
+    );
   return (
     <Page layout="collection">
-      <PageHeader title={title} description={props.description} actions={addButton} />
+      <PageHeader title={title} description={props.description} actions={headerActions} />
       {props.notice}
       <DetailLayout panel={props.panel}>
         <DirectoryList {...props} addButton={addButton} />

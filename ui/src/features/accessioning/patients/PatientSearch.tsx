@@ -79,7 +79,7 @@ export function PatientSearch({ onSearch }: { onSearch: (input: SubjectSearch) =
               label="Given names"
               description="The start of the given names."
             />
-            <TextInput name="birthDate" label="Birth date" format={DATE_FORMAT} />
+            <TextInput name="birthDate" label="Birth date" format={DATE_FORMAT} isPastOnly />
           </Form>
         </FormProvider>
       </Section>

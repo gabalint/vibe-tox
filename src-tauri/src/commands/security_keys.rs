@@ -6,7 +6,7 @@ use lis_engine::{
     DialogCommand, Engine, KeyRecoveryAcknowledgement, KeyRecoveryResult, KeySignInChoicesInput,
     RevokeSecurityKeyInput, SecurityKeyAction, SecurityKeyActionInput, SecurityKeyEnrollInput,
     SecurityKeyRecoveryInput, SecurityKeySignInInput, SecurityKeySignupInput,
-    SecurityKeyUnlockInput, SessionInfo,
+    SecurityKeyUnlockInput, SessionInfo, UpdateRequest,
 };
 use serde_json::Value;
 use tauri::{AppHandle, Runtime, State};
@@ -14,6 +14,7 @@ use tauri::{AppHandle, Runtime, State};
 use crate::security_key_operations::{
     SecurityKeyOperationInput, SecurityKeyOperations, SecurityKeyPinInput, SecurityKeyStatus,
 };
+use crate::updater::{self, Updates};
 
 #[tauri::command]
 pub(crate) async fn security_key_signup(
@@ -101,6 +102,7 @@ pub(crate) async fn security_key_action<R: Runtime>(
     app: AppHandle<R>,
     engine: State<'_, Engine>,
     operations: State<'_, SecurityKeyOperations>,
+    updates: State<'_, Updates>,
     input: SecurityKeyActionInput,
 ) -> Result<Value, CommandError> {
     // Reuse the password route's engine preflight and native dialogs. No path can
@@ -110,7 +112,8 @@ pub(crate) async fn security_key_action<R: Runtime>(
             engine
                 .preflight_dialog(DialogCommand::ExportRecoveryKit)
                 .await?;
-            super::backup::save_file(app, "vibe-tox-recovery-kit.txt").await
+            let file_name = engine.recovery_kit_file_name().await;
+            super::backup::save_file(app, file_name).await
         }
         SecurityKeyAction::RequestExitExport(_) => {
             engine
@@ -123,6 +126,10 @@ pub(crate) async fn security_key_action<R: Runtime>(
                 .preflight_dialog(DialogCommand::RecordUpdateApproval)
                 .await?;
             super::operations::pick_file(app).await
+        }
+        SecurityKeyAction::ApproveDownloadedUpdate(input) => {
+            engine.preflight_update(UpdateRequest::Approve).await?;
+            Some(updater::staged_path(&updates, &input.version)?)
         }
         _ => None,
     };

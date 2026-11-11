@@ -17,7 +17,7 @@ use sha2::{Digest, Sha256};
 
 use crate::database::built_in_schemas;
 use crate::error::{MigrationProblem, StoreError};
-use crate::transaction_guard::TransactionControlGuard;
+use crate::transaction_guard::with_authorizer;
 
 /// Creates the migration ledger. Its shape is fixed forever, so it is not itself a migration.
 pub(crate) const BOOTSTRAP_SQL: &str = "CREATE TABLE IF NOT EXISTS store_migrations (
@@ -206,38 +206,40 @@ fn apply_checked(
     migration: &Migration,
     now: UtcTimestamp,
 ) -> Result<(), StoreError> {
-    let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
-    let before = foreign_key_violations(&tx)?;
-    let guard = TransactionControlGuard::install(&tx)?;
-    let result = tx.execute_batch(migration.sql);
-    if guard.finish()? {
-        return Err(StoreError::TransactionEnded);
-    }
-    result?;
-    if tx.is_autocommit() {
-        return Err(StoreError::TransactionEnded);
-    }
-    let added = foreign_key_violations(&tx)?
-        .into_iter()
-        .any(|(key, count)| count > before.get(&key).copied().unwrap_or(0));
-    if added {
-        return Err(problem(
-            module.module,
-            migration.version,
-            MigrationProblem::ForeignKeyViolation,
-        ));
-    }
-    tx.execute(
-        "INSERT INTO store_migrations (module, version, name, checksum, applied_at) \
-         VALUES (?1, ?2, ?3, ?4, ?5)",
-        params![
-            module.module,
-            migration.version,
-            migration.name,
-            checksum(migration),
-            now
-        ],
-    )?;
-    tx.commit()?;
-    Ok(())
+    with_authorizer(conn, |conn, control| {
+        let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let before = foreign_key_violations(&tx)?;
+        let guard = control.protect(&tx);
+        let result = tx.execute_batch(migration.sql);
+        if guard.finish() {
+            return Err(StoreError::TransactionEnded);
+        }
+        result?;
+        if tx.is_autocommit() {
+            return Err(StoreError::TransactionEnded);
+        }
+        let added = foreign_key_violations(&tx)?
+            .into_iter()
+            .any(|(key, count)| count > before.get(&key).copied().unwrap_or(0));
+        if added {
+            return Err(problem(
+                module.module,
+                migration.version,
+                MigrationProblem::ForeignKeyViolation,
+            ));
+        }
+        tx.execute(
+            "INSERT INTO store_migrations (module, version, name, checksum, applied_at) \
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![
+                module.module,
+                migration.version,
+                migration.name,
+                checksum(migration),
+                now
+            ],
+        )?;
+        tx.commit()?;
+        Ok(())
+    })
 }

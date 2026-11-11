@@ -2,14 +2,14 @@
   "id": "runs",
   "title": "Runs and positions",
   "summary": "Track a run’s instrument, method version, materials and sample positions.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-10-29",
   "routes": ["/bench/runs", "/bench/runs/:runId"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
         "Open a run from Runs to inspect its method version, instrument, recorded lots and positions. The run page offers the actions currently allowed. Analysts add patient samples by scanning container labels and add control, calibrator or blank positions through the corresponding actions.",
-        "QC review opens the run’s quality workspace when your account has quality authority. Close run ends additions to the run; results arriving afterward are quarantined for review."
+        "QC review opens the run’s quality workspace when your account has quality authority. Close run asks why the run is being closed, then ends additions to the run; results arriving afterward are quarantined for review. Closing cannot be undone."
       ]
     },
     {
@@ -31,6 +31,8 @@
     "ui/src/lib/person.ts",
     "ui/src/features/analytics/runs/RunsPage.tsx",
     "ui/src/features/analytics/runs/RunPage.tsx",
+    "ui/src/components/ReasonConfirmDialog/ReasonConfirmDialog.tsx",
+    "ui/src/components/ReasonField/ReasonField.tsx",
     "ui/src/features/analytics/runs/Positions.tsx",
     "ui/src/features/analytics/runs/PositionPanel.tsx",
     "ui/src/features/analytics/runs/PatientPositionForm.tsx",
@@ -150,8 +152,8 @@
         },
         {
           "name": "Closed",
-          "meaning": "Records closure time and a recorded reason when present.",
-          "values": "Date/time and reason, displayed only for a closed run.",
+          "meaning": "Records when the run was closed and why.",
+          "values": "Date/time followed by the reason, for example “2026-10-23 13:53 GMT+3: All results received and reconciled”; displayed only for a closed run. Runs closed without a reason show the date/time alone.",
           "rules": "Read-only; supplied by the current record."
         },
         {
@@ -239,6 +241,12 @@
           "rules": "Required, trimmed 1–1,000 characters; recorded with the failure."
         },
         {
+          "name": "Close run: Reason",
+          "meaning": "Explains why the run is being closed, for example “All results received and reconciled”.",
+          "values": "Free text.",
+          "rules": "Required, trimmed 1–1,000 characters; shown beside the closing time and recorded in the audit trail."
+        },
+        {
           "name": "Completed preparation batch",
           "meaning": "Links actual preparation to the new patient execution.",
           "values": "Optional completed batches for the exact run method version; blank means no recorded link.",
@@ -304,7 +312,7 @@
           "name": "Close run",
           "does": "Confirms the run’s intake is finished.",
           "availableWhen": "An open run offers this action and its displayed revision is current.",
-          "result": "Prevents further positions; later incoming results for it are quarantined. The confirmation has no reason-entry field."
+          "result": "After a Reason is entered, prevents further positions; later incoming results for it are quarantined. Closing cannot be undone. The reason appears in the Closed field and in the audit trail."
         },
         {
           "name": "QC review",

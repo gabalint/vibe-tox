@@ -4,6 +4,7 @@
 
 use lis_audit::{AuditDetail, AuditEvent, Outcome, Stream};
 use lis_core::{Capability, UtcTimestamp};
+use lis_report::TemplateRef;
 use lis_specimens::SpecimenId;
 use lis_store::CommandContext;
 use serde::Deserialize;
@@ -16,7 +17,6 @@ use crate::gates;
 use crate::model::{
     CandidateId, CandidateState, LineDisposition, LineKind, ReportId, ReportRelationship,
 };
-use crate::policy;
 use crate::relationship::relationship;
 use crate::repo::candidates::{self, CandidateRow, LineRow};
 use crate::repo::reports::{self, ReportRow, RevisionRow};
@@ -49,6 +49,8 @@ pub struct PreparedCandidate {
     pub candidate_id: CandidateId,
     /// The exact template input.
     pub data_json: String,
+    /// The template of the layout in force at preparation, recorded on the candidate.
+    pub template: TemplateRef,
     /// The printed issue time.
     pub prepared_at: UtcTimestamp,
 }
@@ -145,7 +147,7 @@ fn store_candidate(
     let data = tox_report_data(&built.snapshot, header)?;
     let content_json = built.snapshot.to_canonical_json()?;
     let data_json = lis_report::tox_v2::to_json(&data)?;
-    let template = policy::report_template();
+    let template = crate::layouts::in_force(ctx.tx())?.template();
     let superseded = candidates::open_candidate(ctx.tx(), report.id)?;
     if let Some(open) = &superseded
         && !candidates::set_state(ctx.tx(), open.id, open.revision, CandidateState::Superseded)?
@@ -168,7 +170,7 @@ fn store_candidate(
         content_json,
         data_sha256: sha256_hex(&data_json),
         data_json,
-        template_id: template.id,
+        template_id: template.id.clone(),
         template_version: i64::from(template.version),
         state: CandidateState::Rendering,
         render: None,
@@ -181,6 +183,7 @@ fn store_candidate(
     Ok(PreparedCandidate {
         candidate_id: candidate.id,
         data_json: candidate.data_json,
+        template,
         prepared_at: candidate.prepared_at,
     })
 }

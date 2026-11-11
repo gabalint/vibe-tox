@@ -23,4 +23,13 @@ loincCode: string | null,
 /**
  * Drug class code as provided.
  */
-drugClassCode: string | null, };
+drugClassCode: string | null, 
+/**
+ * Offered for new method versions and source test-code maps; a retired
+ * analyte stays in existing records.
+ */
+active: boolean, 
+/**
+ * Current revision; each correction or retirement adds one.
+ */
+revision: number, };

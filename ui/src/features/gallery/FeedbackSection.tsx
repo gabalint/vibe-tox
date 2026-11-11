@@ -13,7 +13,8 @@ export function FeedbackSection() {
   return (
     <GallerySection title="Status and feedback">
       <div className={styles.row}>
-        <StatusBadge tone="neutral">Approved</StatusBadge>
+        <StatusBadge tone="neutral">Withdrawn</StatusBadge>
+        <StatusBadge tone="success">Approved</StatusBadge>
         <StatusBadge tone="info">Queued</StatusBadge>
         <StatusBadge tone="warning">Draft awaiting approval</StatusBadge>
         <StatusBadge tone="hold">Identity hold</StatusBadge>
@@ -35,6 +36,12 @@ export function FeedbackSection() {
         </Alert>
         <Alert tone="danger" title="Label print failed">
           The synthetic label was not printed.
+        </Alert>
+        <Alert tone="info" compact>
+          <ul>
+            <li>Code SYN-AMP is permanent because records use it.</li>
+            <li>Results and reports already issued keep what they showed.</li>
+          </ul>
         </Alert>
         <Facts
           items={[

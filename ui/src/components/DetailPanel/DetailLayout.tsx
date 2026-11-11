@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import styles from "./DetailPanel.module.css";
+import { PANEL_MIN_REM, PanelWidthContext, usePanelWidth, WidePanelContext } from "./usePanelWidth";
 
 /**
  * The list's narrowest useful width beside the panel, in rem: "about 40rem" (UI standards,
@@ -15,8 +16,7 @@ import styles from "./DetailPanel.module.css";
  * 39.95rem (639px) side by side. The panel replaces the list below a 1248px window.
  */
 const LIST_MIN_REM = 38;
-/** The panel's narrowest width and the gap before it, in rem; see `.panel` in the CSS. */
-const PANEL_MIN_REM = 22;
+/** The gap before the panel, in rem; see `.layout` in the CSS. */
 const GAP_REM = 1;
 
 /** Whether the panel replaces the list, because both do not fit side by side. */
@@ -33,23 +33,31 @@ interface DetailLayoutProps {
  * A list with the open record's side panel docked on its right, inside `Page`. When the
  * list would be narrower than about 40rem (38rem) beside the panel, the panel replaces the
  * list and offers "Back to list". The list is hidden, not removed, so its sort and scroll survive.
+ * Beside the list, the panel's width can be dragged between its minimum and the width that
+ * leaves the list its 38rem.
  */
 export function DetailLayout({ panel, children }: DetailLayoutProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const narrow = useNarrowWidth(ref);
+  const { width, rem } = useWidth(ref);
+  const narrow = width > 0 && width < (LIST_MIN_REM + PANEL_MIN_REM + GAP_REM) * rem;
+  const panelWidth = usePanelWidth(width, rem, LIST_MIN_REM + GAP_REM);
   return (
     <div ref={ref} className={styles.layout}>
       <div className={styles.list} hidden={narrow && Boolean(panel)}>
         {children}
       </div>
-      <NarrowLayoutContext value={narrow}>{panel}</NarrowLayoutContext>
+      <NarrowLayoutContext value={narrow}>
+        <PanelWidthContext value={panelWidth}>
+          <WidePanelContext value={panelWidth.requestWide}>{panel}</WidePanelContext>
+        </PanelWidthContext>
+      </NarrowLayoutContext>
     </div>
   );
 }
 
-/** Whether the element is too narrow for the list and the panel side by side. */
-function useNarrowWidth(ref: RefObject<HTMLElement | null>): boolean {
-  const [narrow, setNarrow] = useState(false);
+/** The element's width and the root font size, in pixels; width 0 until it is measured. */
+function useWidth(ref: RefObject<HTMLElement | null>) {
+  const [size, setSize] = useState({ width: 0, rem: 16 });
   // Synchronizes with the element's width, which lives outside React. Without
   // ResizeObserver (test environments), the layout stays side by side.
   useLayoutEffect(() => {
@@ -58,10 +66,10 @@ function useNarrowWidth(ref: RefObject<HTMLElement | null>): boolean {
     const observer = new ResizeObserver(([entry]) => {
       if (!entry) return;
       const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-      setNarrow(entry.contentRect.width < (LIST_MIN_REM + PANEL_MIN_REM + GAP_REM) * rem);
+      setSize({ width: entry.contentRect.width, rem });
     });
     observer.observe(element);
     return () => observer.disconnect();
   }, [ref]);
-  return narrow;
+  return size;
 }

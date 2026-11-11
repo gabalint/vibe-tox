@@ -4,6 +4,8 @@
 
 /// The demo marking: wraps a template and watermarks every page.
 const DEMO_V1: &str = include_str!("../templates/demo-marking/v1.typ");
+/// The preview marking: wraps a report layout rendered on synthetic sample data.
+const PREVIEW_V1: &str = include_str!("../templates/preview-marking/v1.typ");
 
 /// What an installation's documents carry besides their template.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -12,6 +14,8 @@ pub enum Marking {
     Unmarked,
     /// The demo laboratory's output: "DEMO" behind the content of every page.
     Demo,
+    /// A layout preview on synthetic data: "PREVIEW – NOT A REPORT" on every page.
+    Preview,
 }
 
 /// The keyword the demo marking writes into a PDF's plain XMP metadata.
@@ -23,6 +27,7 @@ impl Marking {
         match self {
             Self::Unmarked => None,
             Self::Demo => Some(DEMO_V1),
+            Self::Preview => Some(PREVIEW_V1),
         }
     }
 }
@@ -53,6 +58,28 @@ mod tests {
             sha256_hex(DEMO_V1.as_bytes()),
             "2dc627e8dbb99d91b54eb20e6a20f74757903d2f034870cd2c0aee641d24f0aa"
         );
+    }
+
+    #[test]
+    fn the_preview_marking_is_pinned() {
+        assert_eq!(
+            sha256_hex(PREVIEW_V1.as_bytes()),
+            "15696272aaaa90aafb6a31c643baecb7f602d8ea0e598b1672969d0c71ff8b35"
+        );
+    }
+
+    // REQ-RPT-007: every page of a layout preview says it is not a report.
+    #[test]
+    fn previews_are_marked_on_every_page() {
+        let template = reference("tox-report-standard", 1);
+        let text = rendered_marked_text(
+            &template,
+            crate::preview::SAMPLE_REPORT_JSON,
+            Marking::Preview,
+        )
+        .expect("renders");
+        assert!(text.contains("PREVIEW–NOTAREPORT"), "{text}");
+        assert!(text.contains("Test,Patient"));
     }
 
     // Proposed REQ-OPS-016: every page of demo output carries the watermark; unmarked

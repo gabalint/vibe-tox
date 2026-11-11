@@ -2,23 +2,19 @@
 //! performed by the engine; safety gates call these inside the write transaction.
 
 use lis_catalog::{ComponentPurpose, OrderableVersionId};
-use std::collections::BTreeMap;
-use std::collections::btree_map::Entry;
-
-use lis_core::{GateReason, UtcTimestamp};
-use lis_identity::{ClientId, SubjectId, SubjectSummary};
-use rusqlite::{Connection, OptionalExtension, Row, params};
+use lis_core::GateReason;
+use lis_identity::SubjectId;
+use rusqlite::{Connection, OptionalExtension, Row};
 use serde::Serialize;
 use ts_rs::TS;
 
 use crate::error::OrderError;
-use crate::inputs::ListOrdersInput;
-use crate::model::{OrderComponentId, OrderId, OrderItemId, OrderStatus};
+use crate::model::{OrderComponentId, OrderId, OrderItemId};
 use crate::query_detail::{
     all_holds, allowed_actions, billing_items, cancellations, empty_evidence, evidence,
     order_items, trigger_assessments,
 };
-use crate::views::{ClarificationHoldView, OrderDetail, OrderSummary, StandingOrderView};
+use crate::views::{ClarificationHoldView, OrderDetail, StandingOrderView};
 
 /// An accepted order item that may be linked to a new accession.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
@@ -190,129 +186,6 @@ pub fn get_order(conn: &Connection, order_id: OrderId) -> Result<OrderDetail, Or
     Ok(detail)
 }
 
-/// Bounded order worklist, newest first, with each order's patient name, placer order
-/// number, client name and item count (REQ-ORD-001). PHI: the engine audits the read.
-pub fn list_orders(
-    conn: &Connection,
-    input: &ListOrdersInput,
-) -> Result<Vec<OrderSummary>, OrderError> {
-    if input.limit == 0 || input.limit > 500 {
-        return Err(crate::error::invalid(
-            "limit",
-            "out_of_range",
-            "Use a limit from 1 to 500.",
-        ));
-    }
-    let filter = match input.filter {
-        crate::OrderFilter::All => "1",
-        crate::OrderFilter::NeedsDecision => "o.status = 'received'",
-        crate::OrderFilter::OnHold => {
-            "EXISTS (SELECT 1 FROM ord_clarification_holds h \
-            WHERE h.order_id = o.id AND h.state = 'open')"
-        }
-        crate::OrderFilter::Accepted => "o.status = 'accepted'",
-    };
-    let subject = if input.subject_id.is_some() {
-        "o.subject_id = ?1"
-    } else {
-        "1"
-    };
-    if let Some(id) = input.before_order_id {
-        ensure_order_exists(conn, id)?;
-    }
-    let before = "(?4 IS NULL OR (o.received_at, o.id) < (SELECT received_at, id FROM ord_orders WHERE id=?4)) AND (?4 IS NOT NULL OR ?2 IS NULL OR o.received_at < ?2)";
-    let sql = format!(
-        "WITH page AS MATERIALIZED (SELECT o.id, o.subject_id, o.client_id, o.placer_order_id, \
-         o.status, o.received_at, o.version, o.revision FROM ord_orders o \
-         WHERE {filter} AND {subject} AND {before} \
-         ORDER BY o.received_at DESC, o.id DESC LIMIT ?3) \
-         SELECT o.id, o.subject_id, o.client_id, o.placer_order_id, o.status, o.received_at, \
-         o.version, o.revision, \
-         (SELECT count(*) FROM ord_clarification_holds h WHERE h.order_id = o.id AND h.state = 'open'), \
-         (SELECT count(*) FROM ord_order_items i WHERE i.order_id = o.id) \
-         FROM page o ORDER BY o.received_at DESC, o.id DESC"
-    );
-    let rows = conn
-        .prepare(&sql)?
-        .query_map(
-            params![
-                input.subject_id,
-                input.before_received_at,
-                input.limit,
-                input.before_order_id
-            ],
-            |row| {
-                Ok(OrderRow {
-                    order_id: row.get(0)?,
-                    subject_id: row.get(1)?,
-                    client_id: row.get(2)?,
-                    placer_order_id: row.get(3)?,
-                    status: row.get(4)?,
-                    received_at: row.get(5)?,
-                    version: row.get(6)?,
-                    revision: row.get(7)?,
-                    open_hold_count: row.get(8)?,
-                    item_count: row.get(9)?,
-                })
-            },
-        )?
-        .collect::<Result<Vec<_>, _>>()?;
-    with_names(conn, rows)
-}
-
-/// One row of the order worklist query, before the names are read.
-struct OrderRow {
-    order_id: OrderId,
-    subject_id: SubjectId,
-    client_id: ClientId,
-    placer_order_id: Option<String>,
-    status: OrderStatus,
-    received_at: UtcTimestamp,
-    version: i64,
-    revision: i64,
-    open_hold_count: i64,
-    item_count: i64,
-}
-
-/// Adds the patient and client names, read through the identity module's published
-/// queries (never from its tables), once per distinct patient and client.
-fn with_names(conn: &Connection, rows: Vec<OrderRow>) -> Result<Vec<OrderSummary>, OrderError> {
-    let mut subjects: BTreeMap<SubjectId, SubjectSummary> = BTreeMap::new();
-    let mut clients: BTreeMap<ClientId, String> = BTreeMap::new();
-    rows.into_iter()
-        .map(|row| {
-            let subject = match subjects.entry(row.subject_id) {
-                Entry::Occupied(entry) => entry.into_mut(),
-                Entry::Vacant(entry) => {
-                    entry.insert(lis_identity::subject_summary(conn, row.subject_id)?)
-                }
-            };
-            let client_name = match clients.entry(row.client_id) {
-                Entry::Occupied(entry) => entry.into_mut(),
-                Entry::Vacant(entry) => {
-                    entry.insert(lis_identity::get_client(conn, row.client_id)?.name)
-                }
-            };
-            Ok(OrderSummary {
-                order_id: row.order_id,
-                subject_id: row.subject_id,
-                patient_family_name: subject.family_name.clone(),
-                patient_given_names: subject.given_names.clone(),
-                patient_birth_date: subject.birth_date.clone(),
-                patient_identifiers: subject.identifiers.clone(),
-                placer_order_id: row.placer_order_id,
-                client_name: client_name.clone(),
-                item_count: row.item_count,
-                status: row.status,
-                received_at: row.received_at,
-                version: row.version,
-                revision: row.revision,
-                open_hold_count: row.open_hold_count,
-            })
-        })
-        .collect()
-}
-
 /// Every open hold for an order.
 pub fn open_holds(
     conn: &Connection,
@@ -365,7 +238,7 @@ pub fn list_standing_orders(
     Ok(rows)
 }
 
-fn ensure_order_exists(conn: &Connection, order_id: OrderId) -> Result<(), OrderError> {
+pub(crate) fn ensure_order_exists(conn: &Connection, order_id: OrderId) -> Result<(), OrderError> {
     conn.query_row("SELECT 1 FROM ord_orders WHERE id = ?1", [order_id], |_| {
         Ok(())
     })

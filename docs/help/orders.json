@@ -2,7 +2,7 @@
   "id": "orders",
   "title": "Orders and decisions",
   "summary": "Review the supplied request, its tests, evidence, holds and specimen progress.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-11-06",
   "routes": ["/orders", "/orders/:orderId"],
   "sections": [
     {
@@ -72,7 +72,13 @@
     "ui/src/features/accessioning/orders/OrderMaintenance.tsx",
     "crates/lis-orders/src/commands/evidence.rs",
     "crates/lis-orders/src/commands/cancellation.rs",
-    "crates/lis-orders/src/queries.rs"
+    "crates/lis-orders/src/queries.rs",
+    "crates/lis-specimens/src/queries.rs",
+    "crates/lis-engine/src/commands/orders.rs",
+    "crates/lis-orders/src/order_list.rs",
+    "crates/lis-identity/src/search.rs",
+    "ui/src/components/FindField/FindField.tsx",
+    "ui/src/components/FindField/NoResults.tsx"
   ],
   "pages": [
     {
@@ -81,6 +87,12 @@
       "purpose": "Locate saved requests and see which need acceptance or clarification.",
       "access": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
       "fields": [
+        {
+          "name": "Find",
+          "meaning": "Finds orders by patient, sample barcode, accession, order number or client. The field shows \"Patient, barcode, accession, order no., client\"; pointing at it shows the full text.",
+          "values": "The start of a patient's family name, given names or full name (Given Family, Family Given or Family, Given), or of an active patient identifier; the start of a sample barcode (primary container label, such as C00000005) or accession number (such as A26000005); the start of the clinic's order number; or the start of the client's name. Up to 200 characters.",
+          "rules": "Patient and client names, barcodes, accession and order numbers ignore case; patient identifiers match case as entered. The list updates after a short pause in typing, or at once on Enter, so scanning a tube's barcode lists its order. Works together with Show orders and the patient filter, and the count shows the orders found. The text stays in the address, so Back and the breadcrumb return to the same list. The search text is not stored in the audit trail; only that a search was used."
+        },
         {
           "name": "Show orders",
           "meaning": "Restricts the list to a request state or work category.",
@@ -96,8 +108,20 @@
         {
           "name": "Patient / Order number / Client / Tests / Received / Status / Open holds",
           "meaning": "Columns used to identify a request and its progress.",
-          "values": "Patient name; clinic number or Not supplied; client; test count; request receipt time; Received, not yet accepted, Accepted or Rejected; number of open holds.",
+          "values": "Patient name; clinic number or Not supplied; client; test count; request receipt time; Received, not yet accepted (warning badge), Accepted (green badge) or Rejected (neutral badge); number of open holds.",
           "rules": "Read-only. Test count is not performed work and request receipt time is not collection time."
+        },
+        {
+          "name": "Sample barcode",
+          "meaning": "Label codes of the primary containers received for the order, to find an order from the tube in hand.",
+          "values": "One or more container label codes, separated by semicolons, in accession order; None received before any specimen is accessioned.",
+          "rules": "Read-only. Aliquot labels are not listed; scan or search a label in the top bar to open its container. Select the column header to sort ascending, then descending; orders with no sample sort first in ascending order."
+        },
+        {
+          "name": "Accession",
+          "meaning": "The laboratory's accession numbers for the order, as used on reports, in Result review, runs and billing.",
+          "values": "One or more accession numbers, separated by commas, in accession order, such as A26000005, A26000006; Not received yet before any specimen is accessioned.",
+          "rules": "Read-only. Each number is a link that opens its accession page; clicking it does not open the order. Select the column header to sort ascending, then descending; orders not received yet sort first in ascending order."
         },
         {
           "name": "Birth date and patient identifiers",
@@ -112,6 +136,12 @@
           "does": "Starts a new requisition.",
           "availableWhen": "Order-entry authority is required. Reads and decisions are recorded in the audit trail. The application checks your current permission and record state when you submit.",
           "result": "Uses the patient filter if present; otherwise starts with patient selection."
+        },
+        {
+          "name": "Clear search",
+          "does": "Removes the find text.",
+          "availableWhen": "Find has text: the × in the field, or the button when no order matches. Escape in the field does the same.",
+          "result": "Lists the orders under the current Show orders and patient filter again."
         },
         {
           "name": "Clear filter / Show all orders / Show orders for all patients",
@@ -139,11 +169,11 @@
         }
       ],
       "restrictions": [
-        "This is a bounded list, not an exhaustive export. Use the patient’s Orders view to narrow a large list.",
+        "This is a bounded list, not an exhaustive export. Use Find or the patient’s Orders view to narrow a large list.",
         "Acceptance shown here does not prove that specimens were received or accepted."
       ],
       "workflow": [
-        "Choose the relevant state filter or open Orders from a patient.",
+        "Type or scan a patient name, sample barcode, accession or order number in Find, or choose the relevant state filter, or open Orders from a patient.",
         "Open the intended row and check identity and source details.",
         "Make the explicit decision offered on the order record."
       ],
@@ -151,6 +181,10 @@
         {
           "problem": "No orders under the selected filter.",
           "recovery": "Choose Show all orders or remove the patient restriction. An empty filtered list is not evidence that no orders exist."
+        },
+        {
+          "problem": "No orders match the find text.",
+          "recovery": "Check the spelling, type fewer characters, or search by another value such as the accession or order number. Find matches the start of each value, not text in the middle. Use Clear search, and choose Show all orders, to see the whole list. Aliquot labels are not searched; scan the primary container's label."
         },
         {
           "problem": "The list is limited.",
@@ -173,7 +207,7 @@
         {
           "name": "Requisition: Received / Client / Client location / Ordering practitioner / Clinic order number / Received as / Billing responsibility / Facility setting / Template use",
           "meaning": "The request facts saved from the ordering source.",
-          "values": "Read-only values corresponding to New order, with Not recorded where absent.",
+          "values": "Read-only values corresponding to New order, with Not recorded where absent. Received as also shows HL7 interface (EMR) for an order an Interfaces HL7 Orders connection received; its document is the stored original message, and its clinic order number the message's placer number.",
           "rules": "Template use explicitly shows whether it was confirmed for this patient. Received is the saved request time, not specimen collection time."
         },
         {
@@ -234,7 +268,7 @@
           "name": "Authority reference",
           "meaning": "Source of new authority for an add-on or supporting reflex context.",
           "values": "Text, up to 1000 characters.",
-          "rules": "The request form permits blank, but an add-on cannot be accepted without new authority reference."
+          "rules": "Required when the kind is Add-on, with new authority; the request is not recorded without it. Optional for a reflex. The reference cannot be added to a recorded request later."
         },
         {
           "name": "Reason — Record request",
@@ -347,7 +381,7 @@
         {
           "name": "Valid from / Valid until",
           "meaning": "The dates over which the source states this evidence applies.",
-          "values": "Real dates in YYYY-MM-DD format.",
+          "values": "Real dates in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field.",
           "rules": "Each optional; an end date cannot precede the start date."
         },
         {
@@ -359,7 +393,7 @@
         {
           "name": "Related provider NPI",
           "meaning": "The provider identified by this evidence.",
-          "values": "A valid ten-digit NPI with a valid check digit.",
+          "values": "A valid ten-digit NPI with a valid check digit. The field hint reads “10 digits. The last digit is checked automatically.” Fewer or more than ten digits shows “The NPI must be exactly 10 digits.”; a failed check digit shows “This NPI is not valid. Please check the number for a typo.”",
           "rules": "Required for Provider enrollment; optional for other evidence. For order enrollment evidence it must identify the ordering practitioner."
         },
         {
@@ -542,7 +576,7 @@
           "name": "Accept request / Decline request",
           "does": "Decides an individual requested follow-on with a reason.",
           "availableWhen": "A Requested add-on or reflex item, current revision and order-entry authority.",
-          "result": "Acceptance makes the authorized test available for suitable material; decline preserves the request without performing it."
+          "result": "Acceptance makes the authorized test available for suitable material; decline preserves the request without performing it. An add-on recorded without an authority reference cannot be accepted: the dialog says so, and the way forward is to decline it and record a new request with the reference. When a gate refuses the decision, the message names it, for example an open clarification hold or a parent test outside the reflex scope."
         },
         {
           "name": "Reject order",
@@ -660,7 +694,7 @@
         },
         {
           "problem": "Add-on acceptance is blocked.",
-          "recovery": "Check the recorded authority reference and catalog availability. A saved request without new authority is still only a request."
+          "recovery": "Read the message: it names the gate. An add-on without an authority reference cannot get one later; decline it and record a new request with the document or call that authorizes it. For an inactive test version, record the request again with a current version."
         },
         {
           "problem": "A cancellation or evidence amendment is stale",

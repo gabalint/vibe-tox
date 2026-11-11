@@ -31,9 +31,12 @@
 //! | --- | --- | --- |
 //! | `tox-report` v1 | Top of `templates/tox-report/v1.typ` | None; kept pinned, unused from M3 |
 //! | `tox-report` v2 | Top of `templates/tox-report/v2.typ` | [`tox_v2::ToxReportData`] |
+//! | `tox-report` v3 | Top of `templates/tox-report/v3.typ` | [`tox_v2::ToxReportData`] |
+//! | `tox-report-standard` v1, `tox-report-compact` v1, `tox-report-results-first` v1 | Top of `templates/tox-layouts/contract-v1.typ` | [`tox_v2::ToxReportData`] |
 //! | `report-notice` v1 | Top of `templates/report-notice/v1.typ` | [`notice_v1::ReportNoticeData`] |
 //! | `catalog-preview` v1 | Top of `templates/catalog-preview/v1.typ` | [`catalog_preview_v1::CatalogPreviewDocument`] |
 //! | `catalog-preview` v2 | Same data contract; current-value comparison labels | [`catalog_preview_v1::CatalogPreviewDocument`] |
+//! | `audit-export` v1 | Top of `templates/audit-export/v1.typ` | [`audit_export_v1::AuditExportDocument`] |
 //!
 //! `tox-report` v2 shows: the report number and revision on every page; its
 //! completeness (partial or final) and its relationship (initial, supplement
@@ -50,6 +53,13 @@
 //! REQ-RPT-008). The template enforces the relationship, completeness and
 //! limits rules and refuses unknown codes.
 //!
+//! The three report layouts (REQ-RPT-007) print the same content as
+//! `tox-report` v3 in other arrangements; each is the shared contract file
+//! joined with its layout file at build time, pinned as one source. They
+//! colour the engine's comparison wording by its code
+//! ([`tox_v2::ToxComparisonCode`]). [`preview`] renders any of them on a fixed
+//! synthetic report under the preview marking.
+//!
 //! `report-notice` v1 is the withdrawal notice: the laboratory, the report
 //! number, latest revision and accession, and a fixed statement that the
 //! report must not be used. It refuses any key outside its contract, so it
@@ -61,15 +71,22 @@
 //! and drafts awaiting review. Every value shows its source label, and blank
 //! cutoffs and starter values are marked in words (proposed REQ-OPS-015).
 //!
+//! `audit-export` v1 prints the audit events an export's filters matched,
+//! with the filters, the export time and who exported, and each event's old
+//! and new values; a page header marks it confidential when it holds patient
+//! information (REQ-OPS-001).
+//!
 //! Each typed module offers `to_json`, whose output the engine stores, and
 //! `render_json`, which renders stored JSON with the module's template.
 
+pub mod audit_export_v1;
 pub mod catalog_preview_v1;
 mod data;
 mod error;
 mod laboratory;
 mod marking;
 pub mod notice_v1;
+pub mod preview;
 mod renderer;
 mod template;
 pub mod tox_v2;

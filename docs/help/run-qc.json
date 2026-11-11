@@ -2,14 +2,14 @@
   "id": "run-qc",
   "title": "Run QC review",
   "summary": "Review observations and record scoped quality decisions for a run.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-11-02",
   "routes": ["/bench/runs/:runId/qc/:tab?", "/quality/deviations/:deviationId"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
         "Use Assessments for the current QC decisions, Observations for the evidence received, Changed QC rows for conflicting imports and Deviations for recorded issues. Tabs with open work show its count.",
-        "Open the relevant observation or assessment to inspect its details before using the available decision action. The workspace covers the run, individual analytes and preparation batches where applicable. Open run returns to positions when your account can perform analysis."
+        "Open the relevant observation or assessment to inspect its details before using the available decision action. Assessments starts with a summary line, such as “3 of 3 analytes accepted · Whole run not assessed (optional)”, then the optional Whole run section, then a grid of the analytes and preparation batches. Each analyte needs its own accepted QC before its results can go further. The breadcrumb above the title, Runs › the run › QC review, returns to the run or to Runs."
       ]
     },
     {
@@ -33,6 +33,7 @@
     "ui/src/features/analytics/qc/AssessmentsTab.tsx",
     "ui/src/features/analytics/qc/ScopePanel.tsx",
     "ui/src/features/analytics/qc/AssessQcDialog.tsx",
+    "ui/src/features/analytics/qc/AcceptQcDialog.tsx",
     "ui/src/features/analytics/qc/ObservationGrid.tsx",
     "ui/src/features/analytics/qc/ConflictsTab.tsx",
     "ui/src/features/analytics/qc/ConflictPanel.tsx",
@@ -46,14 +47,15 @@
     "crates/lis-analytical/src/commands/qc.rs",
     "crates/lis-analytical/src/commands/deviations.rs",
     "crates/lis-analytical/src/commands/mod.rs",
-    "ui/src/features/analytics/qc/DeviationPage.tsx"
+    "ui/src/features/analytics/qc/DeviationPage.tsx",
+    "ui/src/components/DataGrid/gridSelection.ts"
   ],
   "pages": [
     {
       "title": "Run QC review",
       "routes": ["/bench/runs/:runId/qc/:tab?"],
-      "purpose": "Assess the exact QC evidence for each analyte, the whole run and associated preparation batches; investigate changed rows and deviations.",
-      "access": "Requires quality-management authority. Open run additionally requires analysis authority.",
+      "purpose": "Assess the exact QC evidence for each analyte (several at once when they can be accepted), the optional whole run and associated preparation batches; investigate changed rows and deviations.",
+      "access": "Requires quality-management authority. Adding positions or closing the run on the run page needs analysis authority.",
       "fields": [
         {
           "name": "Tabs",
@@ -62,9 +64,21 @@
           "rules": "Defaults to Assessments. Changed-row and deviation tab counts are the open items, not the full history."
         },
         {
+          "name": "Summary",
+          "meaning": "Shows at a glance how many analytes have current accepted QC and the whole run's assessment.",
+          "values": "“N of M analytes accepted · Whole run …”; the whole run reads not assessed (optional), accepted or rejected.",
+          "rules": "Read-only. An analyte counts only while its acceptance cites exactly its current observations."
+        },
+        {
+          "name": "Whole run",
+          "meaning": "An optional decision about the run as a whole, shown apart from the analytes with its note: “Optional. Reject to block every analyte on this run. Accepting it doesn’t accept the analytes.”",
+          "values": "Not assessed (optional), Accepted or Rejected. History opens its assessments in the side panel; Assess QC records a decision.",
+          "rules": "Not required. Rejecting it blocks results of every analyte on the run; accepting it does not accept any analyte, which still needs its own assessment."
+        },
+        {
           "name": "Assessed for",
           "meaning": "Identifies the exact scope of a decision.",
-          "values": "An analyte code on this run, Whole run, or an associated Preparation batch.",
+          "values": "An analyte code on this run or an associated Preparation batch. The whole run has its own section above the grid.",
           "rules": "Read-only; supplied by the current record."
         },
         {
@@ -76,7 +90,7 @@
         {
           "name": "Assessment",
           "meaning": "Shows the latest decision on the scope.",
-          "values": "Not assessed, Accepted or Rejected.",
+          "values": "Not assessed, Accepted or Rejected (the whole run reads Not assessed (optional)).",
           "rules": "Read-only. Accepted is a QC decision, not a technical review or release."
         },
         {
@@ -84,6 +98,12 @@
           "meaning": "Shows when the current decision was recorded and how many earlier assessments exist.",
           "values": "Date/time and nonnegative history count.",
           "rules": "Read-only; supplied by the current record."
+        },
+        {
+          "name": "Accept with others",
+          "meaning": "Says whether the row can be selected for Accept QC together with other analytes, or why not.",
+          "values": "Available; Already accepted.; Rejected; this is final.; No QC observations.; A changed QC row awaits a decision.; An open deviation applies. (any open deviation on the run's QC that is limited to this analyte or to no analyte); Assessed on its own. (preparation batches).",
+          "rules": "Read-only. Rows that are not Available show no check box and are skipped by Select all; they can still be opened and assessed one at a time."
         },
         {
           "name": "Assessment history",
@@ -102,6 +122,12 @@
           "meaning": "Explains an assessment or its replacement.",
           "values": "Free text.",
           "rules": "Optional for the first assessment; required for replacement; at most 1,000 characters after trimming."
+        },
+        {
+          "name": "Accept QC (several analytes): Reason",
+          "meaning": "One reason recorded with each analyte's acceptance.",
+          "values": "Free text. The dialog lists each selected analyte with the number of current observations it cites.",
+          "rules": "Optional when none of the selected analytes has an assessment yet; required when one replaces an earlier acceptance whose evidence changed; at most 1,000 characters after trimming."
         },
         {
           "name": "Observations: Analyte / Test code",
@@ -203,9 +229,15 @@
       "actions": [
         {
           "name": "Assess QC / Record assessment",
-          "does": "Records a decision on the opened scope and exact evidence shown.",
+          "does": "Records a decision on the opened scope (an analyte, the whole run or a preparation batch) and exact evidence shown.",
           "availableWhen": "Quality-management authority; current evidence and prior assessment still match.",
           "result": "Adds an attributed assessment. A replacement preserves history."
+        },
+        {
+          "name": "Select rows / Select all rows / Accept QC / Clear",
+          "does": "Selects analytes whose Accept with others reads Available and accepts their QC at once. Each analyte gets its own assessment, citing its current observations, with the same reason, and its own audit event.",
+          "availableWhen": "Quality-management authority; at least one Available analyte selected. Rejection is not offered here: reject one scope at a time with Assess QC.",
+          "result": "Analytes are recorded one after another. If the engine refuses one (for example its evidence changed), the dialog names it and shows its reason; those already recorded stay recorded, and Accept the rest continues with the others. On success the selection clears."
         },
         {
           "name": "Accept as correction",
@@ -238,10 +270,10 @@
           "result": "Opens a panel with Previous, Next and Close."
         },
         {
-          "name": "Open run",
-          "does": "Returns to this run’s material and positions.",
-          "availableWhen": "Analysis authority.",
-          "result": "Opens the run without changing QC."
+          "name": "Runs / run breadcrumb",
+          "does": "The run’s title returns to its material and positions; Runs returns to the run list.",
+          "availableWhen": "Always, above the page title.",
+          "result": "Opens the run or the list without changing QC."
         },
         {
           "name": "Cancel",
@@ -253,14 +285,19 @@
       "restrictions": [
         "A Rejected QC assessment cannot be relabeled Accepted. There is no waiver action; investigate and follow the laboratory’s appropriate new-work procedure.",
         "A changed observation can invalidate a previous QC decision and downstream technical reviews. Decide the conflict and reassess the relevant current evidence.",
-        "The application records decisions, not laboratory QC ranges or rules. Apply the laboratory’s approved procedure."
+        "The application records decisions, not laboratory QC ranges or rules. Apply the laboratory’s approved procedure.",
+        "Accepting the whole run never accepts an analyte, and bulk acceptance never rejects. An analyte with an open changed QC row or deviation, or without observations, is accepted only one at a time after the issue is addressed."
       ],
       "workflow": [
         "Inspect Observations, checking analyte, position, lot, value and units.",
         "Resolve Changed QC rows and relevant Deviations using their exact scope.",
-        "In Assessments, open the intended scope, inspect history and record the decision supported by the evidence."
+        "In Assessments, select the analytes that are Available and choose Accept QC, or open one scope, inspect its history and record the decision supported by the evidence. Assess the whole run only when the laboratory's procedure calls for a run-level decision."
       ],
       "troubleshooting": [
+        {
+          "problem": "Results are still blocked after accepting the whole run.",
+          "recovery": "The whole run is a separate, optional decision. Accept QC for each analyte, one by one or by selecting several and choosing Accept QC."
+        },
         {
           "problem": "Acceptance is refused because evidence changed.",
           "recovery": "Reload the workspace, review all newly arrived or replaced observations, and start the decision again."

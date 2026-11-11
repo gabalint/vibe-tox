@@ -10,6 +10,7 @@ use serde::Serialize;
 use ts_rs::TS;
 
 use crate::Engine;
+use crate::pipeline::{Call, Failure};
 use crate::registry::LIST_LISTENER_STATUS;
 
 /// One analyzer listener as the UI shows it.
@@ -36,6 +37,14 @@ pub struct ListenerStatusView {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub files_too_large: Option<u32>,
+    /// The latest error since the app started, kept after the listener recovers.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub last_error: Option<ListenerDetailCode>,
+    /// When that error began.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub last_error_at: Option<UtcTimestamp>,
 }
 
 impl Engine {
@@ -44,29 +53,39 @@ impl Engine {
     /// listener shows as disabled.
     pub async fn list_listener_status(&self) -> Result<Vec<ListenerStatusView>, CommandError> {
         self.run(&LIST_LISTENER_STATUS, |call| async move {
-            let names = self.read(&call, lis_interfaces::instrument_names).await?;
-            let mut statuses: BTreeMap<_, _> = self
-                .listeners
-                .status_snapshot()
-                .into_iter()
-                .map(|status| (status.instrument_id, status))
-                .collect();
-            Ok(names
-                .into_iter()
-                .map(|(instrument_id, instrument_name)| {
-                    let status = statuses.remove(&instrument_id);
-                    ListenerStatusView {
-                        instrument_id,
-                        instrument_name,
-                        state: status.as_ref().map_or(ListenerState::Disabled, |s| s.state),
-                        last_activity_at: status.as_ref().and_then(|s| s.last_activity_at),
-                        detail: status.as_ref().and_then(|s| s.detail_code),
-                        files_waiting: status.as_ref().and_then(|s| s.files_waiting),
-                        files_too_large: status.and_then(|s| s.files_too_large),
-                    }
-                })
-                .collect())
+            self.listener_views(&call).await
         })
         .await
+    }
+
+    /// Every configured instrument with its listener state, ordered by name.
+    pub(crate) async fn listener_views(
+        &self,
+        call: &Call,
+    ) -> Result<Vec<ListenerStatusView>, Failure> {
+        let names = self.read(call, lis_interfaces::instrument_names).await?;
+        let mut statuses: BTreeMap<_, _> = self
+            .listeners
+            .status_snapshot()
+            .into_iter()
+            .map(|status| (status.instrument_id, status))
+            .collect();
+        Ok(names
+            .into_iter()
+            .map(|(instrument_id, instrument_name)| {
+                let status = statuses.remove(&instrument_id);
+                ListenerStatusView {
+                    instrument_id,
+                    instrument_name,
+                    state: status.as_ref().map_or(ListenerState::Disabled, |s| s.state),
+                    last_activity_at: status.as_ref().and_then(|s| s.last_activity_at),
+                    detail: status.as_ref().and_then(|s| s.detail_code),
+                    files_waiting: status.as_ref().and_then(|s| s.files_waiting),
+                    files_too_large: status.as_ref().and_then(|s| s.files_too_large),
+                    last_error: status.as_ref().and_then(|s| s.last_error),
+                    last_error_at: status.and_then(|s| s.last_error_at),
+                }
+            })
+            .collect())
     }
 }

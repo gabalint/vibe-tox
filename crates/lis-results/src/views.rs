@@ -61,6 +61,13 @@ pub struct ImportAttemptSummary {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub origin: Option<FileOrigin>,
+    /// When the message or file began to arrive; a retry keeps its receipt's time.
+    pub received_at: UtcTimestamp,
+    /// For a `duplicate` attempt, the latest attempt of the identical earlier
+    /// receipt, which holds its rows. Absent until that receipt is imported.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub duplicate_of_attempt_id: Option<ImportAttemptId>,
 }
 
 /// One quarantined source row. Its clinical text is returned only by the audited detail query.
@@ -78,6 +85,22 @@ pub struct QuarantineItemView {
     pub state: QuarantineState,
     #[ts(type = "number")]
     pub revision: i64,
+    /// The run of the position the row matched; absent when it matched none.
+    pub run_id: Option<RunId>,
+    /// The specimen of the container the row matched, whose results are in review.
+    pub specimen_id: Option<SpecimenId>,
+    /// For a label more than one sample matches: the open runs of the instrument
+    /// that hold the label now. Empty for every other reason.
+    pub matching_runs: Vec<MatchingRunView>,
+}
+
+/// An open run whose position has a quarantined row's label.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct MatchingRunView {
+    pub run_id: RunId,
+    pub created_at: UtcTimestamp,
 }
 
 /// An import attempt with its quarantined and set-aside clinical rows.

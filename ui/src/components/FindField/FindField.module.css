@@ -17,6 +17,11 @@
   max-width: 100%;
 }
 
+.field[data-wide] {
+  flex-basis: 28rem;
+  width: 28rem;
+}
+
 .label {
   font-weight: var(--font-weight-semibold);
 }
@@ -66,12 +71,14 @@
   outline-offset: 0;
 }
 
-/* WebKit's own clear button would duplicate ours. */
+/* WebKit's own clear button would duplicate ours; WebKitGTK still draws it with only
+   `appearance: none`, so it is also taken out of the layout. */
 .input::-webkit-search-cancel-button {
   appearance: none;
+  display: none;
 }
 
-/* A small icon button inside a text field: Find's clear button and RecordPicker's opener. */
+/* A small icon button inside a text field: Find's clear button. */
 .fieldButton {
   position: absolute;
   right: var(--space-1);

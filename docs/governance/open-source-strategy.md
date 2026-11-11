@@ -5,7 +5,7 @@ Status: **GPL-3.0-only; remaining governance decisions open.**
 the [development disclaimer](development-disclaimer.md) states the development
 and clinical-validation limits without adding license restrictions.
 
-The repository [gabalint/vibe-tox](https://github.com/gabalint/vibe-tox) is public,
+The repository [openbga/tox](https://github.com/openbga/tox) is public,
 and the presentation website is published from `website/`. Supported software
 releases, signing and security-response commitments remain open
 ([Q-19](../planning/open-questions.md#decision-and-discovery-queue)).

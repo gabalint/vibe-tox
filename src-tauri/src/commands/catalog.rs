@@ -3,16 +3,16 @@
 
 use lis_core::CommandError;
 use lis_engine::{
-    AnalyteId, AnalyteView, ApproveMethodVersion, ApproveOrderableVersion,
-    ApproveValidityPolicyVersion, CodedName, CreateAnalyte, CreateOrderable, DraftMethodVersion,
-    DraftOrderableVersion, DraftValidityPolicyVersion, Engine, GetMethodVersionInput,
-    GetOrderableVersionInput, GetValidityPolicyInput, ListMethodVersionsInput,
-    ListOrderableVersionsInput, ListValidityPolicyVersionsInput, MethodId, MethodVersion,
-    MethodVersionView, MethodView, OrderableId, OrderableVersion, OrderableVersionView,
-    OrderableView, RetireMethodVersion, RetireOrderableVersion, RetireValidityPolicyVersion,
-    SpecimenTypeId, SpecimenTypeView, UpdateMethodDraft, UpdateOrderableDraft,
-    UpdateValidityPolicyDraft, ValidityPolicyVersion, ValidityPolicyView, VersionRef,
-    VersionSummary,
+    AnalyteHistoryEntry, AnalyteId, AnalyteInput, AnalyteUsage, AnalyteView, ApproveMethodVersion,
+    ApproveOrderableVersion, ApproveValidityPolicyVersion, CodedName, CreateAnalyte,
+    CreateOrderable, DraftMethodVersion, DraftOrderableVersion, DraftValidityPolicyVersion, Engine,
+    GetMethodVersionInput, GetOrderableVersionInput, GetValidityPolicyInput,
+    ListMethodVersionsInput, ListOrderableVersionsInput, ListValidityPolicyVersionsInput, MethodId,
+    MethodVersion, MethodVersionView, MethodView, OrderableId, OrderableVersion,
+    OrderableVersionView, OrderableView, RetireMethodVersion, RetireOrderableVersion,
+    RetireValidityPolicyVersion, SpecimenTypeId, SpecimenTypeView, UpdateAnalyte,
+    UpdateMethodDraft, UpdateOrderableDraft, UpdateValidityPolicyDraft, ValidityPolicyVersion,
+    ValidityPolicyView, VersionRef, VersionSummary,
 };
 use tauri::State;
 
@@ -44,6 +44,30 @@ pub(crate) async fn create_analyte(
     input: CreateAnalyte,
 ) -> Result<AnalyteId, CommandError> {
     engine.create_analyte(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn update_analyte(
+    engine: State<'_, Engine>,
+    input: UpdateAnalyte,
+) -> Result<AnalyteView, CommandError> {
+    engine.update_analyte(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn analyte_history(
+    engine: State<'_, Engine>,
+    input: AnalyteInput,
+) -> Result<Vec<AnalyteHistoryEntry>, CommandError> {
+    engine.analyte_history(input).await
+}
+
+#[tauri::command]
+pub(crate) async fn analyte_usage(
+    engine: State<'_, Engine>,
+    input: AnalyteInput,
+) -> Result<AnalyteUsage, CommandError> {
+    engine.analyte_usage(input).await
 }
 
 #[tauri::command]

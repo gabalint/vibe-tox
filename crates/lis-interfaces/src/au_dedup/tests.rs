@@ -165,7 +165,8 @@ fn corrected_profile_resend_imports_and_same_profile_retries_still_deduplicate()
         receive(&database, &instrument, &bytes).duplicate_of,
         Some(corrected.id)
     );
-    assert_eq!(imports(&database), 2);
+    // Each duplicate is queued too, to be listed as an attempt that imports nothing.
+    assert_eq!(imports(&database), 4);
 }
 
 #[test]

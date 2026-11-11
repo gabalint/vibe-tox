@@ -147,5 +147,22 @@ async fn collection_change_after_release_retains_impact_after_quality_review_and
         after.iter().any(|key| key.ends_with(&expected_suffix)),
         "impact cannot disappear after rereview: {after:?}"
     );
+    {
+        let conn = bench.lab().t().conn();
+        let ready =
+            lis_reporting::release_queue(&conn, lis_reporting::ReleaseQueue::Ready, 100).unwrap();
+        assert!(
+            ready
+                .iter()
+                .all(|item| item.specimen_id != bench.sample().specimen_id),
+            "a change after release is routed through impact review, not release-ready"
+        );
+    }
+    assert!(
+        bench
+            .impact_queue()
+            .await
+            .contains(&released.revision_id.to_string())
+    );
     assert_eq!(bench.revision_row(released.revision_id), frozen);
 }

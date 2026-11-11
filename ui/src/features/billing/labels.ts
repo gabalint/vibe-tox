@@ -26,7 +26,7 @@ export const WORK_FILTERS: readonly Choice<WorkFilter>[] = [
 const DERIVATION_STATES: Record<string, Status> = {
   held: { label: "Held", tone: "hold" },
   candidate: { label: "Ready for approval", tone: "warning" },
-  approved: { label: "Approved", tone: "neutral" },
+  approved: { label: "Approved", tone: "success" },
   handed_off: { label: "Handed off", tone: "neutral" },
   superseded: { label: "Superseded", tone: "neutral" },
 };

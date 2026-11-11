@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 use std::io::{Read, Write};
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener, TcpStream};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
 use std::str::FromStr;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
@@ -11,7 +11,7 @@ use lis_au::{
     WireEvent, encode_frame,
 };
 use lis_core::{Capability, CorrelationId, FixedClock, Principal};
-use lis_store::testing::{principal, test_start};
+use lis_store::testing::{local_port, principal, test_start};
 use lis_store::{ArtifactDigest, Database};
 use tempfile::TempDir;
 
@@ -514,11 +514,7 @@ fn complete_receipt_recovers_using_frozen_profile_after_instrument_changes() {
 #[test]
 fn tcp_supervisor_accepts_fragmented_native_au_frame_without_astm_enq() {
     let fixture = Fixture::open(TransmissionClass::B);
-    let port = TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
-        .expect("port reserves")
-        .local_addr()
-        .expect("local address")
-        .port();
+    let port = local_port();
     let instrument_id = fixture.instrument.id;
     let settings = fixture.settings.clone();
     fixture
@@ -585,7 +581,8 @@ fn final_frame_ambiguity_keeps_single_block_receipt_evidence_and_holds_multibloc
             .expect("repeated final");
         assert_eq!(due_ack(&mut session, now, &context), vec![6]);
         let receipts = fixture.receipts();
-        assert_eq!(fixture.imports(), 1);
+        // A repeated single block is a duplicate receipt, queued to be listed only.
+        assert_eq!(fixture.imports(), if multiblock { 1 } else { 2 });
         if multiblock {
             assert_eq!(receipts.len(), 1);
             assert_eq!(receipts[0].frame_count, 2);

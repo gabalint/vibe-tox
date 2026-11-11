@@ -8,7 +8,8 @@
     {
       "title": "How to use this page",
       "paragraphs": [
-        "Audit trail lists events newest first. Use the available filters to narrow the stream, action or record, and open an event for its details. Self-approvals only isolates those events. Verify chain checks the selected stream for changed or missing events.",
+        "Audit trail lists events of every stream together, newest first, and each row names its stream. Security holds sign-ins, users, roles and security settings, backups, restores, updates, exports and instrument and partner connections. Clinical holds patients, orders, specimens, results, QC, reports, billing and laboratory setup such as the catalog and the laboratory profile. Access holds who opened patient records, orders, specimens, runs, results, reports or billing, and who viewed this trail or checked its chain or anchors.",
+        "Use the filters to narrow the stream, action, record, who acted, the outcome and the days recorded; they combine, the LIS applies them before it sends a page, and Clear filters removes them all at once. Open an event for its details. Self-approvals only isolates those events. Verify chain checks one chosen stream for changed or missing events.",
         "Audit anchors shows seals copied to backup targets. Use its verification view to compare anchor evidence and its file view to inspect export history. Exporting anchors now requires backup authority in addition to viewing access."
       ]
     },
@@ -30,32 +31,50 @@
     {
       "title": "Audit trail",
       "routes": ["/audit"],
-      "purpose": "Find attributable activity and verify the consistency of a selected audit stream.",
+      "purpose": "Find attributable activity across every audit stream or in one, and verify the consistency of a chosen stream.",
       "access": "View audit authority is required. Viewing the trail is itself recorded as an access event.",
       "fields": [
         {
           "name": "Stream",
-          "meaning": "Category of activity under review.",
-          "values": "Security (default); Clinical; Access.",
-          "rules": "Required selection. Changing stream clears Action and Record type because their choices belong to the stream."
+          "meaning": "Category of activity under review; the page description under the title says what the chosen stream holds.",
+          "values": "All streams (default): every event, newest first by the time it was recorded. Security: sign-ins, users, roles and security settings; backups, restores, updates and exports; instrument and partner connections. Clinical: patients, orders, specimens, results, QC, reports and billing, and laboratory setup such as the catalog and the laboratory profile. Access: who opened patient records, orders, specimens, runs, results, reports or billing, and who viewed this audit trail or checked its chain or anchors.",
+          "rules": "Changing stream clears Action, Record type and the record found with Find, because they belong to the stream; Self-approvals only, By, Outcome and the days stay. With All streams, Action and Record type offer the choices of every stream."
         },
         {
-          "name": "Find by record ID",
-          "meaning": "Find events concerning one internal record identifier.",
-          "values": "Exact record ID supplied by the relevant record/evidence, or blank for all.",
-          "rules": "Optional; this is not a patient-name search. Use up to 128 lowercase letters, digits, periods, colons, hyphens or underscores. Applies after a typing pause or Enter."
+          "name": "Find",
+          "meaning": "Find one record by a value shown elsewhere in the LIS, pick it, and list only the events about it. The field's placeholder (and its name for screen readers) says what it searches for the chosen Record type.",
+          "values": "With Any record type: every value below together, and record IDs. By record type: Instrument: code or name (for example AU-SER); App version and Update approval: version (for example 0.1.2-nightly.20261031.22); User and Session: username or name, with each of that user's sessions listed separately, newest first; Backup target: target name; Backup run: the day it was requested, as YYYY-MM-DD in the laboratory's time zone; Billing handoff: handoff number, or the accession number of work it holds; Report, Report revision and Report export: report number (for example A26000005-UR); Order: accession number or placer order number; Accession and Specimen: accession number; Container: container label (for example C00000005) or accession number; Practitioner: family name, given names, \"Family, Given\" or NPI; Client: name or code; Specimen type, Analyte, Method and Orderable: code or name; Patient: name or identifier, only for people who may read patients (Enter orders or Manage quality). Every type is also found by its whole record ID; other record types are found by record ID only. Each choice shows the record's label, its record type, the streams that hold its events and when its latest event was recorded.",
+          "rules": "Optional. Matches the start of a value, ignoring case; type at least two characters, or one digit for a handoff number. Searches after a pause in typing and lists only records that have events in the chosen stream (any stream with All streams), at most 20 of each type and 50 in total; when more match, a line under the field says so: type more of the value. Nothing applies until a record is picked; picking one also chooses its Record type. The X in the field, or Clear filters, removes the picked record: the trail shows every record again and keeps the Record type. Each option shows the record's label, and under it its type, streams and latest event. Without patient access, patients are not searched by name and their names are not shown; a patient's record ID still finds their events. The search is recorded as an access event with the record type and stream searched and the number of records found, never the text typed."
         },
         {
           "name": "Action",
           "meaning": "Narrow events to one recorded operation.",
-          "values": "Any action or actions actually recorded in the chosen stream.",
+          "values": "Any action or actions actually recorded in the chosen stream, or in any stream with All streams.",
           "rules": "Optional; choices come from the recorded event vocabulary."
+        },
+        {
+          "name": "By",
+          "meaning": "Narrow events by who acted.",
+          "values": "Anyone (default); People only: events by signed-in users; System only: events by the LIS itself, instruments and interface partners; or one user, by name, from every account.",
+          "rules": "Optional. A sign-in is recorded by the system, so People only leaves sign-ins out; choose System only or Anyone to see them. Kept when the stream changes."
+        },
+        {
+          "name": "Outcome",
+          "meaning": "Narrow events by how the recorded action ended.",
+          "values": "Any outcome (default); Succeeded; Failed: attempted and did not complete; Denied: refused by an authorization check, such as a missing permission.",
+          "rules": "Optional. Kept when the stream changes."
         },
         {
           "name": "Record type (More filters)",
           "meaning": "Narrow events by the kind of affected record.",
-          "values": "Any record type or the chosen stream’s recorded types.",
-          "rules": "Optional."
+          "values": "Any record type or the recorded types of the chosen stream. With All streams, every stream's types, each followed by the streams that hold its events, such as \"Order — Clinical, Access\" or \"Instrument — Security\".",
+          "rules": "Optional. Also sets what Find searches. Choosing another type clears a record found as a different type."
+        },
+        {
+          "name": "Recorded from / Recorded to (More filters)",
+          "meaning": "Narrow events to the days they were recorded, in the laboratory's time zone (UTC before a laboratory profile exists).",
+          "values": "A day as YYYY-MM-DD, typed or picked from the calendar; blank for no limit. Recorded to includes the whole of its day.",
+          "rules": "Optional; either end may be used alone. A day that is not a real date, a Recorded to before Recorded from, or a Recorded from after Recorded to shows a message under the field and is not applied. The calendar offers no day after today. While More filters is closed, the days applied are shown under the filter row."
         },
         {
           "name": "Self-approvals only",
@@ -64,9 +83,9 @@
           "rules": "Optional; use for review of permitted exceptions, not as evidence that every approval required two people."
         },
         {
-          "name": "Seq. / Outcome",
-          "meaning": "Stream sequence and result of the recorded action.",
-          "values": "Increasing sequence number within its stream; Succeeded, Denied or Failed.",
+          "name": "Seq. / Stream / Outcome",
+          "meaning": "Sequence number within the event's stream, the stream it belongs to, and the result of the recorded action.",
+          "values": "Increasing sequence number within its stream, so two streams can each have an event 5; Security, Clinical or Access; Succeeded (green badge with a check mark), Denied (amber warning badge) or Failed (red badge).",
           "rules": "Read-only; denied/failed events are evidence, not completed business changes."
         },
         {
@@ -84,14 +103,20 @@
         {
           "name": "Action / Record / Record ID",
           "meaning": "Operation and affected record identity.",
-          "values": "Display labels plus recorded action code and record identifier where available.",
-          "rules": "Read-only; a dash means no value was recorded."
+          "values": "Display labels plus recorded action code and record identifier where available. The record's label is its current readable value, such as an accession number, report number, instrument code and name, username, backup target or version; the workstation shows as This computer.",
+          "rules": "Read-only; a dash means no value was recorded. A patient's name is shown only to people who may read patients (Enter orders or Manage quality); others see the record type and ID."
         },
         {
           "name": "Reason / Authority / Correlation ID",
           "meaning": "Explanation, authorization context and identifier linking related diagnostics.",
           "values": "Stored text or dash; correlation identifier.",
           "rules": "Read-only; opening the panel shows full unclipped evidence."
+        },
+        {
+          "name": "Changes (event panel)",
+          "meaning": "What the event changed: for each changed field, its value before and after, read from the record's own history when the event is opened. Audit events themselves never store values.",
+          "values": "A table with the columns Field, Old and New: first Revision, the record's revision before and after, then one row per changed field, with — for an empty or not yet recorded value. Patient and Identifiers: the patient's current name and identifiers, for changes to a patient record (the export also gives the birth date). Recorded details: other facts stored with the event (codes, counts, IDs), labeled, leaving out a field the table already shows. Or one of these sentences: \"No data changed.\" (an event with no record revision, such as a sign-in, a list or a check); \"This revision changed no field value…\" (the history was read and both revisions hold the same values, for example a laboratory profile saved with only a reason); \"The values of this kind of record are not kept in a history…\" (a revision was recorded but the record type keeps no readable history); \"These are patient values, which your roles cannot read…\" (field names are listed, and each row shows Hidden across Old and New).",
+          "rules": "Read-only. Old and new values are shown for patients (demographic corrections, identifiers added or deactivated, billing profile versions with address, phone, coverage and guarantor), the laboratory profile, clients, locations, practitioners and analytes, and for an instrument's Enabled and Transport. Patient values need View audit plus Enter orders or Manage quality (demographics and identifiers) or Enter orders or Billing (billing profile); without them only the changed field names are shown. Every opening is recorded as an access event; when patient values are shown it names the patient. Other record types show their revision only; result and report revisions, other configuration versions and instrument connection settings are not yet compared here."
         },
         {
           "name": "Chain intact / The chain is not intact",
@@ -103,27 +128,33 @@
       "actions": [
         {
           "name": "Open event / Previous / Next / Close",
-          "does": "Inspect the full details of already-loaded events.",
+          "does": "Inspect the full details of already-loaded events, and what each changed.",
           "availableWhen": "A row is displayed.",
-          "result": "Read-only panel; events cannot be edited or deleted here."
+          "result": "Read-only panel; events cannot be edited or deleted here. Opening an event reads its Changes from the record's history and records that read as an access event."
         },
         {
           "name": "Verify chain",
-          "does": "Recompute the selected stream’s local integrity evidence.",
-          "availableWhen": "View audit authority.",
+          "does": "Recompute the chosen stream’s local integrity evidence.",
+          "availableWhen": "View audit authority and one stream chosen; with All streams the button is unavailable, because each stream has its own chain.",
           "result": "Shows checked count and findings; it does not repair or rewrite events."
+        },
+        {
+          "name": "Export › CSV, for analysis / PDF, for printing",
+          "does": "Saves every event that matches the current Stream and filters, not only the rows loaded on screen, to a new file in your Downloads folder: a CSV file for analysis or a PDF for printing or sending to an auditor. Each event lists stream, sequence number, occurred and recorded times (laboratory time zone; the CSV also in UTC), who acted, action, outcome, record, the patient for patient records, reason, authority, revision, its Changes as old → new values, the other recorded details and the correlation ID. The PDF also shows the laboratory, the filters used, the export time, who exported and the number of events, and says on every page when it contains patient information.",
+          "availableWhen": "Shown to users holding both View audit and Export (in the standard roles: Auditor together with Administrator). Patient values and identification are included only for patients the exporter's roles may read, as in the event panel; otherwise the changed field names are listed as hidden.",
+          "result": "A success notice names the file and the number of events. The file covers events recorded up to the moment of export; a CSV holds up to 50,000 events and a PDF up to 2,000. If more match, nothing is written and the page says to narrow the filters. The export is recorded in the Security stream (action Export events) with the format, number of events and patients, and every filter, so the same filters reproduce it; the file is never overwritten, a second export the same day gets a numbered name."
         },
         {
           "name": "Load older events",
           "does": "Fetch the next older page matching the selected filters.",
           "availableWhen": "Another page may exist.",
-          "result": "Appends up to 100 events. A failed older-page load preserves rows already read."
+          "result": "Appends up to 100 events that come after the last row shown; events recorded since the first page do not shift it. A failed older-page load preserves rows already read."
         },
         {
           "name": "Clear filters / Show all events",
-          "does": "Remove all constraints except Stream.",
+          "does": "Remove every filter at once (the record found, action, By, Outcome, self-approvals, record type and days) except Stream.",
           "availableWhen": "A filter is applied or no matching events are found.",
-          "result": "Reloads events for the selected stream."
+          "result": "Reloads events for the selected stream, or for every stream."
         },
         {
           "name": "Audit anchors",
@@ -135,10 +166,11 @@
       "restrictions": [
         "A local chain check cannot detect every rewritten chain or events removed from its end; compare separately held anchors.",
         "Audit consistency does not establish that each recorded action was appropriate.",
-        "Do not remove or rewrite evidence to obtain a passing check."
+        "Do not remove or rewrite evidence to obtain a passing check.",
+        "An exported file leaves the application's protections: keep, send and dispose of it under the laboratory's procedure for records, especially when it contains patient information."
       ],
       "workflow": [
-        "Choose the stream and narrow the review by record ID, action and record type.",
+        "Start from All streams, or choose a stream, and narrow the review by a record found with Find, action, who acted, outcome, record type and the days recorded.",
         "Open relevant events and retain their sequence, actor, time and correlation identifiers.",
         "Verify chain, then use Audit anchors when independent retained evidence is needed.",
         "Investigate findings through the laboratory’s documented review process."
@@ -146,7 +178,11 @@
       "troubleshooting": [
         {
           "problem": "No event matches",
-          "recovery": "Clear filters and verify the stream and internal record identifier; load older events where available."
+          "recovery": "Clear filters, choose All streams in case the event is in another stream, and verify the internal record identifier; load older events where available."
+        },
+        {
+          "problem": "Find lists no record",
+          "recovery": "Type the start of the value as the LIS shows it (at least two characters), set Record type to Any record type, and choose All streams: Find lists only records with events in the chosen stream. Records of types without a readable value are found by their whole record ID. Patients are found by name only by people who may read patients."
         },
         {
           "problem": "Older events could not be loaded",
@@ -155,6 +191,26 @@
         {
           "problem": "The chain is not intact",
           "recovery": "Preserve the result and event/sequence details and escalate through the laboratory’s incident process; do not alter evidence."
+        },
+        {
+          "problem": "Changes says the values are hidden",
+          "recovery": "The event changed a patient record and your roles cannot read patients. Ask the laboratory's user administrator for a role with Enter orders or Manage quality (or Billing, for billing profile changes) if your review needs the values; the field names stay visible."
+        },
+        {
+          "problem": "The changes could not be loaded",
+          "recovery": "Use Retry in the Changes section. The rest of the event stays visible; an event that no longer exists in the chosen stream shows \"This audit event does not exist.\""
+        },
+        {
+          "problem": "Not exported: more events match than one file holds",
+          "recovery": "Narrow the filters, for example choose one stream, fewer days (Recorded from / Recorded to), one user or one action, and export again; or use CSV, which holds more events than PDF."
+        },
+        {
+          "problem": "Not exported: the Downloads folder is not available",
+          "recovery": "The computer's account has no Downloads folder the app can use. Ask the person who manages the computer to restore it, then export again."
+        },
+        {
+          "problem": "There is no Export button",
+          "recovery": "Export needs the Export permission besides View audit. Ask the laboratory's user administrator for a role that holds it, if laboratory policy allows you to take audit records out of the application."
         }
       ]
     },
@@ -281,6 +337,8 @@
   "reviewSources": [
     "ui/src/features/audit/AuditTrailPage.tsx",
     "ui/src/features/audit/AuditFilters.tsx",
+    "ui/src/features/audit/AuditFind.tsx",
+    "ui/src/features/audit/findHints.ts",
     "ui/src/features/audit/AuditEvents.tsx",
     "ui/src/features/audit/AuditEventDetails.tsx",
     "ui/src/features/audit/ChainCheck.tsx",
@@ -291,6 +349,20 @@
     "ui/src/features/audit/anchors/VerifyAnchorsSection.tsx",
     "ui/src/features/audit/anchors/AnchorExportsSection.tsx",
     "ui/src/features/audit/anchors/anchorText.ts",
-    "crates/lis-engine/src/commands/audit.rs"
+    "crates/lis-engine/src/commands/audit.rs",
+    "crates/lis-engine/src/commands/audit/input.rs",
+    "crates/lis-audit/src/list.rs",
+    "ui/src/features/audit/AuditChanges.tsx",
+    "crates/lis-engine/src/commands/audit/changes.rs",
+    "crates/lis-identity/src/audit_changes.rs",
+    "crates/lis-audit/src/changes.rs",
+    "ui/src/features/audit/AuditExport.tsx",
+    "crates/lis-engine/src/commands/audit/export.rs",
+    "crates/lis-engine/src/commands/audit/export_rows.rs",
+    "crates/lis-report/templates/audit-export/v1.typ",
+    "crates/lis-engine/src/commands/audit/find.rs",
+    "crates/lis-engine/src/commands/audit/labels.rs",
+    "crates/lis-engine/src/commands/audit/read.rs",
+    "crates/lis-audit/src/search.rs"
   ]
 }

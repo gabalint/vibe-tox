@@ -1,27 +1,19 @@
 import { useState } from "react";
+import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { Dialog } from "@/components/Dialog";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Timestamp } from "@/components/Timestamp";
 import type { Tone } from "@/components/tones";
+import type { ListenerRestartView } from "@/generated/ListenerRestartView";
 import type { ListenerState } from "@/generated/ListenerState";
 import type { ListenerStatusView } from "@/generated/ListenerStatusView";
 import { useCommandQuery } from "@/lib/commands";
-import { listenerDetailText } from "@/lib/listenerDetail";
+import { LISTENER_STATES, listenerDetailText } from "@/lib/listenerDetail";
 import styles from "./listeners.module.css";
 
 /** How often the state is asked for again while it is on screen. */
 const POLL_INTERVAL_MS = 10_000;
-
-const STATES: Record<ListenerState, { tone: Tone; label: string }> = {
-  disabled: { tone: "neutral", label: "Disabled" },
-  listening: { tone: "info", label: "Listening" },
-  connected: { tone: "neutral", label: "Connected" },
-  receiving: { tone: "info", label: "Receiving" },
-  error: { tone: "danger", label: "Error" },
-  // An enabled result-file instrument without a watched folder: files are loaded by hand.
-  manual_only: { tone: "neutral", label: "Manual loading only" },
-};
 
 /** The order states are counted in the top-bar summary: the ones needing attention first. */
 const SUMMARY_ORDER: readonly ListenerState[] = [
@@ -50,15 +42,47 @@ export function ListenerStatus() {
   return (
     <section aria-label="Analyzer listeners" className={styles.listeners}>
       <span className={styles.heading}>Analyzer listeners</span>
+      <RestartSummary />
       <ListenerList listeners={listeners} />
     </section>
   );
 }
 
 /**
+ * After the first start of a new version: how many listeners the app started again, and each
+ * enabled one that did not start, with the reason (ADR 0020).
+ */
+function RestartSummary() {
+  const restart = useCommandQuery<ListenerRestartView | null>("get_listener_restart");
+  const summary = restart.data;
+  if (!summary || (summary.listening === 0 && summary.failed.length === 0)) return null;
+  const listening = `${summary.listening} ${summary.listening === 1 ? "analyzer" : "analyzers"} listening again`;
+  if (summary.failed.length === 0) {
+    return (
+      <Alert tone="success" title="Updated">
+        {listening}.
+      </Alert>
+    );
+  }
+  return (
+    <Alert tone="warning" title="Updated; some analyzers did not start listening">
+      {listening}. These did not start:
+      <ul>
+        {summary.failed.map((listener) => (
+          <li key={listener.instrumentId}>
+            {listener.instrumentName}: {listenerDetailText(listener) ?? "No reason was reported."}
+          </li>
+        ))}
+      </ul>
+      Check them in Laboratory setup › Instruments.
+    </Alert>
+  );
+}
+
+/**
  * One badge in the top bar counting the listeners by state, for example "2 analyzers:
  * 1 connected, 1 listening" (REQ-OPS-013). Pressing it shows every listener's state and last
- * activity.
+ * activity, after an update with the restart summary.
  */
 export function ListenerSummary() {
   const listeners = useListeners();
@@ -75,6 +99,7 @@ export function ListenerSummary() {
         onOpenChange={setOpen}
         actions={<Button onPress={() => setOpen(false)}>Close</Button>}
       >
+        <RestartSummary />
         <ListenerList listeners={listeners} stacked />
       </Dialog>
     </>
@@ -88,7 +113,7 @@ function summarize(listeners: ListenersQuery): { tone: Tone; text: string } {
   if (all.length === 0) return { tone: "neutral", text: "No instruments configured" };
   const counts = SUMMARY_ORDER.flatMap((state) => {
     const count = all.filter((listener) => listener.state === state).length;
-    return count === 0 ? [] : [`${count} ${STATES[state].label.toLowerCase()}`];
+    return count === 0 ? [] : [`${count} ${LISTENER_STATES[state].label.toLowerCase()}`];
   });
   return {
     tone: summaryTone(new Set(all.map((listener) => listener.state))),
@@ -96,11 +121,10 @@ function summarize(listeners: ListenersQuery): { tone: Tone; text: string } {
   };
 }
 
-/** The tone of the state needing the most attention: an error, then one still waiting. */
+/** The tone of the state needing the most attention: an error, then any working listener. */
 function summaryTone(states: Set<ListenerState>): Tone {
   if (states.has("error")) return "danger";
-  if (states.has("listening")) return "info";
-  if (states.has("connected") || states.has("receiving")) return "neutral";
+  if (states.has("listening") || states.has("connected") || states.has("receiving")) return "info";
   return "neutral";
 }
 
@@ -119,7 +143,7 @@ function ListenerList({ listeners, stacked }: { listeners: ListenersQuery; stack
 }
 
 function ListenerItem({ listener }: { listener: ListenerStatusView }) {
-  const state = STATES[listener.state];
+  const state = LISTENER_STATES[listener.state];
   const detail = listenerDetailText(listener);
   return (
     <li className={styles.listener}>

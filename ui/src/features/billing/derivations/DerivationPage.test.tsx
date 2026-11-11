@@ -18,6 +18,8 @@ const CANDIDATE: DerivationView = {
   allowedActions: ["approve_service_derivation", "derive_services"],
 };
 
+const SPECIMEN_ID = "00000000-0000-7000-8000-0000000000e5";
+
 const ROUTE = { path: "/billing/derivations/:derivationId", element: <DerivationPage /> };
 
 function mockPage(
@@ -91,7 +93,9 @@ describe("DerivationPage (REQ-BIL-005)", () => {
       await screen.findByRole("heading", { level: 1, name: "Service derivation 2" }),
     ).toBeTruthy();
     expect(
-      screen.getByText("1 blocking flag holds this derivation.", { exact: false }),
+      screen.getByText(
+        "1 blocking flag holds this derivation. Give every analyte a confirmed billing class, then derive again.",
+      ),
     ).toBeTruthy();
     const flags = screen.getByRole("grid", { name: "Flags" });
     expect(
@@ -102,6 +106,11 @@ describe("DerivationPage (REQ-BIL-005)", () => {
       within(flags).getByRole("gridcell", { name: "Blocking: holds the derivation" }),
     ).toBeTruthy();
     expect(within(flags).getByRole("gridcell", { name: "For information" })).toBeTruthy();
+    expect(
+      within(flags).getByRole("link", { name: "Billing class mappings" }).getAttribute("href"),
+    ).toBe("/billing/class-mappings");
+    // Only the blocking flag links to a fix.
+    expect(within(flags).getAllByRole("link")).toHaveLength(1);
     const classes = screen.getByRole("grid", { name: "Billing classes for accession A26000001" });
     const row = within(classes).getByRole("gridcell", { name: "SYN-C1" }).closest("[role=row]");
     expect(row?.textContent).toContain("Presumptive (screening)YesYesNo");
@@ -120,6 +129,42 @@ describe("DerivationPage (REQ-BIL-005)", () => {
     expect(screen.getByRole("link", { name: "Version 1" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Approve derivation" })).toBeNull();
     await expectNoA11yViolations(container, { wholePage: true });
+  });
+
+  it("links each blocking flag to where it is fixed", async () => {
+    const { container } = renderPage({
+      ...DERIVATION,
+      flags: [
+        { code: "laboratory_billing_identity_missing", refId: "", blocking: true },
+        { code: "report_not_final", refId: SPECIMEN_ID, blocking: true },
+        { code: "billing_context_conflict", refId: "", blocking: true },
+      ],
+      flagReferenceLabels: { [SPECIMEN_ID]: "A26000005" },
+    });
+    expect(
+      await screen.findByText(
+        "3 blocking flags hold this derivation. Fix each blocking flag below, using its Fix in link where there is one, then derive again.",
+      ),
+    ).toBeTruthy();
+    const flags = screen.getByRole("grid", { name: "Flags" });
+    const href = (name: string) => within(flags).getByRole("link", { name }).getAttribute("href");
+    expect(href("Laboratory profile")).toBe("/configuration/laboratory");
+    expect(href("Report for A26000005")).toBe(`/reports/specimens/${SPECIMEN_ID}`);
+    // A billing context conflict is resolved on this page, so it has no link.
+    expect(within(flags).getAllByRole("link")).toHaveLength(2);
+    await expectNoA11yViolations(container, { wholePage: true });
+  });
+
+  it("names the fix when every blocking flag has the same one", async () => {
+    renderPage({
+      ...DERIVATION,
+      flags: [{ code: "laboratory_billing_identity_missing", refId: "", blocking: true }],
+    });
+    expect(
+      await screen.findByText(
+        "1 blocking flag holds this derivation. Set Billing NPI and Tax ID in the laboratory profile, then derive again.",
+      ),
+    ).toBeTruthy();
   });
 
   it("approves a candidate with its revision", async () => {

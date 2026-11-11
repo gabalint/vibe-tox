@@ -52,6 +52,11 @@
 //! - **Validity lines** need no limit: they print the measured value, the
 //!   method limits only when defined, and the current validity assessment.
 //!
+//! - **Report layouts** ([`layouts`], REQ-RPT-007): an administrator drafts
+//!   one of the ready-made layouts and a quality manager approves or rejects
+//!   it ([`approve_report_layout`]). Each candidate records the template of
+//!   the layout in force when it was prepared; issued bytes never change.
+//!
 //! Printed wording lives in [`display`], the fixed policy in [`policy`].
 
 #![warn(clippy::wildcard_enum_match_arm)]
@@ -67,6 +72,7 @@ pub mod dispositions;
 mod error;
 pub mod gates;
 mod impact;
+pub mod layouts;
 pub mod manifest;
 mod model;
 pub mod policy;
@@ -93,6 +99,10 @@ pub use commands::incidents::{
     ClosePreservationIncidentInput, close_preservation_incident, record_content_incident,
     record_preservation_incident,
 };
+pub use commands::layouts::{
+    ApproveReportLayoutInput, DraftReportLayoutInput, RejectReportLayoutInput,
+    approve_report_layout, draft_report_layout, reject_report_layout,
+};
 pub use commands::obligations::{
     AddDeliveryObligationInput, RecordDeliveryAttemptInput, RedirectDeliveryObligationInput,
     add_delivery_obligation, record_delivery_attempt, redirect_delivery_obligation,
@@ -111,6 +121,7 @@ pub use error::ReportingError;
 pub use lis_report::RenderedPdf;
 pub use manifest::{ExpectedComponent, ExpectedTrigger, Manifest, manifest};
 pub use model::*;
+pub use queries::audit_records::{audit_record_label, audit_record_search};
 pub use queries::billing::{CurrentFinalRelease, ReportedLine, current_final_release};
 pub use queries::candidate::{candidate_artifact, get_candidate};
 pub use queries::delivery::{
@@ -124,13 +135,17 @@ pub use queries::destinations::{
 pub use queries::incidents::{
     IncidentQueueItem, IncidentQueueSubject, preservation_incidents, unrecorded_content_incident,
 };
+pub use queries::layouts::report_layouts;
 pub use queries::obligation::get_delivery_obligation;
+pub use queries::outbound::{
+    RevisionOutbound, latest_revision_id, revision_delivery_paused, revision_outbound,
+};
 pub use queries::queues::{
     ReleaseQueue, ReleaseQueueItem, ReleaseReconciliation, RevisionQueueItem, impact_queue,
     partial_reports, release_queue, release_reconciliation, revisions_without_destination,
 };
 pub use queries::report::{
-    ListReportsInput, ReportListFilter, audit_record_label, get_report, get_revision, list_reports,
+    ListReportsInput, ReportListFilter, get_report, get_revision, list_reports,
 };
 pub use queries::workspace::report_workspace;
 pub use repo::quality::IncidentSubject;
@@ -163,6 +178,11 @@ pub const MIGRATIONS: &[Migration] = &[
         version: 5,
         name: "self_verification",
         sql: include_str!("../migrations/0005_self_verification.sql"),
+    },
+    Migration {
+        version: 6,
+        name: "report_layouts",
+        sql: include_str!("../migrations/0006_report_layouts.sql"),
     },
 ];
 

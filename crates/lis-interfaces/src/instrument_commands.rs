@@ -6,8 +6,8 @@ use lis_store::CommandContext;
 
 use crate::commands::required_instrument;
 use crate::model::{
-    Instrument, InstrumentTransport, RegisterInstrument, SetInstrumentEnabled, SetResultFolder,
-    UpdateInstrumentConnection,
+    ChangeStamp, Instrument, InstrumentTransport, RegisterInstrument, SetInstrumentEnabled,
+    SetResultFolder, UpdateInstrumentConnection,
 };
 use crate::validation::{valid_text, validate_identity};
 use crate::{InterfaceError, repo};
@@ -35,6 +35,8 @@ pub fn register_instrument(
         result_folder: None,
         enabled: input.enabled,
         revision: 1,
+        created: Some(stamp(ctx)),
+        changed: None,
     };
     repo::insert_instrument(ctx.tx(), &instrument)?;
     ctx.audit(
@@ -73,6 +75,8 @@ pub fn update_instrument_connection(
         &input.connection,
         next_revision,
     )?;
+    let changed = stamp(ctx);
+    repo::record_change(ctx.tx(), input.instrument_id, &changed)?;
     ctx.audit(
         AuditEvent::new(
             Stream::Security,
@@ -92,6 +96,7 @@ pub fn update_instrument_connection(
         connection: input.connection,
         result_folder: current.result_folder.filter(|_| keeps_folder),
         revision: next_revision,
+        changed: Some(changed),
         ..current
     })
 }
@@ -106,6 +111,8 @@ pub fn set_instrument_enabled(
     ensure_revision(&current, input.expected_revision)?;
     let next_revision = current.revision + 1;
     repo::update_enabled(ctx.tx(), input.instrument_id, input.enabled, next_revision)?;
+    let changed = stamp(ctx);
+    repo::record_change(ctx.tx(), input.instrument_id, &changed)?;
     ctx.audit(
         AuditEvent::new(
             Stream::Security,
@@ -120,6 +127,7 @@ pub fn set_instrument_enabled(
     Ok(Instrument {
         enabled: input.enabled,
         revision: next_revision,
+        changed: Some(changed),
         ..current
     })
 }
@@ -154,6 +162,8 @@ pub fn set_result_folder(
     }
     let next_revision = current.revision + 1;
     repo::update_result_folder(ctx.tx(), input.instrument_id, path, next_revision)?;
+    let changed = stamp(ctx);
+    repo::record_change(ctx.tx(), input.instrument_id, &changed)?;
     let present = input
         .folder
         .as_ref()
@@ -181,8 +191,18 @@ pub fn set_result_folder(
     Ok(Instrument {
         result_folder: input.folder.map(|folder| folder.path),
         revision: next_revision,
+        changed: Some(changed),
         ..current
     })
+}
+
+/// The command's principal and time, recorded beside the change it makes.
+fn stamp(ctx: &CommandContext<'_>) -> ChangeStamp {
+    ChangeStamp {
+        by: ctx.principal().actor().id_text(),
+        by_display: None,
+        at: ctx.now(),
+    }
 }
 
 fn ensure_revision(instrument: &Instrument, expected: i64) -> Result<(), InterfaceError> {

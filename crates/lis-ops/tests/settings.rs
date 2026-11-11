@@ -179,7 +179,7 @@ fn settings_versions_are_append_only_and_checked_by_the_store() {
              keep_weekly, backup_warn_minutes, backup_alert_minutes, offhost_warn_hours, \
              offline_warn_days, restore_test_warn_days, kit_confirm_warn_days, \
              anchor_warn_minutes, anchor_incident_hours, disk_free_warn_gib, \
-             os_support_warn_days, clock_jump_seconds, ?3, set_by, set_at \
+             os_support_warn_days, clock_jump_seconds, ?3, set_by, set_at, lot_expiry_warn_days \
              FROM ops_settings_versions WHERE version = 1",
             rusqlite::params![version, interval, reason],
         )

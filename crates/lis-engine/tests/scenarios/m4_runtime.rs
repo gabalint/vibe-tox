@@ -4,7 +4,8 @@
 //! policy (idle timeout from the policy, absolute lifetime, disabled account), health and
 //! update records. Synthetic data only.
 
-use std::net::{IpAddr, Ipv4Addr, TcpListener};
+use std::net::{IpAddr, Ipv4Addr};
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -19,12 +20,13 @@ use lis_engine::{
     DisposalMethod, Engine, EngineConfig, HealthState, KeyProvider, KeyState, ListAppRunsInput,
     ListHealthHistoryInput, ListWorkQueueItemsInput, MemoryKeyStore, OperationsSettings,
     RecordMediaDisposalInput, RecordUpdateApprovalInput, RegisterInstrument,
-    RestoreInstallationKeyInput, SessionInfo, SetOperationsSettingsInput, VersionStatus,
-    WithdrawUpdateApprovalInput,
+    RestoreInstallationKeyInput, SessionInfo, SetOperationsSettingsInput, UpdateRequest,
+    VersionStatus, WithdrawUpdateApprovalInput,
 };
 use lis_interfaces::{ConnectionSettings, ListenerState};
 use lis_ops::health::CheckCode;
 use lis_ops::policy::DEFAULT_SETTINGS;
+use lis_store::testing::local_port;
 use lis_store::{DATABASE_FILE, PRE_MIGRATION_DIR};
 use rusqlite::Connection;
 use secrecy::SecretString;
@@ -38,7 +40,10 @@ pub(crate) async fn runtime_call(
     name: &str,
     _target: UserId,
 ) -> Option<Result<(), CommandError>> {
-    match health_call(engine, name).await {
+    if let Some(result) = health_call(engine, name).await {
+        return Some(result);
+    }
+    match update_call(engine, name).await {
         Some(result) => Some(result),
         None => records_call(engine, name).await,
     }
@@ -97,6 +102,31 @@ async fn health_call(engine: &Engine, name: &str) -> Option<Result<(), CommandEr
                 reason: "Synthetic policy".to_owned(),
                 password: secret(PASSWORD).into(),
             })
+            .await
+            .map(drop),
+        _ => return None,
+    })
+}
+
+/// In-app updates (ADR 0020): the shell's update requests after the engine allows them.
+async fn update_call(engine: &Engine, name: &str) -> Option<Result<(), CommandError>> {
+    Some(match name {
+        "check_release_update" => engine.preflight_update(UpdateRequest::CheckRelease).await,
+        "list_nightly_builds" => engine.preflight_update(UpdateRequest::ListNightly).await,
+        "download_update" => engine.preflight_update(UpdateRequest::Download).await,
+        "approve_downloaded_update" => engine
+            .approve_downloaded_update(
+                approval_input("9.9.9", PASSWORD),
+                PathBuf::from("synthetic-missing-package"),
+            )
+            .await
+            .map(drop),
+        "stop_listeners_for_update" => engine.stop_listeners_for_update().await.map(drop),
+        "install_update" => engine
+            .begin_update_install(
+                "9.9.9".to_owned(),
+                PathBuf::from("synthetic-missing-package"),
+            )
             .await
             .map(drop),
         _ => return None,
@@ -520,14 +550,6 @@ async fn pending_migrations_on_existing_data_keep_a_pre_migration_snapshot() {
     engine.shutdown().await;
 }
 
-fn free_port() -> u16 {
-    TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
-}
-
 async fn wait_for_listening(engine: &Engine) {
     for _ in 0..200 {
         let status = engine.list_listener_status().await.unwrap();
@@ -567,7 +589,7 @@ async fn quitting_with_an_active_listener_warns_and_records_the_override() {
             name: "Synthetic analyzer".to_owned(),
             connection: ConnectionSettings::AstmTcp {
                 bind_address: IpAddr::V4(Ipv4Addr::LOCALHOST),
-                port: free_port(),
+                port: local_port(),
                 allowed_peers: vec![IpAddr::V4(Ipv4Addr::LOCALHOST)],
             },
             enabled: true,
@@ -595,6 +617,88 @@ async fn quitting_with_an_active_listener_warns_and_records_the_override() {
     assert_eq!(stop_events.len(), 1, "recorded once");
     assert_eq!(stop_events[0].0, "user", "attributed to the signed-in user");
     assert!(stop_events[0].1.contains("quit_with_warnings"));
+}
+
+#[tokio::test]
+async fn an_update_stops_the_listeners_and_the_new_version_starts_them_again() {
+    let host = Host::new();
+    let engine = host.start(KeyProvider::Fixed(key(1))).await;
+    host.enrol_admin(&engine).await;
+    engine
+        .register_instrument(RegisterInstrument {
+            code: "SYN-ANALYZER".to_owned(),
+            name: "Synthetic analyzer".to_owned(),
+            connection: ConnectionSettings::AstmTcp {
+                bind_address: IpAddr::V4(Ipv4Addr::LOCALHOST),
+                port: local_port(),
+                allowed_peers: vec![IpAddr::V4(Ipv4Addr::LOCALHOST)],
+            },
+            enabled: true,
+        })
+        .await
+        .unwrap();
+    wait_for_listening(&engine).await;
+
+    let stopped = engine.stop_listeners_for_update().await.unwrap();
+    assert_eq!(stopped.stopped, 1);
+    assert!(
+        engine.update_warnings().await.is_empty(),
+        "a stopped listener does not hold the installation"
+    );
+    // An installation that did not happen starts the listeners again at once.
+    engine
+        .restart_listeners_after_failed_update()
+        .await
+        .unwrap();
+    wait_for_listening(&engine).await;
+    engine
+        .restart_listeners_after_failed_update()
+        .await
+        .unwrap();
+    assert!(engine.get_listener_restart().await.unwrap().is_none());
+    engine.stop_listeners_for_update().await.unwrap();
+    engine.shutdown().await;
+    drop(engine);
+
+    // The next start sees another version before it; its enabled setting did not change.
+    // App runs are append-only, so an open run of an older version is added last.
+    host.conn()
+        .execute(
+            "INSERT INTO ops_app_runs (id, started_at, last_seen_at, app_version, os_text, \
+             previous_unclean) SELECT 'ffffffff-ffff-7fff-bfff-ffffffffffff', max(started_at), \
+             max(started_at), '0.0.1', 'synthetic', 0 FROM ops_app_runs",
+            [],
+        )
+        .unwrap();
+    let engine = host.start(KeyProvider::Fixed(key(1))).await;
+    wait_for_listening(&engine).await;
+    let restart = engine.get_listener_restart().await.unwrap().unwrap();
+    assert_eq!(restart.listening, 1);
+    assert!(restart.failed.is_empty());
+    engine.shutdown().await;
+    let events: Vec<(String, String)> = host
+        .conn()
+        .prepare(
+            "SELECT action, details FROM audit_events WHERE action LIKE 'ops.%listeners%' \
+             ORDER BY seq",
+        )
+        .unwrap()
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap();
+    let actions: Vec<&str> = events.iter().map(|(action, _)| action.as_str()).collect();
+    assert_eq!(
+        actions,
+        [
+            "ops.stop_listeners_for_update",
+            "ops.restart_listeners_after_update",
+            "ops.stop_listeners_for_update",
+            "ops.restart_listeners_after_update",
+        ]
+    );
+    assert!(events[1].1.contains("install_not_completed"));
+    assert!(events[3].1.contains("new_version"));
 }
 
 #[tokio::test]
@@ -867,9 +971,21 @@ async fn update_records_need_their_capability_a_backup_and_fresh_authentication(
         .await;
     assert_eq!(code_of(without_backup), ErrorCode::Conflict);
     let wrong_password = engine
-        .record_update_approval(approval_input("9.9.9", "wrong passphrase"), Some(package))
+        .record_update_approval(
+            approval_input("9.9.9", "wrong passphrase"),
+            Some(package.clone()),
+        )
         .await;
     assert_eq!(code_of(wrong_password), ErrorCode::Validation);
+    // ADR 0020: a downloaded package installs only under an approval naming it.
+    let not_approved = engine
+        .begin_update_install("9.9.9".to_owned(), package.clone())
+        .await;
+    assert_eq!(code_of(not_approved), ErrorCode::Conflict);
+    let downloaded_without_backup = engine
+        .approve_downloaded_update(approval_input("9.9.9", PASSWORD), package)
+        .await;
+    assert_eq!(code_of(downloaded_without_backup), ErrorCode::Conflict);
     let disposal = engine.record_media_disposal(disposal()).await.unwrap();
     assert_eq!(disposal.method, DisposalMethod::Wiped);
     let disposals = engine.list_media_disposals().await.unwrap();

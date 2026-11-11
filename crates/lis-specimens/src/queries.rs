@@ -3,6 +3,8 @@
 //! engine checks the capability, and audits the read where the result is
 //! sensitive, before calling them.
 
+use std::collections::BTreeMap;
+
 use lis_core::GateReason;
 use rusqlite::Connection;
 
@@ -76,30 +78,81 @@ pub fn order_item_accessioned(
     Ok(accessions::item_accessioned(conn, item_id)?)
 }
 
-/// Current accession number for an accession or specimen audit record. The
-/// label is resolved from the owner table and never copied into audit storage.
-pub fn audit_record_label(
+/// An order's receipt as the order worklist shows it (REQ-ORD-001).
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct OrderReceipt {
+    /// The order's accessions, in accession order.
+    pub accessions: Vec<lis_orders::OrderAccessionRef>,
+    /// Primary-container label codes (sample barcodes), in accession order.
+    pub sample_barcodes: Vec<String>,
+}
+
+/// The accessions and sample barcodes of each listed order, in one query. Orders with no
+/// received sample are absent from the map.
+pub fn order_receipts(
     conn: &Connection,
-    record_type: &str,
-    record_id: &str,
-) -> Result<Option<String>, SpecimenError> {
-    let accession_id = match record_type {
-        "accession" => match record_id.parse::<AccessionId>() {
-            Ok(id) => id,
-            Err(_) => return Ok(None),
-        },
-        "specimen" => {
-            let Ok(id) = record_id.parse::<SpecimenId>() else {
-                return Ok(None);
-            };
-            match accessions::specimen_accession(conn, id)? {
-                Some(accession_id) => accession_id,
-                None => return Ok(None),
-            }
+    order_ids: &[lis_orders::OrderId],
+) -> Result<BTreeMap<lis_orders::OrderId, OrderReceipt>, SpecimenError> {
+    // Hyphenated UUIDs need no JSON escaping.
+    let ids = order_ids
+        .iter()
+        .map(|id| format!("\"{id}\""))
+        .collect::<Vec<_>>()
+        .join(",");
+    let mut receipts: BTreeMap<_, OrderReceipt> = BTreeMap::new();
+    let mut statement = conn.prepare_cached(
+        "SELECT a.order_id, a.id, a.accession_number, c.label_code FROM spc_accessions a \
+         LEFT JOIN spc_collections col ON col.accession_id = a.id \
+         LEFT JOIN spc_specimens s ON s.collection_id = col.id \
+         LEFT JOIN spc_containers c ON c.specimen_id = s.id AND c.kind = 'primary' \
+         WHERE a.order_id IN (SELECT value FROM json_each(?1)) \
+         ORDER BY a.created_at, a.id, c.label_code",
+    )?;
+    let rows = statement.query_map([format!("[{ids}]")], |row| {
+        Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
+    })?;
+    for row in rows {
+        let (order_id, accession_id, accession_number, label_code): (
+            _,
+            AccessionId,
+            _,
+            Option<String>,
+        ) = row?;
+        let receipt = receipts.entry(order_id).or_default();
+        if receipt.accessions.last().map(|last| last.accession_id) != Some(accession_id) {
+            receipt.accessions.push(lis_orders::OrderAccessionRef {
+                accession_id,
+                accession_number,
+            });
         }
-        _ => return Ok(None),
-    };
-    Ok(accessions::accession(conn, accession_id)?.map(|accession| accession.number))
+        receipt.sample_barcodes.extend(label_code);
+    }
+    Ok(receipts)
+}
+
+/// Orders with an accession number or primary-container label code (sample barcode)
+/// starting with `text`, ignoring case, for finding orders (REQ-ORD-001).
+pub fn orders_with_code(
+    conn: &Connection,
+    text: &str,
+) -> Result<Vec<lis_orders::OrderId>, SpecimenError> {
+    // Numbers are issued in upper case. A range on the unique indexes keeps wildcard
+    // characters literal; U+10FFFF sorts after every character that may follow.
+    let start = text.trim().to_uppercase();
+    let end = format!("{start}\u{10FFFF}");
+    let mut statement = conn.prepare_cached(
+        "SELECT order_id FROM spc_accessions \
+         WHERE accession_number >= ?1 AND accession_number < ?2 \
+         UNION SELECT a.order_id FROM spc_containers c \
+         JOIN spc_specimens s ON s.id = c.specimen_id \
+         JOIN spc_collections col ON col.id = s.collection_id \
+         JOIN spc_accessions a ON a.id = col.accession_id \
+         WHERE c.kind = 'primary' AND c.label_code >= ?1 AND c.label_code < ?2",
+    )?;
+    let orders: Vec<lis_orders::OrderId> = statement
+        .query_map([start, end], |row| row.get(0))?
+        .collect::<Result<_, _>>()?;
+    Ok(orders)
 }
 
 /// The accession a container belongs to.

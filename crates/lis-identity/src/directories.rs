@@ -25,6 +25,16 @@ pub(crate) fn record_registration(
 ) -> Result<(), IdentityError> {
     let actor = ActorRef::user(ctx.principal())?;
     let (kind, id) = record.key();
+    let (code, name, given, active, revision) = current_values(ctx.tx(), record)?;
+    ctx.tx().execute("INSERT INTO idn_directory_history(record_kind,record_id,revision,code,name,given_names,active,recorded_at,recorded_by,origin) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,'registered')",params![kind,id,revision,code,name,given,active,ctx.now(),actor.id])?;
+    Ok(())
+}
+
+type DirectoryValues = (String, String, Option<String>, bool, i64);
+
+/// The record's projected code (or NPI), name, given names, availability and revision.
+fn current_values(conn: &Connection, record: DirectoryRecord) -> rusqlite::Result<DirectoryValues> {
+    let (_, id) = record.key();
     let sql = match record {
         DirectoryRecord::Client(_) => {
             "SELECT code,name,NULL,active,revision FROM idn_client_organizations WHERE id=?1"
@@ -36,12 +46,9 @@ pub(crate) fn record_registration(
             "SELECT npi,family_name,given_names,active,revision FROM idn_practitioners WHERE id=?1"
         }
     };
-    let (code, name, given, active, revision): (String, String, Option<String>, bool, i64) =
-        ctx.tx().query_row(sql, [&id], |r| {
-            Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?))
-        })?;
-    ctx.tx().execute("INSERT INTO idn_directory_history(record_kind,record_id,revision,code,name,given_names,active,recorded_at,recorded_by,origin) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,'registered')",params![kind,id,revision,code,name,given,active,ctx.now(),actor.id])?;
-    Ok(())
+    conn.query_row(sql, [&id], |r| {
+        Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?))
+    })
 }
 
 struct Correction<'a> {
@@ -58,6 +65,12 @@ fn append_correction(
     value: Correction<'_>,
 ) -> Result<(), IdentityError> {
     let actor = ActorRef::user(ctx.principal())?;
+    let (code, name, given, active, _) = current_values(ctx.tx(), value.record)?;
+    if (code.as_str(), name.as_str(), given.as_deref(), active)
+        == (value.code, value.name, value.given, value.active)
+    {
+        return Err(IdentityError::NothingChanged);
+    }
     let reason = required_text("reason", value.reason, REASON_MAX)?;
     let (kind, id) = value.record.key();
     ctx.tx().execute("INSERT INTO idn_directory_history(record_kind,record_id,revision,code,name,given_names,active,recorded_at,recorded_by,reason,origin) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,'corrected')",params![kind,id,value.revision+1,value.code,value.name,value.given,value.active,ctx.now(),actor.id,reason])?;

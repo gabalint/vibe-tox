@@ -37,6 +37,7 @@ export function useListedSelection(bulk: GridBulk | undefined, rowIds: readonly 
       setNotice(null);
       bulk.onChange(ids);
     },
+    isSelectable: bulk.isSelectable,
   };
   return { selection, notice };
 }

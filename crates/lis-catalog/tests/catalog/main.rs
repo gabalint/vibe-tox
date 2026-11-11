@@ -4,6 +4,7 @@
 // Marks helpers outside `#[test]` functions as test code for clippy's test allowances.
 #![cfg(test)]
 
+mod analytes;
 mod approval_references;
 mod authorization;
 mod directories;
@@ -35,7 +36,7 @@ use lis_store::{CommandContext, lint_schema};
 use rusqlite::Connection;
 
 /// Every table this module and the audit trail write.
-const TABLES: [&str; 19] = [
+const TABLES: [&str; 20] = [
     "cat_approval_references",
     "cat_specimen_types",
     "cat_analytes",
@@ -55,6 +56,7 @@ const TABLES: [&str; 19] = [
     "cat_catalog_preview_drafts",
     "cat_catalog_reviews",
     "cat_catalog_review_confirmations",
+    "cat_analyte_history",
 ];
 
 /// Two people: the author drafts, the approver approves and retires.

@@ -24,6 +24,11 @@
     "allow-verify-delivery-destination",
     "allow-replace-delivery-destination",
     "allow-retire-delivery-destination",
-    "allow-close-preservation-incident"
+    "allow-close-preservation-incident",
+    "allow-get-report-layouts",
+    "allow-preview-report-layout",
+    "allow-draft-report-layout",
+    "allow-approve-report-layout",
+    "allow-reject-report-layout"
   ]
 }

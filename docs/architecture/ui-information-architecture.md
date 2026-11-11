@@ -14,7 +14,7 @@ Record names follow the [domain model](domain-model.md); capacity and platform q
 
 ## Navigation
 
-The navigation and route definitions are maintained in [`navigation.ts`](../../ui/src/app/navigation.ts), [`setupNavigation.ts`](../../ui/src/app/setupNavigation.ts) and [`routes.tsx`](../../ui/src/app/routes.tsx). Areas appear only when the current session can reach at least one screen. Test catalog, Laboratory setup and System are collapsed by default.
+The navigation and route definitions are maintained in [`navigation.ts`](../../ui/src/app/navigation.ts), [`setupNavigation.ts`](../../ui/src/app/setupNavigation.ts) and [`routes.tsx`](../../ui/src/app/routes.tsx). Areas appear only when the current session can reach at least one screen. Every area is collapsed at each sign-in; a collapsed area shows the total of its entries' queue counts. Areas the person opens or closes stay that way until sign-out or lock and are not stored; going to a screen opens its area.
 
 | Area | Screens in navigation order |
 | --- | --- |
@@ -22,9 +22,10 @@ The navigation and route definitions are maintained in [`navigation.ts`](../../u
 | Front desk | Patients, Orders, Incomplete identity intake, Storage excursions, Container lookup |
 | Bench | Worklist, Runs, Bench setup |
 | Review | Result review, Result imports |
-| Reports | Release queue, Delivery, Reports |
-| Billing | Billing follow-up, Billing work, Billing class mappings |
+| Reports | Release queue, Delivery, Reports, Report templates |
+| Billing | Billing follow-up, Billing work, Billing handoffs, Billing class mappings |
 | Quality and audit | Audit trail, Audit anchors |
+| Interfaces | Connections, Logs, Unrouted messages |
 | Test catalog | Tests and panels, Methods, Analytes, Specimen types |
 | Laboratory setup | Material configuration, Laboratory profile, Catalog review, Clients, Practitioners, Delivery destinations, Instruments, Users, Starter data |
 | System | Host health, Backups, Recovery kit, Versions and updates, Operations settings, Media disposals, Exit export |
@@ -46,7 +47,7 @@ A **panel** opens beside its directory or workspace; a **page** has its own reco
 | Client location | Client page | Add or correct location with attributable history |
 | Practitioner | Laboratory setup › Practitioners → panel | Name, NPI, factual correction and active state; local Find field |
 | Delivery destination | Laboratory setup › Delivery destinations or client page → panel | Verification, replacement and retirement; available verification evidence |
-| Instrument | Laboratory setup › Instruments → panel | Connection, listener configuration and outcome of the last change |
+| Instrument | Laboratory setup › Instruments → panel | Connection, listener configuration and outcome of the last change; service status and approved source read from Bench setup, linked to the same instrument there |
 | User | Laboratory setup › Users → panel | Roles, active state and permitted sign-in recovery actions |
 | Laboratory profile | Laboratory setup › Laboratory profile → page | Versioned reporting and performing-laboratory facts |
 | Material configuration | Laboratory setup › Material configuration → page | Label profiles and storage configuration |
@@ -64,14 +65,17 @@ Versioned record pages show the version in effect and any open draft in the head
 | Order | Front desk › Orders → page | Supplied evidence revisions, cancellation decisions and billing context remain attributable |
 | Accession and container | Order page, scan field or Container lookup → page | Connected intake preserves patient/order context; receiving, allocation, collection facts and label decisions are explicit |
 | Run | Bench › Runs → page | Positions, QC and expected results remain linked to their exact run |
-| Lot and instrument readiness | Bench › Bench setup → tab and panel | Lots expose withdrawal; instrument panels expose service status and approved result sources |
+| Lot and instrument readiness | Bench › Bench setup → tab and panel | Lots expose withdrawal and mark lots expiring soon, which the Lots expiring soon work queue also lists; instrument panels expose service status and approved result sources, and for configuration staff a one-line connection linked back to Laboratory setup |
 | Deviation | Work item or related record → `/quality/deviations/:deviationId` | Exact audited read independent of run scope |
 | Specimen results | Review › Result review → page | Result lines form the technical-review workspace |
 | Import attempt | Review › Result imports → page | Quarantine decisions operate on the selected retained attempt/item |
 | Report and revision | Reports or Release queue → page | Frozen candidate, release and revision history remain distinct |
 | Delivery obligation | Reports › Delivery → panel | Attempts and their channel/evidence level belong to the exact obligation |
 | Billing evidence | Billing › Billing follow-up or order billing context | Financial evidence does not authorize clinical work |
-| Billing derivation and handoff | Billing work → derivation or handoff page | Bulk handoff selection is explicit; individual outcomes belong to the handoff item |
+| Billing derivation and handoff | Billing work → derivation or handoff page; Billing handoffs → handoff page | Bulk handoff selection is explicit; individual outcomes belong to the handoff item. A handoff whose items are all acknowledged leaves Billing work and is found in Billing handoffs |
+| Interface connection | Interfaces › Connections → page with Overview, Rules, Logs and History tabs | Edit, Start/Stop with a reason, destination check, folder test and synthetic test message; analyzers stay under Laboratory setup › Instruments |
+| Interface message | Interfaces › Logs → tab by outcome; an outgoing message opens in a side panel (control ID, message as sent, ACK, attempts; audited), an unrouted one Unrouted messages, a received one its connection | Transport and application outcomes are separate; never a bare "Delivered"; Send again only after every attempt failed |
+| Unrouted message | Interfaces › Unrouted messages → panel | Send once, Retry routing, Deliver another way or Dismiss with reason; Add a rule opens the closest connection |
 
 [`itemPath.ts`](../../ui/src/features/workqueues/itemPath.ts) owns work-item routing. Deviations, preservation incidents, delivery obligations, billing patient/date work and handoff items retain their exact identities across list limits. Unknown item kinds do not get a guessed record link. The connected workflow is described in [daily operation](../operations/daily-operation.md).
 
@@ -107,6 +111,6 @@ The component contracts and presentation rules are maintained in [UI standards](
 | Practitioner-to-client relationships | Order entry offers practitioners independently of client. A maintained relationship and laboratory workflow are needed before narrowing by client. FHIR's practitioner-role model is supporting prior art, not an implemented feature ([DOM-102](../research/sources-domain.md#ui-information-architecture-sources-2026-10-13)). |
 | Practitioner search at scale | The current engine lists practitioners and the UI filters them locally. A bounded engine query with explicit continuation needs design and workload evidence if that list approaches the NFR-33 capacity target. |
 | NPI registry prefill | Outside current scope. A future NPPES lookup would require an explicit network/data-flow decision and staff confirmation of imported values ([DOM-103](../research/sources-domain.md#ui-information-architecture-sources-2026-10-13)). |
-| Instruments in two areas | Connection administration and bench readiness have different permissions. Combining them needs a read-model and visibility decision; current navigation keeps both homes. |
+| Instruments in two areas | Connection administration and bench readiness have different permissions. Combining them needs a read-model and visibility decision; current navigation keeps both homes, each panel linking to the same instrument in the other, and a new analyzer's confirmation offering Set in service and Register source there. |
 | Collection capacity | Per-directory capacity requires laboratory counts and reference-host measurements. NFR-33 is a target; synthetic lists and catalog content do not establish a laboratory's actual workload. |
 | Action metadata | Some views still derive visibility from capability and status fields rather than an `allowedActions` collection. Every engine command must continue enforcing the authoritative gate. |

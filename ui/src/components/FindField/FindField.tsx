@@ -19,6 +19,10 @@ interface FindFieldProps {
   label: string;
   /** An example or the fields searched. */
   placeholder?: string;
+  /** Hides the visible "Find", as in a filter row whose fields have their labels above. */
+  isLabelHidden?: boolean;
+  /** A wider field, for a placeholder that names many searched fields. */
+  isWide?: boolean;
   /** The find text in effect, usually from `?q=` (`useFindParam`). */
   value: string;
   /** Called after a short pause in typing, and at once on Enter, Escape or clear. */
@@ -40,7 +44,15 @@ export function FindCount({ shown, total, noun, one }: FindCountProps) {
  * Find in a directory: searches the identifiers and names its grid shows. Escape clears it.
  * The count line is a polite live region, so the new count is announced after each change.
  */
-export function FindField({ label, placeholder = label, value, onChange, count }: FindFieldProps) {
+export function FindField({
+  label,
+  placeholder = label,
+  isLabelHidden,
+  isWide,
+  value,
+  onChange,
+  count,
+}: FindFieldProps) {
   const [text, setText] = useState(value);
   // The text in effect can change from outside (Back, "Clear search"): show it then.
   const [shownValue, setShownValue] = useState(value);
@@ -60,14 +72,21 @@ export function FindField({ label, placeholder = label, value, onChange, count }
         onSubmit={pause.now}
         onClear={() => pause.now("")}
         className={styles.field}
+        data-wide={isWide || undefined}
       >
-        <Label className={styles.label}>
-          <span aria-hidden="true">Find</span>
-          <span className={styles.accessibleLabel}>{label}</span>
-        </Label>
+        {isLabelHidden ? (
+          // Out of the row, so the field starts where the content below it does.
+          <Label className={styles.accessibleLabel}>{label}</Label>
+        ) : (
+          <Label className={styles.label}>
+            <span aria-hidden="true">Find</span>
+            <span className={styles.accessibleLabel}>{label}</span>
+          </Label>
+        )}
         <div className={styles.control}>
           <Search aria-hidden="true" className={styles.icon} />
-          <Input placeholder={placeholder} className={styles.input} />
+          {/* The placeholder as a tooltip too, for when the field is too narrow to show it. */}
+          <Input placeholder={placeholder} title={placeholder} className={styles.input} />
           <Button className={styles.fieldButton}>
             <X aria-hidden="true" />
           </Button>

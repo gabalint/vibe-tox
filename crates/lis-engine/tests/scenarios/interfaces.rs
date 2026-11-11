@@ -1,12 +1,13 @@
 //! Instrument configuration through the engine (REQ-INT-005, REQ-INT-009,
 //! REQ-OPS-001): a change restarts the listeners so it takes effect at once.
 
-use std::net::{IpAddr, Ipv4Addr, TcpListener};
+use std::net::{IpAddr, Ipv4Addr};
 use std::time::Duration;
 
 use lis_core::{CommandError, ErrorCode, InstrumentId, UserId};
 use lis_engine::{Engine, RegisterInstrument, SetInstrumentEnabled, UpdateInstrumentConnection};
 use lis_interfaces::{ConnectionSettings, ListenerDetailCode, ListenerState};
+use lis_store::testing::local_port;
 
 use crate::fixture::{TestEngine, code_of};
 
@@ -16,14 +17,6 @@ fn tcp(port: u16, allowed_peers: Vec<IpAddr>) -> ConnectionSettings {
         port,
         allowed_peers,
     }
-}
-
-fn free_port() -> u16 {
-    TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
 }
 
 fn registration(port: u16) -> RegisterInstrument {
@@ -86,7 +79,7 @@ async fn configuration_changes_restart_the_listeners() {
     t.admin_session().await;
     let registered = t
         .engine
-        .register_instrument(registration(free_port()))
+        .register_instrument(registration(local_port()))
         .await
         .unwrap();
     assert!(registered.listeners_restarted);
@@ -102,7 +95,7 @@ async fn configuration_changes_restart_the_listeners() {
         .update_instrument_connection(UpdateInstrumentConnection {
             instrument_id: registered.instrument.id,
             expected_revision: registered.instrument.revision,
-            connection: tcp(free_port(), vec![IpAddr::V4(Ipv4Addr::LOCALHOST)]),
+            connection: tcp(local_port(), vec![IpAddr::V4(Ipv4Addr::LOCALHOST)]),
         })
         .await
         .unwrap();
@@ -140,14 +133,14 @@ async fn configuration_changes_restart_the_listeners() {
 async fn a_tcp_instrument_needs_a_lab_network_allow_list() {
     let t = TestEngine::start().await;
     t.admin_session().await;
-    let mut input = registration(free_port());
-    input.connection = tcp(free_port(), vec![]);
+    let mut input = registration(local_port());
+    input.connection = tcp(local_port(), vec![]);
     let error = t.engine.register_instrument(input).await.unwrap_err();
     assert_eq!(error.code(), ErrorCode::Validation);
     let json = serde_json::to_value(&error).unwrap();
     assert_eq!(json["fieldErrors"][0]["field"], "connection.allowedPeers");
-    let mut public = registration(free_port());
-    public.connection = tcp(free_port(), vec![IpAddr::V4(Ipv4Addr::new(8, 8, 8, 8))]);
+    let mut public = registration(local_port());
+    public.connection = tcp(local_port(), vec![IpAddr::V4(Ipv4Addr::new(8, 8, 8, 8))]);
     assert_eq!(
         code_of(t.engine.register_instrument(public).await),
         ErrorCode::Validation

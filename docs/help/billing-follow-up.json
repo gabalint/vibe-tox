@@ -2,7 +2,7 @@
   "id": "billing-follow-up",
   "title": "Billing follow-up and order billing",
   "summary": "Review supplied financial information and track missing evidence for an order.",
-  "reviewedOn": "2026-10-14",
+  "reviewedOn": "2026-11-03",
   "routes": ["/billing/review", "/billing/orders/:orderId"],
   "sections": [
     {
@@ -253,7 +253,7 @@
         {
           "name": "Order billing — Valid from / Valid until",
           "meaning": "The dates over which the source states this evidence applies.",
-          "values": "Real dates in YYYY-MM-DD format.",
+          "values": "Real dates in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field.",
           "rules": "Each optional; an end date cannot precede the start date."
         },
         {
@@ -265,7 +265,7 @@
         {
           "name": "Order billing — Related provider NPI",
           "meaning": "The provider identified by this evidence.",
-          "values": "A valid ten-digit NPI with a valid check digit.",
+          "values": "A valid ten-digit NPI with a valid check digit. The field hint reads “10 digits. The last digit is checked automatically.” Fewer or more than ten digits shows “The NPI must be exactly 10 digits.”; a failed check digit shows “This NPI is not valid. Please check the number for a typo.”",
           "rules": "Required for Provider enrollment; optional for other evidence. For order enrollment evidence it must identify the ordering practitioner."
         },
         {
@@ -409,7 +409,7 @@
         {
           "name": "Guarantor birth date / Subscriber birth date",
           "meaning": "Birth date supplied for that party.",
-          "values": "A real calendar date in YYYY-MM-DD format.",
+          "values": "A real calendar date in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field, which offers no day after today.",
           "rules": "Optional. It does not change the clinical patient birth date."
         },
         {
@@ -451,13 +451,13 @@
         {
           "name": "Coverage starts / Coverage ends",
           "meaning": "Coverage effective period from the source.",
-          "values": "Real dates in YYYY-MM-DD format.",
+          "values": "Real dates in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field.",
           "rules": "Each optional; end cannot precede start."
         },
         {
           "name": "Coverage checked on",
           "meaning": "Date the source says the coverage was checked.",
-          "values": "Real date in YYYY-MM-DD format.",
+          "values": "Real date in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field.",
           "rules": "Optional. A recorded check date is not a promise of payment."
         },
         {
@@ -517,7 +517,7 @@
         {
           "name": "Patient billing profile — Valid from / Valid until",
           "meaning": "The dates over which the source states this evidence applies.",
-          "values": "Real dates in YYYY-MM-DD format.",
+          "values": "Real dates in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field.",
           "rules": "Each optional; an end date cannot precede the start date."
         },
         {
@@ -529,7 +529,7 @@
         {
           "name": "Patient billing profile — Related provider NPI",
           "meaning": "The provider identified by this evidence.",
-          "values": "A valid ten-digit NPI with a valid check digit.",
+          "values": "A valid ten-digit NPI with a valid check digit. The field hint reads “10 digits. The last digit is checked automatically.” Fewer or more than ten digits shows “The NPI must be exactly 10 digits.”; a failed check digit shows “This NPI is not valid. Please check the number for a typo.”",
           "rules": "Required for Provider enrollment; optional for other evidence. For order enrollment evidence it must identify the ordering practitioner."
         },
         {

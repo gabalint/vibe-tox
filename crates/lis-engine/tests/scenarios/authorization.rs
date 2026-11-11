@@ -8,9 +8,12 @@ use lis_auth::{
     CreateFirstAdministratorInput, CreateUserInput, DesignateOnePersonLaboratoryInput,
     ResetUserCredentialsInput, SetUserRolesInput, SignInInput, UnlockSessionInput, VerifyMfaInput,
 };
-use lis_core::{CommandError, ErrorCode, UserId};
+use lis_core::{CommandError, ErrorCode, Phi, UserId};
 use lis_engine::registry::{Access, COMMANDS, CommandSpec};
-use lis_engine::{AuditStream, Engine, ListAuditEventsInput, VerifyAuditChainInput};
+use lis_engine::{
+    AuditExportFormat, AuditStream, Engine, ExportAuditEventsInput, FindAuditRecordsInput,
+    GetAuditEventChangesInput, ListAuditEventsInput, VerifyAuditChainInput,
+};
 
 use crate::fixture::{PASSWORD, TestEngine, secret};
 
@@ -195,7 +198,6 @@ async fn session_call(engine: &Engine, name: &str) -> Option<Result<(), CommandE
             .await
             .map(drop),
         "current_session" => engine.current_session().await.map(drop),
-        "list_listener_status" => engine.list_listener_status().await.map(drop),
         "touch_session" => engine.touch_session().await,
         "lock_session" => engine.lock_session().await,
         "unlock_session" => engine
@@ -241,6 +243,15 @@ async fn pin_call(engine: &Engine, name: &str) -> Option<Result<(), CommandError
             })
             .await
             .map(drop),
+        _ => return listener_call(engine, name).await,
+    })
+}
+
+/// The public analyzer listener queries.
+async fn listener_call(engine: &Engine, name: &str) -> Option<Result<(), CommandError>> {
+    Some(match name {
+        "list_listener_status" => engine.list_listener_status().await.map(drop),
+        "get_listener_restart" => engine.get_listener_restart().await.map(drop),
         _ => return None,
     })
 }
@@ -298,15 +309,47 @@ async fn admin_call(
             })
             .await
             .map(drop),
+        _ => return audit_call(engine, name).await,
+    })
+}
+
+/// The audit trail commands.
+async fn audit_call(engine: &Engine, name: &str) -> Option<Result<(), CommandError>> {
+    Some(match name {
         "list_audit_events" => engine
             .list_audit_events(ListAuditEventsInput {
-                stream: AuditStream::Security,
-                before_seq: None,
+                stream: Some(AuditStream::Security),
                 limit: 10,
-                action: None,
+                ..ListAuditEventsInput::default()
+            })
+            .await
+            .map(drop),
+        "get_audit_event_changes" => engine
+            .get_audit_event_changes(GetAuditEventChangesInput {
+                stream: AuditStream::Security,
+                seq: 1,
+            })
+            .await
+            .map(drop),
+        "export_audit_events" => engine
+            .export_audit_events(
+                ExportAuditEventsInput {
+                    format: AuditExportFormat::Csv,
+                    filter: ListAuditEventsInput {
+                        limit: 10,
+                        ..ListAuditEventsInput::default()
+                    },
+                },
+                None,
+            )
+            .await
+            .map(drop),
+        "find_audit_records" => engine
+            .find_audit_records(FindAuditRecordsInput {
+                text: Phi::new("A26".to_owned()),
                 record_type: None,
-                record_id: None,
-                self_approvals_only: None,
+                stream: None,
+                day: None,
             })
             .await
             .map(drop),

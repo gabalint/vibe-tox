@@ -53,7 +53,8 @@ export function RecordApprovalDialog({ onClose }: { onClose: () => void }) {
     >
       <p>
         Approve a downloaded update before installation. After confirmation, choose its package to
-        record its SHA-256 fingerprint. For the installed app, use Accept running version.
+        record its SHA-256 fingerprint. For the installed app, use Accept this version for clinical
+        use on Installed versions.
       </p>
       <TextInput
         name="version"

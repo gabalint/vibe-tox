@@ -2,13 +2,13 @@
   "id": "operations-settings",
   "title": "Operations settings",
   "summary": "Review versioned backup, health, sign-in and separation-of-duties policies.",
-  "reviewedOn": "2026-10-15",
+  "reviewedOn": "2026-11-09",
   "routes": ["/operations/settings"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
-        "This page presents the settings your account is authorized to read or change. Operations settings cover backup intervals, retention and health thresholds. Security policy covers sign-in behavior. Separation of duties controls the listed requirements for another person’s approval.",
+        "This page presents the settings your account is authorized to read or change. Operations settings cover backup intervals, retention, health thresholds and how early lots are listed as expiring soon. Security policy covers sign-in behavior. Separation of duties controls the listed requirements for another person’s approval.",
         "Use the corresponding change action, review the fields and enter the requested reason and authentication. Each policy change creates a new version; the current values remain visible for review."
       ]
     },
@@ -31,7 +31,7 @@
     {
       "title": "Operations settings",
       "routes": ["/operations/settings"],
-      "purpose": "Set the laboratory’s backup, retention and health thresholds, sign-in policy and separation of duties.",
+      "purpose": "Set the laboratory’s backup, retention and health thresholds, the lot expiry warning, sign-in policy and separation of duties.",
       "access": "Operations settings requires Manage configuration; Security policy requires Manage users; Separation of duties can be read with Approve configuration or Manage quality; only Approve configuration can change it. Each section is shown only with its corresponding authority.",
       "fields": [
         {
@@ -123,6 +123,12 @@
           "meaning": "Wall-clock movement threshold recorded for investigation.",
           "values": "10–3600 seconds; default 60.",
           "rules": "Required whole number when editing; current values are prefilled. Does not change the host clock."
+        },
+        {
+          "name": "Warning before a lot expires",
+          "meaning": "How many days before its expiry date an active lot is listed as expiring soon. Such a lot appears in the Lots expiring soon work queue, carries an Expires in N days badge in Bench setup › Lots, and Create run warns when it is chosen.",
+          "values": "1–365 days; default 14.",
+          "rules": "Required whole number when editing; current values are prefilled. Lots section. A warning only: a lot stays usable through its expiry date and is blocked for new work after it, whatever this value."
         },
         {
           "name": "Idle timeout",

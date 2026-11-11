@@ -13,6 +13,12 @@ function renderPage(listQueues: () => unknown) {
   return renderRoutes([{ path: "/work-queues", element: <WorkQueuesPage /> }], "/work-queues");
 }
 
+const queueOrder = () =>
+  screen
+    .getAllByRole("row")
+    .slice(1)
+    .map((row) => row.querySelector('[role="gridcell"]')?.textContent);
+
 describe("WorkQueuesPage (REQ-OPS-004)", () => {
   beforeEach(() => {
     mockGridLayout();
@@ -40,6 +46,32 @@ describe("WorkQueuesPage (REQ-OPS-004)", () => {
     expect(await screen.findByText("Navigated to /work-queues/review_ready")).toBeTruthy();
   });
 
+  it("lists the most recent work first, queues with nothing waiting last, and turns on click", async () => {
+    const older = { ...REVIEW_QUEUE, queue: "qc_review", label: "QC requiring review" };
+    const newer = {
+      ...REVIEW_QUEUE,
+      queue: "import_quarantine",
+      label: "Open import quarantine",
+      oldestSince: "2026-10-13T11:00:00Z",
+    };
+    const { user } = renderPage(() => [LABEL_QUEUE, older, newer]);
+    expect(await screen.findByRole("gridcell", { name: "Reprint" })).toBeTruthy();
+    const header = screen.getByRole("columnheader", { name: "Oldest item waiting" });
+    expect(header.getAttribute("aria-sort")).toBe("descending");
+    expect(queueOrder()).toEqual([
+      "Open import quarantine",
+      "QC requiring review",
+      "Label print failures",
+    ]);
+    await user.click(header);
+    expect(header.getAttribute("aria-sort")).toBe("ascending");
+    expect(queueOrder()).toEqual([
+      "QC requiring review",
+      "Open import quarantine",
+      "Label print failures",
+    ]);
+  });
+
   it("opens a queue with a single click, with no usage hint", async () => {
     const { user } = renderPage(() => [REVIEW_QUEUE, LABEL_QUEUE]);
     expect(await screen.findByRole("gridcell", { name: "Reprint" })).toBeTruthy();
@@ -51,7 +83,7 @@ describe("WorkQueuesPage (REQ-OPS-004)", () => {
   it("refreshes on request and says when the queues were read", async () => {
     const list = vi.fn(() => [REVIEW_QUEUE]);
     const { user } = renderPage(list);
-    expect(await screen.findByText("Updated 12:00 UTC")).toBeTruthy();
+    expect(await screen.findByText("Updated 12:00:00 UTC")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Refresh" }));
     await vi.waitFor(() => expect(list).toHaveBeenCalledTimes(2));
   });

@@ -2,7 +2,7 @@
   "id": "receive-specimens",
   "title": "Receiving specimens",
   "summary": "Register material for an accepted order, then verify labels and record receipt decisions.",
-  "reviewedOn": "2026-10-22",
+  "reviewedOn": "2026-11-03",
   "routes": ["/orders/:orderId/accession", "/accessions/:accessionId"],
   "sections": [
     {
@@ -45,6 +45,9 @@
   "reviewSources": [
     "ui/src/features/accessioning/specimens/AccessionForm.tsx",
     "ui/src/features/accessioning/specimens/CollectionFields.tsx",
+    "ui/src/components/FieldPicker/FieldPicker.tsx",
+    "ui/src/components/FieldPicker/DateCalendar.tsx",
+    "ui/src/components/FieldPicker/PeriodViews.tsx",
     "ui/src/features/accessioning/specimens/SpecimenList.tsx",
     "ui/src/features/accessioning/specimens/AccessionTestSelection.tsx",
     "ui/src/features/accessioning/specimens/accessionValues.ts",
@@ -141,18 +144,18 @@
           "name": "Collection time known",
           "meaning": "Precision of the collection timing actually supplied.",
           "values": "Date and time (UTC offset supplied); Date and time (named timezone); Date only; time not recorded; Unknown.",
-          "rules": "Required; no default. Choose Unknown if neither date nor time is supplied; do not substitute receipt time."
+          "rules": "Required; no default. Choose Unknown if neither date nor time is supplied; do not substitute receipt time. Choosing Unknown shows a warning: without a collection date, billing for the order is held (Date of service unknown), and correcting it later requires a collection correction and quality review. Date only shows a note that the report will show time not recorded."
         },
         {
           "name": "Collection date",
           "meaning": "Local calendar date at the collection site.",
-          "values": "Real date in YYYY-MM-DD format.",
+          "values": "Real date in YYYY-MM-DD format. Type it, or use the calendar button in the field: the picked day is filled in as YYYY-MM-DD, and days after today in the laboratory timezone cannot be picked.",
           "rules": "Required except when Unknown. Date-only entry cannot exceed the current UTC date by more than one day; this accommodates timezone differences and is not permission to invent a date."
         },
         {
           "name": "Collection time",
           "meaning": "Local clock time at collection.",
-          "values": "24-hour HH:MM, without seconds.",
+          "values": "24-hour HH:MM, without seconds. Type it, or use the clock button in the field: pick the hour, then the minutes; the value is filled in as HH:MM.",
           "rules": "Required for either date-and-time choice; hidden for date-only or Unknown. The resulting instant cannot be in the future."
         },
         {
@@ -186,10 +189,10 @@
           "rules": "Required in each specimen row. The form starts with one blank specimen row, without assuming a count."
         },
         {
-          "name": "Volume / Volume unit / Volume is",
-          "meaning": "Quantity and measurement provenance recorded for the primary containers in this specimen row.",
-          "values": "Positive exact decimal and a unit up to 16 characters; Estimated, Measured or Unknown.",
-          "rules": "Choose how the volume was obtained. Estimated/Measured require amount and unit together; Unknown requires both blank. The row’s volume applies to each generated container, not a split total."
+          "name": "Volume is / Volume / Volume unit",
+          "meaning": "How the volume was obtained, then the quantity, for the primary containers in this specimen row.",
+          "values": "Measured, Estimated or Unknown; a positive exact decimal and a unit up to 16 characters.",
+          "rules": "Volume is comes first, is required and starts empty. Measured or Estimated marks Volume and Volume unit required; leaving either empty highlights it when you save. Unknown empties and disables both. The row’s volume applies to each generated container, not a split total."
         }
       ],
       "actions": [
@@ -222,6 +225,12 @@
           "does": "Copies the configured laboratory timezone into the collection-site field.",
           "availableWhen": "Named-timezone entry and a laboratory timezone is configured.",
           "result": "Changes only the unsaved timezone value; use it only when it is the collection site’s correct zone."
+        },
+        {
+          "name": "Choose the collection date / Choose the collection time",
+          "does": "The calendar and clock buttons inside Collection date and Collection time open a calendar, or hour and minute lists (24-hour). The calendar heading opens the months of the year, and the year heading a decade of years, to reach a distant date quickly.",
+          "availableWhen": "The date or time field is shown for the chosen collection precision.",
+          "result": "Fills the field as YYYY-MM-DD or HH:MM and closes; picking an hour keeps any minutes already entered. The value is checked like a typed one: a future collection instant is still refused on saving. Escape closes without a change."
         },
         {
           "name": "Receive specimens",
@@ -430,18 +439,18 @@
           "name": "Collection time known",
           "meaning": "Precision of the collection timing actually supplied.",
           "values": "Date and time (UTC offset supplied); Date and time (named timezone); Date only; time not recorded; Unknown.",
-          "rules": "Required; no default. Choose Unknown if neither date nor time is supplied; do not substitute receipt time."
+          "rules": "Required; no default. Choose Unknown if neither date nor time is supplied; do not substitute receipt time. Choosing Unknown shows a warning: without a collection date, billing for the order is held (Date of service unknown), and correcting it later requires a collection correction and quality review. Date only shows a note that the report will show time not recorded."
         },
         {
           "name": "Collection date",
           "meaning": "Local calendar date at the collection site.",
-          "values": "Real date in YYYY-MM-DD format.",
+          "values": "Real date in YYYY-MM-DD format. Type it, or use the calendar button in the field: the picked day is filled in as YYYY-MM-DD, and days after today in the laboratory timezone cannot be picked.",
           "rules": "Required except when Unknown. Date-only entry cannot exceed the current UTC date by more than one day; this accommodates timezone differences and is not permission to invent a date."
         },
         {
           "name": "Collection time",
           "meaning": "Local clock time at collection.",
-          "values": "24-hour HH:MM, without seconds.",
+          "values": "24-hour HH:MM, without seconds. Type it, or use the clock button in the field: pick the hour, then the minutes; the value is filled in as HH:MM.",
           "rules": "Required for either date-and-time choice; hidden for date-only or Unknown. The resulting instant cannot be in the future."
         },
         {
@@ -573,7 +582,7 @@
         {
           "name": "Valid from / Valid until",
           "meaning": "The dates over which the source states this evidence applies.",
-          "values": "Real dates in YYYY-MM-DD format.",
+          "values": "Real dates in YYYY-MM-DD format. Type it, or pick it from the calendar button in the field.",
           "rules": "Each optional; an end date cannot precede the start date."
         },
         {
@@ -585,7 +594,7 @@
         {
           "name": "Related provider NPI",
           "meaning": "The provider identified by this evidence.",
-          "values": "A valid ten-digit NPI with a valid check digit.",
+          "values": "A valid ten-digit NPI with a valid check digit. The field hint reads “10 digits. The last digit is checked automatically.” Fewer or more than ten digits shows “The NPI must be exactly 10 digits.”; a failed check digit shows “This NPI is not valid. Please check the number for a typo.”",
           "rules": "Required for Provider enrollment; optional for other evidence. For order enrollment evidence it must identify the ordering practitioner."
         },
         {
@@ -769,6 +778,12 @@
           "does": "Copies the configured laboratory timezone into the collection-site field.",
           "availableWhen": "Named-timezone entry and a laboratory timezone is configured.",
           "result": "Changes only the unsaved timezone value; use it only when it is the collection site’s correct zone."
+        },
+        {
+          "name": "Choose the collection date / Choose the collection time",
+          "does": "The calendar and clock buttons inside Collection date and Collection time open a calendar, or hour and minute lists (24-hour). The calendar heading opens the months of the year, and the year heading a decade of years, to reach a distant date quickly.",
+          "availableWhen": "The date or time field is shown for the chosen collection precision.",
+          "result": "Fills the field as YYYY-MM-DD or HH:MM and closes; picking an hour keeps any minutes already entered. The value is checked like a typed one: a future collection instant is still refused on saving. Escape closes without a change."
         },
         {
           "name": "Resolve collection review / Resolve review",

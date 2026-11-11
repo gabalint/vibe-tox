@@ -1,18 +1,24 @@
 import {
   Anchor,
+  Cable,
   ClipboardCheck,
   ClipboardList,
   ContactRound,
   FileCheck,
+  FileClock,
   FileInput,
+  FileOutput,
   Files,
   FileText,
   Inbox,
+  LayoutTemplate,
   ListChecks,
   type LucideIcon,
   Microscope,
+  Network,
   Receipt,
   ReceiptText,
+  Route,
   ScanBarcode,
   ScrollText,
   Send,
@@ -53,8 +59,6 @@ export interface NavSection {
   heading?: string;
   /** Stable work-area symbol, also used by the compact navigation rail. */
   icon?: LucideIcon;
-  /** Closed until the person opens it or goes to one of its screens. */
-  collapsedByDefault?: boolean;
   screens: readonly Screen[];
 }
 
@@ -211,6 +215,16 @@ export const navigation: readonly NavSection[] = [
         page: () => import("@/features/reports/history/ReportsPage").then((m) => m.ReportsPage),
         capabilities: ["deliver_reports", "manage_quality"],
       },
+      {
+        path: "/reports/templates",
+        label: "Report templates",
+        icon: LayoutTemplate,
+        page: () =>
+          import("@/features/reports/templates/ReportTemplatesPage").then(
+            (m) => m.ReportTemplatesPage,
+          ),
+        capabilities: ["manage_configuration", "manage_quality"],
+      },
     ],
   },
   {
@@ -235,6 +249,13 @@ export const navigation: readonly NavSection[] = [
           import("@/features/billing/work/BillingWorkPage").then((m) => m.BillingWorkPage),
         capabilities: ["billing"],
         queue: "billing_work",
+      },
+      {
+        path: "/billing/handoffs",
+        label: "Billing handoffs",
+        icon: FileOutput,
+        page: () => import("@/features/billing/handoffs/HandoffsPage").then((m) => m.HandoffsPage),
+        capabilities: ["billing"],
       },
       {
         path: "/billing/class-mappings",
@@ -263,6 +284,39 @@ export const navigation: readonly NavSection[] = [
         icon: Anchor,
         page: () => import("@/features/audit/anchors/AnchorsPage").then((m) => m.AnchorsPage),
         capabilities: ["view_audit"],
+      },
+    ],
+  },
+  {
+    heading: "Interfaces",
+    icon: Network,
+    screens: [
+      {
+        path: "/interfaces/connections",
+        label: "Connections",
+        icon: Cable,
+        page: () =>
+          import("@/features/interfaces/connections/ConnectionsPage").then(
+            (m) => m.ConnectionsPage,
+          ),
+        capabilities: ["manage_configuration"],
+      },
+      {
+        path: "/interfaces/logs",
+        label: "Logs",
+        icon: FileClock,
+        page: () => import("@/features/interfaces/logs/LogsPage").then((m) => m.LogsPage),
+        capabilities: ["manage_configuration"],
+        tabbed: true,
+      },
+      {
+        path: "/interfaces/unrouted",
+        label: "Unrouted messages",
+        icon: Route,
+        page: () =>
+          import("@/features/interfaces/unrouted/UnroutedPage").then((m) => m.UnroutedPage),
+        capabilities: ["manage_configuration"],
+        queue: "unrouted_messages",
       },
     ],
   },

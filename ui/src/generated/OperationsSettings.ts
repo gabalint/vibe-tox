@@ -63,4 +63,8 @@ osSupportWarnDays: number,
 /**
  * A wall-clock jump larger than this is recorded.
  */
-clockJumpSeconds: number, };
+clockJumpSeconds: number, 
+/**
+ * Days before a lot's expiry date from which the lot is listed as expiring soon.
+ */
+lotExpiryWarnDays: number, };

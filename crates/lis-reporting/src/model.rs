@@ -39,6 +39,25 @@ pub type ImpactAssessmentId = Id<ImpactAssessment>;
 pub enum PreservationIncident {}
 /// An issued file found missing or damaged (NFR-07).
 pub type PreservationIncidentId = Id<PreservationIncident>;
+/// Marker for [`LayoutVersionId`].
+pub enum LayoutVersion {}
+/// One drafted choice of report layout (REQ-RPT-007).
+pub type LayoutVersionId = Id<LayoutVersion>;
+
+text_enum! {
+    /// Where a report layout version stands (`0006_report_layouts.sql`).
+    #[ts(export)]
+    LayoutVersionState {
+        /// Drafted, waiting for approval; affects no report.
+        Draft = "draft",
+        /// Approved: new candidates use its layout.
+        Active = "active",
+        /// Replaced by a later approval.
+        Superseded = "superseded",
+        /// Rejected with a reason; never takes effect.
+        Rejected = "rejected",
+    }
+}
 
 text_enum! {
     /// How a revision relates to the previous one (REQ-RPT-002).

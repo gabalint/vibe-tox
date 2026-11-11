@@ -1,11 +1,16 @@
 /*
- * Design tokens (docs/governance/ui-standards.md#color). Light theme only.
- * Contrast (NFR-09), computed by tokens.test.ts: text 16.6:1; muted text 6.3:1 on the page,
- * 5.8:1 on the row tint; control border 4.7:1; accent 6.7:1 on white, white on accent 6.7:1,
- * white on accent hover 8.7:1; focus ring 6.7:1 on white, 5.8:1 on the row tint; each
+ * Design tokens (docs/governance/ui-standards.md#color): the light theme, then the dark theme's
+ * values for the same color roles. The neutral scale is not themed: --color-neutral-0 stays
+ * the white of paper, for QR codes and report thumbnails.
+ * Light contrast (NFR-09), computed by tokens.test.ts: text 16.6:1; muted text 6.3:1 on the
+ * page, 5.8:1 on the row tint; control border 4.7:1; accent 6.7:1 on white, white on accent
+ * 6.7:1, white on accent hover 8.7:1; focus ring 6.7:1 on white, 5.8:1 on the row tint; each
  * tone's text on its fill 6.6:1 or more; white on the hold and danger solids 6.6:1 or more.
+ * The test checks the dark theme against the same minimums.
  */
 :root {
+  color-scheme: light;
+
   /* Neutral scale */
   --color-neutral-0: #ffffff;
   --color-neutral-50: #f6f7f9;
@@ -100,4 +105,50 @@
 
   /* Motion: never over 150ms */
   --duration-fast: 120ms;
+}
+
+/*
+ * Dark theme: set by the Appearance choice (app/appearance.ts). Screen only, so printing
+ * stays light. Surfaces get lighter as they rise: page, then panels, then hover.
+ */
+@media screen {
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --color-text: #e6e9ee;
+    --color-text-muted: #a9b2bf;
+    --color-text-inverse: #11151a;
+    --color-surface: #1e232a;
+    --color-surface-sunken: #15191e;
+    --color-surface-hover: #2a3039;
+    --color-border: #353c47;
+    --color-border-control: #7d8797;
+    --color-accent: #6aa8ec;
+    --color-accent-hover: #93c0f2;
+    --color-accent-subtle: #1c3250;
+    --color-backdrop: rgb(0 0 0 / 60%);
+
+    --tone-info-bg: #232c38;
+    --tone-info-border: #8496ad;
+    --tone-info-text: #c0cbdb;
+    --tone-success-bg: #143021;
+    --tone-success-border: #4fa56c;
+    --tone-success-text: #a3dbb4;
+    --tone-warning-bg: #362a0a;
+    --tone-warning-border: #c99a2e;
+    --tone-warning-text: #f2d081;
+    --tone-danger-bg: #3d1715;
+    --tone-danger-border: #f08a84;
+    --tone-danger-text: #ffb3ad;
+    --tone-danger-solid: #f08a84;
+    --tone-hold-bg: #371830;
+    --tone-hold-border: #e48ac2;
+    --tone-hold-text: #f7bde1;
+    --tone-hold-solid: #e48ac2;
+    --tone-neutral-bg: #2a3039;
+    --tone-neutral-border: #8a94a3;
+    --tone-neutral-text: #c8ced8;
+
+    --shadow-overlay: 0 8px 24px rgb(0 0 0 / 50%);
+  }
 }

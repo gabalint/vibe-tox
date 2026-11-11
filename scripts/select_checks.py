@@ -13,6 +13,7 @@ TOOLING = {
     "scripts/select_checks.py", "scripts/test_select_checks.py",
     "scripts/check_repository_metadata.py", "scripts/test_repository_metadata.py",
     "scripts/release_version.py", "scripts/test_release_version.py",
+    "scripts/update_feed.py", "scripts/test_update_feed.py",
     ".github/workflows/ci.yml", ".github/workflows/package.yml", ".gitignore",
 }
 EMBEDDED = {

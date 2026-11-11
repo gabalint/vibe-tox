@@ -13,7 +13,10 @@ import type { QueueCount } from "./NavItem";
 import frame from "./Sidebar.module.css";
 import styles from "./SideNav.module.css";
 
-/** A disclosure when expanded; a labeled link popover when the sidebar is compact. */
+/**
+ * A disclosure when expanded; a labeled link popover when the sidebar is compact. A closed
+ * disclosure shows its entries' total count, which the open entries show one by one.
+ */
 export function NavGroup({
   heading,
   icon: Icon = Folder,
@@ -74,6 +77,7 @@ export function NavGroup({
       <button
         type="button"
         id={`${id}-heading`}
+        aria-label={isOpen ? undefined : label}
         aria-expanded={isOpen}
         aria-controls={isOpen ? `${id}-list` : undefined}
         className={styles.group}
@@ -82,6 +86,11 @@ export function NavGroup({
       >
         <Icon aria-hidden="true" className={styles.icon} />
         <span className={styles.label}>{heading}</span>
+        {!isOpen && count && (
+          <span aria-hidden="true" className={styles.count}>
+            {count.shown}
+          </span>
+        )}
         <Chevron aria-hidden="true" className={styles.chevron} />
       </button>
       {isOpen && (

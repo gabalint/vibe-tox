@@ -31,6 +31,7 @@ const DETAIL: ImportAttemptDetail = {
   rowsSetAside: 0,
   rowsRetained: 0,
   processedAt: "2026-10-12T11:00:00Z",
+  receivedAt: "2026-10-12T10:58:00Z",
   registrationId: null,
   file: null,
   setAside: [],
@@ -45,6 +46,9 @@ const DETAIL: ImportAttemptDetail = {
       reason: "conflicting_duplicate",
       state: "open",
       revision: 1,
+      runId: null,
+      specimenId: null,
+      matchingRuns: [],
     },
     {
       itemId: "item-2",
@@ -56,6 +60,9 @@ const DETAIL: ImportAttemptDetail = {
       reason: "unknown_sample",
       state: "rejected",
       revision: 2,
+      runId: null,
+      specimenId: null,
+      matchingRuns: [],
     },
   ],
 };
@@ -84,6 +91,7 @@ const SECOND: ImportAttemptDetail = {
   outcome: "processed",
   rowsQuarantined: 0,
   processedAt: "2026-10-12T12:00:00Z",
+  receivedAt: "2026-10-12T11:58:00Z",
   quarantine: [],
 };
 
@@ -94,10 +102,20 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     const list = vi.fn(() => [DETAIL]);
     const { user, container } = renderPage("/review/imports", { list_import_attempts: list });
     await screen.findByRole("gridcell", { name: "Synthetic analyzer 1" });
-    expect(screen.getByText("Processed, some rows quarantined")).toBeTruthy();
+    expect(screen.getByRole("gridcell", { name: "Processed, some rows quarantined" })).toBeTruthy();
     // One more than shown, so the list knows whether more exist.
     expect(list).toHaveBeenCalledWith({
-      input: { instrumentId: null, limit: 200, before: null, afterImportAttemptId: undefined },
+      input: {
+        instrumentId: null,
+        outcome: null,
+        receivedFrom: null,
+        receivedBefore: null,
+        search: null,
+        hideDuplicates: false,
+        limit: 200,
+        before: null,
+        afterImportAttemptId: undefined,
+      },
     });
     expect(screen.getByText(/^Updated /)).toBeTruthy();
     await expectNoA11yViolations(container, { wholePage: true });
@@ -124,6 +142,24 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     expect(screen.getByText("No rows were quarantined.")).toBeTruthy();
   });
 
+  it("says the whole message was held when it was refused, not that no rows were", async () => {
+    const refused: ImportAttemptDetail = {
+      ...DETAIL,
+      outcome: "quarantined",
+      failureCode: "unregistered_source",
+      rowsTotal: 3,
+      rowsNew: 0,
+      rowsQc: 0,
+      rowsQuarantined: 3,
+      quarantine: [],
+    };
+    renderPage(`/review/imports/${ATTEMPT_ID}`, { get_import_attempt: () => refused });
+    expect(
+      await screen.findByText("The whole message was held: 3 rows. See Message failure above."),
+    ).toBeTruthy();
+    expect(screen.queryByText("No rows were quarantined.")).toBeNull();
+  });
+
   it("says when more exist than are shown", async () => {
     const many = Array.from({ length: 201 }, (_, index) => ({
       ...DETAIL,
@@ -139,7 +175,17 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     await user.click(screen.getByRole("button", { name: "Load older imports" }));
     await vi.waitFor(() => expect(grid.getAttribute("aria-rowcount")).toBe("202"));
     expect(list).toHaveBeenLastCalledWith({
-      input: { instrumentId: null, limit: 200, before: null, afterImportAttemptId: "attempt-199" },
+      input: {
+        instrumentId: null,
+        outcome: null,
+        receivedFrom: null,
+        receivedBefore: null,
+        search: null,
+        hideDuplicates: false,
+        limit: 200,
+        before: null,
+        afterImportAttemptId: "attempt-199",
+      },
     });
     expect(screen.queryByRole("button", { name: "Load older imports" })).toBeNull();
   });
@@ -167,7 +213,11 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
       resolve_quarantine_item: resolve,
     });
     await screen.findByRole("grid", { name: "Quarantined rows" });
-    expect(await rowActionLabels(user, "R4")).toEqual(["Accept as reprocessing", "Reject row"]);
+    expect(await rowActionLabels(user, "R4")).toEqual([
+      "Retry import",
+      "Accept as reprocessing",
+      "Reject row",
+    ]);
     await openRowWithEnter(user, "R4");
     await user.click(
       within(panel("Row R4")).getByRole("button", { name: "Accept as reprocessing" }),
@@ -202,7 +252,7 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
       get_import_attempt: () => ({ ...DETAIL, quarantine: [...DETAIL.quarantine, unmapped] }),
     });
     await screen.findByRole("grid", { name: "Quarantined rows" });
-    expect(await rowActionLabels(user, "R6")).toEqual(["Reject row"]);
+    expect(await rowActionLabels(user, "R6")).toEqual(["Retry import", "Reject row"]);
     await openRow(user, "R6");
     const row = panel("Row R6");
     expect(within(row).queryByRole("button", { name: "Accept as reprocessing" })).toBeNull();
@@ -244,6 +294,73 @@ describe("Result imports (REQ-ANA-003)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     expect(retry).toHaveBeenCalledWith({
       input: { receiptId: DETAIL.receiptId, reason: "Source fixed" },
     });
+  });
+
+  it("shows one instrument's imports when the address names it", async () => {
+    const list = vi.fn(() => []);
+    renderPage(`/review/imports?instrument=${INSTRUMENT.instrumentId}`, {
+      list_import_attempts: list,
+    });
+    expect(
+      await screen.findByText("No message from this instrument has been processed yet."),
+    ).toBeTruthy();
+    expect(list).toHaveBeenCalledWith({
+      input: {
+        instrumentId: INSTRUMENT.instrumentId,
+        outcome: null,
+        receivedFrom: null,
+        receivedBefore: null,
+        search: null,
+        hideDuplicates: false,
+        limit: 200,
+        before: null,
+        afterImportAttemptId: undefined,
+      },
+    });
+    expect(
+      await screen.findByRole("button", { name: /Synthetic analyzer 1 Instrument/ }),
+    ).toBeTruthy();
+  });
+
+  it("shows a duplicate as not imported, linked to the earlier attempt, with no retry", async () => {
+    const duplicate: ImportAttemptDetail = {
+      ...SECOND,
+      importAttemptId: "00000000-0000-7000-8000-000000008003",
+      attemptNo: 1,
+      receiptId: "00000000-0000-7000-8000-000000009003",
+      outcome: "duplicate",
+      rowsTotal: 0,
+      rowsNew: 0,
+      rowsQc: 0,
+      duplicateOfAttemptId: ATTEMPT_ID,
+    };
+    const { user, container } = renderPage(`/review/imports/${duplicate.importAttemptId}`, {
+      get_import_attempt: (args) =>
+        (args as { input: { importAttemptId: string } }).input.importAttemptId === ATTEMPT_ID
+          ? DETAIL
+          : duplicate,
+    });
+    expect(await screen.findByText("Duplicate – not imported")).toBeTruthy();
+    expect(
+      screen.getByText("The same message was received before from this instrument"),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Retry import" })).toBeNull();
+    expect(screen.queryByText("Quarantined rows")).toBeNull();
+    await expectNoA11yViolations(container, { wholePage: true });
+    await user.click(screen.getByRole("link", { name: "Open the earlier import attempt" }));
+    expect(await screen.findByText("Processed, some rows quarantined")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Retry import" })).toBeTruthy();
+  });
+
+  it("says when a duplicate's earlier message is not imported yet", async () => {
+    renderPage(`/review/imports/${ATTEMPT_ID}`, {
+      get_import_attempt: () => ({ ...SECOND, outcome: "duplicate", rowsTotal: 0, rowsNew: 0 }),
+    });
+    expect(
+      await screen.findByText(
+        "The earlier message has not been imported yet. Refresh to check again.",
+      ),
+    ).toBeTruthy();
   });
 
   it("says when nothing has been imported", async () => {

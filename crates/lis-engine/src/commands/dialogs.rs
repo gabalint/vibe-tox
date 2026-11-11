@@ -15,6 +15,7 @@ use super::backup::{
 };
 use super::file_templates::OPEN_LAYOUT_SAMPLE;
 use super::operations::RECORD_UPDATE_APPROVAL;
+use super::partner::CHOOSE_PARTNER_FOLDER;
 use super::result_files::{CHOOSE_RESULT_FOLDER, LOAD_RESULT_FILE};
 use crate::engine::Engine;
 use crate::registry::CommandSpec;
@@ -42,6 +43,8 @@ pub enum DialogCommand {
     ChooseResultFolder,
     /// `open_layout_sample`: a sample result file for the template page.
     OpenLayoutSample,
+    /// `choose_partner_folder`: a connection's folder.
+    ChoosePartnerFolder,
 }
 
 impl DialogCommand {
@@ -57,6 +60,7 @@ impl DialogCommand {
             Self::LoadResultFile => &LOAD_RESULT_FILE,
             Self::ChooseResultFolder => &CHOOSE_RESULT_FOLDER,
             Self::OpenLayoutSample => &OPEN_LAYOUT_SAMPLE,
+            Self::ChoosePartnerFolder => &CHOOSE_PARTNER_FOLDER,
         }
     }
 }
@@ -81,7 +85,8 @@ impl Engine {
                 | DialogCommand::VerifyAuditAnchors
                 | DialogCommand::RecordUpdateApproval
                 | DialogCommand::LoadResultFile
-                | DialogCommand::ChooseResultFolder => Ok(()),
+                | DialogCommand::ChooseResultFolder
+                | DialogCommand::ChoosePartnerFolder => Ok(()),
                 DialogCommand::OpenLayoutSample => self.require_template_access(&call).await,
             }
         })

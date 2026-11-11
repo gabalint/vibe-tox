@@ -43,6 +43,14 @@ pub enum RuntimeError {
     /// The approved version has started, so the approval is part of its history.
     #[error("This version is already installed; its approval can no longer be withdrawn.")]
     ApprovalInstalled,
+    /// The version to install has no current approval.
+    #[error("Record the update approval for this version before installing it.")]
+    InstallNotApproved,
+    /// The downloaded package is not the one the approval names.
+    #[error(
+        "The downloaded package differs from the approved one. Download the update again and record a new approval."
+    )]
+    PackageNotApproved,
     /// Only the running version can be accepted.
     #[error("Only the version that is running now can be accepted.")]
     VersionNotRunning,
@@ -91,6 +99,8 @@ impl RuntimeError {
             | Self::PreUpdateBackupInvalid
             | Self::ApprovalWithdrawn
             | Self::ApprovalInstalled
+            | Self::InstallNotApproved
+            | Self::PackageNotApproved
             | Self::VersionNotRunning
             | Self::VersionNotApproved
             | Self::VersionNotStartedSinceApproval

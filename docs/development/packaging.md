@@ -5,6 +5,31 @@ builds ([branches and releases](releases.md)). They are not a production release
 validated for clinical use. Publisher signing, notarization and the updater remain blocked on the
 publisher and supported-release decisions in [Q-19 and Q-34](../planning/open-questions.md).
 
+## Product name and compatibility
+
+The public project name is **OpenBGA/tox**, hosted by the **OpenBGA** organization
+at [`openbga/tox`](https://github.com/openbga/tox). The presentation website and
+documentation, desktop window titles and new authenticator enrollments use this
+name. Tauri's `productName` excludes `/`, so OS bundles and installers use
+**OpenBGA Tox** (`OpenBGA Tox.app` on macOS), and published download filenames use
+`openbga-tox_<version>_<os>-<arch>.<ext>`. The Tauri bundle identifier remains
+`org.vibetox.lis`, and the executable remains `lis-desktop`.
+
+Persistent names are compatibility contracts: keep the OS key-store and security-key
+RP identities, `VibeToxLIS` backup directory, versioned `vibe-tox-*` formats,
+cryptographic domain strings, interface application identifiers and saved UI
+preference keys. Recovery-kit and export filenames retain their existing prefixes.
+New authenticator enrollment labels use OpenBGA/tox; existing authenticator entries
+may still show their original label. Renaming does not rotate credentials or rewrite
+stored records.
+
+Changing Tauri's product name also changes platform bundle/install names. Before
+publishing a renamed build, qualify upgrade from the previous development build on
+Windows, macOS and Linux, including app discovery, shortcuts, uninstall entries and
+the existing data/key-store access. A stable bundle identifier alone does not prove
+installer upgrade continuity. This remains part of the real-host release checks
+below (NFR-24, NFR-33; Q-19, Q-34).
+
 ## Configured bundles
 
 Tauri automatically merges the matching `src-tauri/tauri.<platform>.conf.json` file into the main
@@ -45,7 +70,7 @@ The package workflow verifies the completed `.app` before uploading:
 
 ```bash
 codesign --verify --deep --strict --verbose=2 \
-  "$CARGO_TARGET_DIR/release/bundle/macos/Vibe Tox LIS.app"
+  "$CARGO_TARGET_DIR/release/bundle/macos/OpenBGA Tox.app"
 ```
 
 This follows Apple's [signature verification guidance](https://developer.apple.com/forums/thread/706379)
@@ -120,11 +145,11 @@ part of [G2-09](../quality/open-items-g1-g2.md), not a waiver of that gate.
 | Item | Current state | Release requirement |
 | --- | --- | --- |
 | Project licence | GPL-3.0-only adopted ([ADR 0017](../architecture/decisions/0017-gplv3-license.md)); the canonical [LICENSE](../../LICENSE) defines the project license. Third-party material retains its applicable terms and notices. | Include license texts and applicable notices; verify dependency compatibility and provide corresponding source for each covered binary under GPLv3 section 6. Ownership administration remains Q-11. |
-| Publisher identity | The plain metadata publisher is “Vibe Toxicology LIS project,” not a legal publisher or signing identity. | Decide the legal publisher entity and name (Q-19/Q-34). |
+| Publisher identity | The plain metadata publisher is “OpenBGA,” not a legal publisher or signing identity. | Decide the legal publisher entity and name (Q-19/Q-34). |
 | Windows signing | Certificate thumbprint, digest algorithm, timestamp URL and custom signing command are explicitly empty. | Authenticode-sign and verify both the executable and NSIS installer. |
 | macOS trust | The complete app bundle is ad-hoc signed and its signature checked during packaging. Developer ID signing and notarization are not configured. | Sign with Developer ID, notarize, staple and verify on a clean host. |
 | Linux signing | Packages and repository metadata are unsigned. | Choose the release channel and signing method, then verify on each supported distribution. |
-| Updater | Updater artifacts are disabled; no endpoint, public key or private key is configured. | After Q-19/Q-34, retain lab approval and verified pre-update snapshot requirements (NFR-24). |
+| Updater | Accepted in [ADR 0020](../architecture/decisions/0020-in-app-updates.md). The `nightly` and `release` channels build Minisign-signed update artifacts and publish `latest.json` (and `nightly.json`) once the signing secret and public-key variable are set ([in-app updates](releases.md#in-app-updates)). Local and `artifacts` builds have no updater. The manifest is neither signed nor expiring. | Configure the signing secret and public key; retain lab approval and the verified pre-update snapshot (NFR-24); add a signed, expiring manifest and freeze detection (NFR-21, G2-03); qualify installation on each OS, including macOS. |
 | File associations | None. | Add only if a user workflow and safe parser boundary are approved. |
 
 Before conveying a covered binary, prepare and verify its matching corresponding

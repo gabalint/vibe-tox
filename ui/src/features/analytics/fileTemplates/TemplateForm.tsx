@@ -11,9 +11,9 @@ import type { RegisterFileSourceInput } from "@/generated/RegisterFileSourceInpu
 import type { SourceRegistrationView } from "@/generated/SourceRegistrationView";
 import type { SourceTestCodeInput } from "@/generated/SourceTestCodeInput";
 import { useCommandMutation } from "@/lib/commands";
+import { benchInstrumentPath } from "@/lib/instrumentPages";
 import { UnsavedChangesGuard } from "@/lib/UnsavedChangesGuard";
 import { SOURCE_QUERIES } from "../contract";
-import { benchInstrumentPath } from "../paths";
 import { CheckSection } from "./CheckSection";
 import { ColumnsSection, UnitsSection } from "./ColumnsSection";
 import { MappingSteps } from "./MappingSteps";
@@ -90,7 +90,10 @@ export function TemplateForm({ instrumentId }: { instrumentId: string }) {
   return (
     <FormProvider {...form}>
       {/* Before the redirect, so the guard is released when the instrument opens. */}
-      <UnsavedChangesGuard when={(form.formState.isDirty || sample !== null) && !saved} />
+      <UnsavedChangesGuard
+        form="New file template"
+        when={(form.formState.isDirty || sample !== null) && !saved}
+      />
       {saved && <Navigate to={benchInstrumentPath(instrumentId)} />}
       <Form
         aria-label="New file template"

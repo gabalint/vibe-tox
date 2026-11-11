@@ -4,12 +4,14 @@ import styles from "./Form.module.css";
 interface FieldLabelProps {
   children: string;
   isRequired?: boolean;
+  /** Read by screen readers only: the field's value names it, such as "All connections". */
+  isHidden?: boolean;
 }
 
 /** A field's visible label, with the required marker. */
-export function FieldLabel({ children, isRequired }: FieldLabelProps) {
+export function FieldLabel({ children, isRequired, isHidden }: FieldLabelProps) {
   return (
-    <Label className={styles.label}>
+    <Label className={styles.label} data-hidden={isHidden || undefined}>
       {children}
       {isRequired && (
         <span className={styles.required} aria-hidden="true">

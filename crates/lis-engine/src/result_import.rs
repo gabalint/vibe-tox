@@ -3,6 +3,8 @@
 //! parsing happen outside a database transaction; one typed `import_receipt`
 //! write applies the semantic effect. The reader follows the registration: a
 //! file template reads the bytes as a result file (result files brief §5).
+//! A receipt identical to an earlier one is listed as a `duplicate` attempt
+//! without being read.
 
 use std::str::FromStr;
 use std::sync::Arc;
@@ -60,14 +62,21 @@ async fn process(db: Arc<Database>, item: LeasedItem, retry: bool) -> Result<(),
         })
         .await
         .map_err(interface_failure)?;
-    if receipt.state != ReceiptState::Complete || receipt.duplicate_of.is_some() {
+    if receipt.state != ReceiptState::Complete {
         return Ok(());
     }
-    let registration = db
-        .read(move |conn| lis_analytical::active_registration(conn, receipt.instrument_id))
-        .await
-        .map_err(result_dependency_failure)?;
-    let source = read_source(&db, &receipt, registration.as_ref()).await?;
+    let (registration, source) = match receipt.duplicate_of {
+        // Identical to an earlier receipt: listed, linked to it, not read again.
+        Some(earlier) => (None, ImportSource::Duplicate(earlier)),
+        None => {
+            let registration = db
+                .read(move |conn| lis_analytical::active_registration(conn, receipt.instrument_id))
+                .await
+                .map_err(result_dependency_failure)?;
+            let source = read_source(&db, &receipt, registration.as_ref()).await?;
+            (registration, source)
+        }
+    };
     let instrument_id = receipt.instrument_id;
     db.write(principal, CorrelationId::generate(), move |ctx| {
         lis_results::import_receipt(

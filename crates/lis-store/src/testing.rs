@@ -2,8 +2,10 @@
 //! clock and principals with chosen capabilities. Enable with the `testing`
 //! feature from `[dev-dependencies]`.
 
+use std::net::{Ipv4Addr, TcpListener};
 use std::path::Path;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 use lis_core::{
     Capability, FixedClock, ModuleSchema, Principal, SessionId, UserId, UtcTimestamp, WorkstationId,
@@ -81,4 +83,58 @@ pub fn principal(capabilities: &[Capability]) -> Principal {
         WorkstationId::generate(),
         capabilities.iter().copied(),
     )
+}
+
+/// The first port [`local_port`] hands out, and how many it cycles through: below the
+/// ephemeral ranges of Linux (32768 up), macOS and Windows (49152 up).
+const PORTS_FROM: u32 = 20_000;
+const PORTS: u32 = 12_000;
+
+/// A loopback TCP port that nothing listens on now, for a listener or printer the code
+/// under test opens later. Asking the OS for port 0 and closing it is not enough: until
+/// the code binds, the OS may give the same port to another test or use it for an
+/// outgoing connection. These ports lie outside the ephemeral range, each is handed out
+/// once per process, and a process starts at an offset of its own.
+#[must_use]
+pub fn local_port() -> u16 {
+    static NEXT: AtomicU32 = AtomicU32::new(0);
+    let offset = std::process::id().wrapping_mul(7_919) % PORTS;
+    loop {
+        let next = NEXT.fetch_add(1, Ordering::Relaxed);
+        assert!(next < PORTS, "the test process used every local port");
+        let candidate = PORTS_FROM + (offset + next) % PORTS;
+        #[expect(clippy::expect_used, reason = "the range is below u16::MAX")]
+        let port = u16::try_from(candidate).expect("port fits in u16");
+        // Skip a port another program on this computer already uses.
+        if TcpListener::bind((Ipv4Addr::LOCALHOST, port)).is_ok() {
+            return port;
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeSet;
+    use std::sync::Mutex;
+
+    use super::*;
+
+    // Tests running side by side never share a port, and none is an ephemeral port.
+    #[test]
+    fn local_ports_are_distinct_and_outside_the_ephemeral_range() {
+        let ports = Mutex::new(Vec::new());
+        let take_fifty = || {
+            let mine: Vec<u16> = (0..50).map(|_| local_port()).collect();
+            ports.lock().unwrap().extend(mine);
+        };
+        std::thread::scope(|scope| {
+            for _ in 0..8 {
+                scope.spawn(take_fifty);
+            }
+        });
+        let ports = ports.into_inner().unwrap();
+        let distinct: BTreeSet<u16> = ports.iter().copied().collect();
+        assert_eq!(distinct.len(), ports.len());
+        assert!(ports.iter().all(|&port| (20_000..32_000).contains(&port)));
+    }
 }

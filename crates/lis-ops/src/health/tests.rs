@@ -106,6 +106,7 @@ fn ubuntu(version: &str) -> OsIdentity {
     OsIdentity::Linux(LinuxRelease {
         id: "ubuntu".into(),
         version_id: version.into(),
+        name: None,
         pretty_name: None,
     })
 }

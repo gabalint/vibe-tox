@@ -4,6 +4,7 @@ import type { SessionInfo } from "@/generated/SessionInfo";
 import { expectNoA11yViolations } from "@/lib/test/a11y";
 import { engineError, mockCommands } from "@/lib/test/ipc";
 import { renderRoutes } from "@/lib/test/router";
+import { useUnsavedForm } from "@/lib/unsavedForms";
 import { AuthGate } from "./AuthGate";
 import { TEST_SESSION } from "./testSession";
 import { UserMenu } from "./UserMenu";
@@ -18,6 +19,11 @@ function renderMenu() {
 }
 
 type User = ReturnType<typeof renderMenu>["user"];
+
+function UnsavedOrder() {
+  useUnsavedForm("New order", true);
+  return null;
+}
 
 async function choose(user: User, item: string) {
   await user.click(await screen.findByRole("button", { name: "Signed in as Test Analyst" }));
@@ -90,6 +96,25 @@ describe("UserMenu", () => {
     expect(await screen.findByText("Navigated to /about")).toBeTruthy();
   });
 
+  it("shows the running version last and copies it, staying open (#4584)", async () => {
+    mockCommands({
+      current_session: () => TEST_SESSION,
+      app_info: () => ({ appVersion: "0.1.2-nightly.20261103.24" }),
+    });
+    const { user } = renderMenu();
+    await user.click(await screen.findByRole("button", { name: "Signed in as Test Analyst" }));
+    const item = await screen.findByRole("menuitem", {
+      name: "Version 0.1.2-nightly.20261103.24, Copy",
+    });
+    expect(screen.getAllByRole("menuitem").at(-1)).toBe(item);
+    await expectNoA11yViolations(document.body);
+    await user.click(item);
+    expect(
+      await screen.findByRole("menuitem", { name: "Version 0.1.2-nightly.20261103.24, Copied" }),
+    ).toBeTruthy();
+    expect(await navigator.clipboard.readText()).toBe("0.1.2-nightly.20261103.24");
+  });
+
   it("enables and disables the personal PIN from the menu and refreshes its status", async () => {
     let enabled = false;
     mockCommands({
@@ -152,6 +177,49 @@ describe("UserMenu", () => {
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeTruthy();
   });
 
+  it("asks before signing out with an unsaved form, Cancel first (#4585)", async () => {
+    let session: SessionInfo | null = TEST_SESSION;
+    const signOut = vi.fn(() => {
+      session = null;
+      return null;
+    });
+    mockCommands({
+      current_session: () => session,
+      setup_status: () => ({ needsAdministrator: false }),
+      sign_out: signOut,
+      set_unsaved_forms: () => null,
+    });
+    const { user } = renderRoutes(
+      [
+        {
+          path: "/",
+          element: (
+            <AuthGate>
+              {(signedIn) => (
+                <>
+                  <UserMenu session={signedIn} />
+                  <UnsavedOrder />
+                </>
+              )}
+            </AuthGate>
+          ),
+        },
+      ],
+      "/",
+    );
+    await choose(user, "Sign out");
+    const dialog = await screen.findByRole("alertdialog", { name: "Leave without saving?" });
+    expect(dialog.textContent).toContain("You have unsaved changes in New order.");
+    expect(within(dialog).getByRole("button", { name: "Cancel" })).toBe(document.activeElement);
+    await user.keyboard("{Enter}");
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(signOut).not.toHaveBeenCalled();
+    await choose(user, "Sign out");
+    await user.click(await screen.findByRole("button", { name: "Sign out without saving" }));
+    expect(await screen.findByRole("heading", { name: "Sign in" })).toBeTruthy();
+    expect(signOut).toHaveBeenCalledOnce();
+  });
+
   it("stays signed in and says so when the engine refuses to sign out", async () => {
     mockCommands({
       current_session: () => TEST_SESSION,
@@ -203,5 +271,31 @@ describe("UserMenu", () => {
     expect(screen.getByRole("dialog", { name: "Change password" })).toBeTruthy();
     expect(screen.getByText("Test Analyst")).toBeTruthy();
     expect(screen.getByLabelText<HTMLInputElement>(/^New password/).value).toBe(NEW_PASSWORD);
+  });
+
+  it("applies the Appearance choice at once and remembers it for this account", async () => {
+    const themes: unknown[] = [];
+    mockCommands({
+      current_session: () => TEST_SESSION,
+      set_window_theme: (args) => {
+        themes.push(args);
+        return null;
+      },
+    });
+    const { user } = renderMenu();
+    await user.click(await screen.findByRole("button", { name: "Signed in as Test Analyst" }));
+    const choices = within(await screen.findByRole("group", { name: "Appearance" }));
+    expect(
+      choices.getAllByRole("menuitemradio").map((item) => [item.textContent, item.ariaChecked]),
+    ).toEqual([
+      ["Light", "false"],
+      ["Dark", "false"],
+      ["System", "true"],
+    ]);
+    await user.click(choices.getByRole("menuitemradio", { name: "Dark" }));
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe("dark"));
+    expect(themes.at(-1)).toEqual({ theme: "dark" });
+    expect(localStorage.getItem(`vibe-tox.appearance-v1.${TEST_SESSION.userId}`)).toBe("dark");
+    localStorage.clear();
   });
 });

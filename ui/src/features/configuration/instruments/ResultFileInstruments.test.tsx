@@ -169,11 +169,17 @@ describe("Result-file instruments (result files brief §6, §7)", {
   it("says when the watched folder cannot be read, or is being watched", async () => {
     const { user } = renderPage([WATCHED], {
       list_listener_status: () => [
-        { ...FOLDER_STATUS, state: "error", detail: "folder_unavailable" },
+        {
+          ...FOLDER_STATUS,
+          state: "error",
+          detail: "folder_unavailable",
+          lastError: "folder_unavailable",
+          lastErrorAt: "2026-10-29T09:00:00Z",
+        },
       ],
     });
     const panel = await openInstrument(user);
-    expect(await within(panel).findByText("The watched folder cannot be read")).toBeTruthy();
+    expect(await within(panel).findByText(/^The watched folder cannot be read,/)).toBeTruthy();
   });
 
   it("disables folder pickup in words for files", async () => {

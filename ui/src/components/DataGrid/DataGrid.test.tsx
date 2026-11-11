@@ -85,6 +85,36 @@ describe("DataGrid", () => {
     );
   });
 
+  it("starts in a column's default direction, turns it on click, and keeps blanks last", async () => {
+    const columns: readonly DataGridColumn<Item>[] = [
+      {
+        id: "id",
+        header: "Accession",
+        cell: (item) => item.id,
+        sortValue: (item) => (item.status === "On hold" ? undefined : item.id),
+        defaultSort: "desc",
+      },
+    ];
+    const rows = [
+      { id: "SYN-000001", status: "Received" },
+      { id: "SYN-000002", status: "On hold" },
+      { id: "SYN-000003", status: "Received" },
+    ];
+    const { user } = renderWithProviders(
+      <DataGrid label="Synthetic worklist" columns={columns} rows={rows} getRowId={getRowId} />,
+    );
+    const order = () => dataRows().map((row) => row.textContent);
+    const header = screen.getByRole("columnheader", { name: "Accession" });
+    expect(header.getAttribute("aria-sort")).toBe("descending");
+    expect(order()).toEqual(["SYN-000003", "SYN-000001", "SYN-000002"]);
+    await user.click(header);
+    expect(header.getAttribute("aria-sort")).toBe("ascending");
+    expect(order()).toEqual(["SYN-000001", "SYN-000003", "SYN-000002"]);
+    await user.click(header);
+    expect(header.getAttribute("aria-sort")).toBe("none");
+    expect(order()).toEqual(["SYN-000001", "SYN-000002", "SYN-000003"]);
+  });
+
   it("has one tab stop and moves focus with the arrow keys", async () => {
     const { user } = renderWithProviders(<Harness rows={items(3)} />);
     await user.tab();

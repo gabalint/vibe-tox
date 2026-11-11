@@ -1,0 +1,228 @@
+import { screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { expectNoA11yViolations } from "@/lib/test/a11y";
+import { openRowActions } from "@/lib/test/grid";
+import { mockCommands } from "@/lib/test/ipc";
+import { mockGridLayout } from "@/lib/test/layout";
+import { renderRoutes } from "@/lib/test/router";
+import { ADMIN, CONNECTION, CORRECTION, FAILED, WRITTEN } from "../testData";
+import { LogsPage } from "./LogsPage";
+
+const ROUTES = [{ path: "/interfaces/logs/:tab?", element: <LogsPage /> }];
+
+function renderPage(list: (args: unknown) => unknown, handlers = {}) {
+  mockCommands({
+    current_session: () => ADMIN,
+    list_partner_connections: () => [CONNECTION],
+    list_partner_messages: list,
+    ...handlers,
+  });
+  return renderRoutes(ROUTES, "/interfaces/logs");
+}
+
+describe("Logs (ticket #4555; REQ-INT-002, REQ-RPT-011)", () => {
+  beforeEach(mockGridLayout);
+
+  it("shows transport and application outcomes separately, never a bare delivery claim", async () => {
+    const list = vi.fn(() => ({ rows: [WRITTEN, FAILED], more: false }));
+    const { container } = renderPage(list);
+    expect(await screen.findByRole("gridcell", { name: "Written" })).toBeTruthy();
+    expect(screen.getByRole("gridcell", { name: "Outcome unknown" })).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", {
+        name: "Written as /srv/billing/out/billing-12_20261103.json",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", {
+        name: "Folder not found or not reachable; not written after 5 attempts",
+      }),
+    ).toBeTruthy();
+    // The word is assembled so the repository's wording check does not match this file.
+    expect(screen.queryByText(new RegExp(["Deliver", "ed"].join("")))).toBeNull();
+    const [args] = list.mock.calls.at(-1) as unknown as [{ input: { view: string } }];
+    expect(args.input.view).toBe("all");
+    await expectNoA11yViolations(container, { wholePage: true });
+  });
+
+  it("shows what an MLLP partner answered: accepted, rejected with its reason, or not yet", async () => {
+    const hospital = { id: CONNECTION.id, name: "HL7 Results - Hospital B" };
+    const sent = {
+      ...WRITTEN,
+      deliveryId: "01a1a000-0000-7000-8000-000000000031",
+      messageType: "hl7_oru" as const,
+      connection: { ...hospital, protocol: "mllp_connect" as const },
+      outcomeUnknown: false,
+      writtenPath: "10.20.0.15:6661",
+      ackCode: "AA" as const,
+    };
+    const rejected = {
+      ...sent,
+      deliveryId: "01a1a000-0000-7000-8000-000000000032",
+      ackCode: "AE" as const,
+      ackText: "Unknown provider NPI 1234567893",
+    };
+    // Sent, and no ACK in time: it goes again with the same control ID.
+    const awaiting = {
+      ...sent,
+      deliveryId: "01a1a000-0000-7000-8000-000000000033",
+      writtenPath: null,
+      ackCode: null,
+      awaitingAck: true,
+      attempts: 1,
+      nextAttemptAt: "2026-11-05T11:20:00.000000000Z",
+      errorCode: "no_ack",
+    };
+    renderPage(() => ({ rows: [sent, rejected, awaiting], more: false }));
+    expect(await screen.findByRole("gridcell", { name: "Accepted (AA)" })).toBeTruthy();
+    expect(screen.getAllByRole("gridcell", { name: "Sent" })).toHaveLength(3);
+    expect(screen.getByRole("gridcell", { name: "Rejected (AE)" })).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", {
+        name: "Sent to 10.20.0.15:6661 · Partner: Unknown provider NPI 1234567893",
+      }),
+    ).toBeTruthy();
+    expect(screen.getByRole("gridcell", { name: "Awaiting application ACK" })).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", { name: /^No acknowledgement in time; attempt 2 of 5 at/ }),
+    ).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /Rejected \(1\)/ })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /Awaiting ACK \(1\)/ })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /Outcome unknown \(0\)/ })).toBeTruthy();
+  });
+
+  it("names a report revision and says a correction went first (REQ-RPT-013)", async () => {
+    renderPage(() => ({ rows: [CORRECTION], more: false }));
+    expect(await screen.findByRole("gridcell", { name: "A26000005-U r2" })).toBeTruthy();
+    expect(screen.getByRole("gridcell", { name: "Report PDF" })).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", {
+        name: "Replaces r1, sent first · Written as /srv/reports/out/A26000005-U_r2_20261103.pdf",
+      }),
+    ).toBeTruthy();
+  });
+
+  it("shows a received order coming in, what it became and where the file moved", async () => {
+    const received = {
+      ...WRITTEN,
+      messageType: "hl7_orders" as const,
+      source: "order" as const,
+      sourceNumber: null,
+      sourceLabel: "ORD-000124",
+      transport: "received" as const,
+      outcomeUnknown: false,
+      writtenPath: "/srv/clinic-a/processed/2026/11/clinicA_000124.hl7",
+      // It waited for its patient's registration first.
+      errorCode: "patient_unknown",
+      received: "order_created" as const,
+    };
+    const rejected = {
+      ...received,
+      messageId: "01a1a000-0000-7000-8000-000000000020",
+      sourceLabel: "ORD-000125",
+      errorCode: "unknown_test",
+      writtenPath: "/srv/clinic-a/failed/2026/11/clinicA_000125.hl7",
+      received: "rejected" as const,
+    };
+    renderPage(() => ({ rows: [received, rejected], more: false }));
+    expect(await screen.findByRole("gridcell", { name: "ORD-000124" })).toBeTruthy();
+    expect(screen.getAllByRole("gridcell", { name: "In" })).toHaveLength(2);
+    expect(screen.getAllByRole("gridcell", { name: "Received" })).toHaveLength(2);
+    expect(screen.getByRole("gridcell", { name: "Order created" })).toBeTruthy();
+    expect(screen.getByRole("gridcell", { name: "Rejected – unknown test" })).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", {
+        name: "Waited until the patient was registered · Moved to /srv/clinic-a/processed/2026/11/clinicA_000124.hl7",
+      }),
+    ).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /Rejected \(1\)/ })).toBeTruthy();
+  });
+
+  it("sends a failed message again from its row", async () => {
+    const resend = vi.fn(() => null);
+    const { user } = renderPage(() => ({ rows: [FAILED], more: false }), {
+      resend_partner_delivery: resend,
+    });
+    await screen.findByRole("gridcell", { name: "Billing handoff 13" });
+    await openRowActions(user, "Billing handoff 13");
+    await user.click(await screen.findByRole("menuitem", { name: "Send again" }));
+    await waitFor(() =>
+      expect(resend).toHaveBeenCalledWith({ input: { deliveryId: FAILED.deliveryId } }),
+    );
+  });
+
+  it("rejects a waiting order with a reason; a resolved rejection leaves Rejected", async () => {
+    const order = {
+      ...WRITTEN,
+      deliveryId: null,
+      messageType: "hl7_orders" as const,
+      source: "order" as const,
+      sourceNumber: null,
+      transport: "received" as const,
+      outcomeUnknown: false,
+      writtenPath: null,
+    };
+    const waiting = {
+      ...order,
+      sourceLabel: "ORD-000126",
+      errorCode: "patient_unknown",
+      received: "waiting_patient" as const,
+      allowedActions: ["reject_received_message"],
+    };
+    const rejected = {
+      ...order,
+      messageId: "01a1a000-0000-7000-8000-000000000030",
+      sourceLabel: "ORD-000127",
+      errorCode: "rejected_by_person",
+      received: "rejected" as const,
+      rejectionResolved: {
+        note: "The clinic cancelled it by phone",
+        resolved: { by: ADMIN.userId, at: "2026-11-03T11:00:00.000000000Z" },
+      },
+    };
+    const reject = vi.fn(() => null);
+    const { user } = renderPage(() => ({ rows: [waiting, rejected], more: false }), {
+      reject_received_message: reject,
+    });
+    expect(await screen.findByRole("tab", { name: "Rejected (0)" })).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", { name: /^Rejected by .+: The clinic cancelled it by phone$/ }),
+    ).toBeTruthy();
+    await openRowActions(user, "ORD-000126");
+    await user.click(await screen.findByRole("menuitem", { name: "Reject…" }));
+    const reason = "Sent by mistake; the clinic confirmed by phone";
+    await user.type(await screen.findByRole("textbox", { name: "Reason" }), reason);
+    await user.click(screen.getByRole("button", { name: "Reject message" }));
+    await waitFor(() =>
+      expect(reject).toHaveBeenCalledWith({ input: { receivedId: waiting.messageId, reason } }),
+    );
+  });
+
+  it("counts every tab of the mockup and narrows by outcome", async () => {
+    const { user } = renderPage(() => ({ rows: [WRITTEN, FAILED], more: false }));
+    expect(await screen.findByRole("tab", { name: "All (2)" })).toBeTruthy();
+    // The filters show only their value; their names are for screen readers.
+    const hidden = Array.from(
+      document.querySelectorAll("[data-hidden]"),
+      (node) => node.textContent,
+    );
+    expect(hidden).toEqual(["Period", "Connection", "Direction", "Outcome"]);
+    for (const name of [
+      "Failed (1)",
+      "Rejected (0)",
+      "Awaiting ACK (0)",
+      "Outcome unknown (1)",
+      "Duplicates (0)",
+    ]) {
+      expect(screen.getByRole("tab", { name })).toBeTruthy();
+    }
+    await user.click(screen.getByRole("button", { name: /Outcome/ }));
+    await user.click(await screen.findByRole("option", { name: "Failed" }));
+    expect(await screen.findByRole("tab", { name: "All (1)" })).toBeTruthy();
+  });
+
+  it("explains an empty log", async () => {
+    renderPage(() => ({ rows: [], more: false }));
+    expect(await screen.findByText("No messages")).toBeTruthy();
+  });
+});

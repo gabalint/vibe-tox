@@ -44,6 +44,31 @@ pub struct Instrument {
     /// Optimistic concurrency revision.
     #[ts(type = "number")]
     pub revision: i64,
+    /// Who registered it and when; absent when it was registered before this
+    /// was recorded.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub created: Option<ChangeStamp>,
+    /// Who last changed its configuration and when; absent when it has not
+    /// changed since it was registered, or changed before this was recorded.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub changed: Option<ChangeStamp>,
+}
+
+/// Who made a configuration change, and when.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ChangeStamp {
+    /// The acting principal's ID.
+    pub by: String,
+    /// Current display name resolved by the engine from the account owner.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub by_display: Option<String>,
+    /// When the change was committed.
+    pub at: UtcTimestamp,
 }
 
 /// Input for registering an analyzer connection.

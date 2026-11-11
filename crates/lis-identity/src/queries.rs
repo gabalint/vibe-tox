@@ -3,6 +3,7 @@
 //! engine checks the capability, and audits the read where the result holds
 //! PHI, before calling them.
 
+use lis_audit::{RecordRef, RecordSearch};
 use rusqlite::Connection;
 use serde::Deserialize;
 use ts_rs::TS;
@@ -64,6 +65,30 @@ pub fn audit_record_label(
     }
 }
 
+/// Clients by the start of their name or code, and practitioners by the start of their
+/// family name, given names, "Family, Given" or NPI (REQ-OPS-001). Patients are found
+/// with [`crate::search_subjects`], by users who may read them.
+pub fn audit_record_search(
+    conn: &Connection,
+    search: &RecordSearch<'_>,
+) -> Result<Vec<RecordRef>, IdentityError> {
+    let mut records = search.records(
+        conn,
+        "client",
+        "SELECT id FROM idn_client_organizations \
+         WHERE name LIKE ?1 ESCAPE '\\' OR code LIKE ?1 ESCAPE '\\' ORDER BY name LIMIT ?2",
+    )?;
+    records.extend(search.records(
+        conn,
+        "practitioner",
+        "SELECT id FROM idn_practitioners \
+         WHERE family_name LIKE ?1 ESCAPE '\\' OR given_names LIKE ?1 ESCAPE '\\' \
+         OR family_name || ', ' || coalesce(given_names, '') LIKE ?1 ESCAPE '\\' \
+         OR npi LIKE ?1 ESCAPE '\\' ORDER BY family_name, given_names LIMIT ?2",
+    )?);
+    Ok(records)
+}
+
 fn identity_not_found_is_none(error: IdentityError) -> Result<Option<String>, IdentityError> {
     match error {
         IdentityError::NotFound(_) => Ok(None),
@@ -75,6 +100,7 @@ fn identity_not_found_is_none(error: IdentityError) -> Result<Option<String>, Id
         | IdentityError::CandidatesNotAcknowledged
         | IdentityError::HoldResolved
         | IdentityError::IdentifierInactive
+        | IdentityError::NothingChanged
         | IdentityError::Duplicate(_)
         | IdentityError::Store(_)) => Err(other),
     }

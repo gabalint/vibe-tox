@@ -12,7 +12,7 @@ use std::sync::Arc;
 use lis_core::{Capability, CommandError, ErrorCode, InstrumentId, Phi, UtcTimestamp};
 use lis_interfaces::{
     FileFacts, FileSource, Instrument, MAX_RESULT_FILE_BYTES, PresentFile, Receipt, ReceiptId,
-    ReceiptState, ReceiveResultFileInput, SetResultFolder, WatchedFolder,
+    ReceiptState, ReceiveResultFileInput, SetResultFolder, WatchedFolder, without_verbatim_prefix,
 };
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -274,7 +274,7 @@ fn read_chosen(path: &Path, instrument_id: InstrumentId) -> Result<ChosenFile, F
     })
 }
 
-/// The canonical path of a folder that exists and can be listed, with the result files
+/// The canonical path, in its usual form, of a folder that exists and can be listed, with the result files
 /// already in it, as the poller would list them.
 fn readable_folder(chosen: &Path) -> Result<WatchedFolder, Failure> {
     let unreadable = || {
@@ -298,6 +298,7 @@ fn readable_folder(chosen: &Path) -> Result<WatchedFolder, Failure> {
     let path = canonical
         .into_os_string()
         .into_string()
+        .map(|path| without_verbatim_prefix(&path))
         .map_err(|_| refused("Choose a folder whose path has only standard characters."))?;
     Ok(WatchedFolder { path, present })
 }

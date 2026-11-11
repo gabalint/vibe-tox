@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Vibe Tox LIS",
+  "productName": "OpenBGA Tox",
   "identifier": "org.vibetox.lis",
   "build": {
     "frontendDist": "../ui/dist",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Vibe Tox LIS",
+        "title": "OpenBGA/tox",
         "width": 1280,
         "height": 800,
         "minWidth": 1024,
@@ -28,8 +28,8 @@
   "bundle": {
     "active": true,
     "createUpdaterArtifacts": false,
-    "publisher": "Vibe Toxicology LIS project",
-    "copyright": "Copyright 2026 Vibe Toxicology LIS contributors",
+    "publisher": "OpenBGA",
+    "copyright": "Copyright 2026 OpenBGA/tox contributors",
     "license": "GPL-3.0-only",
     "licenseFile": "../LICENSE",
     "category": "Medical",

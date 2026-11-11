@@ -105,7 +105,7 @@ describe("Sidebar layout", () => {
     expect(screen.queryByRole("list", { name: "Laboratory setup" })).toBeNull();
     await user.click(screen.getByRole("button", { name: "Expand navigation" }));
     expect(screen.getByRole("button", { name: "Front desk" }).getAttribute("aria-expanded")).toBe(
-      "false",
+      "true",
     );
     expect(
       screen.getByRole("button", { name: "Laboratory setup" }).getAttribute("aria-expanded"),
@@ -178,8 +178,8 @@ describe("Sidebar layout", () => {
     expect(navigationWidth().getAttribute("aria-valuenow")).toBe("56");
     await user.click(screen.getByRole("button", { name: "Expand navigation" }));
     await user.click(screen.getByRole("button", { name: "Front desk" }));
-    expect(screen.queryByRole("list", { name: "Front desk" })).toBeNull();
-    await user.click(screen.getByRole("button", { name: "Front desk" }));
     expect(screen.getByRole("link", { name: "Orders" })).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Front desk" }));
+    expect(screen.queryByRole("list", { name: "Front desk" })).toBeNull();
   });
 });

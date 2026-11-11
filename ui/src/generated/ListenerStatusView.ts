@@ -34,4 +34,12 @@ filesWaiting?: number,
  * For a watched folder, the files over the size limit found since the app started
  * (F14); not read, each an aborted receipt.
  */
-filesTooLarge?: number, };
+filesTooLarge?: number, 
+/**
+ * The latest error since the app started, kept after the listener recovers.
+ */
+lastError?: ListenerDetailCode, 
+/**
+ * When that error began.
+ */
+lastErrorAt?: string, };

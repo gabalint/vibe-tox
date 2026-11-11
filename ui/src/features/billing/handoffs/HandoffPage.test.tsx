@@ -38,7 +38,7 @@ describe("HandoffPage (REQ-BIL-002)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () =>
     expect(await screen.findByText(HANDOFF.artifactSha256)).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1, name: "Billing handoff 7" })).toBeTruthy();
     const crumbs = screen.getByRole("navigation", { name: "Breadcrumb" });
-    expect(within(crumbs).getByRole("link", { name: "Billing work" })).toBeTruthy();
+    expect(within(crumbs).getByRole("link", { name: "Billing handoffs" })).toBeTruthy();
     expect(screen.getByText("bil-handoff-v1")).toBeTruthy();
     expect(screen.getByRole("gridcell", { name: "Awaiting outcome" })).toBeTruthy();
     expect(screen.getByRole("gridcell", { name: "Rejected" })).toBeTruthy();

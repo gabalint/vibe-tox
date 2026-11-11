@@ -5,6 +5,9 @@
 #![cfg(test)]
 
 mod administration;
+mod audit_changes;
+mod audit_export;
+mod audit_find;
 mod audit_trail;
 mod authorization;
 mod fixture;
@@ -23,6 +26,11 @@ mod starter_catalog;
 // interfaces: begin
 mod au_protocol;
 mod interfaces;
+mod partner_contract;
+mod partner_follow_up;
+mod partner_listen;
+mod partner_orders;
+mod partner_sftp;
 // interfaces: end
 // orders: begin
 mod orders;

@@ -11,7 +11,9 @@ mod audit;
 mod listeners;
 mod security_keys;
 mod session;
+mod unsaved_forms;
 mod users;
+mod window_theme;
 // Wave 3+: one adapter module per area. Edit only your block.
 // identity: begin
 mod identity;
@@ -22,6 +24,7 @@ mod catalog_review;
 // catalog: end
 // interfaces: begin
 mod interfaces;
+mod partner;
 // interfaces: end
 // orders: begin
 mod orders;
@@ -36,6 +39,7 @@ mod analytical;
 mod results;
 // results: end
 // reporting: begin
+mod report_layouts;
 mod reporting;
 // reporting: end
 // billing: begin
@@ -51,6 +55,7 @@ mod backup;
 // backup: end
 // runtime: begin
 mod operations;
+mod updates;
 // runtime: end
 // anchors: begin
 mod anchors;
@@ -105,12 +110,14 @@ mod tests {
         app.manage(crate::installation::Installation(
             lis_engine::InstallationKind::Laboratory,
         ));
+        app.manage(crate::updater::Updates::new(app.config()));
+        app.manage(crate::quit::UnsavedForms::default());
         (app, dir)
     }
 
     /// Shell-only commands: granted and handled, but not engine commands, so not in the
     /// registry (`app_info` is in it as a public command).
-    const SHELL_ONLY: [&str; 8] = [
+    const SHELL_ONLY: [&str; 10] = [
         "security_key_status",
         "security_key_pin",
         "security_key_cancel",
@@ -119,6 +126,8 @@ mod tests {
         "open_demo_laboratory",
         "leave_demo_laboratory",
         "reset_demo_laboratory",
+        "set_window_theme",
+        "set_unsaved_forms",
     ];
 
     fn window(app: &App<MockRuntime>, label: &str) -> WebviewWindow<MockRuntime> {
@@ -149,6 +158,7 @@ mod tests {
         assert_eq!(invoke(&main, "app_info"), Ok(()));
         assert_eq!(invoke(&main, "setup_status"), Ok(()));
         assert_eq!(invoke(&main, "startup_status"), Ok(()));
+        assert_eq!(invoke(&main, "set_window_theme"), Ok(()));
     }
 
     // NFR-31: every registered command is wired and granted; refusals come

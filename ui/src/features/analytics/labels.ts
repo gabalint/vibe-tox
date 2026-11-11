@@ -10,6 +10,7 @@ import type { QcOutcome } from "@/generated/QcOutcome";
 import type { QcRole } from "@/generated/QcRole";
 import type { RegistrationState } from "@/generated/RegistrationState";
 import type { RevisionIndicator } from "@/generated/RevisionIndicator";
+import type { RunDetail } from "@/generated/RunDetail";
 import type { RunState } from "@/generated/RunState";
 import type { SampleIdField } from "@/generated/SampleIdField";
 import type { Choice } from "@/lib/choices";
@@ -24,13 +25,6 @@ export const INSTRUMENT_STATUSES: readonly Choice<InstrumentStatus>[] = [
   { id: "in_service", label: "In service" },
   { id: "out_of_service", label: "Out of service" },
 ];
-
-/** `null` means nobody has recorded a status yet; the engine treats that as not ready. */
-export function instrumentStatus(status: InstrumentStatus | null): Status {
-  if (status === "in_service") return { label: "In service", tone: "neutral" };
-  if (status === "out_of_service") return { label: "Out of service", tone: "danger" };
-  return { label: "Status not recorded", tone: "warning" };
-}
 
 /** The instrument's approved result source, as its sender name and version. */
 export function sourceText(instrument: InstrumentReadinessView): string {
@@ -50,10 +44,20 @@ export function lotText(lot: Pick<LotView, "productName" | "lotNumber">): string
   return `${lot.productName}, lot ${lot.lotNumber}`;
 }
 
+/** "Expires today", "Expires in 1 day" or "Expires in N days", as the engine words it. */
+export function expiresIn(daysLeft: number): string {
+  if (daysLeft === 0) return "Expires today";
+  return daysLeft === 1 ? "Expires in 1 day" : `Expires in ${daysLeft} days`;
+}
+
+/** An active lot inside the laboratory's warning period shows how soon it expires (#4557). */
 export function lotStatus(lot: LotView): Status {
   if (lot.state === "withdrawn") return { label: "Withdrawn", tone: "neutral" };
   if (lot.expired) return { label: "Expired", tone: "neutral" };
-  return { label: "Active", tone: "neutral" };
+  if (lot.expiringSoon && lot.daysLeft !== null) {
+    return { label: expiresIn(lot.daysLeft), tone: "warning" };
+  }
+  return { label: "Active", tone: "success" };
 }
 
 export const QC_ROLES: readonly Choice<QcRole>[] = [
@@ -74,6 +78,13 @@ export const ATTEMPT_KINDS: readonly Choice<AttemptKind>[] = [
   { id: "dilution", label: "Dilution" },
 ];
 
+/** A run's title: its method version and instrument, or "Run" until they load. */
+export function runTitle(run: RunDetail | undefined): string {
+  return run
+    ? `Run of ${run.methodCode} version ${run.methodVersion} on ${run.instrumentName}`
+    : "Run";
+}
+
 export function runStatus(state: RunState): Status {
   return state === "open"
     ? { label: "Open", tone: "neutral" }
@@ -82,7 +93,7 @@ export function runStatus(state: RunState): Status {
 
 const REGISTRATION_STATUSES: Record<RegistrationState, Status> = {
   draft: { label: "Draft, awaiting approval", tone: "warning" },
-  active: { label: "Active", tone: "neutral" },
+  active: { label: "Active", tone: "success" },
   retired: { label: "Retired", tone: "neutral" },
 };
 

@@ -1,5 +1,7 @@
 import { useFormContext, useWatch } from "react-hook-form";
+import { FieldGrid, FieldSection } from "@/components/Form";
 import { ChoiceInput, TextInput } from "@/components/FormFields";
+import { DATA_BITS, PARITIES, STOP_BITS } from "@/lib/instrumentPages";
 import styles from "@/styles/layout.module.css";
 import { WHOLE_NUMBER_FORMAT } from "../formats";
 import { AuFields } from "./AuFields";
@@ -7,18 +9,42 @@ import {
   AU_DATA_BITS,
   CONNECTION_KINDS,
   type ConnectionValues,
-  DATA_BITS,
-  PARITIES,
-  STOP_BITS,
+  isAuKind,
 } from "./connectionValues";
 
-/** The analyzer connection, inside a form whose values hold it as `connection`. */
+/**
+ * The analyzer connection, inside a form whose values hold it as `connection`. An AU400/AU640
+ * connection is long, so its fields sit side by side in titled sections of a wide dialog;
+ * other connections keep one column.
+ */
 export function ConnectionFields() {
-  const form = useFormContext<{ connection: ConnectionValues }>();
   const kind = useWatch<{ connection: ConnectionValues }, "connection.kind">({
     name: "connection.kind",
   });
-  const isAu = kind === "au_tcp" || kind === "au_serial";
+  if (!isAuKind(kind)) {
+    return (
+      <>
+        <ConnectionInputs kind={kind} />
+        <ConnectionHint kind={kind} />
+      </>
+    );
+  }
+  return (
+    <>
+      <FieldSection title="Connection">
+        <ConnectionHint kind={kind} />
+        <FieldGrid>
+          <ConnectionInputs kind={kind} />
+        </FieldGrid>
+      </FieldSection>
+      <AuFields />
+    </>
+  );
+}
+
+function ConnectionInputs({ kind }: { kind: ConnectionValues["kind"] }) {
+  const form = useFormContext<{ connection: ConnectionValues }>();
+  const isAu = isAuKind(kind);
   return (
     <>
       <ChoiceInput
@@ -35,12 +61,6 @@ export function ConnectionFields() {
       />
       {(kind === "astm_tcp" || kind === "au_tcp") && (
         <>
-          {kind === "au_tcp" && (
-            <p className={styles.hint}>
-              A transparent serial-to-TCP bridge connects to this LIS listener. Listen on this
-              computer's address and add the bridge's address to the allowed list.
-            </p>
-          )}
           <TextInput
             name="connection.bindAddress"
             label="Listen on address"
@@ -93,13 +113,27 @@ export function ConnectionFields() {
           />
         </>
       )}
-      {isAu && <AuFields />}
-      {kind === "result_file" && (
-        <p className={styles.hint}>
-          The instrument's software exports result files. After registering, choose the folder it
-          exports to, or load each file by hand under Result imports.
-        </p>
-      )}
     </>
   );
+}
+
+/** What the chosen kind of connection needs beyond its fields. */
+function ConnectionHint({ kind }: { kind: ConnectionValues["kind"] }) {
+  if (kind === "au_tcp") {
+    return (
+      <p className={styles.hint}>
+        A transparent serial-to-TCP bridge connects to this LIS listener. Listen on this computer's
+        address and add the bridge's address to the allowed list.
+      </p>
+    );
+  }
+  if (kind === "result_file") {
+    return (
+      <p className={styles.hint}>
+        The instrument's software exports result files. After registering, choose the folder it
+        exports to, or load each file by hand under Result imports.
+      </p>
+    );
+  }
+  return null;
 }

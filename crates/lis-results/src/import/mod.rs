@@ -37,8 +37,8 @@ mod quarantine_acceptance;
 mod writing;
 
 use attempt::{
-    Attempt, Counts, attempt_by_key, audit_attempt, insert_attempt, record_failed_attempt,
-    supersede_prior_quarantine,
+    Attempt, Counts, attempt_by_key, audit_attempt, insert_attempt, record_duplicate_attempt,
+    record_failed_attempt, supersede_prior_quarantine,
 };
 use planning::{Planner, count_plans, plan_patient, plan_rows, record_qc, source_row};
 pub(crate) use quarantine_acceptance::accept_quarantined_as_reprocessing;
@@ -48,6 +48,8 @@ const ASTM_PARSER_VERSION: &str = "astm-result-v1";
 pub(crate) const AU_PARSER_VERSION: &str = "au-result-v1";
 /// The result-file reader (brief §13).
 const FILE_PARSER_VERSION: &str = "delimited-v1";
+/// A duplicate receipt's bytes are not read again.
+const NOT_READ_PARSER_VERSION: &str = "not-read";
 const NOT_PERFORMED_STATUS: &str = "X";
 
 /// The parser result passed into the short database transaction.
@@ -70,6 +72,9 @@ pub enum ImportSource {
     /// A result file whose instrument has no active file registration to
     /// read it with (`unregistered_source`; Retry import after registration).
     UnregisteredFile,
+    /// Bytes identical to this earlier receipt from the same instrument: not
+    /// read, listed as a `duplicate` attempt that imports nothing.
+    Duplicate(ReceiptId),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -160,7 +165,8 @@ enum Plan {
 
 /// Imports typed rows in one `BEGIN IMMEDIATE` unit of work. A repeated
 /// `(receipt_id, attempt_no)` returns the original attempt without another
-/// audit event or clinical effect (NFR-02).
+/// audit event or clinical effect (NFR-02). A duplicate receipt is listed
+/// without a registration check, since nothing in it is read.
 pub fn import_receipt(
     ctx: &mut CommandContext<'_>,
     input: ImportReceiptInput,
@@ -175,6 +181,9 @@ pub fn import_receipt(
             "out_of_range",
             "The attempt number must be at least one.",
         ));
+    }
+    if matches!(input.source, ImportSource::Duplicate(_)) {
+        return record_duplicate_attempt(ctx, &Attempt::of(&input));
     }
     let active_registration = lis_analytical::active_registration(ctx.tx(), input.instrument_id)?;
     if active_registration != input.registration {
@@ -211,7 +220,8 @@ pub fn import_receipt(
 }
 
 /// The rows to place and the references of malformed file records, or the
-/// whole-attempt failure with its row count (brief §5; M2 §3.2).
+/// whole-attempt failure with its row count (brief §5; M2 §3.2). A duplicate
+/// never reaches here.
 fn readable_rows(
     source: ImportSource,
     registration: Option<&lis_analytical::SourceRegistrationView>,
@@ -248,7 +258,9 @@ fn readable_rows(
                 format: ImportFormat::Au,
             })
         }
-        ImportSource::UnregisteredFile => Err((ImportFailureCode::UnregisteredSource, 0)),
+        ImportSource::UnregisteredFile | ImportSource::Duplicate(_) => {
+            Err((ImportFailureCode::UnregisteredSource, 0))
+        }
         ImportSource::File(Err(failure)) => Err((file_failure(failure), 0)),
         ImportSource::File(Ok(extracted)) => {
             let rows = extracted.rows.len() + extracted.malformed_rows.len();

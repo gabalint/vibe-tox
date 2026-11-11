@@ -86,7 +86,7 @@ Suppress a lint only locally, with a reason. In Rust use `#[expect(clippy::lint_
 
 - Typst templates are versioned files in the repository. `typst` and `typst-pdf` are pinned and wrapped behind one renderer module; each issued report records template, renderer and font versions. Release verification checks PDF/A-2 and PDF/UA-1 output ([ENG-146](../research/sources-engineering.md#desktop-application-stack-sources-2026-10-12)).
 - Raw ZPL label templates are versioned the same way. The engine implements TCP 9100 and CUPS transport; native Windows RAW spooler support remains an implementation and qualification gap. Each enabled route needs printer/stock verification.
-- The ASTM driver sends ACK only after durable receipt and ships with a conformance corpus. Qualify each analyzer profile against malformed input and replay cases. HL7 v2/MLLP and FHIR routes remain unimplemented proposals under [ADR 0007](../architecture/decisions/0007-integration-edge-and-interface-engines.md); codec selection and fuzzing evidence belong to that separately scoped work.
+- The ASTM driver sends ACK only after durable receipt and ships with a conformance corpus. Qualify each analyzer profile against malformed input and replay cases. The HL7 v2 partner routes of the Interfaces menu (results out by file, SFTP or outbound MLLP; orders in by file, SFTP or an MLLP listener) use the LIS's own narrow encoder, reader and MLLP framing under [ADR 0007](../architecture/decisions/0007-integration-edge-and-interface-engines.md) and are tested on synthetic messages; FHIR routes remain proposals. A conformance corpus and fuzzing evidence belong to the per-partner contract work.
 
 ## Tests
 

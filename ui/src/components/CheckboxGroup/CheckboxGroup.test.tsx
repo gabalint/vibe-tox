@@ -46,6 +46,7 @@ describe("CheckboxGroup", () => {
     const { container } = renderWithProviders(<Harness errorMessage="Choose a panel." />);
     const group = screen.getByRole("group", { name: "Panels" });
     expect(group.getAttribute("aria-describedby")).toBe(screen.getByText("Choose a panel.").id);
+    expect(group.hasAttribute("data-invalid")).toBe(true);
     await expectNoA11yViolations(container);
   });
 });

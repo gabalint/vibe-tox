@@ -1,8 +1,8 @@
 {
   "id": "users",
   "title": "Users and access",
-  "summary": "Manage individual accounts and roles, and maintain your own security keys and optional unlock PIN from the signed-in menu.",
-  "reviewedOn": "2026-10-15",
+  "summary": "Manage individual accounts and roles, and maintain your own security keys, optional unlock PIN and appearance from the signed-in menu.",
+  "reviewedOn": "2026-11-10",
   "routes": ["/users"],
   "sections": [
     {
@@ -34,6 +34,29 @@
         "Open Signed in as … → Unlock PIN and choose Enable PIN or Change PIN.",
         "Enter and confirm a personal six-digit PIN, then confirm with your password or registered security key. Read the success message and reopen Unlock PIN to verify Enabled.",
         "When your session locks, enter the PIN or choose your normal unlock method. Choose Disable PIN in the settings dialog when you no longer want this option."
+      ]
+    },
+    {
+      "title": "Choose light or dark appearance",
+      "paragraphs": [
+        "Each person can show the app in a light or a dark theme. Screens, statuses and their meanings are the same in both; only the colors change. Report PDFs and printed labels always stay light, because they are printed on white paper."
+      ],
+      "steps": [
+        "Open Signed in as … and choose Light, Dark or System under Appearance. A check mark shows the current choice.",
+        "The app, including the window title bar, changes at once. No restart is needed.",
+        "System follows the computer’s light or dark setting, and changes when that setting changes."
+      ]
+    },
+    {
+      "title": "Sign out or close the app with unsaved input",
+      "paragraphs": [
+        "New order, Receive specimens, Register patient, Load Standard Catalog and New file template keep what you typed only until you save it. Leaving one of these pages, signing out or closing the app with typed input that is not saved asks first. In every one of these warnings Cancel is the default, so pressing Enter keeps you where you are.",
+        "Signing out after the warning loses the typed input; analyzers keep listening at the sign-in screen as before. Closing the window or quitting shows one native warning that names the unsaved page and, when the app is also busy, lists the work still in progress (active analyzer listeners, imports, outbound copies, a backup or similar). With nothing unsaved and nothing in progress the app closes at once."
+      ],
+      "steps": [
+        "Save the page first when you want to keep what you typed.",
+        "Open Signed in as … and choose Sign out, or close the window. If the warning names a page, choose Cancel to go back to it.",
+        "Choose Sign out without saving, Leave or Quit anyway only when the typed input may be lost. Quitting while work is in progress is recorded as Quit despite warnings in the application runs on Health history; unsaved input is not recorded, because it never reached the laboratory record."
       ]
     }
   ],
@@ -165,6 +188,12 @@
           "rules": "Read-only in the Unlock PIN dialog. Changes require your password or registered security key. This setting is personal, not shared by the workstation."
         },
         {
+          "name": "Appearance",
+          "meaning": "Whether the app shows in a light or a dark theme for you.",
+          "values": "Light, Dark or System; System by default. System follows the computer’s light or dark setting.",
+          "rules": "Personal and remembered on this computer for your account; on another computer, choose it again. It applies when you sign in and stays after you sign out or lock until the next person signs in. Before anyone signs in, the app follows the computer’s setting. Report PDFs and printed labels stay light."
+        },
+        {
           "name": "New unlock PIN",
           "meaning": "Personal secret used only to unlock your existing session.",
           "values": "Required six ASCII digits (0–9); initially blank and masked. Leading zeros are preserved.",
@@ -180,13 +209,13 @@
       "actions": [
         {
           "name": "Create user",
-          "does": "Register a new active account with the chosen roles and temporary password.",
+          "does": "Register a new active account with the chosen roles and temporary password. The wide form groups its fields under Account, Roles (side by side, each with what it allows) and Sign-in and confirmation.",
           "availableWhen": "Manage users; granting clinical roles also needs Manage quality, subject to first-quality-manager setup.",
           "result": "The user must change the temporary password and set up an authenticator at first sign-in. Additional staff cannot register a key directly in this creation dialog; after completing their first sign-in they can switch their own account to a security key."
         },
         {
           "name": "Edit roles / Save roles",
-          "does": "Replace the authorized set of roles for another account.",
+          "does": "Replace the authorized set of roles for another account. The wide form shows the roles side by side, then Reason and confirmation.",
           "availableWhen": "Authority for each role granted or revoked, fresh account confirmation, reason and current revision.",
           "result": "New privileges are recorded; earlier grants/revocations remain in history."
         },
@@ -299,6 +328,24 @@
           "result": "An unsent form does not change the PIN. Submitted changes take effect only on success."
         },
         {
+          "name": "Signed in as … / Light, Dark, System",
+          "does": "Changes your appearance and remembers the choice for your account on this computer.",
+          "availableWhen": "Any signed-in user. No password, reason or permission is needed.",
+          "result": "The app and the window title bar change at once and the menu closes. It is a display preference, so nothing is added to the audit trail."
+        },
+        {
+          "name": "Signed in as … / Sign out",
+          "does": "Ends your session and returns to the sign-in screen.",
+          "availableWhen": "Any signed-in user. When a page form has unsaved input, Leave without saving? opens first and names the page.",
+          "result": "Cached screens are cleared so the next person sees nothing from your session. Analyzers keep listening at the sign-in screen. If the engine refuses, The session did not change appears and you stay signed in."
+        },
+        {
+          "name": "Cancel / Sign out without saving (Leave without saving?)",
+          "does": "Keeps you signed in on the page, or signs out and discards the unsaved input.",
+          "availableWhen": "The warning is open. Cancel has focus, so Enter cancels; Escape also cancels.",
+          "result": "Cancel returns to the page with what you typed. Sign out without saving signs out; the typed input is lost and nothing about it is recorded."
+        },
+        {
           "name": "Try again (Unlock PIN status)",
           "does": "Checks your PIN configuration again after a status error.",
           "availableWhen": "The status could not be read.",
@@ -370,12 +417,17 @@
         {
           "problem": "The unlock PIN disappeared after account recovery or credential reset",
           "recovery": "This is expected. Complete normal sign-in and enable a new personal unlock PIN if you still want it."
+        },
+        {
+          "problem": "The app opens light or dark when you did not expect it",
+          "recovery": "Appearance is remembered for each account on each computer, and after a sign-out the sign-in screen keeps the last person’s choice. After you sign in, your own choice applies; choose it again under Signed in as … on a computer you have not used before."
         }
       ]
     }
   ],
   "reviewSources": [
     "ui/src/features/users/UsersPage.tsx",
+    "ui/src/lib/appearance.ts",
     "ui/src/features/users/UserAdministration.tsx",
     "ui/src/features/users/UserPanel.tsx",
     "ui/src/features/users/userColumns.tsx",
@@ -399,6 +451,9 @@
     "ui/src/lib/commands.ts",
     "crates/lis-auth/src/key_proofs.rs",
     "ui/src/features/auth/UserMenu.tsx",
+    "ui/src/lib/unsavedForms.ts",
+    "ui/src/lib/UnsavedChangesGuard.tsx",
+    "src-tauri/src/quit.rs",
     "ui/src/features/auth/SecurityKeysDialog.tsx",
     "ui/src/features/auth/KeyEnrollmentForm.tsx",
     "ui/src/features/auth/RevokeKeyDialog.tsx",

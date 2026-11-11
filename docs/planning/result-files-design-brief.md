@@ -53,7 +53,7 @@ Partial imports do not reconcile absent analytes. **Results expected** follows f
 
 | Boundary | Implemented behavior |
 | --- | --- |
-| Folder selection | Rust native dialog; canonical readable folder unique to one instrument. Local folders or mapped laboratory shares are supported subject to host qualification. |
+| Folder selection | Rust native dialog; canonical readable folder unique to one instrument, kept in its usual Windows form (`C:\…`, `\\server\share\…`, without the `\\?\` prefix). Local folders or mapped laboratory shares are supported subject to host qualification. |
 | Existing content | Baseline files present when the folder is selected are recorded and not automatically imported; manual loading remains possible. |
 | Candidate files | Direct regular `.csv`/`.txt` files only; skip subfolders, links, hidden files and temporary-file patterns. |
 | Stability | Size/time stable over two scans at least 10 seconds apart; Windows also refuses an exporter still holding a writer handle. Check size again after reading. |

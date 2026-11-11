@@ -88,6 +88,7 @@
 mod account;
 pub mod actions;
 mod admin;
+mod audit_records;
 mod challenge;
 mod cipher;
 mod credentials;
@@ -125,11 +126,12 @@ pub use admin::{
     ChangeUserStatusInput, CreateUserInput, ResetUserCredentialsInput, SetUserRolesInput,
     create_user, disable_user, enable_user, reset_user_credentials, set_user_roles,
 };
+pub use audit_records::{audit_record_label, audit_record_search};
 pub use challenge::{
     CHALLENGE_TTL, Challenge, ChallengeId, ChallengeSlot, ChallengeStep, LiveChallenge,
     PasswordAccepted, PendingSecret, SignInStep,
 };
-pub use cipher::{DataKey, has_sealed_secrets, key_opens_sealed_secrets};
+pub use cipher::{DataKey, has_sealed_secrets, key_opens_sealed_secrets, open_secret, seal_secret};
 pub use credentials::{
     AuthenticationMethod, AuthenticationStatus, SecurityKeyCredentialView, SecurityKeyId,
     authentication_method, get_authentication_status, list_key_sign_in_choices, list_security_keys,
@@ -158,6 +160,7 @@ pub use policy::{
 };
 pub use queries::{
     SessionUser, SetupStatus, UserSummary, display_names, list_users, session_user, setup_status,
+    user_names,
 };
 pub use reauthenticate::{ReauthPurpose, Reauthentication, reauthenticate};
 pub use repo::UserStatus;

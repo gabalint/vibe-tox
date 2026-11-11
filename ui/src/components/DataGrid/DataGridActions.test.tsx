@@ -116,7 +116,9 @@ describe("DataGrid row actions", () => {
   });
 });
 
-function BulkGrid() {
+const exceptSynB = (id: string) => id !== "SYN-B";
+
+function BulkGrid({ isSelectable }: { isSelectable?: (id: string) => boolean }) {
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const [rows, setRows] = useState(ITEMS);
   return (
@@ -130,6 +132,7 @@ function BulkGrid() {
         bulk={{
           selectedIds,
           onChange: setSelectedIds,
+          isSelectable,
           actions: <Button>Hand off {selectedIds.size}</Button>,
         }}
       />
@@ -159,6 +162,18 @@ describe("DataGrid bulk selection", () => {
     expect(screen.getByRole("status").textContent).toBe("None selected.");
     await user.click(screen.getByRole("columnheader", { name: "Select all rows" }));
     expect(screen.getByRole("status").textContent).toBe("3 selected.");
+  });
+
+  it("passes by a row that may not be selected, in Space, a click and select all", async () => {
+    const { user } = renderWithProviders(<BulkGrid isSelectable={exceptSynB} />);
+    await selectRow(user, "SYN-B");
+    expect(screen.getByRole("status").textContent).toBe("None selected.");
+    await user.click(screen.getByRole("columnheader", { name: "Select all rows" }));
+    expect(screen.getByRole("status").textContent).toBe("2 selected.");
+    expect(screen.getByRole("button", { name: "Hand off 2" })).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", { name: "SYN-B" }).closest("[role=row]")?.ariaSelected,
+    ).toBeNull();
   });
 
   it("unselects rows that leave the list, and says so", async () => {

@@ -1,10 +1,13 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useContext, useId } from "react";
+import { FormValidationContext } from "react-aria-components";
 import { Button } from "@/components/Button";
 import { FieldGrid } from "@/components/Form";
 import { Inset } from "@/components/Inset";
 import styles from "./FieldList.module.css";
 
 interface FieldListProps {
+  /** The form path of the list, such as `diagnoses`. */
+  name: string;
   legend: string;
   /** Shown when the list is empty, such as "No diagnoses on the requisition." */
   emptyText: string;
@@ -18,8 +21,13 @@ interface FieldListProps {
   renderItem: (index: number) => ReactNode;
 }
 
-/** A repeatable group of fields: as many rows as the requisition supplies, none assumed. */
+/**
+ * A repeatable group of fields: as many rows as the requisition supplies, none assumed. The
+ * engine's error for the whole list, such as "Add at least one analyte.", shows under the
+ * legend as the surrounding `Form` names it, and the list takes the form's error focus.
+ */
 export function FieldList({
+  name,
   legend,
   emptyText,
   items,
@@ -29,9 +37,22 @@ export function FieldList({
   onRemove,
   renderItem,
 }: FieldListProps) {
+  const errorId = useId();
+  const engineError = useContext(FormValidationContext)[name];
+  const errorMessage = Array.isArray(engineError) ? engineError.join(" ") : engineError;
   return (
-    <fieldset className={styles.list}>
+    <fieldset
+      className={styles.list}
+      aria-describedby={errorMessage ? errorId : undefined}
+      aria-invalid={errorMessage ? true : undefined}
+      tabIndex={errorMessage ? -1 : undefined}
+    >
       <legend className={styles.legend}>{legend}</legend>
+      {errorMessage && (
+        <p id={errorId} className={styles.error}>
+          {errorMessage}
+        </p>
+      )}
       {items.length === 0 && <p className={styles.empty}>{emptyText}</p>}
       {items.map((item, index) => (
         <Inset key={item.id} as="fieldset">

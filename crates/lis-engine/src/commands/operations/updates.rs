@@ -1,4 +1,5 @@
-//! Update records (REQ-OPS-006, NFR-24; D13, §7) and media disposal records (REQ-OPS-003).
+//! Update records (REQ-OPS-006, NFR-24; D13, §7), authorization of in-app updates (ADR
+//! 0020) and media disposal records (REQ-OPS-003).
 
 use std::fs::File;
 use std::io::{self, Read};
@@ -12,20 +13,22 @@ use lis_ops::RuntimeError;
 use lis_ops::backup::RunId;
 use lis_ops::disposals::{MediaDisposalView, RecordMediaDisposalInput};
 use lis_ops::updates::{
-    AcceptVersionInput, InstalledVersionView, NewUpdateApproval, UpdateApprovalView,
-    WithdrawUpdateApprovalInput,
+    AcceptVersionInput, InstallFailure, InstalledVersionView, NewUpdateApproval, UpdateApprovalId,
+    UpdateApprovalView, WithdrawUpdateApprovalInput,
 };
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use ts_rs::TS;
 
 use super::{
-    ACCEPT_INSTALLED_VERSION, LIST_INSTALLED_VERSIONS, LIST_MEDIA_DISPOSALS, LIST_UPDATE_APPROVALS,
-    OperationsError, RECORD_MEDIA_DISPOSAL, RECORD_UPDATE_APPROVAL, WITHDRAW_UPDATE_APPROVAL,
-    invalid,
+    ACCEPT_INSTALLED_VERSION, APPROVE_DOWNLOADED_UPDATE, CHECK_RELEASE_UPDATE, DOWNLOAD_UPDATE,
+    INSTALL_UPDATE, LIST_INSTALLED_VERSIONS, LIST_MEDIA_DISPOSALS, LIST_NIGHTLY_BUILDS,
+    LIST_UPDATE_APPROVALS, OperationsError, RECORD_MEDIA_DISPOSAL, RECORD_UPDATE_APPROVAL,
+    WITHDRAW_UPDATE_APPROVAL, invalid,
 };
 use crate::engine::Engine;
-use crate::pipeline::{Failure, accepted};
+use crate::pipeline::{Call, Failure, accepted};
+use crate::registry::CommandSpec;
 
 /// Bytes read at a time while hashing a package.
 const READ_CHUNK: usize = 1 << 20;
@@ -62,7 +65,81 @@ pub struct AcceptInstalledVersionInput {
     pub password: Reauthentication,
 }
 
+/// A request the desktop shell makes to the update host after the engine authorizes it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UpdateRequest {
+    /// `check_release_update` (session): the newest official release.
+    CheckRelease,
+    /// `list_nightly_builds` (session): the retained nightly builds.
+    ListNightly,
+    /// `download_update` (`manage_configuration`): download and verify a package.
+    Download,
+    /// `approve_downloaded_update` (`manage_configuration`), before the staged package is
+    /// looked up.
+    Approve,
+    /// `install_update` (`manage_configuration`), before the shell checks pending work.
+    Install,
+}
+
+impl UpdateRequest {
+    fn spec(self) -> &'static CommandSpec {
+        match self {
+            Self::CheckRelease => &CHECK_RELEASE_UPDATE,
+            Self::ListNightly => &LIST_NIGHTLY_BUILDS,
+            Self::Download => &DOWNLOAD_UPDATE,
+            Self::Approve => &APPROVE_DOWNLOADED_UPDATE,
+            Self::Install => &INSTALL_UPDATE,
+        }
+    }
+}
+
 impl Engine {
+    /// Refuses `request` unless the session and capability of its registry entry allow it,
+    /// before the shell contacts the update host. Changes nothing.
+    pub async fn preflight_update(&self, request: UpdateRequest) -> Result<(), CommandError> {
+        self.run(
+            request.spec(),
+            |call| async move { self.authorize(&call).await },
+        )
+        .await
+    }
+
+    /// `install_update` (`manage_configuration`): allows the shell to install `package`,
+    /// the downloaded and signature-verified package of `version`, only when the current
+    /// approval of that version names the same SHA-256 and its pre-update backup is still
+    /// verified and recent. Audited as `ops.install_update`; returns the approval.
+    pub async fn begin_update_install(
+        &self,
+        version: String,
+        package: PathBuf,
+    ) -> Result<UpdateApprovalId, CommandError> {
+        self.run(&INSTALL_UPDATE, |call| async move {
+            self.authorize(&call).await?;
+            let (_, package_sha256) = package_digest(package).await?;
+            self.write(&call, move |ctx| {
+                lis_ops::updates::begin_update_install(ctx, &version, &package_sha256)
+            })
+            .await
+        })
+        .await
+    }
+
+    /// Records that the installation allowed under `approval` failed, as a failed
+    /// `ops.install_update` (`manage_configuration`).
+    pub async fn record_update_install_failure(
+        &self,
+        approval: UpdateApprovalId,
+        failure: InstallFailure,
+    ) -> Result<(), CommandError> {
+        self.run(&INSTALL_UPDATE, |call| async move {
+            self.write(&call, move |ctx| {
+                lis_ops::updates::record_update_install_failure(ctx, approval, failure)
+            })
+            .await
+        })
+        .await
+    }
+
     /// `list_installed_versions` (session): every version that has run, newest first.
     pub async fn list_installed_versions(&self) -> Result<Vec<InstalledVersionView>, CommandError> {
         self.run(&LIST_INSTALLED_VERSIONS, |call| async move {
@@ -92,30 +169,54 @@ impl Engine {
             let Some(package) = package else {
                 return Ok(None);
             };
-            let (package_file_name, package_sha256) = package_digest(package).await?;
-            let approval = NewUpdateApproval {
-                version: input.version,
-                risk_class_text: input.risk_class_text,
-                release_notes_reviewed: input.release_notes_reviewed,
-                pre_update_run_id: input.pre_update_run_id,
-                notes: input.notes,
-                package_file_name,
-                package_sha256,
-            };
-            let password = input.password;
-            let attempt = self
-                .write(&call, move |ctx| -> Result<_, OperationsError> {
-                    match lis_auth::reauthenticate(ctx, &password, ReauthPurpose::UpdateApproval)? {
-                        Attempt::Rejected(rejection) => Ok(Attempt::Rejected(rejection)),
-                        Attempt::Accepted(()) => Ok(Attempt::Accepted(
-                            lis_ops::updates::record_update_approval(ctx, &approval)?,
-                        )),
-                    }
-                })
-                .await?;
-            accepted(attempt).map(Some)
+            self.approve_package(&call, input, package).await.map(Some)
         })
         .await
+    }
+
+    /// `approve_downloaded_update` (`manage_configuration`, fresh authentication): as
+    /// `record_update_approval`, for `package`, the package the shell downloaded and
+    /// verified for `input.version`.
+    pub async fn approve_downloaded_update(
+        &self,
+        input: RecordUpdateApprovalInput,
+        package: PathBuf,
+    ) -> Result<UpdateApprovalView, CommandError> {
+        self.run(&APPROVE_DOWNLOADED_UPDATE, |call| async move {
+            self.authorize(&call).await?;
+            self.approve_package(&call, input, package).await
+        })
+        .await
+    }
+
+    async fn approve_package(
+        &self,
+        call: &Call,
+        input: RecordUpdateApprovalInput,
+        package: PathBuf,
+    ) -> Result<UpdateApprovalView, Failure> {
+        let (package_file_name, package_sha256) = package_digest(package).await?;
+        let approval = NewUpdateApproval {
+            version: input.version,
+            risk_class_text: input.risk_class_text,
+            release_notes_reviewed: input.release_notes_reviewed,
+            pre_update_run_id: input.pre_update_run_id,
+            notes: input.notes,
+            package_file_name,
+            package_sha256,
+        };
+        let password = input.password;
+        let attempt = self
+            .write(call, move |ctx| -> Result<_, OperationsError> {
+                match lis_auth::reauthenticate(ctx, &password, ReauthPurpose::UpdateApproval)? {
+                    Attempt::Rejected(rejection) => Ok(Attempt::Rejected(rejection)),
+                    Attempt::Accepted(()) => Ok(Attempt::Accepted(
+                        lis_ops::updates::record_update_approval(ctx, &approval)?,
+                    )),
+                }
+            })
+            .await?;
+        accepted(attempt)
     }
 
     /// `withdraw_update_approval` (`manage_configuration`): before the version is installed.

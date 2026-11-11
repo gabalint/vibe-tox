@@ -26,11 +26,14 @@ mod artifact_references;
 mod au_dedup_tests;
 mod au_evidence;
 mod au_session;
+mod audit_records;
 mod commands;
 mod error;
+mod folder_path;
 mod instrument_commands;
 mod listener;
 mod model;
+pub mod partner;
 mod peer_rejections;
 mod queries;
 mod receipt_writer;
@@ -47,17 +50,21 @@ pub use lis_core::InstrumentId;
 use lis_core::{Migration, ModuleSchema};
 
 pub use artifact_references::{ARTIFACT_COLUMNS, referenced_artifacts};
+pub use audit_records::{audit_record_label, audit_record_search};
 pub use error::{InterfaceError, ListenerErrorCode};
+pub use folder_path::without_verbatim_prefix;
 pub use instrument_commands::{
     register_instrument, set_instrument_enabled, set_result_folder, update_instrument_connection,
 };
 pub use listener::{DEFAULT_ESTABLISHMENT_TIMEOUT, ListenerSupervisor, ListenerSupervisorError};
 pub use model::{
-    AbortCode, AuConnectionSettings, ConnectionSettings, DataBits, FileFacts, FileOrigin,
-    FileSource, Instrument, InstrumentTransport, Parity, PresentFile, Receipt, ReceiptFileView,
-    ReceiptFrame, ReceiptId, ReceiptState, ReceiveResultFileInput, RegisterInstrument,
-    SetInstrumentEnabled, SetResultFolder, StopBits, UpdateInstrumentConnection, WatchedFolder,
+    AbortCode, AuConnectionSettings, ChangeStamp, ConnectionSettings, DataBits, FileFacts,
+    FileOrigin, FileSource, Instrument, InstrumentTransport, Parity, PresentFile, Receipt,
+    ReceiptFileView, ReceiptFrame, ReceiptId, ReceiptState, ReceiveResultFileInput,
+    RegisterInstrument, SetInstrumentEnabled, SetResultFolder, StopBits,
+    UpdateInstrumentConnection, WatchedFolder,
 };
+pub use peer_rejections::{PeerRejections, RejectionTally};
 pub use queries::{
     get_instrument, get_receipt, instrument_au_profile, instrument_names, instrument_transport,
     list_instruments, list_receipt_frames, receipt_au_profile,
@@ -97,6 +104,71 @@ pub const MIGRATIONS: &[Migration] = &[
         version: 4,
         name: "au_protocol",
         sql: include_str!("../migrations/0004_au_protocol.sql"),
+    },
+    Migration {
+        version: 5,
+        name: "instrument_changes",
+        sql: include_str!("../migrations/0005_instrument_changes.sql"),
+    },
+    Migration {
+        version: 6,
+        name: "partner_connections",
+        sql: include_str!("../migrations/0006_partner_connections.sql"),
+    },
+    Migration {
+        version: 7,
+        name: "report_pdf_connections",
+        sql: include_str!("../migrations/0007_report_pdf_connections.sql"),
+    },
+    Migration {
+        version: 8,
+        name: "hl7_results",
+        sql: include_str!("../migrations/0008_hl7_results.sql"),
+    },
+    Migration {
+        version: 9,
+        name: "sftp_connections",
+        sql: include_str!("../migrations/0009_sftp_connections.sql"),
+    },
+    Migration {
+        version: 10,
+        name: "order_connections",
+        sql: include_str!("../migrations/0010_order_connections.sql"),
+    },
+    Migration {
+        version: 11,
+        name: "received_orders",
+        sql: include_str!("../migrations/0011_received_orders.sql"),
+    },
+    Migration {
+        version: 12,
+        name: "mllp_connections",
+        sql: include_str!("../migrations/0012_mllp_connections.sql"),
+    },
+    Migration {
+        version: 13,
+        name: "receipt_arrivals",
+        sql: include_str!("../migrations/0013_receipt_arrivals.sql"),
+    },
+    Migration {
+        version: 14,
+        name: "mllp_received",
+        sql: include_str!("../migrations/0014_mllp_received.sql"),
+    },
+    Migration {
+        version: 15,
+        name: "interface_contracts",
+        sql: include_str!("../migrations/0015_interface_contracts.sql"),
+    },
+    Migration {
+        version: 16,
+        name: "rejection_follow_up",
+        sql: include_str!("../migrations/0016_rejection_follow_up.sql"),
+    },
+    Migration {
+        version: 17,
+        name: "report_file_name_placeholder",
+        sql: include_str!("../migrations/0017_report_file_name_placeholder.sql"),
     },
 ];
 

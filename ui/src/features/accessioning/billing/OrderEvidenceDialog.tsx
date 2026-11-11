@@ -5,7 +5,7 @@ import { CommandDialog } from "@/lib/CommandDialog";
 import { FINANCIAL_QUERIES } from "./contract";
 import { EvidenceFields } from "./EvidenceFields";
 import { EMPTY_EVIDENCE, type EvidenceValues, evidenceInput } from "./evidenceValues";
-import { ChangeEvidenceFields } from "./FinancialFields";
+import { ChangeSection } from "./FinancialFields";
 
 export function OrderEvidenceDialog({
   context: initialContext,
@@ -41,9 +41,10 @@ export function OrderEvidenceDialog({
       })}
       successTitle="Order financial evidence saved"
       onClose={onClose}
+      size="wide"
     >
       <EvidenceFields coverages={selection.coverages} />
-      <ChangeEvidenceFields />
+      <ChangeSection />
     </CommandDialog>
   );
 }

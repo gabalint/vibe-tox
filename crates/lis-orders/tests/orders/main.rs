@@ -5,6 +5,7 @@
 mod billing_context;
 mod billing_reviews;
 mod historical_labels;
+mod order_find;
 mod paging;
 
 use std::sync::Arc;
@@ -587,7 +588,9 @@ fn list_orders(
                 limit,
                 before_received_at: None,
                 before_order_id: None,
+                search: None,
             },
+            &lis_orders::OrderMatches::default(),
         )
     })
 }
@@ -759,13 +762,28 @@ fn add_on_without_authority_cannot_be_accepted() {
         })
         .unwrap();
     let mut input = add_on(&fixture, &accepted, accepted.revision);
-    input.authority_reference = None;
+    input.authority_reference = Some("  ".to_owned());
+    let refused = fixture
+        .write(move |ctx| request_follow_on(ctx, input))
+        .unwrap_err();
+    assert_eq!(refused.code(), lis_core::ErrorCode::Validation);
+    assert_eq!(refused.field_errors()[0].field, "authorityReference");
+
+    // A request recorded before the reference was required still cannot be accepted.
+    let input = add_on(&fixture, &accepted, accepted.revision);
     let pending = fixture
         .write(move |ctx| request_follow_on(ctx, input))
         .unwrap();
     let item = pending.items.last().unwrap();
     let item_id = item.item_id;
     let item_revision = item.revision;
+    rusqlite::Connection::open(fixture.t.data_dir().join(lis_store::DATABASE_FILE))
+        .unwrap()
+        .execute(
+            "UPDATE ord_order_items SET authority_reference = NULL WHERE id = ?1",
+            [item_id],
+        )
+        .unwrap();
     let before = audit_count(&fixture);
     let error = fixture
         .write(move |ctx| {
@@ -781,6 +799,11 @@ fn add_on_without_authority_cannot_be_accepted() {
         })
         .unwrap_err();
     assert_eq!(error.code(), lis_core::ErrorCode::GateBlocked);
+    assert!(
+        error
+            .to_string()
+            .starts_with("This add-on has no authority reference.")
+    );
     assert_eq!(audit_count(&fixture), before);
     let order_id = pending.order_id;
     let unchanged = fixture
