@@ -16,7 +16,7 @@ const DONE: ExitExportView = {
   requestedAt: "2026-10-13T12:00:00Z",
   finishedAt: "2026-10-13T12:04:00Z",
   folderLabel: "Encrypted drive E",
-  packageName: "vibe-tox-exit-synthetic-20261013T120000Z",
+  packageName: "openbga-tox-exit-synthetic-20261013T120000Z",
   databaseBytes: 52_428_800,
   artifactCount: 12,
   manifestSha256: "cd".repeat(32),
@@ -66,7 +66,7 @@ describe("ExitExportPage (REQ-OPS-010)", () => {
       request_exit_export: request,
       list_exit_exports: list,
     });
-    expect(await screen.findByText("vibe-tox-exit-synthetic-20261013T120000Z")).toBeTruthy();
+    expect(await screen.findByText("openbga-tox-exit-synthetic-20261013T120000Z")).toBeTruthy();
     expect(screen.getByText("Verified")).toBeTruthy();
     expect(screen.getByText("50.0 MiB")).toBeTruthy();
     expect(list).toHaveBeenCalledWith({ input: { limit: 101 } });

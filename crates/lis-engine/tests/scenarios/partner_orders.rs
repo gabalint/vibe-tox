@@ -29,7 +29,7 @@ pub(super) const SENDER: &str = "SYN-EMR-FAC";
 /// A synthetic OML^O21 for the fixture's practitioner and the panel's partner code.
 pub(super) fn oml(sender: &str, control_id: &str) -> String {
     [
-        format!("MSH|^~\\&|SYN-EMR|{sender}|VIBETOX LIS|LAB|20261104093000||OML^O21|{control_id}|P|2.5.1"),
+        format!("MSH|^~\\&|SYN-EMR|{sender}|OPENBGA TOX|LAB|20261104093000||OML^O21|{control_id}|P|2.5.1"),
         format!("PID|1||MRN-00042^^^{SENDER}^MR||Doe^Jane||19800101|F"),
         "ORC|NW|ORD-0001^SYN-EMR||||||||||1234567893^Synthetic".to_owned(),
         "OBR|1|ORD-0001^SYN-EMR||SYN-PANEL^Synthetic panel^L".to_owned(),

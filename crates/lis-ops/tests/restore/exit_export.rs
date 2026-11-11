@@ -91,7 +91,7 @@ fn the_package_holds_every_documented_file_and_every_digest_verifies() {
         .read_blocking(lis_ops::installation_id)
         .unwrap()
         .unwrap();
-    assert!(name.starts_with(&format!("vibe-tox-exit-{installation}-")));
+    assert!(name.starts_with(&format!("openbga-tox-exit-{installation}-")));
     let package = folder.join(&name);
     let manifest_bytes = fs::read(package.join("manifest.json")).unwrap();
     let (manifest_digest, _) = ArtifactDigest::of_reader(manifest_bytes.as_slice()).unwrap();

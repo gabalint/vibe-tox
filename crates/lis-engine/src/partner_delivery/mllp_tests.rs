@@ -8,7 +8,7 @@ use tokio::net::TcpListener;
 use super::*;
 
 const ORU: &[u8] =
-    b"MSH|^~\\&|VIBETOX LIS|LAB|SYN-EMR|HOSP-B|20261105101500||ORU^R01|MSG-0001|P|2.5.1\r";
+    b"MSH|^~\\&|OPENBGA TOX|LAB|SYN-EMR|HOSP-B|20261105101500||ORU^R01|MSG-0001|P|2.5.1\r";
 
 /// What the test partner does with the message it reads.
 #[derive(Clone, Copy)]
@@ -44,7 +44,7 @@ async fn answer_one(mut stream: TcpStream, answer: Answer) {
     match answer {
         Answer::Ack(code, control_id) => {
             let ack = format!(
-                "MSH|^~\\&|SYN-EMR|HOSP-B|VIBETOX LIS|LAB|20261105101501||ACK|A1|P|2.5.1\r\
+                "MSH|^~\\&|SYN-EMR|HOSP-B|OPENBGA TOX|LAB|20261105101501||ACK|A1|P|2.5.1\r\
                  MSA|{code}|{control_id}\rERR||||E||||Unknown provider NPI 1234567893\r"
             );
             stream.write_all(&frame(ack.as_bytes())).await.unwrap();

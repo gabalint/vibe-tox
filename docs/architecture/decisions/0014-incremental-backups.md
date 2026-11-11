@@ -29,7 +29,7 @@ Design detail: [incremental backup design brief](../../planning/backup-increment
    - **Names.** Each chunk is named by a keyed hash derived from the installation key.
    - **Encryption.** Each chunk is encrypted in the unchanged `vtbk1` container.
    - **Only missing chunks are written.** The chunks a target lacks are written once and never rewritten.
-2. **Every set is a full logical copy.** Its manifest, `vibe-tox-set-2`, names content-addressed list blocks of chunks and artifacts, and is written and read back last. There are no chains, no periodic full copies for correctness and no compaction.
+2. **Every set is a full logical copy.** Its manifest, `openbga-tox-set-2`, names content-addressed list blocks of chunks and artifacts, and is written and read back last. There are no chains, no periodic full copies for correctness and no compaction.
 3. **Verification.**
    - A copy counts after its new objects and manifest are read back and authenticated, and every object it references is present.
    - A scheduled scrub reads whole targets.

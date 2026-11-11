@@ -10,7 +10,7 @@ use std::time::{Duration, Instant};
 #[test]
 #[ignore = "read-only accumulated-history owner summary measurement"]
 fn remediation_retained_history_review_summaries() {
-    let path = std::env::var("VIBE_TOX_CAPACITY_DATABASE").unwrap();
+    let path = std::env::var("OPENBGA_TOX_CAPACITY_DATABASE").unwrap();
     let deadline = Instant::now() + Duration::from_secs(300);
     while !snapshot_ready(&path) {
         assert!(
@@ -87,7 +87,7 @@ fn snapshot_ready(path: &str) -> bool {
     if !Path::new(path).exists() {
         return false;
     }
-    match std::env::var("VIBE_TOX_CAPACITY_READY_LOG") {
+    match std::env::var("OPENBGA_TOX_CAPACITY_READY_LOG") {
         Ok(log) => fs::read_to_string(log).is_ok_and(|text| {
             text.contains(&format!("retained synthetic SQLite snapshot: {path}"))
         }),
@@ -99,7 +99,7 @@ fn snapshot_ready(path: &str) -> bool {
 #[test]
 #[ignore = "requires the explicitly pinned pre-optimization measurement binary"]
 fn remediation_pinned_baseline_review_summaries() {
-    let binary = std::env::var("VIBE_TOX_CAPACITY_BASELINE_BINARY").unwrap();
+    let binary = std::env::var("OPENBGA_TOX_CAPACITY_BASELINE_BINARY").unwrap();
     let status = std::process::Command::new(binary)
         .args([
             "remediation_retained_history_review_summaries",
@@ -117,7 +117,7 @@ fn remediation_pinned_baseline_review_summaries() {
 #[test]
 #[ignore = "read-only retained-history bounded ready-page measurement"]
 fn remediation_retained_history_review_pages() {
-    let path = std::env::var("VIBE_TOX_CAPACITY_DATABASE").unwrap();
+    let path = std::env::var("OPENBGA_TOX_CAPACITY_DATABASE").unwrap();
     let conn =
         rusqlite::Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
             .unwrap();
@@ -160,7 +160,7 @@ fn remediation_retained_history_review_pages() {
 #[test]
 #[ignore = "read-only individual result-status and gate profiling"]
 fn remediation_retained_history_result_components() {
-    let path = std::env::var("VIBE_TOX_CAPACITY_DATABASE").unwrap();
+    let path = std::env::var("OPENBGA_TOX_CAPACITY_DATABASE").unwrap();
     let mut conn =
         rusqlite::Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
             .unwrap();
@@ -201,7 +201,7 @@ fn millis(duration: Duration) -> String {
 }
 
 fn configure_statement_cache(conn: &rusqlite::Connection) {
-    if let Ok(value) = std::env::var("VIBE_TOX_CAPACITY_STATEMENT_CACHE") {
+    if let Ok(value) = std::env::var("OPENBGA_TOX_CAPACITY_STATEMENT_CACHE") {
         let capacity: usize = value.parse().unwrap();
         conn.set_prepared_statement_cache_capacity(capacity);
         println!("benchmark-only statement cache capacity: {capacity}; unchanged data/gates");
@@ -211,7 +211,7 @@ fn configure_statement_cache(conn: &rusqlite::Connection) {
 #[test]
 #[ignore = "read-only bounded-history request latency and exhaustive continuation"]
 fn remediation_bounded_history_pages_reach_every_candidate() {
-    let path = std::env::var("VIBE_TOX_CAPACITY_DATABASE").unwrap();
+    let path = std::env::var("OPENBGA_TOX_CAPACITY_DATABASE").unwrap();
     let conn =
         rusqlite::Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
             .unwrap();

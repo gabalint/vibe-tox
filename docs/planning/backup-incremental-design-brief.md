@@ -112,7 +112,7 @@ Option (b) becomes interesting only if the laboratory needs a recovery point of 
 
 ### 6.3 Names and encryption
 
-- **Name.** `chunkName = hex(SHA-256(chunkKey ‖ SHA-256(plaintext)))`, with `chunkKey = SHA-256("vibe-tox/chunk-key/v1" ‖ installation key)`.
+- **Name.** `chunkName = hex(SHA-256(chunkKey ‖ SHA-256(plaintext)))`, with `chunkKey = SHA-256("openbga-tox/chunk-key/v1" ‖ installation key)`.
   - The key stops anyone with target access from confirming a guessed page by its name.
   - The inner hash avoids length-extension questions.
   - Every target uses the same names, so an object can be copied between targets to repair one.
@@ -133,10 +133,10 @@ A set's manifest must not grow with the database or the artifact count.
   - The manifest holds only the block names.
 - **The `vtbk1` manifest has the same problem.** It lists every artifact in every set. With 25,000 reports a year at about 90 bytes per entry, that is about 2 MB per manifest, or about 90 MB a day at 40 sets a day (arithmetic). This design fixes it too.
 
-### 6.5 Manifest `vibe-tox-set-2`
+### 6.5 Manifest `openbga-tox-set-2`
 
 ```
-{"format":"vibe-tox-set-2", installationId, setId, runId, kind, createdAt, appVersion, keyId,
+{"format":"openbga-tox-set-2", installationId, setId, runId, kind, createdAt, appVersion, keyId,
  schema:[{module,version,name,checksum}],
  database:{pageSize, pageCount, chunkPages:64, root, integrity:"ok"|"not_checked", checkedAt},
  chunkLists:[name…], artifactLists:[name…], artifactCount,
@@ -236,7 +236,7 @@ Measure database growth, page churn, backup/restore duration and writer/checkpoi
 
 | Milestone | Content | Exit tests |
 | --- | --- | --- |
-| **B1. Format** | Format document section and reference decryptor update (content codes 4 and 5, list blocks, `vibe-tox-set-2`, chunk names); `vtbk2` writer and reader in `lis-ops`; the `DBPAGE_VTAB` build flag | Property tests: chunk and list round trip, a page-for-page match of an assembled database against a backup-API copy taken with the writer paused, wrong key, flipped bit, truncated object, swapped list block, manifest moved to another set ID |
+| **B1. Format** | Format document section and reference decryptor update (content codes 4 and 5, list blocks, `openbga-tox-set-2`, chunk names); `vtbk2` writer and reader in `lis-ops`; the `DBPAGE_VTAB` build flag | Property tests: chunk and list round trip, a page-for-page match of an assembled database against a backup-API copy taken with the writer paused, wrong key, flipped bit, truncated object, swapped list block, manifest moved to another set ID |
 | **B2. Runs** | Backup run on `vtbk2` (§6.6), verification (§6.7), quarantine, garbage collection, the integrity-check cadence; `vtbk1` stays readable | A power cut at every step: object, list, manifest, rename, record. Unrecorded sets are quarantined and orphans collected only after the margin. Garbage collection never removes an object reachable from a manual, pre-update or quarantined set (property test over random histories). An unreadable root makes the pass delete nothing. A target offline for a week catches up |
 | **B3. Restore** | Restore and restore test from `vtbk2`; scrub; health signals; 15-minute defaults only after measurement | The [restore, offline-day and interrupted-copy scenarios](../architecture/operations-contract.md#verification-expectations) on `vtbk2`. A `chunk_corrupt` and a `chunk_missing` finding each for its injected fault. Repair by copying an object from another target. A mixed `vtbk1` and `vtbk2` history restores either set. The perf harness's volume scenario reports per-copy bytes at a year |
 | **B4. Measure** | Reference hardware per OS (G2-27) | 15-minute copies at a year; scan time; restore time against NFR-30 |

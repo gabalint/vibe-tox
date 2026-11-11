@@ -8,7 +8,7 @@
 //!   runs, so a release installation never sees them.
 //! - Every URL the shell fetches, including those the index and manifests name, must be a
 //!   release download of that repository.
-//! - Debug builds only: `VIBE_TOX_UPDATE_FEED_URL`, a loopback HTTP address, stands in for the
+//! - Debug builds only: `OPENBGA_TOX_UPDATE_FEED_URL`, a loopback HTTP address, stands in for the
 //!   repository so the screen can be tried locally without publishing ([`local_feed`]).
 //!   Packages are still signature-checked, and installation is refused.
 //! - Only a newer version installs. The updater checks the package's Minisign signature and
@@ -41,7 +41,7 @@ pub(crate) use staging::staged_path;
 use staging::{stage, still_staged};
 
 /// The `owner/name` GitHub repository whose releases this build updates from, set by CI.
-const REPOSITORY: Option<&str> = option_env!("VIBE_TOX_UPDATE_REPOSITORY");
+const REPOSITORY: Option<&str> = option_env!("OPENBGA_TOX_UPDATE_REPOSITORY");
 
 /// How long a manifest or index request may take.
 const CHECK_TIMEOUT: Duration = Duration::from_secs(30);

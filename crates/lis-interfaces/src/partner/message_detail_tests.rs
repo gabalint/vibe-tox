@@ -19,8 +19,8 @@ fn kept() -> PartnerMessageDetail {
 fn kept_bytes_show_as_segments_with_their_control_id() {
     let mut detail = kept();
     detail.show(
-        b"MSH|^~\\&|VIBETOX LIS|LAB||CLINIC-B|20261105100000+0000||ORU^R01^ORU_R01|CTRL-1|T|2.5.1\r\
-          PID|1||TEST-00000^^^VIBETOX^MR||TEST^SYNTHETIC\r",
+        b"MSH|^~\\&|OPENBGA TOX|LAB||CLINIC-B|20261105100000+0000||ORU^R01^ORU_R01|CTRL-1|T|2.5.1\r\
+          PID|1||TEST-00000^^^OPENBGA^MR||TEST^SYNTHETIC\r",
     );
     assert_eq!(detail.content, MessageContent::Sent);
     assert_eq!(detail.control_id.as_deref(), Some("CTRL-1"));

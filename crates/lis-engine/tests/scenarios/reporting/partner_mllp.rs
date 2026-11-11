@@ -37,7 +37,7 @@ pub(super) async fn partner(answers: Vec<Option<&'static str>>) -> (u16, Receive
             kept.lock().unwrap().push(message);
             if let Some(code) = answers.next().flatten() {
                 let ack = format!(
-                    "MSH|^~\\&|SYN-EMR|HOSP-B|VIBETOX LIS|LAB|20261105101501||ACK|A-{id}|P|2.5.1\r\
+                    "MSH|^~\\&|SYN-EMR|HOSP-B|OPENBGA TOX|LAB|20261105101501||ACK|A-{id}|P|2.5.1\r\
                      MSA|{code}|{id}|Unknown provider NPI 1234567893\r"
                 );
                 stream.write_all(&frame(ack.as_bytes())).await.unwrap();

@@ -106,7 +106,7 @@ mod tests {
     use crate::partner::mllp::read_acknowledgement;
 
     const OML: &[u8] =
-        b"MSH|^~\\&|SYN-EMR|HOSP-B|VIBETOX LIS|LAB|20261106093000||OML^O21|MSG-0001|P|2.5.1\r";
+        b"MSH|^~\\&|SYN-EMR|HOSP-B|OPENBGA TOX|LAB|20261106093000||OML^O21|MSG-0001|P|2.5.1\r";
 
     #[test]
     fn an_order_is_acknowledged_to_its_sender_with_its_control_id() {
@@ -114,7 +114,7 @@ mod tests {
         let text = String::from_utf8(ack.clone()).unwrap();
         assert_eq!(
             text,
-            "MSH|^~\\&|VIBETOX LIS|LAB|SYN-EMR|HOSP-B|20261106093001+0000||ACK^O21^ACK|\
+            "MSH|^~\\&|OPENBGA TOX|LAB|SYN-EMR|HOSP-B|20261106093001+0000||ACK^O21^ACK|\
              ACK-MSG-0001|P|2.5.1\rMSA|AA|MSG-0001\r"
         );
         // The LIS's own reader reads it back.

@@ -182,7 +182,7 @@ describe("Connections (ticket #4555; REQ-RPT-012)", () => {
     expect(screen.getByText("SFTP – sftp.clinic-a.example:22")).toBeTruthy();
     expect(screen.getByText("/inbound/results")).toBeTruthy();
     expect(
-      screen.getByText("SSH key as vibetox_lab · fingerprint SHA256:8Zq3...f1Kx"),
+      screen.getByText("SSH key as openbga_lab · fingerprint SHA256:8Zq3...f1Kx"),
     ).toBeTruthy();
   });
 

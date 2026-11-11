@@ -374,7 +374,7 @@ fn approval(version: &str, run: RunId) -> NewUpdateApproval {
         release_notes_reviewed: true,
         pre_update_run_id: run,
         notes: "Release notes reviewed against lab SOP".into(),
-        package_file_name: "vibe-tox-0.5.0.msi".into(),
+        package_file_name: "openbga-tox-0.5.0.msi".into(),
         package_sha256: "b".repeat(64),
     }
 }

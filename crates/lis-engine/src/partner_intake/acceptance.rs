@@ -269,7 +269,7 @@ fn register_fixtures(
 /// A synthetic OML^O21 from `sender` for `patient`, ordering `code`.
 fn oml(sender: &str, control_id: &str, placer: &str, code: &str, patient: &str) -> String {
     [
-        format!("MSH|^~\\&|ACCEPTANCE|{sender}|VIBETOX LIS|LAB|20260101120000||OML^O21|{control_id}|T|2.5.1"),
+        format!("MSH|^~\\&|ACCEPTANCE|{sender}|OPENBGA TOX|LAB|20260101120000||OML^O21|{control_id}|T|2.5.1"),
         format!("PID|1||{patient}^^^{sender}^MR||Acceptance^Synthetic||19000101"),
         format!("ORC|NW|{placer}^ACCEPTANCE||||||||||{NPI}^Acceptance"),
         format!("OBR|1|{placer}^ACCEPTANCE||{code}^Synthetic^L"),

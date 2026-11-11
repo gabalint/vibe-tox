@@ -5,7 +5,7 @@ use super::*;
 /// A synthetic OML^O21 from a clinic's EMR: one requisition with two tests.
 fn oml() -> String {
     [
-        "MSH|^~\\&|SYN-EMR|CLINIC-A|VIBETOX LIS|LAB|20261104093000||OML^O21^OML_O21|MSG-0001|P|2.5.1",
+        "MSH|^~\\&|SYN-EMR|CLINIC-A|OPENBGA TOX|LAB|20261104093000||OML^O21^OML_O21|MSG-0001|P|2.5.1",
         "PID|1||MRN-00042^^^CLINIC-A^MR~SYN-123^^^SYNPAYER^MB||Doe^Jane^Q||19800101|F",
         "PV1|1|O|CLINIC-A-MAIN",
         "ORC|NW|ORD-000124^SYN-EMR||||||||||1234567893^Test^Doctor|||||||||CLINIC-A",

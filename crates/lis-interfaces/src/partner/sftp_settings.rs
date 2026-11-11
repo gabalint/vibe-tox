@@ -130,7 +130,7 @@ mod tests {
         SftpSettings {
             host: " sftp.clinic-a.example ".to_owned(),
             port: 22,
-            username: "vibetox_lab".to_owned(),
+            username: "openbga_lab".to_owned(),
             auth: SftpAuth::Key,
             fingerprint: format!("SHA256:{}", "A".repeat(43)),
             remote_folder: "/inbound/results".to_owned(),

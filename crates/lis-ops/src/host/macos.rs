@@ -183,10 +183,10 @@ macfuse@synthetic on /Volumes/fuse (macfuse, nodev, nosuid, synchronous)
 
     #[test]
     fn the_startup_volume_group_is_the_one_filevault_covers() {
-        let home = "/Users/lab/Library/Application Support/vibe-tox";
+        let home = "/Users/lab/Library/Application Support/openbga-tox";
         assert_eq!(kind(home), Some(VolumeKind::Startup));
         assert_eq!(
-            kind("/System/Volumes/Data/Users/lab/vibe-tox"),
+            kind("/System/Volumes/Data/Users/lab/openbga-tox"),
             Some(VolumeKind::Startup)
         );
     }
@@ -195,12 +195,15 @@ macfuse@synthetic on /Volumes/fuse (macfuse, nodev, nosuid, synchronous)
     #[test]
     fn external_local_volumes_are_not_the_startup_volume() {
         assert_eq!(
-            kind("/Volumes/Lab Backup/vibe-tox"),
+            kind("/Volumes/Lab Backup/openbga-tox"),
             Some(VolumeKind::OtherLocal)
         );
-        assert_eq!(kind("/Volumes/USB/vibe-tox"), Some(VolumeKind::OtherLocal));
         assert_eq!(
-            kind("/Volumes/Lab Backup/Inner/vibe-tox"),
+            kind("/Volumes/USB/openbga-tox"),
+            Some(VolumeKind::OtherLocal)
+        );
+        assert_eq!(
+            kind("/Volumes/Lab Backup/Inner/openbga-tox"),
             Some(VolumeKind::OtherLocal)
         );
     }
@@ -215,10 +218,10 @@ macfuse@synthetic on /Volumes/fuse (macfuse, nodev, nosuid, synchronous)
 /dev/disk6s1 on /Volumes/Windows (ntfs, local, read-only, noowners)
 ";
         for path in [
-            "/Users/lab/vibe-tox",
-            "/Volumes/Old Mac/vibe-tox",
-            "/Volumes/Pool/vibe-tox",
-            "/Volumes/Windows/vibe-tox",
+            "/Users/lab/openbga-tox",
+            "/Volumes/Old Mac/openbga-tox",
+            "/Volumes/Pool/openbga-tox",
+            "/Volumes/Windows/openbga-tox",
         ] {
             assert!(
                 volume_kind(mounts, Path::new(path))
@@ -231,10 +234,10 @@ macfuse@synthetic on /Volumes/fuse (macfuse, nodev, nosuid, synchronous)
     #[test]
     fn smb_afp_nfs_and_webdav_mounts_are_network() {
         for path in [
-            "/Volumes/share/vibe-tox",
-            "/Volumes/afp/vibe-tox",
-            "/Volumes/export/vibe-tox",
-            "/Volumes/dav.example/vibe-tox",
+            "/Volumes/share/openbga-tox",
+            "/Volumes/afp/openbga-tox",
+            "/Volumes/export/openbga-tox",
+            "/Volumes/dav.example/tox",
         ] {
             assert_eq!(kind(path), Some(VolumeKind::Network), "{path}");
         }
@@ -244,8 +247,8 @@ macfuse@synthetic on /Volumes/fuse (macfuse, nodev, nosuid, synchronous)
     #[test]
     fn unlisted_types_and_unflagged_disks_are_unknown_not_local() {
         for path in [
-            "/Volumes/fuse/vibe-tox",
-            "/Volumes/NoFlag/vibe-tox",
+            "/Volumes/fuse/openbga-tox",
+            "/Volumes/NoFlag/openbga-tox",
             "/System/Volumes/Data/home/lab",
         ] {
             assert_eq!(kind(path), None, "{path}");

@@ -20,7 +20,7 @@ use tokio::net::TcpListener;
 
 use super::*;
 
-pub(super) const USER: &str = "vibetox_lab";
+pub(super) const USER: &str = "openbga_lab";
 pub(super) const PASSWORD: &str = "synthetic-sftp-password";
 
 pub(super) fn key(seed: u8) -> PrivateKey {

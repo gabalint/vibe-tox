@@ -880,7 +880,7 @@ async fn release_continues_while_nothing_is_anchored() {
 }
 
 // NFR-12, REQ-OPS-010: an exit export of synthetic data reads with the independent
-// standard-library verifier (run when `VIBE_TOX_RUN_PY_VERIFIER=1`, as CI does on Linux).
+// standard-library verifier (run when `OPENBGA_TOX_RUN_PY_VERIFIER=1`, as CI does on Linux).
 #[tokio::test]
 async fn an_exit_export_passes_the_independent_verifier() {
     let (mut station, _) = anchored().await;
@@ -917,7 +917,7 @@ async fn an_exit_export_passes_the_independent_verifier() {
         })
         .await;
     assert!(package.join("manifest.json").is_file());
-    if std::env::var("VIBE_TOX_RUN_PY_VERIFIER").as_deref() != Ok("1") {
+    if std::env::var("OPENBGA_TOX_RUN_PY_VERIFIER").as_deref() != Ok("1") {
         return;
     }
     let (passed, report) = run_verifier(&package);

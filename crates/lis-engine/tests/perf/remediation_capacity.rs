@@ -1,5 +1,5 @@
 //! Synthetic remediation capacity evidence (UI-12), never clinical validation.
-//! Run the ignored test with VIBE_TOX_CAPACITY_ARTIFACT_DIR to retain picker payload.
+//! Run the ignored test with OPENBGA_TOX_CAPACITY_ARTIFACT_DIR to retain picker payload.
 use super::*;
 use lis_core::Phi;
 use lis_identity::{DemographicsInput, Npi, RegisterPractitioner, RegisterSubject, SubjectId};
@@ -168,7 +168,7 @@ async fn directory(engine: &Engine, existing: usize) {
         payload.len(),
         summary(&measurements)
     );
-    if let Some(path) = std::env::var_os("VIBE_TOX_CAPACITY_ARTIFACT_DIR") {
+    if let Some(path) = std::env::var_os("OPENBGA_TOX_CAPACITY_ARTIFACT_DIR") {
         fs::create_dir_all(&path).unwrap();
         fs::write(
             Path::new(&path).join("practitioner-picker-payload.json"),
@@ -214,7 +214,7 @@ async fn remediation_current_directory_contract_payload() {
 struct RetainedDatabase(std::path::PathBuf);
 impl RetainedDatabase {
     fn snapshot(&self, phase: &str) {
-        let Some(root) = std::env::var_os("VIBE_TOX_CAPACITY_ARTIFACT_DIR") else {
+        let Some(root) = std::env::var_os("OPENBGA_TOX_CAPACITY_ARTIFACT_DIR") else {
             return;
         };
         let destination = Path::new(&root).join(format!("capacity-{phase}.sqlite"));

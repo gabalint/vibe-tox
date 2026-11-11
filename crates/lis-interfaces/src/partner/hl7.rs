@@ -9,7 +9,7 @@
 pub use super::hl7_sex::administrative_sex;
 
 /// The sending application in MSH-3.
-pub const SENDING_APPLICATION: &str = "VIBETOX LIS";
+pub const SENDING_APPLICATION: &str = "OPENBGA TOX";
 
 /// One ORU^R01 message.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -156,7 +156,7 @@ impl Oru {
             patient: Patient {
                 identifiers: vec![(
                     "TEST-00000".to_owned(),
-                    "VIBETOX".to_owned(),
+                    "OPENBGA".to_owned(),
                     "MR".to_owned(),
                 )],
                 family_name: "TEST".to_owned(),

@@ -18,7 +18,7 @@ const ME = "01a1a000-0000-7000-8000-0000000000aa";
 export const SFTP: SftpSettings = {
   host: "sftp.clinic-a.example",
   port: 22,
-  username: "vibetox_lab",
+  username: "openbga_lab",
   auth: "key",
   fingerprint: `SHA256:8Zq3${"A".repeat(35)}f1Kx`,
   remoteFolder: "/inbound/results",

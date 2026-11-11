@@ -207,12 +207,12 @@ mod tests {
     fn a_missing_data_folder_resolves_to_its_nearest_existing_ancestor() {
         let root = tempfile::tempdir().unwrap();
         let canonical = fs::canonicalize(root.path()).unwrap();
-        let missing = root.path().join("not-yet").join("vibe-tox");
+        let missing = root.path().join("not-yet").join("openbga-tox");
         assert_eq!(existing_volume_path(&missing), Some(canonical.clone()));
         fs::create_dir_all(&missing).unwrap();
         assert_eq!(
             existing_volume_path(&missing),
-            Some(canonical.join("not-yet").join("vibe-tox"))
+            Some(canonical.join("not-yet").join("openbga-tox"))
         );
     }
 
@@ -225,7 +225,7 @@ mod tests {
         let link = root.path().join("data-link");
         std::os::unix::fs::symlink(&target, &link).unwrap();
         assert_eq!(
-            existing_volume_path(&link.join("vibe-tox")),
+            existing_volume_path(&link.join("openbga-tox")),
             Some(fs::canonicalize(&target).unwrap())
         );
     }
@@ -236,7 +236,7 @@ mod tests {
         let root = tempfile::tempdir().unwrap();
         let file = root.path().join("file");
         fs::write(&file, "synthetic").unwrap();
-        assert_eq!(existing_volume_path(&file.join("vibe-tox")), None);
+        assert_eq!(existing_volume_path(&file.join("openbga-tox")), None);
     }
 
     // D15: the engine refuses an unknown volume, so an ordinary disk must read as local.
@@ -259,7 +259,7 @@ mod tests {
             ]
         };
         let pick = |path: &str| containing_mount(mounts(), Path::new(path));
-        assert_eq!(pick("/home/lab/vibe-tox"), Some("over"));
+        assert_eq!(pick("/home/lab/openbga-tox"), Some("over"));
         assert_eq!(pick("/home/lab"), Some("over"));
         assert_eq!(pick("/home/lab3"), Some("home"));
         assert_eq!(pick("/var/lib"), Some("root"));
@@ -272,7 +272,7 @@ mod tests {
     proptest! {
         #[test]
         fn parsers_never_panic_on_arbitrary_output(text in any::<String>()) {
-            let path = Path::new("/var/lib/vibe-tox");
+            let path = Path::new("/var/lib/openbga-tox");
             let _ = windows::parse_reg_query(&text);
             let _ = windows::parse_bitlocker_protection(&text);
             let _ = windows::parse_drive_type(&text);

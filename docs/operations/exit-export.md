@@ -13,7 +13,7 @@ reason and fresh confirmation with your password or security key, and it is reco
 3. Read the plaintext warning, enter the reason and confirm with your password or security key, and choose the destination folder.
 4. Wait for the export list to show a successful terminal state. Do not use an incomplete folder.
 
-The application creates a new folder whose name begins `vibe-tox-exit-`. A complete package has a
+The application creates a new folder whose name begins `openbga-tox-exit-`. A complete package has a
 `manifest.json`; a matching folder without that file is interrupted and must not be used.
 
 ## Package contents
@@ -37,7 +37,7 @@ source at the package's application version.
 3. Run the trusted copy from outside the package:
 
    ```text
-   python3 -I /trusted/path/verify_exit_export.py "/path/to/vibe-tox-exit-…"
+   python3 -I /trusted/path/verify_exit_export.py "/path/to/openbga-tox-exit-…"
    ```
 
    On Windows, use the laboratory's trusted Python 3 launcher if it is named differently.

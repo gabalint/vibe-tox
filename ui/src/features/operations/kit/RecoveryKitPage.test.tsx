@@ -22,7 +22,7 @@ const EXPORTED: RecoveryKitStatus = {
     kitNo: 3,
     exportedAt: "2026-10-13T14:00:00Z",
     exportedBy: "Test Operator",
-    fileName: "vibe-tox-recovery-kit-2026-10-13.txt",
+    fileName: "openbga-tox-recovery-kit-2026-10-13.txt",
   },
   outdated: false,
   outdatedReasons: [],
@@ -55,7 +55,10 @@ async function openExport(user: ReturnType<typeof renderPage>["user"]) {
 
 describe("RecoveryKitPage (REQ-OPS-002)", () => {
   it("shows a kit that was never exported and exports one with the warning", async () => {
-    const exportKit = vi.fn(() => ({ kitNo: 1, fileName: "vibe-tox-recovery-kit-2026-10-13.txt" }));
+    const exportKit = vi.fn(() => ({
+      kitNo: 1,
+      fileName: "openbga-tox-recovery-kit-2026-10-13.txt",
+    }));
     const { user, container } = renderPage(() => NEVER_EXPORTED, {
       export_recovery_kit: exportKit,
     });
@@ -72,7 +75,7 @@ describe("RecoveryKitPage (REQ-OPS-002)", () => {
     ).toBeTruthy();
     await user.click(within(dialog).getByRole("button", { name: "Choose where to save" }));
     expect(
-      await screen.findByText("Recovery kit 1 saved as vibe-tox-recovery-kit-2026-10-13.txt"),
+      await screen.findByText("Recovery kit 1 saved as openbga-tox-recovery-kit-2026-10-13.txt"),
     ).toBeTruthy();
     expect(exportKit).toHaveBeenCalledWith({
       input: {
@@ -132,7 +135,7 @@ describe("RecoveryKitPage (REQ-OPS-002)", () => {
     const { user, container } = renderPage(() => EXPORTED, {
       confirm_recovery_kit_storage: confirm,
     });
-    expect(await screen.findByText("vibe-tox-recovery-kit-2026-10-13.txt")).toBeTruthy();
+    expect(await screen.findByText("openbga-tox-recovery-kit-2026-10-13.txt")).toBeTruthy();
     expect(screen.getByText("Never confirmed")).toBeTruthy();
     await expectNoA11yViolations(container, { wholePage: true });
     await user.click(screen.getByRole("button", { name: "Confirm where the kit is stored" }));
@@ -150,7 +153,7 @@ describe("RecoveryKitPage (REQ-OPS-002)", () => {
 
   it("offers no action without backup and restore", async () => {
     renderPage(() => EXPORTED, {}, []);
-    expect(await screen.findByText("vibe-tox-recovery-kit-2026-10-13.txt")).toBeTruthy();
+    expect(await screen.findByText("openbga-tox-recovery-kit-2026-10-13.txt")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Export recovery kit" })).toBeNull();
   });
 

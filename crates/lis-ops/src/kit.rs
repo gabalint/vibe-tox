@@ -110,13 +110,13 @@ impl std::fmt::Debug for PreparedKit {
 }
 
 /// The default file name the save dialog proposes for the laboratory's `date`
-/// (`YYYY-MM-DD`) and the number the kit will get: `vibe-tox-recovery-kit-<date>-kit<N>.txt`,
+/// (`YYYY-MM-DD`) and the number the kit will get: `openbga-tox-recovery-kit-<date>-kit<N>.txt`,
 /// or without `-kit<N>` when the number could not be read.
 #[must_use]
 pub fn default_file_name(date: &str, kit_no: Option<i64>) -> String {
     match kit_no {
-        Some(kit_no) => format!("vibe-tox-recovery-kit-{date}-kit{kit_no}.txt"),
-        None => format!("vibe-tox-recovery-kit-{date}.txt"),
+        Some(kit_no) => format!("openbga-tox-recovery-kit-{date}-kit{kit_no}.txt"),
+        None => format!("openbga-tox-recovery-kit-{date}.txt"),
     }
 }
 
