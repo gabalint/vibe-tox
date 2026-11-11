@@ -77,7 +77,7 @@ describe("Connections (ticket #4555; REQ-RPT-012)", () => {
     await user.click(await screen.findByRole("option", { name: "Report PDF" }));
     const fileName = within(dialog).getByRole("textbox", { name: "File name" });
     await waitFor(() =>
-      expect((fileName as HTMLInputElement).value).toBe("{accession}_r{revision}_{date}.pdf"),
+      expect((fileName as HTMLInputElement).value).toBe("{report}_r{revision}_{date}.pdf"),
     );
     expect(within(dialog).getByRole("button", { name: /Report released/ })).toBeTruthy();
     expect(within(dialog).getByText(/Corrections and withdrawals go first/)).toBeTruthy();

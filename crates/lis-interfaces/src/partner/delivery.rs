@@ -90,7 +90,9 @@ pub struct DueDelivery {
 impl DueDelivery {
     /// The file name the connection's pattern makes for this message, with `date`
     /// (`YYYYMMDD`) and `time` (`HHMMSS`). A withdrawal notice's revision reads
-    /// `<n>-withdrawn`, so it never takes the name of the revision it withdraws.
+    /// `<n>-withdrawn`, so it never takes the name of the revision it withdraws. The
+    /// accession is the report number up to its `-`: a report number is the accession
+    /// number, `-` and the specimen type code, and an accession number holds no `-`.
     #[must_use]
     pub fn file_name(&self, date: &str, time: &str) -> String {
         let number = self
@@ -102,10 +104,14 @@ impl DueDelivery {
             number.clone()
         };
         let record = self.source_label.clone().unwrap_or(number);
+        let accession = record
+            .split_once('-')
+            .map_or(record.as_str(), |(head, _)| head);
         file_name(
             &self.file_name_pattern,
             &FileNameParts {
                 record: &record,
+                accession,
                 revision: &revision,
                 date,
                 time,
@@ -368,4 +374,35 @@ pub fn partner_connection_folder(
         message_type: connection.settings.message_type,
         partner: connection.settings.partner,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_report_file_names_the_report_and_its_accession() {
+        let due = DueDelivery {
+            delivery_id: PartnerDeliveryId::generate(),
+            message_id: PartnerMessageId::generate(),
+            connection_id: PartnerConnectionId::generate(),
+            destination: Destination::default(),
+            file_name_pattern: "{accession}_{report}_r{revision}_{date}.pdf".to_owned(),
+            schedule: Schedule::Immediately,
+            attempts: 0,
+            created_at: UtcTimestamp::parse("2026-11-05T10:00:00.000000000Z").unwrap(),
+            message_type: PartnerMessageType::ReportPdf,
+            artifact_sha256: String::new(),
+            payload_sha256: None,
+            partner: "Synthetic partner".to_owned(),
+            source: MessageSource::ReportRevision,
+            source_id: None,
+            source_number: Some(2),
+            source_label: Some("A26000010-UR".to_owned()),
+        };
+        assert_eq!(
+            due.file_name("20261105", "100000"),
+            "A26000010_A26000010-UR_r2_20261105.pdf"
+        );
+    }
 }

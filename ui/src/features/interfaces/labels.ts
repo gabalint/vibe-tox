@@ -115,12 +115,12 @@ export const FILE_NAMES: Record<PartnerMessageType, { pattern: string; hint: str
   // An incoming connection names no file.
   hl7_orders: { pattern: "", hint: "" },
   hl7_oru: {
-    pattern: "{accession}_r{revision}_{date}.hl7",
-    hint: "{accession} (the report number) and {revision} are required; {date} and {time} are optional; ends in .hl7.",
+    pattern: "{report}_r{revision}_{date}.hl7",
+    hint: "{report} (the report number) and {revision} are required; {accession} (the accession number), {date} and {time} are optional; ends in .hl7.",
   },
   report_pdf: {
-    pattern: "{accession}_r{revision}_{date}.pdf",
-    hint: "{accession} (the report number) and {revision} are required; {date} and {time} are optional; ends in .pdf.",
+    pattern: "{report}_r{revision}_{date}.pdf",
+    hint: "{report} (the report number) and {revision} are required; {accession} (the accession number), {date} and {time} are optional; ends in .pdf.",
   },
   billing_json: {
     pattern: "billing-{handoff}_{date}.json",

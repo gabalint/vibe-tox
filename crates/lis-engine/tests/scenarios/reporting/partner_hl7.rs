@@ -30,7 +30,7 @@ fn settings() -> PartnerConnectionSettings {
         protocol: PartnerProtocol::Folder,
         rules: Vec::new(),
         schedule: Schedule::Immediately,
-        file_name_pattern: "{accession}_r{revision}.hl7".to_owned(),
+        file_name_pattern: "{report}_r{revision}.hl7".to_owned(),
         sftp: None,
         intake: None,
         mllp: None,
