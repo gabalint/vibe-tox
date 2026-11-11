@@ -72,7 +72,7 @@ also sign the update packages with Minisign.
 The gate calls the [`ci` workflow](../../.github/workflows/ci.yml), which selects
 every check for a dispatched run. Bundles build in parallel on the
 [packaging](packaging.md) matrix. The publish job runs only after the gate and every
-build pass. It names the four installers `vibe-tox-lis_<version>_<os>-<arch>.<ext>`,
+build pass. It names the four installers `openbga-tox_<version>_<os>-<arch>.<ext>`,
 adds `SHA256SUMS.txt`, and writes notes with the development-build warning, the
 unsigned-installer prompts and the workflow-run link. A release is created as a
 draft and becomes visible only with every asset attached.
@@ -90,7 +90,7 @@ remains necessary. Browser-download and clean-host launch checks remain separate
 | `linux-amd64.deb` and `linux-amd64.AppImage` | Ubuntu 22.04 |
 
 With in-app updates configured, each release also carries `latest.json` and
-`vibe-tox-lis_<version>_macos-arm64.app.tar.gz`, and the rolling `nightly` release also
+`openbga-tox_<version>_macos-arm64.app.tar.gz`, and the rolling `nightly` release also
 carries `nightly.json`.
 
 The rolling nightly needs a deletable tag, and so do the retained `nightly-*` builds.

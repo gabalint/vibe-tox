@@ -136,7 +136,7 @@ impl Synthetic<'_> {
             loinc: values.and_then(|values| values.loinc.clone()),
         };
         let lab = Organization {
-            name: "Vibe Tox LIS".to_owned(),
+            name: "OpenBGA/tox".to_owned(),
             id: String::new(),
         };
         let group = ObservationGroup {
