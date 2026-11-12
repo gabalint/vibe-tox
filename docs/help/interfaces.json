@@ -2,7 +2,7 @@
   "id": "interfaces",
   "title": "Interfaces",
   "summary": "Receive HL7 orders from a clinic's EMR and send HL7 results, report PDFs and billing handoff files to outside systems, through a folder or the partner's SFTP server, or HL7 over MLLP with a partner on the lab network; map codes between the LIS and each partner, follow every message in Logs, and decide on messages no connection matched.",
-  "reviewedOn": "2026-11-10",
+  "reviewedOn": "2026-11-12",
   "routes": [
     "/interfaces/connections",
     "/interfaces/connections/:connectionId/:tab?",
@@ -691,6 +691,12 @@
           "does": "Opens Resolve the rejection of <record>: a required What was done (1–500 characters), such as the clinic corrected the test code and sent the order again; Mark resolved records it, Cancel leaves it under Rejected.",
           "availableWhen": "From the row's ⋯ menu, on an incoming order the LIS refused or a message an MLLP partner rejected (AE or AR), not resolved yet.",
           "result": "It leaves the Rejected tab and stays under All; Details end with Resolved by <person>, <time>: <note>. Nothing is sent and nothing changes at the partner. A rejection is resolved once. Recorded in the audit trail."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reads the list again. Updated <time> beside the button says when the rows shown were read; Refreshing… shows while it runs.",
+          "availableWhen": "Always.",
+          "result": "Shows the latest messages and outcomes, such as a message that moved from Not sent to Written or a new one. The period, connection, direction, outcome, Show test messages, search and tab stay as they were; checked rows stay checked while they are still shown. The list is not refreshed by itself."
         },
         {
           "name": "Export CSV / Export N selected",

@@ -221,6 +221,21 @@ describe("Logs (ticket #4555; REQ-INT-002, REQ-RPT-011)", () => {
     expect(await screen.findByRole("tab", { name: "All (1)" })).toBeTruthy();
   });
 
+  it("refreshes with the same filters and tab, and says when it was read (#4728)", async () => {
+    const list = vi.fn(() => ({ rows: [WRITTEN, FAILED], more: false }));
+    const { user } = renderPage(list);
+    await user.click(await screen.findByRole("tab", { name: "Failed (1)" }));
+    await user.click(screen.getByRole("button", { name: /Outcome/ }));
+    await user.click(await screen.findByRole("option", { name: "Failed" }));
+    expect(screen.getByText(/^Updated /)).toBeTruthy();
+    const calls = list.mock.calls.length;
+    await user.click(screen.getByRole("button", { name: "Refresh" }));
+    await waitFor(() => expect(list.mock.calls.length).toBeGreaterThan(calls));
+    expect(list.mock.calls.at(-1)).toEqual(list.mock.calls.at(0));
+    expect(await screen.findByRole("tab", { name: "Failed (1)", selected: true })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "All (1)" })).toBeTruthy();
+  });
+
   it("explains an empty log", async () => {
     renderPage(() => ({ rows: [], more: false }));
     expect(await screen.findByText("No messages")).toBeTruthy();
