@@ -1,15 +1,15 @@
-OpenBGA/tox — presentation credits and source notices
+Steady State LIMS — presentation credits and source notices
 
-OpenBGA/tox branding edit, 2026-11-11: the opening and closing title cards, recorded app header and window title, and two spoken product-name phrases were updated. The workflow actions, synthetic data and other narration are retained from the supplied demonstration. The poster and website stills come from the edited video.
+Steady State LIMS branding edit, 2026-11-11: the opening and closing title cards, recorded app header and window title, and two spoken product-name phrases were updated. In the recorded header, the search field was moved 46 pixels to the right to make room for the name. The workflow actions, synthetic data and other narration are retained from the supplied demonstration. The poster and website stills come from the edited video.
 
-Presentation: openbga-tox-overview.mp4, derived from the supplied demo-video/out/vibe-tox-overview.mp4.
+Presentation: steady-state-lims-overview.mp4, derived from the supplied demo-video/out/vibe-tox-overview.mp4.
 The original screen recording uses the real React interface with a mocked engine and synthetic data. The narrated final was assembled by demo-video/mix.mjs from the silent recording, generated voice clips and original instrumental music.
 
 Narration
 Generated locally with Kokoro v1.0, voice af_heart, speed 1.0, through kokoro-onnx. This provenance is recorded in demo-video/README.md, audio/narration.json and audio/tts.py. Kokoro-82M is an Apache-2.0 model:
 https://huggingface.co/hexgrad/Kokoro-82M
 https://huggingface.co/hexgrad/Kokoro-82M/blob/main/LICENSE
-The replacement product-name phrases use the same Kokoro v1.0 model and af_heart voice through kokoro-onnx 0.6.1, at speed 0.95. Explicit English phonemes pronounce the letters B, G and A; the name is spoken as “Open B G A tox.” Model and voice files were obtained from the maintainer’s model-files-v1.1 release, checked 2026-11-11:
+The replacement product-name phrases use the same Kokoro v1.0 model and af_heart voice through kokoro-onnx 0.6.1, at speed 0.95. Explicit English phonemes pronounce LIMS as one word; the name is spoken as “Steady State limz.” Model and voice files were obtained from the maintainer’s model-files-v1.1 release, checked 2026-11-11:
 https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.1
 https://github.com/thewh1teagle/kokoro-onnx
 The narration is synthetic; it is not a recording of a laboratory employee or patient.

@@ -191,7 +191,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           codesign --verify --deep --strict --verbose=2 \
-            "$CARGO_TARGET_DIR/release/bundle/macos/OpenBGA Tox.app"
+            "$CARGO_TARGET_DIR/release/bundle/macos/Steady State LIMS.app"
       - name: Check macOS executable has no dynamic OpenSSL dependency
         if: runner.os == 'macOS'
         run: |
@@ -258,7 +258,7 @@ jobs:
               echo "::error::Expected one $1 bundle, found ${#found[@]}"
               exit 1
             fi
-            cp "${found[0]}" "release/openbga-tox_${VERSION}_$2"
+            cp "${found[0]}" "release/steady-state-lims_${VERSION}_$2"
           }
           stage '*_x64-setup.exe' windows-x64-setup.exe
           stage '*_aarch64.dmg' macos-arm64.dmg
@@ -302,7 +302,7 @@ jobs:
                 echo "Changes since the previous nightly: $GITHUB_SERVER_URL/$GH_REPO/compare/$previous...$GITHUB_SHA"
               fi
             else
-              echo "OpenBGA/tox \`$VERSION\` from \`main\` at $GITHUB_SHA."
+              echo "Steady State LIMS \`$VERSION\` from \`main\` at $GITHUB_SHA."
             fi
             cat <<EOF
 
@@ -311,9 +311,9 @@ jobs:
 
           | System | Download |
           | --- | --- |
-          | Windows x64 | \`openbga-tox_${VERSION}_windows-x64-setup.exe\` (installs for the current user) |
-          | macOS 15 or later, Apple silicon | \`openbga-tox_${VERSION}_macos-arm64.dmg\` |
-          | Linux x64 | \`openbga-tox_${VERSION}_linux-amd64.deb\` or the portable \`openbga-tox_${VERSION}_linux-amd64.AppImage\` |
+          | Windows x64 | \`steady-state-lims_${VERSION}_windows-x64-setup.exe\` (installs for the current user) |
+          | macOS 15 or later, Apple silicon | \`steady-state-lims_${VERSION}_macos-arm64.dmg\` |
+          | Linux x64 | \`steady-state-lims_${VERSION}_linux-amd64.deb\` or the portable \`steady-state-lims_${VERSION}_linux-amd64.AppImage\` |
 
           Windows SmartScreen warns before installation. The macOS app has an ad-hoc bundle signature for development; it is not Developer ID signed or notarized. Copy it to Applications, attempt to open it, then use **Open Anyway** in System Settings → Privacy & Security if macOS blocks it as unverified. Compare each download with \`SHA256SUMS.txt\`. See [macOS development signatures]($source_url/docs/development/packaging.md#macos-development-signatures) if it is reported as damaged.
 
@@ -323,7 +323,7 @@ jobs:
           if [[ "${UPDATER:-}" == true ]]; then
             {
               echo
-              echo "The in-app updater uses \`latest.json\` and the Minisign-signed packages it names, including \`openbga-tox_${VERSION}_macos-arm64.app.tar.gz\`. Install one of the installers above by hand only the first time."
+              echo "The in-app updater uses \`latest.json\` and the Minisign-signed packages it names, including \`steady-state-lims_${VERSION}_macos-arm64.app.tar.gz\`. Install one of the installers above by hand only the first time."
             } >> notes.md
           fi
           cat notes.md
@@ -351,10 +351,10 @@ jobs:
             --published-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --notes-file changes.txt \
             --base-url "$GITHUB_SERVER_URL/$GH_REPO/releases/download/$build_tag" \
             --signature-dir updater \
-            --artifact "windows-x86_64-nsis=release/openbga-tox_${VERSION}_windows-x64-setup.exe" \
-            --artifact "linux-x86_64-appimage=release/openbga-tox_${VERSION}_linux-amd64.AppImage" \
-            --artifact "linux-x86_64-deb=release/openbga-tox_${VERSION}_linux-amd64.deb" \
-            --artifact "darwin-aarch64-app=release/openbga-tox_${VERSION}_macos-arm64.app.tar.gz" \
+            --artifact "windows-x86_64-nsis=release/steady-state-lims_${VERSION}_windows-x64-setup.exe" \
+            --artifact "linux-x86_64-appimage=release/steady-state-lims_${VERSION}_linux-amd64.AppImage" \
+            --artifact "linux-x86_64-deb=release/steady-state-lims_${VERSION}_linux-amd64.deb" \
+            --artifact "darwin-aarch64-app=release/steady-state-lims_${VERSION}_macos-arm64.app.tar.gz" \
             --output release/latest.json
           cat release/latest.json
       - name: Write checksums
@@ -373,7 +373,7 @@ jobs:
                 gh release delete "$BUILD_TAG" --cleanup-tag --yes
               fi
               gh release create "$BUILD_TAG" release/* --target "$GITHUB_SHA" --prerelease --latest=false \
-                --title "OpenBGA/tox $VERSION" --notes-file notes.md
+                --title "Steady State LIMS $VERSION" --notes-file notes.md
               python3 scripts/update_feed.py index --previous previous-index.json \
                 --manifest release/latest.json --tag "$BUILD_TAG" --commit "$GITHUB_SHA" \
                 --manifest-url "$GITHUB_SERVER_URL/$GH_REPO/releases/download/$BUILD_TAG/latest.json" \
@@ -395,7 +395,7 @@ jobs:
               expected=$((expected + 1))
             fi
             gh release create nightly "${files[@]}" --target "$GITHUB_SHA" --prerelease --latest=false \
-              --title "OpenBGA/tox $VERSION" --notes-file notes.md
+              --title "Steady State LIMS $VERSION" --notes-file notes.md
             tag=nightly
             if [[ -s dropped-tags.txt ]]; then
               while read -r dropped; do
@@ -411,7 +411,7 @@ jobs:
               while read -r id; do gh api -X DELETE "repos/$GH_REPO/releases/$id"; done
             # Draft first, so the release becomes visible only with every asset attached.
             gh release create "$tag" release/* --draft --target "$GITHUB_SHA" \
-              --title "OpenBGA/tox $VERSION" --notes-file notes.md --generate-notes
+              --title "Steady State LIMS $VERSION" --notes-file notes.md --generate-notes
             gh release edit "$tag" --draft=false --latest
           fi
           assets="$(gh release view "$tag" --json assets --jq '.assets | length')"

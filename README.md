@@ -1,19 +1,19 @@
-# OpenBGA/tox: free, open-source LIS/LIMS for toxicology labs
+# Steady State LIMS: a free, open-source LIS for toxicology labs
 
-[Presentation website](https://openbga.github.io/tox/) ·
-[Download](https://github.com/openbga/tox/releases/latest) ·
+[Presentation website](https://openbga.github.io/steady-state-lims/) ·
+[Download](https://github.com/openbga/steady-state-lims/releases/latest) ·
 [Documentation](docs/README.md) ·
 [Contributing](CONTRIBUTING.md) ·
 [Security](SECURITY.md)
 
-OpenBGA/tox is a free, open-source laboratory information system (LIS/LIMS)
+Steady State LIMS is a free, open-source laboratory information system (LIS/LIMS)
 for small **US clinical toxicology** laboratories, such as physician-office labs and
 small independent tox labs. It runs as a desktop application on one laboratory
 computer, which holds the laboratory's records, with no server, subscription or
 internet connection required. It is built with a Rust engine, Tauri 2 and a
 TypeScript/React interface for Windows, macOS and Linux.
 
-[![Result review in OpenBGA/tox: analyte values with cutoff classifications, methods and the evidence for the selected result, shown with demo data](website/media/screens/result-review-960.webp)](https://openbga.github.io/tox/)
+[![Result review in Steady State LIMS: analyte values with cutoff classifications, methods and the evidence for the selected result, shown with demo data](website/media/screens/result-review-960.webp)](https://openbga.github.io/steady-state-lims/)
 
 It covers a test from order to delivered report:
 
@@ -34,7 +34,7 @@ record what remains before laboratory use.
 
 ## Vibe coded, with sustained human effort
 
-OpenBGA/tox is built with substantial AI assistance. The vibe is part of how the
+Steady State LIMS is built with substantial AI assistance. The vibe is part of how the
 project moves: exploring ideas, generating code, and iterating quickly. Sustained
 human work gives that process direction through research, requirements analysis,
 architecture review, code review, test design, hands-on testing and revision.
@@ -52,7 +52,7 @@ on its evidence.
 ## Download or run from source
 
 Unsigned development installers for Windows, macOS and Linux are on the
-[releases page](https://github.com/openbga/tox/releases): a `nightly` prerelease
+[releases page](https://github.com/openbga/steady-state-lims/releases): a `nightly` prerelease
 of `develop` and versioned releases from `main`
 ([branches and releases](docs/development/releases.md)). To run from source, install Rust through
 [rustup](https://rustup.rs/) (the repository pins its toolchain), Node.js 24 with npm,
@@ -69,7 +69,7 @@ narrower commands and the quality gate. Use synthetic data only.
 
 ## License and development disclaimer
 
-Copyright 2026 OpenBGA/tox contributors. Respective rights holders retain
+Copyright 2026 Steady State LIMS contributors. Respective rights holders retain
 ownership; this attribution does not assign rights to a separate organization.
 The project's own code, documentation, synthetic fixtures, website and original
 presentation assets are licensed under the [GNU General Public License, version 3
@@ -91,7 +91,7 @@ not modify the license or add use restrictions.
 
 ## Support
 
-Community support is through [GitHub issues](https://github.com/openbga/tox/issues).
+Community support is through [GitHub issues](https://github.com/openbga/steady-state-lims/issues).
 Are you looking for support? Contact [bgasoft.com](https://bgasoft.com).
 
 ## Start here

@@ -38,11 +38,13 @@ fn only_release_downloads_of_the_repository_are_fetched() {
 
 #[test]
 fn repository_and_file_names_are_checked() {
-    assert!(valid_repository("openbga/tox"));
+    assert!(valid_repository("openbga/steady-state-lims"));
     for bad in ["", "openbga", "a/b/c", "../x", "a/.git", "a b/c"] {
         assert!(!valid_repository(bad), "{bad}");
     }
-    assert!(valid_file_name("openbga-tox_0.1.2_windows-x64-setup.exe"));
+    assert!(valid_file_name(
+        "steady-state-lims_0.1.2_windows-x64-setup.exe"
+    ));
     for bad in ["", ".hidden", "a/b", "a\\b", "a b.exe"] {
         assert!(!valid_file_name(bad), "{bad}");
     }
@@ -92,7 +94,7 @@ fn a_local_feed_owns_only_its_own_release_downloads() {
     for url in [
         "http://127.0.0.1:8766/download/nightly/nightly.json",
         "http://127.0.0.1:8765/other/a.deb",
-        "https://github.com/openbga/tox/releases/download/nightly/nightly.json",
+        "https://github.com/openbga/steady-state-lims/releases/download/nightly/nightly.json",
     ] {
         assert!(!feed.owns(&Url::parse(url).unwrap()), "{url}");
     }

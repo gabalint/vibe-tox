@@ -24,7 +24,7 @@ const SKEW_STEPS: u16 = 1;
 const SECRET_BYTES: usize = 20;
 /// Product label shown for new authenticator enrollments, URI-encoded.
 /// Existing enrollments keep their label; the issuer does not affect code verification.
-const ISSUER: &str = "OpenBGA%2Ftox";
+const ISSUER: &str = "Steady%20State%20LIMS";
 
 /// A TOTP shared secret, held in memory only while it is needed.
 #[derive(Clone)]
@@ -199,8 +199,8 @@ mod tests {
         assert_eq!(enrollment.secret_base32, "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ");
         assert_eq!(
             enrollment.otpauth_uri,
-            "otpauth://totp/OpenBGA%2Ftox:jsmith?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ\
-             &issuer=OpenBGA%2Ftox&algorithm=SHA1&digits=6&period=30"
+            "otpauth://totp/Steady%20State%20LIMS:jsmith?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ\
+             &issuer=Steady%20State%20LIMS&algorithm=SHA1&digits=6&period=30"
         );
         assert!(enrollment.qr_svg.contains("<svg"));
         assert_eq!(format!("{enrollment:?}"), "TotpEnrollment([redacted])");

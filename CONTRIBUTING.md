@@ -2,14 +2,14 @@
 
 The project accepts design, research and implementation work. Implementation follows the [implementation plan](docs/planning/implementation-plan.md) and the standards it links. Read [AGENTS.md](AGENTS.md) and the [documentation index](docs/README.md).
 
-OpenBGA/tox welcomes AI-assisted contributions alongside requirements analysis,
+Steady State LIMS welcomes AI-assisted contributions alongside requirements analysis,
 architecture review, code review, testing and documentation. Describe the human
 decisions and review performed, the tools used, the checks actually run and the
 remaining gaps. Keep agent review, human review and laboratory approval distinct;
 the [engineering standards](docs/governance/engineering-standards.md#human-direction-and-review)
 set their responsibilities and required evidence.
 
-Use [GitHub issues](https://github.com/openbga/tox/issues) for bugs, questions and proposals, and pull requests against `develop` for changes. `main` holds released versions; see [branches and releases](docs/development/releases.md). Never post patient information, real requisitions, analyzer exports or credentials; report vulnerabilities privately as described in the [security policy](SECURITY.md). Developer setup is in the [developer guide](docs/development/README.md).
+Use [GitHub issues](https://github.com/openbga/steady-state-lims/issues) for bugs, questions and proposals, and pull requests against `develop` for changes. `main` holds released versions; see [branches and releases](docs/development/releases.md). Never post patient information, real requisitions, analyzer exports or credentials; report vulnerabilities privately as described in the [security policy](SECURITY.md). Developer setup is in the [developer guide](docs/development/README.md).
 
 Describe the problem, evidence, affected requirement or decision IDs, proposed change, and remaining uncertainties. Prefer focused changes that update the canonical document rather than creating another competing summary. Include direct primary-source links and the date checked for claims that may change. Keep examples synthetic and avoid copying restricted standards or proprietary interface manuals.
 

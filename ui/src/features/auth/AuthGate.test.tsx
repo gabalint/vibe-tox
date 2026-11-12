@@ -217,7 +217,7 @@ describe("AuthGate sign-in steps (NFR-19)", () => {
       challengeId: "challenge-1",
       enrollment: {
         secretBase32: "JBSWY3DPEHPK3PXP",
-        otpauthUri: "otpauth://totp/OpenBGA%2Ftox:admin?secret=JBSWY3DPEHPK3PXP",
+        otpauthUri: "otpauth://totp/Steady%20State%20LIMS:admin?secret=JBSWY3DPEHPK3PXP",
         qrSvg: '<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>',
       },
     });

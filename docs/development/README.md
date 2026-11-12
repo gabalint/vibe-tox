@@ -48,8 +48,8 @@ Optional [local build storage guidance](local-build-storage.md) explains target 
 Clone the OpenBGA repository, then run from its root:
 
 ```bash
-git clone https://github.com/openbga/tox.git
-cd tox
+git clone https://github.com/openbga/steady-state-lims.git
+cd steady-state-lims
 npm ci
 npm run tauri dev
 ```
