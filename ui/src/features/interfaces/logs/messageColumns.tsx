@@ -104,8 +104,8 @@ export function messageColumns(
           "—"
         );
       },
-      // Fits the longest outcome, Rejected – unknown test.
-      width: 200,
+      // Fits the longest outcome, Resolved – recorded another way.
+      width: 250,
     },
     {
       id: "details",

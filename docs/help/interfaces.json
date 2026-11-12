@@ -639,13 +639,13 @@
         {
           "name": "Transport",
           "meaning": "Did it leave: what the folder, SFTP server or MLLP connection can prove.",
-          "values": "Written (to a folder); Uploaded (to an SFTP server); Sent (over MLLP, also while its acknowledgement is awaited); Failed; Not sent (not written yet, or replaced by a newer revision and never written); Received (an incoming order message read from a file or received over MLLP, and stored).",
+          "values": "Written (to a folder); Uploaded (to an SFTP server); Sent (over MLLP, also while its acknowledgement is awaited); Failed; Not sent (not written yet, or replaced by a newer revision and never written; an unrouted message: a yellow warning while it waits in Unrouted messages, neutral once someone decided); Received (an incoming order message read from a file or received over MLLP, and stored).",
           "rules": "Never Delivered."
         },
         {
           "name": "Application",
           "meaning": "Did the other system accept it.",
-          "values": "Outcome unknown for a written or uploaded file: a folder or SFTP server never confirms. Over MLLP, the partner's acknowledgement: Accepted (AA); Rejected (AE), an error in the message; Rejected (AR), the message or its sender not accepted; or Awaiting application ACK until it answers. An acknowledgement never proves that a clinician saw the result. For an incoming order: Order created (in Received status, for the laboratory to accept); Waiting for patient; Held for review; Duplicate – ignored; Rejected, or Rejected – unknown test. — otherwise.",
+          "values": "Outcome unknown for a written or uploaded file: a folder or SFTP server never confirms. Over MLLP, the partner's acknowledgement: Accepted (AA); Rejected (AE), an error in the message; Rejected (AR), the message or its sender not accepted; or Awaiting application ACK until it answers. An acknowledgement never proves that a clinician saw the result. For an incoming order: Order created (in Received status, for the laboratory to accept); Waiting for patient; Held for review; Duplicate – ignored; Rejected, or Rejected – unknown test. For an unrouted message, the decision on it: Resolved – sent once (to the connection chosen, which shows its own row); Resolved – routed again; Resolved – recorded another way; Resolved – dismissed. — otherwise, such as for an unrouted message still waiting.",
           "rules": "The billing company's acknowledgement or rejection is recorded on the billing handoff page, by people with Billing. A written report PDF does not count as a staff-attested delivery on the report's page."
         },
         {

@@ -29,7 +29,7 @@ function renderPage(list: (args: unknown) => unknown, handlers = {}) {
   return renderRoutes(ROUTES, "/interfaces/logs");
 }
 
-describe("Logs rows (tickets #4680, #4679, #4682)", () => {
+describe("Logs rows (tickets #4680, #4679, #4682, #4723)", () => {
   beforeEach(mockGridLayout);
 
   it("links the record to the revision sent or the handoff; a test message has no link", async () => {
@@ -39,6 +39,38 @@ describe("Logs rows (tickets #4680, #4679, #4682)", () => {
     const handoff = screen.getByRole("link", { name: "Billing handoff 12" });
     expect(handoff.getAttribute("href")).toBe(`/billing/handoffs/${WRITTEN.sourceId}`);
     expect(screen.queryByRole("link", { name: /Test/ })).toBeNull();
+  });
+
+  it("warns only on an unrouted message still waiting; a resolved one says how", async () => {
+    const unrouted = {
+      ...CORRECTION,
+      deliveryId: null,
+      connection: null,
+      reason: null,
+      transport: "not_sent" as const,
+      outcomeUnknown: false,
+      writtenPath: null,
+      unrouted: true,
+    };
+    const resolved = {
+      ...unrouted,
+      messageId: "01a1a000-0000-7000-8000-000000000060",
+      resolution: "delivered_another_way" as const,
+    };
+    renderPage(() => ({ rows: [unrouted, resolved], more: false }));
+    expect(
+      await screen.findByRole("gridcell", { name: "Resolved – recorded another way" }),
+    ).toBeTruthy();
+    const tones = screen
+      .getAllByRole("gridcell", { name: "Not sent" })
+      .map((cell) => cell.querySelector("[data-tone]")?.getAttribute("data-tone"));
+    expect(tones.sort()).toEqual(["neutral", "warning"]);
+    expect(screen.getByRole("gridcell", { name: "Delivery recorded another way" })).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", {
+        name: "No connection rule matched; waiting in Unrouted messages",
+      }),
+    ).toBeTruthy();
   });
 
   it("hides test messages in the engine until Show test messages, then badges them", async () => {
