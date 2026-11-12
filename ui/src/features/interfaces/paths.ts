@@ -7,6 +7,10 @@ export const UNROUTED_PATH = "/interfaces/unrouted";
 export const connectionPath = (connectionId: string) =>
   `${CONNECTIONS_PATH}/${encodeURIComponent(connectionId)}`;
 
+/** The connection's Overview with its interface contract open, where its acceptance tests run. */
+export const contractPath = (connectionId: string) =>
+  `${connectionPath(connectionId)}?contract=open`;
+
 const segment = encodeURIComponent;
 
 /** The records a message is made from, on their own pages: Logs links its Record to them. */

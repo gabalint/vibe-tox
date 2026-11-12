@@ -24,6 +24,22 @@ pub(crate) const ACCEPTED: &str = "COALESCE((SELECT a.passed FROM ifc_partner_ac
      WHERE a.connection_id = c.id AND a.covers = c.acceptance_key \
      ORDER BY a.ran_at DESC, a.rowid DESC LIMIT 1), 0)";
 
+/// SQL naming why connection `c` is not accepted, as a `WaitReason` code, or NULL when it
+/// is (#4726): no approved contract, no run yet, the latest run failed, or it covers the
+/// connection as it was before a change.
+pub(crate) fn acceptance_hold() -> String {
+    format!(
+        "CASE WHEN {ACCEPTED} THEN NULL \
+         WHEN NOT EXISTS (SELECT 1 FROM ifc_partner_contracts k WHERE k.connection_id = c.id) \
+         THEN 'contract_not_approved' \
+         WHEN NOT EXISTS (SELECT 1 FROM ifc_partner_acceptance_runs a \
+         WHERE a.connection_id = c.id) THEN 'tests_not_run' \
+         WHEN (SELECT a.covers FROM ifc_partner_acceptance_runs a WHERE a.connection_id = c.id \
+         ORDER BY a.ran_at DESC, a.rowid DESC LIMIT 1) = c.acceptance_key THEN 'tests_failed' \
+         ELSE 'tests_out_of_date' END"
+    )
+}
+
 /// The connection's acceptance key, from what is stored now; written with its row.
 pub(crate) fn acceptance_key(
     conn: &Connection,

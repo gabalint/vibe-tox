@@ -3,8 +3,9 @@ import type { DataGridColumn } from "@/components/DataGrid";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Timestamp } from "@/components/Timestamp";
 import type { PartnerMessageRow } from "@/generated/PartnerMessageRow";
+import type { WaitReason } from "@/generated/WaitReason";
 import { applicationOf, detailText, MESSAGE_TYPES, recordText, transportOf } from "../labels";
-import { handoffPath, reportPath, revisionPath } from "../paths";
+import { contractPath, handoffPath, reportPath, revisionPath } from "../paths";
 
 type FormatTime = (at: string) => string;
 type PersonText = (userId: string, display?: string) => string;
@@ -16,6 +17,38 @@ function resolvedText(row: PartnerMessageRow, formatTime: FormatTime, person: Pe
   const verb = row.errorCode === "rejected_by_person" ? "Rejected" : "Resolved";
   const who = person(done.resolved.by, done.resolved.byDisplay);
   return `${verb} by ${who}, ${formatTime(done.resolved.at)}: ${done.note}`;
+}
+
+/** Holds the connection's interface contract and its acceptance tests clear (#4726). */
+const CONTRACT_HOLDS: readonly (WaitReason | null)[] = [
+  "contract_not_approved",
+  "tests_not_run",
+  "tests_failed",
+  "tests_out_of_date",
+];
+
+/**
+ * What became of the row and how a person followed it up; a message held by its connection's
+ * contract or acceptance tests links to the contract, where the tests run (#4726).
+ */
+function Details({
+  row,
+  formatTime,
+  person,
+}: {
+  row: PartnerMessageRow;
+  formatTime: FormatTime;
+  person: PersonText;
+}) {
+  const text = [detailText(row, formatTime), resolvedText(row, formatTime, person)]
+    .filter(Boolean)
+    .join(" · ");
+  if (row.connection === null || !CONTRACT_HOLDS.includes(row.waiting)) return text;
+  return (
+    <>
+      {text} · <Link to={contractPath(row.connection.id)}>Open interface contract</Link>
+    </>
+  );
 }
 
 /** The page of the record a message was made from; none for a test message or an order. */
@@ -110,10 +143,7 @@ export function messageColumns(
     {
       id: "details",
       header: "Details",
-      cell: (row) =>
-        [detailText(row, formatTime), resolvedText(row, formatTime, person)]
-          .filter(Boolean)
-          .join(" · "),
+      cell: (row) => <Details row={row} formatTime={formatTime} person={person} />,
       wrap: true,
     },
   ];
