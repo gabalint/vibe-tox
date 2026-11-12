@@ -29,9 +29,10 @@ const CONTRACT_HOLDS: readonly (WaitReason | null)[] = [
 
 /**
  * What became of the row and how a person followed it up; a message held by its connection's
- * contract or acceptance tests links to the contract, where the tests run (#4726).
+ * contract or acceptance tests links to the contract, where the tests run (#4726). Also on the
+ * message panel, which pushes the Details column out of view.
  */
-function Details({
+export function MessageDetails({
   row,
   formatTime,
   person,
@@ -143,7 +144,7 @@ export function messageColumns(
     {
       id: "details",
       header: "Details",
-      cell: (row) => <Details row={row} formatTime={formatTime} person={person} />,
+      cell: (row) => <MessageDetails row={row} formatTime={formatTime} person={person} />,
       wrap: true,
     },
   ];

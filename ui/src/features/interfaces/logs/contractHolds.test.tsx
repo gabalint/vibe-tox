@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { PartnerMessageRow } from "@/generated/PartnerMessageRow";
 import { mockCommands } from "@/lib/test/ipc";
@@ -28,6 +28,13 @@ function renderAt(path: string, rows: PartnerMessageRow[]) {
     list_partner_messages: () => ({ rows, more: false }),
     get_partner_connection: () => DETAIL,
     list_partner_mappings: () => MAPPINGS,
+    get_partner_message: () => ({
+      deliveryId: HELD.deliveryId,
+      controlId: null,
+      content: "not_made",
+      segments: [],
+      attempts: [],
+    }),
   });
   return renderRoutes(ROUTES, path);
 }
@@ -55,6 +62,13 @@ describe("Messages held by the interface contract (ticket #4726)", () => {
     renderAt("/interfaces/logs", [{ ...HELD, waiting: "stopped" }]);
     expect(await screen.findByText("Connection stopped")).toBeTruthy();
     expect(screen.queryByRole("link", { name: "Open interface contract" })).toBeNull();
+  });
+
+  it("shows the reason and the link on the open message, whose panel pushes Details out of view", async () => {
+    renderAt(`/interfaces/logs?open=${HELD.deliveryId}`, [HELD]);
+    const panel = await screen.findByRole("region", { name: /–/ });
+    expect(await within(panel).findByText(/Held: acceptance tests out of date/)).toBeTruthy();
+    expect(within(panel).getByRole("link", { name: "Open interface contract" })).toBeTruthy();
   });
 
   it("opens the contract when the link's address asks for it", async () => {

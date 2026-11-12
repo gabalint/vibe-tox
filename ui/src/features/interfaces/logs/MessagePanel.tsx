@@ -11,10 +11,13 @@ import type { PartnerAttempt } from "@/generated/PartnerAttempt";
 import type { PartnerMessageDetail } from "@/generated/PartnerMessageDetail";
 import type { PartnerMessageRow } from "@/generated/PartnerMessageRow";
 import { useCommandQuery } from "@/lib/commands";
+import { useFormatTime } from "@/lib/format";
+import { usePersonText } from "@/lib/person";
 import { GET_MESSAGE } from "../contract";
 import { applicationOf, MESSAGE_TYPES, problemText, recordText, transportOf } from "../labels";
 import { connectionPath } from "../paths";
 import styles from "./MessagePanel.module.css";
+import { MessageDetails } from "./messageColumns";
 
 /** Why the message itself is not shown. */
 const NOT_SHOWN: Record<Exclude<MessageContent, "sent">, string> = {
@@ -36,7 +39,8 @@ interface MessagePanelProps {
 }
 
 /**
- * One outgoing message (ticket #4678): its control ID, the partner's answer, the HL7 message
+ * One outgoing message (ticket #4678): what became of it and why it waits, as in the Details
+ * column the open panel pushes out of view (#4726), its control ID, the partner's answer, the HL7 message
  * exactly as sent and every attempt. The message is the copy kept when it was made, checked
  * against its digest by the engine, never made again. It holds patient data: it is read only
  * when the panel opens, and each read is recorded in the audit trail.
@@ -49,6 +53,8 @@ export function MessagePanel({
 }: MessagePanelProps) {
   const detail = useCommandQuery<PartnerMessageDetail>(GET_MESSAGE, { input: { deliveryId } });
   useWidePanel(detail.data?.content === "sent");
+  const formatTime = useFormatTime();
+  const person = usePersonText();
   const transport = transportOf(row);
   return (
     <DetailPanel
@@ -69,6 +75,10 @@ export function MessagePanel({
                     ) : (
                       (row.connection?.name ?? "None matched")
                     ),
+                },
+                {
+                  label: "Details",
+                  value: <MessageDetails row={row} formatTime={formatTime} person={person} />,
                 },
                 { label: "Control ID (MSH-10)", value: loaded.controlId ?? "—" },
                 { label: "Partner's answer", value: <Answer row={row} /> },
