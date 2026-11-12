@@ -73,8 +73,8 @@ pub use standing_authority::standing_collection_gate;
 pub use views::{
     AuthorityEvidenceView, BillingReviewItemView, CancellationView, ClarificationHoldView,
     DiagnosisView, MedicationView, OrderAccessionRef, OrderComponentView, OrderDetail,
-    OrderEvidenceView, OrderItemView, OrderSummary, PointOfCareResultView, StandingOrderView,
-    TriggerAssessmentView,
+    OrderEvidenceView, OrderItemView, OrderSummary, OrderedTestRef, PointOfCareResultView,
+    StandingOrderView, TriggerAssessmentView,
 };
 
 /// Forward-only migrations, numbered from `0001` (coding standards).

@@ -6,6 +6,7 @@ import { Timestamp } from "@/components/Timestamp";
 import type { OrderSummary } from "@/generated/OrderSummary";
 import { subjectName } from "../subjects";
 import { orderStatus } from "./labels";
+import { OrderedTests } from "./OrderedTests";
 
 export const orderPath = (orderId: string) => `/orders/${orderId}`;
 
@@ -76,7 +77,7 @@ export const ORDER_COLUMNS: readonly DataGridColumn<OrderSummary>[] = [
   {
     id: "items",
     header: "Tests",
-    cell: (order) => order.itemCount,
+    cell: (order) => <OrderedTests order={order} />,
     sortValue: (order) => order.itemCount,
     align: "end",
     width: 80,

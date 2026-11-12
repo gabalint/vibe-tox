@@ -460,7 +460,7 @@ fn accepted_items_are_ready_only_without_an_open_hold() {
 }
 
 #[test]
-fn order_list_names_patient_client_placer_number_and_item_count() {
+fn order_list_names_patient_client_placer_number_and_ordered_tests() {
     let fixture = Fixture::open();
     let received = fixture.register(None);
     let accepted = fixture
@@ -497,10 +497,16 @@ fn order_list_names_patient_client_placer_number_and_item_count() {
                 order.placer_order_id,
                 order.client_name,
                 order.item_count,
+                order.ordered_tests,
             )
         })
         .collect();
     let text = |value: &str| value.to_owned();
+    // The fixture's add-on requests the same orderable as the initial item.
+    let test = || lis_orders::OrderedTestRef {
+        code: text("SYN-O"),
+        name: text("Synthetic orderable"),
+    };
     assert_eq!(
         listed,
         [
@@ -510,7 +516,8 @@ fn order_list_names_patient_client_placer_number_and_item_count() {
                 None,
                 Some(text("PO-SYN-0002")),
                 text("Synthetic clinic"),
-                1
+                1,
+                vec![test()],
             ),
             (
                 first.order_id,
@@ -518,7 +525,8 @@ fn order_list_names_patient_client_placer_number_and_item_count() {
                 Some(text("Order")),
                 None,
                 text("Synthetic clinic"),
-                2
+                2,
+                vec![test(), test()],
             ),
         ]
     );

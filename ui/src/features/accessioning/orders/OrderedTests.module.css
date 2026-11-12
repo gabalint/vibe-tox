@@ -1,0 +1,21 @@
+/* A dotted underline marks the count as having more to show on hover. */
+.count {
+  text-decoration: underline dotted;
+  text-underline-offset: 0.2em;
+  cursor: default;
+}
+
+/* The look of the navigation tooltips. */
+.tooltip {
+  composes: tooltip from "../../../app/Sidebar.module.css";
+}
+
+.title {
+  font-weight: var(--font-weight-semibold);
+}
+
+.tests {
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+}

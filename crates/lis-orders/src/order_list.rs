@@ -4,6 +4,7 @@
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 
+use lis_catalog::OrderableVersionId;
 use lis_core::{Phi, UtcTimestamp};
 use lis_identity::{ClientId, SubjectId, SubjectSummary};
 use rusqlite::{Connection, params};
@@ -12,7 +13,7 @@ use crate::error::OrderError;
 use crate::inputs::ListOrdersInput;
 use crate::model::{OrderId, OrderStatus};
 use crate::queries::ensure_order_exists;
-use crate::views::OrderSummary;
+use crate::views::{OrderSummary, OrderedTestRef};
 
 /// Longest find text, in characters.
 const SEARCH_MAX: usize = 200;
@@ -36,7 +37,7 @@ pub fn order_search(input: &ListOrdersInput) -> Result<Option<Phi<String>>, Orde
 }
 
 /// Bounded order worklist, newest first, with each order's patient name, placer order
-/// number, client name and item count (REQ-ORD-001). With find text, only orders whose
+/// number, client name, item count and ordered tests (REQ-ORD-001). With find text, only orders whose
 /// placer order number starts with it, ignoring case, or that `matches` names are listed.
 /// PHI: the engine audits the read.
 pub fn list_orders(
@@ -84,7 +85,46 @@ pub fn list_orders(
             },
         )?
         .collect::<Result<Vec<_>, _>>()?;
-    with_names(conn, rows)
+    let order_ids: Vec<OrderId> = rows.iter().map(|row| row.order_id).collect();
+    let tests = ordered_tests(conn, &order_ids)?;
+    with_names(conn, rows, tests)
+}
+
+/// The test of each item of `orders`, in request order, by order: one query for the
+/// items, then each ordered version once through the catalog's published query.
+fn ordered_tests(
+    conn: &Connection,
+    orders: &[OrderId],
+) -> Result<BTreeMap<OrderId, Vec<OrderedTestRef>>, OrderError> {
+    let items = conn
+        .prepare_cached(
+            "SELECT order_id, orderable_version_id FROM ord_order_items \
+             WHERE order_id IN (SELECT value FROM json_each(?1)) \
+             ORDER BY order_id, requested_at, id",
+        )?
+        .query_map([id_array(orders)], |row| {
+            Ok((
+                row.get::<_, OrderId>(0)?,
+                row.get::<_, OrderableVersionId>(1)?,
+            ))
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut versions: BTreeMap<OrderableVersionId, OrderedTestRef> = BTreeMap::new();
+    let mut tests: BTreeMap<OrderId, Vec<OrderedTestRef>> = BTreeMap::new();
+    for (order_id, version_id) in items {
+        let test = match versions.entry(version_id) {
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(entry) => {
+                let version = lis_catalog::get_orderable_version(conn, version_id)?;
+                entry.insert(OrderedTestRef {
+                    code: version.code,
+                    name: version.name,
+                })
+            }
+        };
+        tests.entry(order_id).or_default().push(test.clone());
+    }
+    Ok(tests)
 }
 
 /// A JSON array of IDs for `json_each`; hyphenated UUIDs need no escaping.
@@ -142,8 +182,13 @@ struct OrderRow {
 }
 
 /// Adds the patient and client names, read through the identity module's published
-/// queries (never from its tables), once per distinct patient and client.
-fn with_names(conn: &Connection, rows: Vec<OrderRow>) -> Result<Vec<OrderSummary>, OrderError> {
+/// queries (never from its tables), once per distinct patient and client, and the
+/// ordered tests.
+fn with_names(
+    conn: &Connection,
+    rows: Vec<OrderRow>,
+    mut tests: BTreeMap<OrderId, Vec<OrderedTestRef>>,
+) -> Result<Vec<OrderSummary>, OrderError> {
     let mut subjects: BTreeMap<SubjectId, SubjectSummary> = BTreeMap::new();
     let mut clients: BTreeMap<ClientId, String> = BTreeMap::new();
     rows.into_iter()
@@ -172,6 +217,7 @@ fn with_names(conn: &Connection, rows: Vec<OrderRow>) -> Result<Vec<OrderSummary
                 sample_barcodes: Vec::new(),
                 accessions: Vec::new(),
                 item_count: row.item_count,
+                ordered_tests: tests.remove(&row.order_id).unwrap_or_default(),
                 status: row.status,
                 received_at: row.received_at,
                 version: row.version,

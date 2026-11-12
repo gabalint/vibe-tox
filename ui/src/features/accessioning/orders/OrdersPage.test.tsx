@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OrderSummary } from "@/generated/OrderSummary";
 import { expectNoA11yViolations } from "@/lib/test/a11y";
@@ -9,6 +9,9 @@ import { mockGridLayout } from "@/lib/test/layout";
 import { renderRoutes } from "@/lib/test/router";
 import { ACCESSION_ID, ORDER_ID, SUBJECT_ID, SUBJECT_VIEW, sessionWith } from "../testData";
 import { OrdersPage } from "./OrdersPage";
+
+const SCREEN = { code: "SYN-DS", name: "Synthetic drug screen" };
+const CONFIRMATION = { code: "SYN-OPC", name: "Synthetic opiates confirmation" };
 
 const SUMMARY: OrderSummary = {
   orderId: ORDER_ID,
@@ -25,6 +28,7 @@ const SUMMARY: OrderSummary = {
     { accessionId: `${ACCESSION_ID.slice(0, -1)}2`, accessionNumber: "A26000006" },
   ],
   itemCount: 2,
+  orderedTests: [SCREEN, CONFIRMATION],
   status: "received",
   receivedAt: "2026-10-12T14:05:00Z",
   version: 1,
@@ -135,6 +139,33 @@ describe("OrdersPage (REQ-ORD-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => 
 
     await openRowWithEnter(user, "PO-SYN-1000");
     expect(await screen.findByText(`Navigated to /orders/${ORDER_ID}`)).toBeTruthy();
+  });
+
+  it("lists the ordered tests when a test count is hovered or its cell focused (#4747)", async () => {
+    const single = { ...summary(2), itemCount: 1, orderedTests: [SCREEN] };
+    const { user } = renderPage(() => [SUMMARY, single]);
+    const cell = await screen.findByRole("gridcell", {
+      name: "2 tests ordered: Synthetic drug screen (SYN-DS); Synthetic opiates confirmation (SYN-OPC)",
+    });
+    await user.hover(within(cell).getByText("2"));
+    const tooltip = await screen.findByRole("tooltip");
+    expect(within(tooltip).getByText("2 tests ordered")).toBeTruthy();
+    expect(
+      within(tooltip)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Synthetic drug screen (SYN-DS)", "Synthetic opiates confirmation (SYN-OPC)"]);
+    await user.unhover(within(cell).getByText("2"));
+    await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull());
+
+    const one = screen.getByRole("gridcell", {
+      name: "1 test ordered: Synthetic drug screen (SYN-DS)",
+    });
+    act(() => one.focus());
+    const focused = await screen.findByRole("tooltip");
+    expect(within(focused).getByText("1 test ordered")).toBeTruthy();
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull());
   });
 
   it("sorts orders by sample barcode in both directions", async () => {
