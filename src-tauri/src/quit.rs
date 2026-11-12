@@ -83,12 +83,12 @@ fn quit_prompt(unsaved: &[String], in_progress: &[String]) -> Option<QuitPrompt>
             leave: "Leave",
         }),
         (true, false) => Some(QuitPrompt {
-            title: "Quit OpenBGA/tox?",
+            title: "Quit Steady State LIMS?",
             text: in_progress_text,
             leave: "Quit anyway",
         }),
         (false, false) => Some(QuitPrompt {
-            title: "Quit OpenBGA/tox?",
+            title: "Quit Steady State LIMS?",
             text: format!("{unsaved_text} What you typed is lost.\n\n{in_progress_text}"),
             leave: "Quit anyway",
         }),
@@ -209,7 +209,7 @@ mod tests {
     #[test]
     fn work_in_progress_alone_keeps_the_quit_warning() {
         let prompt = quit_prompt(&[], &names(&["Analyzer A is listening"])).unwrap();
-        assert_eq!(prompt.title, "Quit OpenBGA/tox?");
+        assert_eq!(prompt.title, "Quit Steady State LIMS?");
         assert_eq!(
             prompt.text,
             "These are still in progress:\n\n• Analyzer A is listening\n\nQuitting now may \
@@ -225,7 +225,7 @@ mod tests {
             &names(&["Analyzer A is listening", "A backup is running"]),
         )
         .unwrap();
-        assert_eq!(prompt.title, "Quit OpenBGA/tox?");
+        assert_eq!(prompt.title, "Quit Steady State LIMS?");
         assert_eq!(
             prompt.text,
             "You have unsaved changes in New order. What you typed is lost.\n\nThese are \

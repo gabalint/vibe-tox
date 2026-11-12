@@ -1,8 +1,8 @@
 # Public website and presentation
 
 The presentation is published at
-[openbga.github.io/tox](https://openbga.github.io/tox/) from the public
-repository [openbga/tox](https://github.com/openbga/tox); see
+[openbga.github.io/steady-state-lims](https://openbga.github.io/steady-state-lims/) from the public
+repository [openbga/steady-state-lims](https://github.com/openbga/steady-state-lims); see
 [publication](#publication).
 
 The website summarizes the [license](../architecture/decisions/0017-gplv3-license.md) and links the
@@ -37,7 +37,7 @@ development status with the license and disclaimer, and the repository. Its acti
 latest development release, presentation, documentation, contribution and security
 guidance, the support link that [AGENTS.md](../../AGENTS.md#current-mandate)
 permits, or source. The hero's “Download development build” action and the
-getting-started section link to the [latest release](https://github.com/openbga/tox/releases/latest),
+getting-started section link to the [latest release](https://github.com/openbga/steady-state-lims/releases/latest),
 where visitors choose their platform's installer and read its release notes. Keep
 the destination independent of versioned asset filenames; [branches and releases](releases.md)
 describes the unsigned development builds and the separate nightly channel.
@@ -58,7 +58,7 @@ project has none and must not invent them (WEB-07). The video's `uploadDate` is 
 2026-11-11. Update it when a different recording is published, and keep `duration`
 matched to that file.
 
-A project site at `openbga.github.io/tox/` is a subdirectory of the host. Google
+A project site at `openbga.github.io/steady-state-lims/` is a subdirectory of the host. Google
 reads `robots.txt` only from the host root and does not support site names for
 subdirectories (WEB-08), so the site ships neither a `robots.txt` nor `WebSite` markup.
 Search Console verification and sitemap submission would be project-owner actions outside
@@ -75,15 +75,17 @@ Keep it with the stills. The build-from-source
 commands follow the [developer guide](README.md#build-and-run); update both together.
 No analytics, contact form, account, clinical interface, or JavaScript runtime is used.
 
-The site serves `openbga-tox-overview.mp4` and its poster. It is a 121.233-second
+The site serves `steady-state-lims-overview.mp4` and its poster. It is a 121.233-second
 recording of the actual React interface with a mocked engine and synthetic data,
 with narration and music. It demonstrates a workflow, not end-to-end clinical
 execution or validation.
 
 The title cards, app header, window title and two spoken product-name phrases
-use OpenBGA/tox. The workflow footage, synthetic data and remaining narration
-come from the supplied demonstration. The replacement phrases use Kokoro v1.0
-with the same `af_heart` voice; the name is pronounced “Open B G A tox.” The
+use Steady State LIMS. The workflow footage, synthetic data and remaining narration
+come from the supplied demonstration. In the recorded header, the search field
+sits further right to make room for the name, as the application lays it out. The
+replacement phrases use Kokoro v1.0 with the same `af_heart` voice; LIMS is
+pronounced as one word, “limz.” The
 [media credits](../../website/media/credits.txt) record the editing and audio
 provenance. The poster and stills come from this edited recording.
 
@@ -98,9 +100,9 @@ the page or choosing a later recording.
 | `website/index.html` | Public content, search metadata and structured data, navigation, native player and links |
 | `website/styles.css`, `website/responsive.css` | Presentation styles and responsive adaptations |
 | `website/favicon.png` | Application test-tube icon, reused from `src-tauri/icons/128x128.png` |
-| `website/media/openbga-tox-overview.mp4` | Narrated H.264/AAC application walkthrough with current branding; progressive playback |
-| `website/media/openbga-tox-overview-poster.jpg` | Title poster from the edited recording |
-| `website/media/openbga-tox-overview.en.vtt` | English captions for the narration and music |
+| `website/media/steady-state-lims-overview.mp4` | Narrated H.264/AAC application walkthrough with current branding; progressive playback |
+| `website/media/steady-state-lims-overview-poster.jpg` | Title poster from the edited recording |
+| `website/media/steady-state-lims-overview.en.vtt` | English captions for the narration and music |
 | `website/media/transcript.txt` | Narration and descriptions of the application scenes |
 | `website/media/credits.txt` | Narration/music provenance and the supplied soundfont license notice |
 | `website/media/screens/*.webp` | Six application stills from the recording, 960 and 1600 pixels wide; each links to its full-size file |
@@ -120,7 +122,7 @@ the described screen without a dialog, highlight or transition. The current stil
 `audit-trail` 98. From the repository root, with FFmpeg and `cwebp`:
 
 ```bash
-ffmpeg -ss 18.5 -i website/media/openbga-tox-overview.mp4 -frames:v 1 \
+ffmpeg -ss 18.5 -i website/media/steady-state-lims-overview.mp4 -frames:v 1 \
   -vf "crop=1804:948:58:111" /tmp/orders.png
 for width in 960 1600; do
   cwebp -q 82 -m 6 -resize "$width" 0 /tmp/orders.png \

@@ -72,7 +72,7 @@ also sign the update packages with Minisign.
 The gate calls the [`ci` workflow](../../.github/workflows/ci.yml), which selects
 every check for a dispatched run. Bundles build in parallel on the
 [packaging](packaging.md) matrix. The publish job runs only after the gate and every
-build pass. It names the four installers `openbga-tox_<version>_<os>-<arch>.<ext>`,
+build pass. It names the four installers `steady-state-lims_<version>_<os>-<arch>.<ext>`,
 adds `SHA256SUMS.txt`, and writes notes with the development-build warning, the
 unsigned-installer prompts and the workflow-run link. A release is created as a
 draft and becomes visible only with every asset attached.
@@ -90,7 +90,7 @@ remains necessary. Browser-download and clean-host launch checks remain separate
 | `linux-amd64.deb` and `linux-amd64.AppImage` | Ubuntu 22.04 |
 
 With in-app updates configured, each release also carries `latest.json` and
-`openbga-tox_<version>_macos-arm64.app.tar.gz`, and the rolling `nightly` release also
+`steady-state-lims_<version>_macos-arm64.app.tar.gz`, and the rolling `nightly` release also
 carries `nightly.json`.
 
 The rolling nightly needs a deletable tag, and so do the retained `nightly-*` builds.
@@ -106,6 +106,14 @@ updates**. The [updates guide](../operations/updates.md) describes the operator 
 | --- | --- | --- |
 | Release | `releases/latest/download/latest.json`. GitHub's latest release, which is never a prerelease | Every configured build with a lower version |
 | Nightly | `releases/download/nightly/nightly.json`: the newest build's manifest plus the retained builds, newest first. Each entry points to the `latest.json` of its own `nightly-*` release | Only builds that are themselves nightly builds |
+
+A build reads these files, and accepts the packages they name, only under the
+repository name compiled into it (ADR 0020). GitHub redirects the addresses of a
+renamed repository, but newer manifests name the new repository, so a build made
+under the earlier name is offered no further updates. Install a current build by hand
+once. The bundle identifier and persistent names are unchanged; installer upgrade
+continuity is still subject to the
+[real-host checks](packaging.md#product-name-and-compatibility).
 
 Each `latest.json` is a Tauri updater manifest. It holds the version, the change summary
 (the commit subjects since the previous build of that channel, merge commits excluded), the

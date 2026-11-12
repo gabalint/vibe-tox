@@ -9,7 +9,7 @@ export function AuthLayout({ children, aside }: { children: ReactNode; aside?: R
       <div className={styles.card}>
         <p className={styles.appName}>
           <FlaskConical aria-hidden="true" className={styles.icon} />
-          OpenBGA/tox
+          Steady State LIMS
         </p>
         {children}
       </div>

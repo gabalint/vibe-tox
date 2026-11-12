@@ -7,19 +7,19 @@ publisher and supported-release decisions in [Q-19 and Q-34](../planning/open-qu
 
 ## Product name and compatibility
 
-The public project name is **OpenBGA/tox**, hosted by the **OpenBGA** organization
-at [`openbga/tox`](https://github.com/openbga/tox). The presentation website and
-documentation, desktop window titles and new authenticator enrollments use this
-name. Tauri's `productName` excludes `/`, so OS bundles and installers use
-**OpenBGA Tox** (`OpenBGA Tox.app` on macOS), and published download filenames use
-`openbga-tox_<version>_<os>-<arch>.<ext>`. The Tauri bundle identifier remains
+The public project name is **Steady State LIMS**, hosted by the **OpenBGA** organization
+at [`openbga/steady-state-lims`](https://github.com/openbga/steady-state-lims). The
+presentation website and documentation, desktop window titles, OS bundles and
+installers (`Steady State LIMS.app` on macOS) and new authenticator enrollments use
+this name. Published download filenames use
+`steady-state-lims_<version>_<os>-<arch>.<ext>`. The Tauri bundle identifier remains
 `org.vibetox.lis`, and the executable remains `lis-desktop`.
 
 Persistent names are compatibility contracts: keep the OS key-store and security-key
 RP identities, `VibeToxLIS` backup directory, versioned `vibe-tox-*` formats,
 cryptographic domain strings, interface application identifiers and saved UI
 preference keys. Recovery-kit and export filenames retain their existing prefixes.
-New authenticator enrollment labels use OpenBGA/tox; existing authenticator entries
+New authenticator enrollment labels use Steady State LIMS; existing authenticator entries
 may still show their original label. Renaming does not rotate credentials or rewrite
 stored records.
 
@@ -29,6 +29,10 @@ Windows, macOS and Linux, including app discovery, shortcuts, uninstall entries 
 the existing data/key-store access. A stable bundle identifier alone does not prove
 installer upgrade continuity. This remains part of the real-host release checks
 below (NFR-24, NFR-33; Q-19, Q-34).
+
+A build also accepts in-app updates only under the repository name compiled into it.
+A build made under an earlier repository name needs one manual installation of a
+current build ([in-app updates](releases.md#in-app-updates)).
 
 ## Configured bundles
 
@@ -70,7 +74,7 @@ The package workflow verifies the completed `.app` before uploading:
 
 ```bash
 codesign --verify --deep --strict --verbose=2 \
-  "$CARGO_TARGET_DIR/release/bundle/macos/OpenBGA Tox.app"
+  "$CARGO_TARGET_DIR/release/bundle/macos/Steady State LIMS.app"
 ```
 
 This follows Apple's [signature verification guidance](https://developer.apple.com/forums/thread/706379)

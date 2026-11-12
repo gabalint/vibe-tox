@@ -19,7 +19,7 @@ const APPROVAL: UpdateApprovalView = {
   version: "0.4.0",
   approvedBy: OTHER_USER,
   approvedAt: "2026-10-12T09:00:00Z",
-  packageFileName: "openbga-tox-0.4.0-synthetic.msi",
+  packageFileName: "steady-state-lims-0.4.0-synthetic.msi",
   packageSha256: "ab".repeat(32),
   riskClassText: "Minor",
   preUpdateRunId: RUN_ID,
@@ -33,7 +33,7 @@ const PENDING: UpdateApprovalView = {
   approvalId: "00000000-0000-7000-8000-0000000000f2",
   version: "0.5.0",
   approvedAt: "2026-10-13T09:00:00Z",
-  packageFileName: "openbga-tox-0.5.0-synthetic.msi",
+  packageFileName: "steady-state-lims-0.5.0-synthetic.msi",
   installed: false,
   revision: 3,
 };
@@ -42,7 +42,7 @@ const WITHDRAWN: UpdateApprovalView = {
   ...PENDING,
   approvalId: "00000000-0000-7000-8000-0000000000f3",
   version: "0.4.1",
-  packageFileName: "openbga-tox-0.4.1-synthetic.msi",
+  packageFileName: "steady-state-lims-0.4.1-synthetic.msi",
   withdrawn: { by: OTHER_USER, at: "2026-10-12T12:00:00Z" },
 };
 
@@ -148,7 +148,7 @@ describe("VersionsPage (REQ-OPS-006)", () => {
     await openRow(user, "Awaiting acceptance");
     expect(router.state.location.search).toBe("?open=0.4.0");
     const open = panel("Version 0.4.0");
-    expect(within(open).getByText("openbga-tox-0.4.0-synthetic.msi")).toBeTruthy();
+    expect(within(open).getByText("steady-state-lims-0.4.0-synthetic.msi")).toBeTruthy();
     await user.click(await within(open).findByRole("button", { name: /Accept this version/ }));
     const dialog = await screen.findByRole("alertdialog", { name: /Accept version 0.4.0/ });
     await user.type(within(dialog).getByRole("textbox", { name: /^Note/ }), "Smoke test passed");
@@ -238,7 +238,7 @@ describe("VersionsPage (REQ-OPS-006)", () => {
     await user.click(within(dialog).getByRole("checkbox", { name: /reviewed the release notes/ }));
     await user.click(within(dialog).getByRole("button", { name: "Choose the update package" }));
     expect(
-      await screen.findByText("Update approved: openbga-tox-0.5.0-synthetic.msi"),
+      await screen.findByText("Update approved: steady-state-lims-0.5.0-synthetic.msi"),
     ).toBeTruthy();
     expect(approve).toHaveBeenCalledWith({
       input: {
@@ -407,13 +407,13 @@ describe("VersionsPage (REQ-OPS-006)", () => {
     expect(screen.queryByText(/Select an approval/)).toBeNull();
     // Only the approval whose version is not installed has an action, in its row and panel.
     expect(screen.getAllByRole("button", { name: /^Actions for/ })).toHaveLength(1);
-    await openRow(user, "openbga-tox-0.4.1-synthetic.msi");
+    await openRow(user, "steady-state-lims-0.4.1-synthetic.msi");
     expect(
       within(panel("Approval of version 0.4.1")).queryByRole("button", {
         name: "Withdraw approval",
       }),
     ).toBeNull();
-    await openRow(user, "openbga-tox-0.5.0-synthetic.msi");
+    await openRow(user, "steady-state-lims-0.5.0-synthetic.msi");
     await user.click(
       within(panel("Approval of version 0.5.0")).getByRole("button", { name: "Withdraw approval" }),
     );
@@ -457,7 +457,7 @@ describe("VersionsPage (REQ-OPS-006)", () => {
 
   it("withdraws from the row's menu, and checks the approvals tab for accessibility", async () => {
     const { user, container } = renderPage({}, ALL, `${PATH}/approvals`);
-    await screen.findByRole("gridcell", { name: "openbga-tox-0.5.0-synthetic.msi" });
+    await screen.findByRole("gridcell", { name: "steady-state-lims-0.5.0-synthetic.msi" });
     await expectNoA11yViolations(container, { wholePage: true });
     const menu = await openRowActions(user, "approval of version 0.5.0");
     await user.click(within(menu).getByRole("menuitem", { name: "Withdraw approval" }));

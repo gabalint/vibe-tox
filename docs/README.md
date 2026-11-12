@@ -1,4 +1,4 @@
-# OpenBGA/tox documentation
+# Steady State LIMS documentation
 
 ## Start with the current application
 

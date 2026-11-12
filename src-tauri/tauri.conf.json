@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "OpenBGA Tox",
+  "productName": "Steady State LIMS",
   "identifier": "org.vibetox.lis",
   "build": {
     "frontendDist": "../ui/dist",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "OpenBGA/tox",
+        "title": "Steady State LIMS",
         "width": 1280,
         "height": 800,
         "minWidth": 1024,
@@ -29,7 +29,7 @@
     "active": true,
     "createUpdaterArtifacts": false,
     "publisher": "OpenBGA",
-    "copyright": "Copyright 2026 OpenBGA/tox contributors",
+    "copyright": "Copyright 2026 Steady State LIMS contributors",
     "license": "GPL-3.0-only",
     "licenseFile": "../LICENSE",
     "category": "Medical",

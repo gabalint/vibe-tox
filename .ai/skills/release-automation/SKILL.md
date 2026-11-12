@@ -19,7 +19,7 @@ The operator's prompt supplies these values:
 
 | Input | Meaning |
 | --- | --- |
-| `REPO` | GitHub repository, for example `openbga/tox` |
+| `REPO` | GitHub repository, for example `openbga/steady-state-lims` |
 | `CLONE` | A clone used only by this task. Create it with `git clone https://github.com/$REPO.git "$CLONE"` when missing. Never use a developer's working checkout. |
 | `REPORT_DIR` | Directory for the run report |
 | Time budget | How long to wait for runs; default 4 hours |
@@ -71,10 +71,10 @@ The operator's prompt supplies these values:
    and check all of the following:
    - The release is not a draft.
    - `nightly` is a prerelease; `v<version>` is not.
-   - There are five non-empty assets: four `openbga-tox_<version>_*` installers and
+   - There are five non-empty assets: four `steady-state-lims_<version>_*` installers and
      `SHA256SUMS.txt`. When in-app updates are configured
      ([in-app updates](../../../docs/development/releases.md#in-app-updates)), there are also
-     `latest.json` and `openbga-tox_<version>_macos-arm64.app.tar.gz`, and `nightly` also
+     `latest.json` and `steady-state-lims_<version>_macos-arm64.app.tar.gz`, and `nightly` also
      carries `nightly.json`. Its first build entry names the new version, and the
      `nightly-<date>.<run>` release it points to exists.
    - After a fresh fetch, the tag's commit equals the dispatched SHA.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent verifier for an OpenBGA/tox exit package (vibe-tox-exit-1).
+"""Independent verifier for a Steady State LIMS exit package (vibe-tox-exit-1).
 
 Written from docs/architecture/backup-and-export-formats.md alone (NFR-12, REQ-OPS-010,
 ADR 0008), with the Python standard library only. It checks, in the document's order:
