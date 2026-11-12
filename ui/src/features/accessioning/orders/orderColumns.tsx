@@ -83,7 +83,7 @@ export const ORDER_COLUMNS: readonly DataGridColumn<OrderSummary>[] = [
   },
   {
     id: "received",
-    header: "Received",
+    header: "Order received",
     cell: (order) => <Timestamp value={order.receivedAt} />,
     sortValue: (order) => order.receivedAt,
     width: 180,

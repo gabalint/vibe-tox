@@ -95,7 +95,7 @@ describe("OrdersPage (REQ-ORD-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => 
     const headers = within(grid)
       .getAllByRole("columnheader")
       .map((header) => header.textContent);
-    expect(headers.slice(0, 8)).toEqual([
+    expect(headers.slice(0, 9)).toEqual([
       "Patient",
       "Birth date",
       "Patient identifiers",
@@ -104,6 +104,8 @@ describe("OrdersPage (REQ-ORD-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, () => 
       "Accession",
       "Client",
       "Tests",
+      // The order's receipt, not a specimen's (#4748).
+      "Order received",
     ]);
     const row = within(grid).getByRole("gridcell", { name: "PO-SYN-1000" }).closest("[role=row]");
     if (!(row instanceof HTMLElement)) throw new Error("no row");

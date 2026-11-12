@@ -2,7 +2,7 @@
   "id": "orders",
   "title": "Orders and decisions",
   "summary": "Review the supplied request, its tests, evidence, holds and specimen progress.",
-  "reviewedOn": "2026-11-06",
+  "reviewedOn": "2026-11-12",
   "routes": ["/orders", "/orders/:orderId"],
   "sections": [
     {
@@ -106,10 +106,10 @@
           "rules": "Use Show orders for all patients to remove it; New order retains the filtered patient."
         },
         {
-          "name": "Patient / Order number / Client / Tests / Received / Status / Open holds",
+          "name": "Patient / Order number / Client / Tests / Order received / Status / Open holds",
           "meaning": "Columns used to identify a request and its progress.",
-          "values": "Patient name; clinic number or Not supplied; client; test count; request receipt time; Received, not yet accepted (warning badge), Accepted (green badge) or Rejected (neutral badge); number of open holds.",
-          "rules": "Read-only. Test count is not performed work and request receipt time is not collection time."
+          "values": "Patient name; clinic number or Not supplied; client; test count; the date and time the laboratory received the order (request), shown in local time with its offset; Received, not yet accepted (warning badge), Accepted (green badge) or Rejected (neutral badge); number of open holds.",
+          "rules": "Read-only. Test count is not performed work. Order received is when the laboratory recorded the request, not when a specimen was collected or received: Sample barcode and Accession show whether specimens have arrived. Select Order received to sort by it."
         },
         {
           "name": "Sample barcode",
