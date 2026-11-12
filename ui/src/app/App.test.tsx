@@ -18,7 +18,7 @@ describe("App frame", () => {
     expect(await screen.findByRole("button", { name: "No instruments configured" })).toBeTruthy();
     expect(await screen.findByRole("link", { name: "Health: OK" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Signed in as Test Analyst" })).toBeTruthy();
-    await waitFor(() => expect(document.title).toBe("Work queues · OpenBGA/tox"));
+    await waitFor(() => expect(document.title).toBe("Work queues · Steady State LIMS"));
     await expectNoA11yViolations(container, { wholePage: true });
   });
 
@@ -26,13 +26,13 @@ describe("App frame", () => {
   it("titles the window after the page and focuses the page heading on navigation", async () => {
     const { user } = renderApp("/about", ["perform_analysis"]);
     const about = await screen.findByRole("heading", { level: 1, name: "About this app" });
-    await waitFor(() => expect(document.title).toBe("About this app · OpenBGA/tox"));
+    await waitFor(() => expect(document.title).toBe("About this app · Steady State LIMS"));
     // The first screen leaves focus where it was.
     expect(document.activeElement).not.toBe(about);
     await user.click(screen.getByRole("link", { name: "Work queues" }));
     const heading = await screen.findByRole("heading", { level: 1, name: "Work queues" });
     await waitFor(() => expect(document.activeElement).toBe(heading));
-    expect(document.title).toBe("Work queues · OpenBGA/tox");
+    expect(document.title).toBe("Work queues · Steady State LIMS");
   });
 
   it("skips from the top of the page to the main content", async () => {

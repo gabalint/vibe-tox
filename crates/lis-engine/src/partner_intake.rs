@@ -101,6 +101,7 @@ impl PartnerIntake {
     }
 
     fn pass(&self) -> Result<(), IntakeError> {
+        let _pass = locked(&self.readings.pass);
         let db = &self.ops.db;
         if held_by_recovery(db) {
             return Ok(());

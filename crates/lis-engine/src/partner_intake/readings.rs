@@ -14,9 +14,14 @@ use lis_interfaces::partner::{
 
 use crate::ops_worker::locked;
 
-/// The latest reading of each connection the reader reads from a folder or server.
+/// Shared readings and serialization of folder/SFTP intake passes.
 #[derive(Default)]
-pub(crate) struct PartnerReadings(Mutex<HashMap<PartnerConnectionId, LastAttempt>>);
+pub(crate) struct PartnerReadings {
+    /// Manual and background readers must finish recording and moving files before
+    /// another pass lists them. Separate from `readings`, which a pass updates.
+    pub(super) pass: Mutex<()>,
+    readings: Mutex<HashMap<PartnerConnectionId, LastAttempt>>,
+}
 
 impl PartnerReadings {
     /// Records a reading at `at`; `problem` is the PHI-free code of the first failure.
@@ -30,13 +35,13 @@ impl PartnerReadings {
             at,
             error_code: problem.map(str::to_owned),
         };
-        locked(&self.0).insert(id, reading);
+        locked(&self.readings).insert(id, reading);
     }
 
     /// Adds the latest reading to `connection`, as its last connection; a started one whose
     /// reading failed is in error.
     pub(crate) fn add_view(&self, connection: &mut PartnerConnection) {
-        let Some(reading) = locked(&self.0).get(&connection.id).cloned() else {
+        let Some(reading) = locked(&self.readings).get(&connection.id).cloned() else {
             return;
         };
         if connection.active && reading.error_code.is_some() {

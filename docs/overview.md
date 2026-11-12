@@ -1,4 +1,4 @@
-# OpenBGA/tox at a glance
+# Steady State LIMS at a glance
 
 Status: updated 2026-10-20 from the [project scope](project-scope.md), the
 [implementation plan](planning/implementation-plan.md#status) and the
@@ -12,7 +12,7 @@ licensed under [GPL-3.0-only](../LICENSE), running on a single computer the labo
 
 ## In 30 seconds
 
-OpenBGA/tox covers a test from order to delivered report: orders, specimens and labels,
+Steady State LIMS covers a test from order to delivered report: orders, specimens and labels,
 analyzer results, quality control, review, release, delivery and billing. It is a desktop
 application for Windows, macOS and Linux that keeps all data on the lab's own computer, works
 without internet, and lets the lab back up, restore or export everything at no cost. Optional
@@ -22,7 +22,7 @@ application scope.
 > **Status.** Built and tested on synthetic data only. It is not yet clinically validated, and is
 > not ready to report patient results.
 
-OpenBGA/tox is vibe coded with substantial AI assistance and sustained human
+Steady State LIMS is vibe coded with substantial AI assistance and sustained human
 effort. Development includes research, requirements analysis, architecture review,
 code review, test design, hands-on testing and repeated refinement. Human
 direction shapes the scope, challenges generated work and determines what needs

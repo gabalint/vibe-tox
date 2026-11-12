@@ -5,7 +5,7 @@ including its source, documentation, website and presentation.
 
 ## Vibe coded, with documented effort
 
-OpenBGA/tox is **vibe coded**: developed with substantial assistance from
+Steady State LIMS is **vibe coded**: developed with substantial assistance from
 AI coding tools, alongside sustained human effort in research, requirements
 analysis, architecture review, code review, test design, hands-on testing and
 revision. The [engineering standards](engineering-standards.md#human-direction-and-review)

@@ -90,7 +90,7 @@ fn fingerprint(key_id: KeyId) -> String {
 
 const RESTORE_STEPS: &str = "\
 Restore steps (on a replacement computer):
-1. Install the same or a newer version of OpenBGA/tox and connect one of the
+1. Install the same or a newer version of Steady State LIMS and connect one of the
    backup locations listed above.
 2. Open the app. On the setup screen, before creating any user, choose to restore
    from a backup.
@@ -110,7 +110,7 @@ pub(crate) fn kit_text(
 ) -> Zeroizing<String> {
     let mut text = Zeroizing::new(String::new());
     for line in [
-        "OpenBGA/tox recovery kit".to_owned(),
+        "Steady State LIMS recovery kit".to_owned(),
         format!("Format: {KIT_FORMAT}"),
         String::new(),
         "Anyone with this file can read your backups. Store it like a disk-encryption \

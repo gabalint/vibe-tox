@@ -241,7 +241,8 @@ async fn an_emr_order_waits_for_its_patient_then_arrives_as_received() {
     let input = orders.input.path();
     fs::write(input.join("clinic_0001.hl7"), oml(SENDER, "MSG-1")).unwrap();
     fs::write(input.join("clinic_0002.hl7.tmp"), "not complete").unwrap();
-    orders.read().await;
+    // Manual passes also share the background reader's file-processing boundary.
+    tokio::join!(orders.read(), orders.read());
     assert_eq!(
         orders.states(),
         [(

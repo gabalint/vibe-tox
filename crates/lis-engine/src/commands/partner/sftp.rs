@@ -26,7 +26,7 @@ use crate::partner_delivery::sftp::{self, Credential, KEY_CONTEXT};
 use crate::pipeline::Failure;
 
 /// The comment of the LIS's public key, as the partner's IT sees it.
-const KEY_COMMENT: &str = "openbga-tox";
+const KEY_COMMENT: &str = "steady-state-lims";
 
 /// Input of `test_partner_sftp`: the server as entered in the connection dialog.
 #[derive(Debug, Clone, Deserialize, TS)]

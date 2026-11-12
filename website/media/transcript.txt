@@ -1,8 +1,8 @@
-OpenBGA/tox — presentation transcript
+Steady State LIMS — presentation transcript
 
-The title cards, app header, window title and spoken product name use OpenBGA/tox. The product name is pronounced “Open B G A tox.” The recorded workflow and other narration are retained from the supplied demonstration.
+The title cards, app header, window title and spoken product name use Steady State LIMS. LIMS is pronounced as one word, “limz.” The recorded workflow and other narration are retained from the supplied demonstration.
 
-Video: openbga-tox-overview.mp4. Duration: 2 minutes 1 second.
+Video: steady-state-lims-overview.mp4. Duration: 2 minutes 1 second.
 Synthetic English narration with soft instrumental music underneath; the music fades out at the end.
 
 About the recording
@@ -10,9 +10,9 @@ This is a recording of the real React user interface with a mocked engine and fi
 
 Visual descriptions below describe what is shown. Narration follows the original workflow script with the product name updated.
 
-00:00:00.593 — Introduction
-Visual: A test-tube icon and the OpenBGA/tox title appear. The card introduces a free laboratory information system for small toxicology labs, from order to delivered report, on one computer the lab owns.
-Narration: Meet OpenBGA/tox: a free lab system for small toxicology labs, on one computer you own.
+00:00:01.330 — Introduction
+Visual: A test-tube icon and the Steady State LIMS title appear. The card introduces a free laboratory information system for small toxicology labs, from order to delivered report, on one computer the lab owns.
+Narration: Meet Steady State LIMS: a free lab system for small toxicology labs, on one computer you own.
 
 00:00:08.652 — Work queues
 Visual: The Work queues screen lists pending work. The cursor highlights reports ready for release and opens that queue to show a synthetic accession.
@@ -58,9 +58,9 @@ Narration: A tamper-evident audit trail records every change and every view of s
 Visual: The recording highlights backup targets, restore-test records and completed exit-export records in the operations screens.
 Narration: And your data stays yours: encrypted backups to the drives you choose, restore tests, and a complete export whenever you want it.
 
-00:01:54.100 — Closing card
+00:01:54.470 — Closing card
 Visual: The closing card lists orders and accessioning; analyzer and result-file interfaces; QC, review and release; delivery and billing; a tamper-evident audit trail; and encrypted backup and exit export. It says: “Free and open source. Runs on Windows, macOS and Linux, with or without internet.” The final note says: “Shown with synthetic demo data. Not yet clinically validated: each laboratory validates it before clinical use.”
-Narration: OpenBGA/tox. Free, offline-first, and yours.
+Narration: Steady State LIMS. Free, offline-first, and yours.
 
 00:01:58.416 — Music fades out
 The closing card remains visible as the instrumental music ends.

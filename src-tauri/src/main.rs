@@ -1,4 +1,4 @@
-//! Desktop shell for OpenBGA/tox (ADR 0012): one Tauri window over the
+//! Desktop shell for Steady State LIMS (ADR 0012): one Tauri window over the
 //! bundled UI, thin command adapters, report windows and diagnostic logging setup.
 //!
 //! Invariants:
