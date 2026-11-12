@@ -13,8 +13,9 @@ use lis_auth::{DataKey, RoleCode};
 use lis_core::{CommandError, ErrorCode, FixedClock, InstrumentId, ModuleSchema, UserId};
 use lis_engine::{
     ChosenResultFolder, DialogCommand, Engine, EngineConfig, Guard, HealthState, Inhibitor,
-    InstallationKind, Instrument, KeyProvider, LoadOutcome, LoadResultFileInput,
-    PrinterDestinations, RegisterInstrument, ResultFolderInput, SetInstrumentEnabled,
+    InstallationKind, Instrument, KeyProvider, ListAuditEventsInput, LoadOutcome,
+    LoadResultFileInput, PrinterDestinations, RegisterInstrument, ResultFolderInput,
+    SetInstrumentEnabled,
 };
 use lis_interfaces::{
     ConnectionSettings, ListenerState, MAX_RESULT_FILE_BYTES, without_verbatim_prefix,
@@ -223,6 +224,35 @@ async fn a_watched_folder_is_picked_up_at_the_sign_in_screen() {
     let (deliveries, failures) = imported(&w.t).await;
     assert_eq!(deliveries, 1);
     assert_eq!(failures, [Some("unregistered_source".to_owned())]);
+}
+
+// Ticket #4743: the audit trail names the instrument that received a file, as Bench setup
+// does; its ID stays on the event.
+#[tokio::test]
+async fn the_audit_trail_names_the_instrument_that_received_a_file() {
+    let w = Watched::new().await;
+    w.put("batch-001.csv", EXPORT);
+    w.pick_up().await;
+    w.t.create_user("auditor1", &[RoleCode::Auditor]).await;
+    w.t.engine.sign_out().await.unwrap();
+    w.t.first_sign_in("auditor1").await;
+
+    let events =
+        w.t.engine
+            .list_audit_events(ListAuditEventsInput {
+                limit: 50,
+                action: Some("interface.receive_result_file".into()),
+                ..ListAuditEventsInput::default()
+            })
+            .await
+            .unwrap();
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].principal_kind, "instrument");
+    assert_eq!(events[0].principal_id, w.instrument.id.to_string());
+    assert_eq!(
+        events[0].principal_display.as_deref(),
+        Some("Synthetic LC-MS/MS")
+    );
 }
 
 // F13: a file written while the app was closed is read after the next start.

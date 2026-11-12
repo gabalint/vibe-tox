@@ -30,7 +30,7 @@ principalKind: "user" | "instrument" | "partner" | "system",
  */
 principalId: string, 
 /**
- * The user's display name, when the principal is a known user.
+ * The display name of a known user, or the current name of a known instrument.
  */
 principalDisplay: string | null, 
 /**

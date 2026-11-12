@@ -110,6 +110,25 @@ describe("AuditTrailPage (REQ-OPS-001)", { timeout: WALKTHROUGH_TIMEOUT_MS }, ()
     expect(screen.queryByRole("button", { name: "Load older events" })).toBeNull();
   });
 
+  it("names an instrument in By, and shows its ID where the engine has no name (#4743)", async () => {
+    const [named, unknown] = events(2, 2).map((event) => ({
+      ...event,
+      principalKind: "instrument" as const,
+      principalId: "00000000-0000-7000-8000-000000000301",
+    }));
+    const list = vi.fn(() => [
+      { ...named, principalDisplay: "Synthetic LC-MS/MS" },
+      { ...unknown, principalDisplay: null },
+    ]);
+    renderPage({ list_audit_events: list });
+    expect(
+      await screen.findByRole("gridcell", { name: "Synthetic LC-MS/MS (instrument)" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("gridcell", { name: "Instrument 00000000-0000-7000-8000-000000000301" }),
+    ).toBeTruthy();
+  });
+
   it("retains the shown count and rows when an older page fails, then handles an empty final page", async () => {
     const list = vi
       .fn()
