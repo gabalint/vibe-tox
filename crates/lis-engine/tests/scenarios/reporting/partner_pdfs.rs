@@ -313,7 +313,10 @@ async fn a_message_held_by_out_of_date_tests_says_so_and_goes_once_they_pass() {
     pdfs.release(None).await;
     pdfs.deliver().await;
     assert!(pdfs.files().is_empty());
-    assert_eq!(pdfs.rows().await[0].waiting, Some(WaitReason::TestsOutOfDate));
+    assert_eq!(
+        pdfs.rows().await[0].waiting,
+        Some(WaitReason::TestsOutOfDate)
+    );
 
     let engine = pdfs.bench.lab().engine();
     assert_passed(&run_tests(engine, pdfs.connection.connection.id).await);
