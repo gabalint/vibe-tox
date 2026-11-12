@@ -43,7 +43,9 @@ export function UnroutedPage() {
       header: "Waiting since",
       cell: (row) => `${formatTime(row.createdAt)} (${waited(row.createdAt, now)})`,
       sortValue: (row) => row.createdAt,
-      width: 230,
+      // Fits "2026-11-11 12:34 GMT+2 (under 1 h)"; wraps rather than cut off (#4727).
+      width: 270,
+      wrap: true,
     },
     { id: "message", header: "Message", cell: (row) => MESSAGE_TYPES[row.messageType], width: 130 },
     { id: "record", header: "Record", cell: recordText, identifier: true },

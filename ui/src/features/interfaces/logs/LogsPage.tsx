@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/Checkbox";
 import { ErrorState } from "@/components/ErrorState";
 import { FindField } from "@/components/FindField";
 import { Page, PageHeader } from "@/components/Page";
+import { RefreshControl } from "@/components/RefreshControl";
 import { Select } from "@/components/Select";
 import { Tabs } from "@/components/Tabs";
 import { useToast } from "@/components/Toast";
@@ -104,9 +105,10 @@ function exportView(tab: TabId, outcome: string): MessageView {
  * message in and out, with two separate outcomes, transport and application, and never a bare
  * delivery claim. Period, connection, direction, outcome, Show test messages (off: the engine
  * leaves test messages out, tab counts included, #4679) and search sit in one row; the tabs
- * below count what they hold. Filters stay in the URL, the tab in the path. Export CSV saves
- * the rows shown to the Downloads folder, or Export N selected only the rows checked (#4682);
- * it is audited. The search takes several values separated by commas.
+ * below count what they hold. Filters stay in the URL, the tab in the path. Refresh reads the
+ * list again with the same filters, tab and search, and says when it was read (#4728). Export
+ * CSV saves the rows shown to the Downloads folder, or Export N selected only the rows checked
+ * (#4682); it is audited. The search takes several values separated by commas.
  */
 export function LogsPage() {
   const toast = useToast();
@@ -228,9 +230,16 @@ export function LogsPage() {
             onChange={setSearch}
           />
         </div>
-        <Button isDisabled={shown.length === 0} isPending={exportLog.isPending} onPress={runExport}>
-          {selectedIds.size > 0 ? `Export ${selectedIds.size} selected` : "Export CSV"}
-        </Button>
+        <div className={styles.actions}>
+          <RefreshControl query={messages} />
+          <Button
+            isDisabled={shown.length === 0}
+            isPending={exportLog.isPending}
+            onPress={runExport}
+          >
+            {selectedIds.size > 0 ? `Export ${selectedIds.size} selected` : "Export CSV"}
+          </Button>
+        </div>
       </div>
       {exportLog.error && <ErrorState title="Not exported" error={exportLog.error} />}
       <Tabs

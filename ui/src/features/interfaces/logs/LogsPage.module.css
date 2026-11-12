@@ -1,4 +1,4 @@
-/* The filter row of the Logs mockup: boxed choices and search, Export CSV at the far end. */
+/* The filter row of the Logs mockup: boxed choices and search, Refresh and Export CSV at the far end. */
 .filters {
   display: flex;
   flex-wrap: wrap;
@@ -27,4 +27,10 @@
 
 .search {
   flex-basis: 16rem;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
