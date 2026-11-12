@@ -1,8 +1,8 @@
 //! Reading one page of audit events, of one stream or of every stream, with the display
-//! labels the viewer shows: user names, action and record-type labels, and record labels
-//! from their owner modules ([`super::labels`]).
+//! labels the viewer shows: user and instrument names, action and record-type labels, and
+//! record labels from their owner modules ([`super::labels`]).
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 
 use lis_audit::{ByFilter, EventFilter};
 use lis_core::UserId;
@@ -24,6 +24,7 @@ pub(super) fn read_page(
     let filter = event_filter(input, user_id.as_deref());
     let events = lis_audit::list(conn, &filter).map_err(StoreError::from)?;
     let names = lis_auth::display_names(conn, &user_ids(&events))?;
+    let instruments = instrument_names(conn, &events)?;
     let records: BTreeSet<_> = events
         .iter()
         .filter_map(|event| event.record_type.clone().zip(event.record_id.clone()))
@@ -37,10 +38,7 @@ pub(super) fn read_page(
     Ok(events
         .into_iter()
         .map(|event| {
-            let principal_display = (event.principal_kind == "user")
-                .then(|| event.principal_id.parse::<UserId>().ok())
-                .flatten()
-                .and_then(|id| names.get(&id).cloned());
+            let principal_display = principal_display(&event, &names, &instruments);
             let record_label = event
                 .record_type
                 .as_ref()
@@ -76,6 +74,43 @@ pub(super) fn read_page(
                 correlation_id: event.correlation_id,
             }
         })
+        .collect())
+}
+
+/// Who acted, by name: a user's display name or an instrument's current name, as Bench setup
+/// shows it (ticket #4743). Names are read at read time, so a renamed instrument shows its
+/// current name; a principal not found has none, and the viewer shows its kind and ID.
+fn principal_display(
+    event: &lis_audit::StoredEvent,
+    users: &HashMap<UserId, String>,
+    instruments: &HashMap<String, String>,
+) -> Option<String> {
+    match event.principal_kind.as_str() {
+        "user" => event
+            .principal_id
+            .parse::<UserId>()
+            .ok()
+            .and_then(|id| users.get(&id).cloned()),
+        "instrument" => instruments.get(&event.principal_id).cloned(),
+        _ => None,
+    }
+}
+
+/// The names of the laboratory's instruments, by ID as audit stores it, read once for the
+/// page and only when an instrument acted in `events`.
+fn instrument_names(
+    conn: &rusqlite::Connection,
+    events: &[lis_audit::StoredEvent],
+) -> Result<HashMap<String, String>, AuditReadError> {
+    if !events
+        .iter()
+        .any(|event| event.principal_kind == "instrument")
+    {
+        return Ok(HashMap::new());
+    }
+    Ok(lis_interfaces::instrument_names(conn)?
+        .into_iter()
+        .map(|(id, name)| (id.to_string(), name))
         .collect())
 }
 

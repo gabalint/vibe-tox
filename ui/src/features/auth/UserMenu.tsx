@@ -1,5 +1,5 @@
 import { Check, ChevronDown, Copy, Info, KeyRound, Lock, LogOut, UserRound } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Header,
   Menu,
@@ -30,7 +30,7 @@ import styles from "./UserMenu.module.css";
 /**
  * The signed-in person's menu: change password, lock, sign out, Appearance (light, dark or the
  * system's setting, applied at once), "About this app" (the app and web engine versions) and, last, the
- * running version with Copy (ticket #4584). Lock and sign-out clear every cached engine result, so nothing
+ * running version, which copies itself (tickets #4584, #4745). Lock and sign-out clear every cached engine result, so nothing
  * from this session is shown to the next person (REQ-IDN-004). Sign out asks first while a page form has
  * unsaved input (ticket #4585).
  */
@@ -180,38 +180,51 @@ export function UserMenu({ session }: { session: SessionInfo }) {
   );
 }
 
+/** How long "Copied" or "Not copied" shows after the version row is chosen. */
+const COPY_RESULT_SHOWN_MS = 2000;
+
 /**
  * The running version, from the same `app_info` query as About this app. A menu holds only items,
- * so the whole row is the Copy action; it stays open to show "Copied".
+ * so the whole row copies the version; a small copy icon right after the version, in the same
+ * text style, is the hint (ticket #4745). The menu stays open to show "Copied" briefly.
  */
 function VersionItem() {
   const info = useCommandQuery<AppInfo>("app_info");
-  const [copy, setCopy] = useState<"Copy" | "Copied" | "Not copied">("Copy");
+  const [copy, setCopy] = useState<"idle" | "Copied" | "Not copied">("idle");
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
   const version = info.data?.appVersion;
   if (version === undefined) return null;
+  const show = (result: "Copied" | "Not copied") => {
+    setCopy(result);
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setCopy("idle"), COPY_RESULT_SHOWN_MS);
+  };
   return (
     <>
       <Separator className={styles.separator} />
       <MenuItem
         className={styles.item}
         textValue={`Version ${version}`}
-        aria-label={`Version ${version}, ${copy}`}
+        aria-label={
+          copy === "idle" ? `Copy version ${version}` : `Version ${version} ${copy.toLowerCase()}`
+        }
         shouldCloseOnSelect={false}
         onAction={() =>
           void navigator.clipboard.writeText(version).then(
-            () => setCopy("Copied"),
-            () => setCopy("Not copied"),
+            () => show("Copied"),
+            () => show("Not copied"),
           )
         }
       >
-        <span className={styles.version}>Version {version}</span>
-        <span className={styles.copy}>
+        <span className={styles.version}>
+          Version {version}
           {copy === "Copied" ? (
-            <Check aria-hidden="true" className={styles.icon} />
+            <Check aria-hidden="true" className={styles.copyIcon} />
           ) : (
-            <Copy aria-hidden="true" className={styles.icon} />
+            <Copy aria-hidden="true" className={styles.copyIcon} />
           )}
-          {copy}
+          {copy !== "idle" && copy}
         </span>
       </MenuItem>
     </>

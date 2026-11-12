@@ -97,8 +97,8 @@
         {
           "name": "By / Principal ID",
           "meaning": "Actor responsible for the event and its stable identifier.",
-          "values": "User, Instrument, Partner or System with displayed name/ID.",
-          "rules": "Read-only; use the identifier when names alone are ambiguous."
+          "values": "By shows a user's name or an instrument's name as Bench setup shows it, followed by the kind in brackets, such as Test Analyst (user) or ASTM - serial port (instrument). The name is the current one, read when the trail is shown. When there is no name (System, Partner, or a user or instrument the LIS no longer finds), By shows the kind and the recorded ID or component, such as System sign-in-screen. Principal ID, in the event details, is always the recorded identifier.",
+          "rules": "Read-only; use Principal ID when names alone are ambiguous. The audit export shows the same name with the ID: the PDF as Name (ID), the CSV in its user and user_id columns, which also hold instruments."
         },
         {
           "name": "Action / Record / Record ID",
