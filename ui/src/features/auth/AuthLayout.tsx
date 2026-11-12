@@ -1,5 +1,5 @@
-import { FlaskConical } from "lucide-react";
 import type { ReactNode } from "react";
+import { BrandLockup } from "@/components/BrandLockup";
 import styles from "./auth.module.css";
 
 /** The centered frame of the signed-out screens. */
@@ -8,8 +8,7 @@ export function AuthLayout({ children, aside }: { children: ReactNode; aside?: R
     <main className={styles.layout}>
       <div className={styles.card}>
         <p className={styles.appName}>
-          <FlaskConical aria-hidden="true" className={styles.icon} />
-          Steady State LIMS
+          <BrandLockup />
         </p>
         {children}
       </div>

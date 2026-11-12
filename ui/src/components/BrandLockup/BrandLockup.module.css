@@ -1,0 +1,30 @@
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+/* The icon's transparent margin leaves a 28px tile. */
+.mark {
+  width: var(--space-8);
+  height: var(--space-8);
+  flex-shrink: 0;
+}
+
+.text {
+  display: grid;
+}
+
+.product {
+  color: var(--color-text);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.15;
+}
+
+.parent {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.2;
+}

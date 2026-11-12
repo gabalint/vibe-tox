@@ -5,7 +5,9 @@
 **Product name and repository — user instruction, 2026-11-11.** The project is
 **Steady State LIMS**, hosted at `openbga/steady-state-lims` under the **OpenBGA**
 organization. Use this identity in the application, OS bundles, presentation video,
-website and documentation; download filenames use `steady-state-lims`. Describe the
+website and documentation; download filenames use `steady-state-lims`. The name never
+carries an OpenBGA prefix; brand lockups show the mark, **Steady State** and “An
+OpenBGA project” beneath it (user instruction, 2026-11-12). Describe the
 substantial AI-assisted development alongside the human work in requirements
 analysis, research, architecture review, testing and
 iteration; distinguish required review from completed evidence. Keep persistent
