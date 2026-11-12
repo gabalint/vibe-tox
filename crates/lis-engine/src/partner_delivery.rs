@@ -78,6 +78,7 @@ impl Scan for PartnerDeliveries {
 
 impl PartnerDeliveries {
     fn pass(&self) -> Result<(), PartnerError> {
+        let _one_at_a_time = locked(&self.ops.delivery_pass);
         let db = &self.ops.db;
         if held_by_recovery(db) {
             return Ok(());
@@ -316,7 +317,7 @@ pub(crate) fn stamp(at: UtcTimestamp, zone: Option<&TimeZone>) -> (String, Strin
 
 impl Engine {
     /// One delivery pass now, as the poller runs every 10 seconds from start. Scenario tests
-    /// drive the poller with it and the clock.
+    /// drive the poller with it and the clock; it waits for a pass the poller has under way.
     pub async fn deliver_partner_messages(&self) {
         scan_off_runtime(Arc::new(PartnerDeliveries {
             ops: Arc::clone(&self.ops),
