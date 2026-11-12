@@ -1,5 +1,6 @@
 import { lazy, Suspense, useId, useRef, useState } from "react";
 import { Outlet } from "react-router";
+import { BrandLockup } from "@/components/BrandLockup";
 import { LoadingState } from "@/components/LoadingState";
 import { UserMenu } from "@/features/auth/UserMenu";
 import { ListenerSummary } from "@/features/listeners/ListenerStatus";
@@ -15,7 +16,7 @@ import { helpGridStyle, PageHelpButton } from "./help/HelpResize";
 import { useHelpLayout } from "./help/useHelpLayout";
 import { ScanField } from "./ScanField";
 import { Sidebar } from "./Sidebar";
-import { APP_NAME, usePageHeading } from "./usePageHeading";
+import { usePageHeading } from "./usePageHeading";
 
 const PageHelp = lazy(() => import("./help/PageHelp").then((m) => ({ default: m.PageHelp })));
 
@@ -54,7 +55,7 @@ export function AppShell({ session }: { session: SessionInfo }) {
           Skip to main content
         </button>
         <header className={styles.topBar}>
-          <span className={styles.appName}>{APP_NAME}</span>
+          <BrandLockup />
           {session.capabilities.includes("accession") && <ScanField />}
           <div className={styles.topBarEnd}>
             <PageHelpButton

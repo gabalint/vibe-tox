@@ -639,13 +639,13 @@
         {
           "name": "Transport",
           "meaning": "Did it leave: what the folder, SFTP server or MLLP connection can prove.",
-          "values": "Written (to a folder); Uploaded (to an SFTP server); Sent (over MLLP, also while its acknowledgement is awaited); Failed; Not sent (not written yet, or replaced by a newer revision and never written); Received (an incoming order message read from a file or received over MLLP, and stored).",
+          "values": "Written (to a folder); Uploaded (to an SFTP server); Sent (over MLLP, also while its acknowledgement is awaited); Failed; Not sent (not written yet, or replaced by a newer revision and never written; an unrouted message: a yellow warning while it waits in Unrouted messages, neutral once someone decided); Received (an incoming order message read from a file or received over MLLP, and stored).",
           "rules": "Never Delivered."
         },
         {
           "name": "Application",
           "meaning": "Did the other system accept it.",
-          "values": "Outcome unknown for a written or uploaded file: a folder or SFTP server never confirms. Over MLLP, the partner's acknowledgement: Accepted (AA); Rejected (AE), an error in the message; Rejected (AR), the message or its sender not accepted; or Awaiting application ACK until it answers. An acknowledgement never proves that a clinician saw the result. For an incoming order: Order created (in Received status, for the laboratory to accept); Waiting for patient; Held for review; Duplicate – ignored; Rejected, or Rejected – unknown test. — otherwise.",
+          "values": "Outcome unknown for a written or uploaded file: a folder or SFTP server never confirms. Over MLLP, the partner's acknowledgement: Accepted (AA); Rejected (AE), an error in the message; Rejected (AR), the message or its sender not accepted; or Awaiting application ACK until it answers. An acknowledgement never proves that a clinician saw the result. For an incoming order: Order created (in Received status, for the laboratory to accept); Waiting for patient; Held for review; Duplicate – ignored; Rejected, or Rejected – unknown test. For an unrouted message, the decision on it: Resolved – sent once (to the connection chosen, which shows its own row); Resolved – routed again; Resolved – recorded another way; Resolved – dismissed. — otherwise, such as for an unrouted message still waiting.",
           "rules": "The billing company's acknowledgement or rejection is recorded on the billing handoff page, by people with Billing. A written report PDF does not count as a staff-attested delivery on the report's page."
         },
         {
@@ -691,6 +691,12 @@
           "does": "Opens Resolve the rejection of <record>: a required What was done (1–500 characters), such as the clinic corrected the test code and sent the order again; Mark resolved records it, Cancel leaves it under Rejected.",
           "availableWhen": "From the row's ⋯ menu, on an incoming order the LIS refused or a message an MLLP partner rejected (AE or AR), not resolved yet.",
           "result": "It leaves the Rejected tab and stays under All; Details end with Resolved by <person>, <time>: <note>. Nothing is sent and nothing changes at the partner. A rejection is resolved once. Recorded in the audit trail."
+        },
+        {
+          "name": "Refresh",
+          "does": "Reads the list again. Updated <time> beside the button says when the rows shown were read; Refreshing… shows while it runs.",
+          "availableWhen": "Always.",
+          "result": "Shows the latest messages and outcomes, such as a message that moved from Not sent to Written or a new one. The period, connection, direction, outcome, Show test messages, search and tab stay as they were; checked rows stay checked while they are still shown. The list is not refreshed by itself."
         },
         {
           "name": "Export CSV / Export N selected",
@@ -751,7 +757,7 @@
         {
           "name": "Waiting since, Message, Record, Client, Practitioner, Reason, Next action",
           "meaning": "When the message was made and how long it has waited, its type, the report revision or billing handoff, the clients and practitioners in it, why it is here and what to do.",
-          "values": "As recorded, such as 2026-11-03 10:40 (3 h); Reason is No rule matched; Next action is Send to a connection.",
+          "values": "As recorded. Waiting since shows the time and how long it has waited, such as 2026-11-03 10:40 GMT+2 (3 h), (under 1 h) in its first hour and in days, such as (2 d), from 48 hours; on a narrow window it goes onto two lines rather than being cut off. Reason is No rule matched; Next action is Send to a connection.",
           "rules": "Oldest first. A row shows its details below the table; the oldest is shown until you choose another. The count also shows beside the menu entry and in the Unrouted interface messages work queue. A report revision leaves the list when a newer revision or the withdrawal of the same report is released; the newer one is routed on its own."
         },
         {

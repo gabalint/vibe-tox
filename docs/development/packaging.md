@@ -15,6 +15,11 @@ this name. Published download filenames use
 `steady-state-lims_<version>_<os>-<arch>.<ext>`. The Tauri bundle identifier remains
 `org.vibetox.lis`, and the executable remains `lis-desktop`.
 
+The full name never carries the OpenBGA prefix. The brand lockup in the application's
+sign-in card and top bar and in the website header shows the mark, the short name
+**Steady State** and “An OpenBGA project” beneath it. The mark is the desktop icon,
+[`src-tauri/app-icon.svg`](../../src-tauri/app-icon.svg).
+
 Persistent names are compatibility contracts: keep the OS key-store and security-key
 RP identities, `VibeToxLIS` backup directory, versioned `vibe-tox-*` formats,
 cryptographic domain strings, interface application identifiers and saved UI

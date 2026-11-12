@@ -273,6 +273,14 @@ const RESOLUTIONS: Record<UnroutedResolution, string> = {
   dismissed: "Dismissed",
 };
 
+/** The decision on an unrouted message, in Application: neutral, never a delivery claim. */
+const RESOLVED: Record<UnroutedResolution, string> = {
+  sent_once: "Resolved – sent once",
+  routed_again: "Resolved – routed again",
+  delivered_another_way: "Resolved – recorded another way",
+  dismissed: "Resolved – dismissed",
+};
+
 /** Did it leave: what the folder, SFTP server or MLLP connection can prove. */
 export function transportOf(row: PartnerMessageRow): Labelled {
   switch (row.transport) {
@@ -281,18 +289,21 @@ export function transportOf(row: PartnerMessageRow): Labelled {
     case "failed":
       return { label: "Failed", tone: "danger" };
     case "not_sent":
-      return { label: "Not sent", tone: row.unrouted ? "warning" : "hold" };
+      // Only an unrouted message still waiting for a decision is a warning (#4723).
+      if (row.unrouted) return { label: "Not sent", tone: row.resolution ? "neutral" : "warning" };
+      return { label: "Not sent", tone: "hold" };
     case "received":
       return { label: "Received", tone: "neutral" };
   }
 }
 
 /**
- * Did the partner accept it (an MLLP partner says, a folder never does), or what a received
- * message became.
+ * Did the partner accept it (an MLLP partner says, a folder never does), what a received
+ * message became, or how an unrouted message was resolved.
  */
 export function applicationOf(row: PartnerMessageRow): Labelled | null {
   if (row.received !== null) return receivedOutcome(row.received, row.errorCode);
+  if (row.resolution !== null) return { label: RESOLVED[row.resolution], tone: "neutral" };
   const ack = ackOutcome(row);
   if (ack) return ack;
   return row.outcomeUnknown ? { label: "Outcome unknown", tone: "warning" } : null;
