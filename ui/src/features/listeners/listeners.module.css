@@ -61,15 +61,8 @@
   padding-block-end: 0;
 }
 
-.title {
-  grid-area: title;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-}
-
 .row .name {
+  grid-area: title;
   font-weight: var(--font-weight-semibold);
 }
 
@@ -77,7 +70,8 @@
   grid-area: meta;
   display: flex;
   flex-wrap: wrap;
-  gap: 0 var(--space-3);
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }

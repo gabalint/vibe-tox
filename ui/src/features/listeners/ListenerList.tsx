@@ -85,8 +85,8 @@ export function ListenerList({
 }
 
 /**
- * One analyzer in the window: its name and state on the first line, why and when below in the
- * muted small text, and its Enable or Disable button at the right of both (ticket #4746).
+ * One analyzer in the window: its name on the first line; its state, why and when below it, in
+ * the muted small text; and its Enable or Disable button at the right of both (ticket #4746).
  */
 function ListenerRow({
   listener,
@@ -99,13 +99,11 @@ function ListenerRow({
   const detail = listenerDetailText(listener);
   return (
     <li className={styles.row}>
-      <span className={styles.title}>
-        <span className={styles.name}>
-          {controls ? controls.nameOf(listener) : listener.instrumentName}
-        </span>
-        <StatusBadge tone={state.tone}>{state.label}</StatusBadge>
+      <span className={styles.name}>
+        {controls ? controls.nameOf(listener) : listener.instrumentName}
       </span>
       <span className={styles.meta}>
+        <StatusBadge tone={state.tone}>{state.label}</StatusBadge>
         {detail && <span>{detail}</span>}
         {listener.lastActivityAt && (
           <span>
