@@ -7,9 +7,11 @@ repository [openbga/steady-state-lims](https://github.com/openbga/steady-state-l
 
 The website summarizes the [license](../architecture/decisions/0017-gplv3-license.md) and links the
 [development disclaimer](../governance/development-disclaimer.md). The page states the development
-status once in the hero and once in its vibe-coded disclaimer, and labels the recording and its
+status once in the hero and once in the disclaimer, and labels the recording and its
 stills as demo data; the video carries its own notices. Keep these current without repeating them
-in other sections. Signed releases, hosted services and clinical readiness still require their
+in other sections. The page leads with the product. Its project-status section mentions the
+substantial AI assistance in a short note below the status table, not as a headline; the [README](../../README.md),
+[overview](../overview.md) and disclaimer describe the development approach in full. Signed releases, hosted services and clinical readiness still require their
 own approvals (Q-11, Q-19 in the [decision queue](../planning/open-questions.md)). The Kokoro and
 soundfont notices in [media credits](../../website/media/credits.txt) retain their own terms.
 
@@ -41,8 +43,10 @@ getting-started section link to the [latest release](https://github.com/openbga/
 where visitors choose their platform's installer and read its release notes. Keep
 the destination independent of versioned asset filenames; [branches and releases](releases.md)
 describes the unsigned development builds and the separate nightly channel.
-The footer credits OpenBGA and carries one small support notice: “Are you looking
-for support? Contact bgasoft.com.” The domain links to <https://bgasoft.com>.
+The header carries the brand lockup ([product name](packaging.md#product-name-and-compatibility)).
+The footer names Steady State LIMS as an OpenBGA project and carries one small support
+notice: “Are you looking for support? Contact bgasoft.com.” The domain links to
+<https://bgasoft.com>.
 
 ### Search and sharing metadata
 
