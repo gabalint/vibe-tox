@@ -1,10 +1,21 @@
 // The two pages that manage one instrument, linked both ways: its connection under Laboratory
 // setup, and its service status and result sources under Bench setup.
+import type { CommandName } from "@/generated/CommandName";
 import type { InstrumentConnectionSettings } from "@/generated/InstrumentConnectionSettings";
 import type { SerialDataBits } from "@/generated/SerialDataBits";
 import type { SerialParity } from "@/generated/SerialParity";
 import type { SerialStopBits } from "@/generated/SerialStopBits";
 import { type Choice, labelOf } from "@/lib/choices";
+
+/**
+ * Each instrument change restarts the listeners, so their status changes too. Bench setup lists
+ * a new or renamed instrument from its readiness.
+ */
+export const INSTRUMENT_QUERIES: readonly CommandName[] = [
+  "list_instruments",
+  "list_listener_status",
+  "list_instrument_readiness",
+];
 
 /** One instrument's panel under Laboratory setup › Instruments: its connection settings. */
 export const instrumentConnectionPath = (instrumentId: string) =>

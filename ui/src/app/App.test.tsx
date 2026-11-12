@@ -92,6 +92,8 @@ describe("App frame", () => {
     const dialog = await screen.findByRole("dialog", { name: "Analyzer listeners" });
     expect(within(dialog).getByText("Synthetic Analyzer 1")).toBeTruthy();
     expect(within(dialog).getByText("Could not open the connection")).toBeTruthy();
+    // Without manage_configuration the window stays read-only (ticket #4746).
+    expect(within(dialog).queryByRole("button", { name: /able/ })).toBeNull();
     await expectNoA11yViolations(dialog);
     await user.click(within(dialog).getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog")).toBeNull();
