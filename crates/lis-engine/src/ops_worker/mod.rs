@@ -77,6 +77,9 @@ pub(crate) struct Operations {
     pub(crate) health: Mutex<HealthCache>,
     pub(crate) light: Mutex<light::LightState>,
     pub(crate) schedule: Mutex<jobs::Schedule>,
+    /// Held for one partner delivery pass, so a pass a scenario test starts waits for the
+    /// poller's instead of sending the same delivery again.
+    pub(crate) delivery_pass: Mutex<()>,
 }
 
 /// Why an operations step failed. Messages are PHI-free and name no path.
@@ -160,6 +163,7 @@ impl Operations {
             health: Mutex::new(HealthCache::default()),
             light: Mutex::new(light::LightState::default()),
             schedule: Mutex::new(jobs::Schedule::default()),
+            delivery_pass: Mutex::new(()),
         }
     }
 
