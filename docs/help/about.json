@@ -2,14 +2,14 @@
   "id": "about",
   "title": "About this app",
   "summary": "Find the software versions to include when reporting an application problem.",
-  "reviewedOn": "2026-11-05",
+  "reviewedOn": "2026-11-12",
   "routes": ["/about"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
         "Read the app version, web engine version and platform shown on this page. Include these details when reporting a problem so support can identify the software involved. If the web engine version says Not reported by the operating system, include that wording rather than guessing a version.",
-        "The app version is also the last line of the user menu (your name, top right), such as Version 0.1.2-nightly.20261103.24. Choose that line, or its Copy label, to copy the version to the clipboard; the menu stays open and the label changes to Copied. If the clipboard cannot be used, the label reads Not copied; read the version from the menu or this page instead. The line is missing while the version cannot be loaded."
+        "The app version is also the last line of the user menu (your name, top right), such as Version 0.1.2-nightly.20261103.24, followed by a small copy icon in the same gray text. The icon darkens when you point at the line or move to it with the arrow keys. Choose anywhere on that line to copy the version to the clipboard; the menu stays open and, for about two seconds, the icon becomes a check mark followed by Copied. If the clipboard cannot be used, Not copied shows instead; read the version from the menu or this page. The line is missing while the version cannot be loaded."
       ]
     },
     {
@@ -53,10 +53,10 @@
       ],
       "actions": [
         {
-          "name": "Copy (Version line in the user menu)",
+          "name": "Version line in the user menu (copies the version)",
           "does": "Copies the running app version, exactly as App version shows it, to the clipboard.",
           "availableWhen": "Any signed-in user, once the version has loaded.",
-          "result": "The menu stays open and Copy changes to Copied, or to Not copied if the clipboard cannot be used. Reopening the menu shows Copy again."
+          "result": "The menu stays open and Copied, or Not copied if the clipboard cannot be used, shows after the version for about two seconds; then the copy icon returns. Screen readers name the line Copy version, followed by the version."
         },
         {
           "name": "Retry",

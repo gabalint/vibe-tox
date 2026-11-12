@@ -96,7 +96,7 @@ describe("UserMenu", () => {
     expect(await screen.findByText("Navigated to /about")).toBeTruthy();
   });
 
-  it("shows the running version last and copies it, staying open (#4584)", async () => {
+  it("shows the running version last and copies it, staying open (#4584, #4745)", async () => {
     mockCommands({
       current_session: () => TEST_SESSION,
       app_info: () => ({ appVersion: "0.1.2-nightly.20261103.24" }),
@@ -104,15 +104,24 @@ describe("UserMenu", () => {
     const { user } = renderMenu();
     await user.click(await screen.findByRole("button", { name: "Signed in as Test Analyst" }));
     const item = await screen.findByRole("menuitem", {
-      name: "Version 0.1.2-nightly.20261103.24, Copy",
+      name: "Copy version 0.1.2-nightly.20261103.24",
     });
     expect(screen.getAllByRole("menuitem").at(-1)).toBe(item);
+    expect(item.textContent).toBe("Version 0.1.2-nightly.20261103.24");
     await expectNoA11yViolations(document.body);
     await user.click(item);
-    expect(
-      await screen.findByRole("menuitem", { name: "Version 0.1.2-nightly.20261103.24, Copied" }),
-    ).toBeTruthy();
+    const copied = await screen.findByRole("menuitem", {
+      name: "Version 0.1.2-nightly.20261103.24 copied",
+    });
+    expect(copied.textContent).toBe("Version 0.1.2-nightly.20261103.24Copied");
     expect(await navigator.clipboard.readText()).toBe("0.1.2-nightly.20261103.24");
+    expect(
+      await screen.findByRole(
+        "menuitem",
+        { name: "Copy version 0.1.2-nightly.20261103.24" },
+        { timeout: 3000 },
+      ),
+    ).toBeTruthy();
   });
 
   it("enables and disables the personal PIN from the menu and refreshes its status", async () => {

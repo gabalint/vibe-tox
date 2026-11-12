@@ -32,20 +32,24 @@
   font-weight: var(--font-weight-semibold);
 }
 
-/* The running version and its Copy label, the menu's last row (ticket #4584). */
+/* The running version, the menu's last row: the copy icon and "Copied" are part of the version
+   text, in its muted style; hovering or focusing the row darkens the icon to full text color. The
+   icon keeps the muted text's contrast at rest, above the 3:1 non-text minimum (tickets #4584, #4745). */
 .version {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
   white-space: nowrap;
 }
 
-.copy {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  margin-inline-start: auto;
-  padding: 0 var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
+.copyIcon {
+  width: var(--font-size-sm);
+  height: var(--font-size-sm);
+  flex: none;
+}
+
+.item[data-focused] .copyIcon {
+  color: var(--color-text);
 }
