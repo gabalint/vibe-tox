@@ -757,7 +757,7 @@
         {
           "name": "Waiting since, Message, Record, Client, Practitioner, Reason, Next action",
           "meaning": "When the message was made and how long it has waited, its type, the report revision or billing handoff, the clients and practitioners in it, why it is here and what to do.",
-          "values": "As recorded, such as 2026-11-03 10:40 (3 h); Reason is No rule matched; Next action is Send to a connection.",
+          "values": "As recorded. Waiting since shows the time and how long it has waited, such as 2026-11-03 10:40 GMT+2 (3 h), (under 1 h) in its first hour and in days, such as (2 d), from 48 hours; on a narrow window it goes onto two lines rather than being cut off. Reason is No rule matched; Next action is Send to a connection.",
           "rules": "Oldest first. A row shows its details below the table; the oldest is shown until you choose another. The count also shows beside the menu entry and in the Unrouted interface messages work queue. A report revision leaves the list when a newer revision or the withdrawal of the same report is released; the newer one is routed on its own."
         },
         {
