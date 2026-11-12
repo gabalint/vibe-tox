@@ -9,7 +9,10 @@ export async function expectNoA11yViolations(
   container: Element,
   { wholePage = false }: { wholePage?: boolean } = {},
 ) {
-  const results = await axe.run(container, { rules: { region: { enabled: wholePage } } });
+  // react-aria's hidden live announcer can announce a pending button by its id after the button
+  // has unmounted; that library node is not the screen under test.
+  const context = { include: container, exclude: "[data-live-announcer]" };
+  const results = await axe.run(context, { rules: { region: { enabled: wholePage } } });
   const violations = results.violations.map(
     (violation) =>
       `${violation.id}: ${violation.help} (${violation.nodes.map((node) => node.target.join(" ")).join(", ")})`,
