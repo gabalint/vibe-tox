@@ -2,14 +2,15 @@
   "id": "instruments",
   "title": "Instruments",
   "summary": "Configure analyzer connections and result-file intake for registered instruments.",
-  "reviewedOn": "2026-11-10",
+  "reviewedOn": "2026-11-12",
   "routes": ["/configuration/instruments"],
   "sections": [
     {
       "title": "How to use this page",
       "paragraphs": [
         "Register analyzer creates an instrument connection. Open its panel to read every saved setting without opening Edit connection: General, Connection and, for AU400 / AU640, AU settings, in the order of the Edit connection form. Below them, Live status, Result source, Activity and Changes show the running listener or folder with its last error, the approved sender, recent imports, and who registered and last changed the analyzer. Select a group's title to collapse or expand it. General also shows the analyzer's service status and approved result source from Bench setup, with a Readiness and sources link to the same analyzer there. Network connections use an allowed-address list; result-file instruments can use manual loading or a chosen watched folder.",
-        "Connection changes restart the affected listeners, and the outcome appears in the panel. A watched folder belongs to its instrument. Files already present when it is selected are not automatically loaded, while later eligible files are read while the application is open."
+        "Connection changes restart the affected listeners, and the outcome appears in the panel. A watched folder belongs to its instrument. Files already present when it is selected are not automatically loaded, while later eligible files are read while the application is open.",
+        "The Analyzer listeners window, opened from the analyzers status in the top bar, lists every analyzer with its listener state. People with Manage configuration can also enable or disable each analyzer there, or all at once, and open an analyzer's settings on this page from its name; the window asks first when an analyzer is sending results now or, for a disable, has an open run."
       ]
     },
     {
@@ -31,7 +32,7 @@
       "title": "Analyzer connections and watched result folders",
       "routes": ["/configuration/instruments"],
       "purpose": "Register analyzers, match their actual communication settings, and control automatic receipt of result messages or result files.",
-      "access": "Manage configuration is required to register, edit, enable or disable an analyzer (one at a time or with Enable all / Disable all) and choose or clear a result folder. Registration does not approve the analyzer for clinical service or supply source mappings.",
+      "access": "Manage configuration is required to register, edit, enable or disable an analyzer (one at a time or with Enable all / Disable all, here or in the Analyzer listeners window) and choose or clear a result folder. Registration does not approve the analyzer for clinical service or supply source mappings.",
       "fields": [
         {
           "name": "Find analyzers",
@@ -357,7 +358,13 @@
           "name": "Enable all / Disable all",
           "does": "Turn listening, or folder pickup for result-file instruments, on or off for every analyzer not already in that state. The confirmation lists each analyzer that will change, with its connection and whether listening or folder pickup changes; analyzers already in that state are left alone. There is no reason field: the single Enable or Disable has none either.",
           "availableWhen": "Manage configuration. Enable all appears only while at least one analyzer is disabled, Disable all only while at least one is enabled. Confirm with the Enable all or Disable all button in the dialog; Cancel changes nothing.",
-          "result": "Each analyzer is changed one after another as a separate saved change with its own audit entry, and all analyzer listeners restart after each one. A refusal, such as a changed revision, does not stop the others. A notice under the page header gives the count changed (for example 3 instruments enabled) and names each analyzer that was not changed, with the reason, and, after Enable all, each enabled analyzer whose listener reports an error, such as Could not open the connection. Close the notice with its dismiss button. Check each listed analyzer's Live status before relying on receipt."
+          "result": "Each analyzer is changed one after another as a separate saved change with its own audit entry, and all analyzer listeners restart after each one. A refusal, such as a changed revision, does not stop the others. A notice under the page header gives the count changed (for example 3 instruments enabled) and names each analyzer that was not changed, with the reason, and, after Enable all, the enabled analyzers now listening (Listening now: …) and each enabled analyzer whose listener reports an error, such as Could not open the connection. Close the notice with its dismiss button. Check each listed analyzer's Live status before relying on receipt."
+        },
+        {
+          "name": "Analyzer listeners window: Enable / Disable, Enable all / Disable all",
+          "does": "Turn one analyzer, or every analyzer not already in that state, on or off from the Analyzer listeners window that opens from the analyzers status in the top bar (for example 5 analyzers: 5 disabled). Each row's Enable or Disable button changes that analyzer; Enable all and Disable all sit beside Close. Each analyzer's name opens its panel on this page and closes the window. There is no reason field, as on this page.",
+          "availableWhen": "Manage configuration. Without it the window shows the same states read-only: no buttons and no links. Enable all appears only while at least one analyzer is disabled, Disable all only while at least one is enabled. The change is made at once, without a dialog, unless it would interrupt something: then a confirmation lists each analyzer sending results now (all listeners restart with any change, so this applies to enabling too) and, when disabling, each analyzer being disabled that has an open run, with the count; Whether results are coming in could not be checked or Open runs could not be checked appears when that could not be read. Confirm with the dialog's Enable, Disable, Enable all or Disable all button; Cancel changes nothing.",
+          "result": "The same saved change as on this page: one change per analyzer, each with its own audit entry, after which all analyzer listeners restart. A notice at the top of the window gives the count changed, names each analyzer not changed with the reason and, after enabling, lists the analyzers now listening (Listening now: …) and each enabled analyzer whose listener reports an error, with the reason. The list below refreshes with each analyzer's new state. Closing an open run is done on the run itself; disabling an analyzer does not close it."
         },
         {
           "name": "Choose folder / Change folder",
@@ -450,6 +457,10 @@
     "crates/lis-au/src/config.rs",
     "crates/lis-interfaces/src/repo.rs",
     "crates/lis-interfaces/src/listener.rs",
-    "crates/lis-engine/src/commands/interfaces.rs"
+    "crates/lis-engine/src/commands/interfaces.rs",
+    "ui/src/lib/instrumentEnabling.tsx",
+    "ui/src/features/listeners/ListenersDialog.tsx",
+    "ui/src/features/listeners/ListenerList.tsx",
+    "ui/src/features/listeners/ListenerStatus.tsx"
   ]
 }

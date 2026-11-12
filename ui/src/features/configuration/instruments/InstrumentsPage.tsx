@@ -4,18 +4,14 @@ import type { DataGridColumn } from "@/components/DataGrid";
 import type { InstrumentChangeResult } from "@/generated/InstrumentChangeResult";
 import type { InstrumentConfiguration } from "@/generated/InstrumentConfiguration";
 import { useCommandQuery } from "@/lib/commands";
+import { type BulkOutcome, BulkOutcomeAlert, bulkTargets } from "@/lib/instrumentEnabling";
 import { connectionText } from "@/lib/instrumentPages";
 import { useOpenRecord } from "@/lib/openRecord";
 import { openRecordPanel } from "@/lib/openRecordPanel";
 import { codedColumns } from "../catalogColumns";
 import { LIST_INSTRUMENTS } from "../contract";
 import { byId, Directory } from "../Directory";
-import {
-  BulkEnableDialog,
-  type BulkOutcome,
-  BulkOutcomeAlert,
-  bulkTargets,
-} from "./BulkEnableDialog";
+import { BulkEnableDialog } from "./BulkEnableDialog";
 import { useInstrumentActions } from "./InstrumentActions";
 import { RegisterDialog } from "./InstrumentDialogs";
 import { InstrumentPanel, Listening } from "./InstrumentPanel";
