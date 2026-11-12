@@ -135,10 +135,11 @@ fn new_row(
     checked_against: usize,
     unrouted: bool,
 ) -> Result<MessageRow, PartnerError> {
-    let (source_group, source_label) = message
+    let (source_group, report_number) = message
         .report
         .map(|report| (report.report_id, report.report_number))
         .unzip();
+    let source_label = report_number.or(message.accession);
     Ok(MessageRow {
         id: PartnerMessageId::generate(),
         message_type: message.message_type,

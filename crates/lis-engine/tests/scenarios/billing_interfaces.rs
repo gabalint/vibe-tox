@@ -26,7 +26,10 @@ use super::paging::release_groups;
 use super::*;
 use crate::partner_contract::{approve_and_test, assert_passed, draft_contract, terms};
 
+/// A pattern saved before #4742, which existing connections keep.
 const PATTERN: &str = "billing-{handoff}.json";
+/// The default pattern of a new Billing JSON connection (#4742).
+const DEFAULT_PATTERN: &str = "bh-{handoff_id}_{accession}.json";
 
 pub(super) async fn partner_call(engine: &Engine, name: &str) -> Option<Result<(), CommandError>> {
     let connection_id = PartnerConnectionId::generate();
@@ -360,6 +363,15 @@ impl Partners {
     }
 
     async fn connect(&self, rules: Vec<RoutingRule>) -> PartnerConnectionDetail {
+        self.connect_named(rules, PATTERN).await
+    }
+
+    /// A connection whose files are named by `pattern`.
+    async fn connect_named(
+        &self,
+        rules: Vec<RoutingRule>,
+        pattern: &str,
+    ) -> PartnerConnectionDetail {
         let engine = self.admin().await;
         let chosen = engine
             .choose_partner_folder(Some(self.folder.path().to_owned()))
@@ -368,7 +380,10 @@ impl Partners {
             .unwrap();
         engine
             .create_partner_connection(CreatePartnerConnectionInput {
-                settings: settings("Billing - Synthetic", rules),
+                settings: PartnerConnectionSettings {
+                    file_name_pattern: pattern.to_owned(),
+                    ..settings("Billing - Synthetic", rules)
+                },
                 folder_choice: Some(chosen.folder_choice),
                 processed_folder_choice: None,
                 failed_folder_choice: None,
@@ -566,6 +581,51 @@ async fn fail_five_times(
     assert_eq!(row.error_code.as_deref(), Some("folder_missing"));
     assert_eq!(partners.queue_count("interface_failures").await, Some(1));
     fs::rename(&moved, partners.folder.path()).unwrap();
+}
+
+/// #4742: the default pattern names the file by the handoff's ID and its accessions, the
+/// lowest and how many others; the log finds the message by an accession.
+#[tokio::test]
+async fn the_default_pattern_names_the_handoff_id_and_its_accessions() {
+    let partners = Partners::start().await;
+    let connection = partners
+        .connect_named(client_is("SYN-CLIENT"), DEFAULT_PATTERN)
+        .await;
+    let both = [&partners.approved[0], &partners.approved[1]];
+    let handoff = partners.desk.hand_off(&both).await.unwrap();
+    partners.desk.resync().await;
+    verify(&partners, &connection).await;
+    partners.desk.engine().deliver_partner_messages().await;
+
+    let written = files(partners.folder.path());
+    assert_eq!(written.len(), 1);
+    let bytes = fs::read(partners.folder.path().join(&written[0])).unwrap();
+    let file: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    let mut accessions: Vec<&str> = file["items"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|item| item["specimens"].as_array().unwrap())
+        .map(|specimen| specimen["accessionNumber"].as_str().unwrap())
+        .collect();
+    accessions.sort_unstable();
+    accessions.dedup();
+    assert_eq!(accessions.len(), 2);
+    let name = format!("bh-{}_{}_plus1.json", handoff.handoff_id, accessions[0]);
+    assert_eq!(written[0], name);
+
+    let found = partners
+        .admin()
+        .await
+        .list_partner_messages(ListPartnerMessages {
+            search: Some(accessions[0].to_owned()),
+            ..all()
+        })
+        .await
+        .unwrap()
+        .rows;
+    assert_eq!(found.len(), 1);
+    assert_eq!(found[0].source_number, Some(handoff.handoff_no));
 }
 
 async fn resend_and_write(partners: &Partners, handoff_no: i64) {

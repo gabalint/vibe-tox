@@ -79,20 +79,22 @@ pub struct DueDelivery {
     /// The partner the connection sends to (HL7 MSH-6).
     pub partner: String,
     pub source: MessageSource,
-    /// The report revision, for a report's revision.
+    /// The billing handoff, or the report revision, for a report's revision.
     pub source_id: Option<String>,
     /// The handoff or revision number.
     pub source_number: Option<i64>,
-    /// The report number, for a report's revision or withdrawal.
+    /// The report number, for a report's revision or withdrawal; the accession label,
+    /// for a billing handoff routed since #4742.
     pub source_label: Option<String>,
 }
 
 impl DueDelivery {
     /// The file name the connection's pattern makes for this message, with `date`
     /// (`YYYYMMDD`) and `time` (`HHMMSS`). A withdrawal notice's revision reads
-    /// `<n>-withdrawn`, so it never takes the name of the revision it withdraws. The
-    /// accession is the report number up to its `-`: a report number is the accession
-    /// number, `-` and the specimen type code, and an accession number holds no `-`.
+    /// `<n>-withdrawn`, so it never takes the name of the revision it withdraws. A
+    /// report's accession is the report number up to its `-`: a report number is the
+    /// accession number, `-` and the specimen type code, and an accession number holds
+    /// no `-`. A handoff's accession is its label, as routing stored it (#4742).
     #[must_use]
     pub fn file_name(&self, date: &str, time: &str) -> String {
         let number = self
@@ -103,14 +105,26 @@ impl DueDelivery {
         } else {
             number.clone()
         };
-        let record = self.source_label.clone().unwrap_or(number);
-        let accession = record
-            .split_once('-')
-            .map_or(record.as_str(), |(head, _)| head);
+        let billing = self.source == MessageSource::BillingHandoff;
+        let label = self.source_label.as_deref();
+        let record = match label {
+            Some(label) if !billing => label.to_owned(),
+            _ => number,
+        };
+        let (accession, handoff_id) = if billing {
+            let id = self.source_id.as_deref().unwrap_or_default();
+            (label.unwrap_or_default(), id)
+        } else {
+            let accession = record
+                .split_once('-')
+                .map_or(record.as_str(), |(head, _)| head);
+            (accession, "")
+        };
         file_name(
             &self.file_name_pattern,
             &FileNameParts {
                 record: &record,
+                handoff_id,
                 accession,
                 revision: &revision,
                 date,
@@ -403,6 +417,41 @@ mod tests {
         assert_eq!(
             due.file_name("20261105", "100000"),
             "A26000010_A26000010-UR_r2_20261105.pdf"
+        );
+    }
+
+    #[test]
+    fn a_handoff_file_names_the_handoff_and_its_accessions() {
+        let handoff_id = "01a16857-9620-7063-9047-c92771393165";
+        let due = DueDelivery {
+            delivery_id: PartnerDeliveryId::generate(),
+            message_id: PartnerMessageId::generate(),
+            connection_id: PartnerConnectionId::generate(),
+            destination: Destination::default(),
+            file_name_pattern: "bh-{handoff_id}_{accession}.json".to_owned(),
+            schedule: Schedule::Immediately,
+            attempts: 0,
+            created_at: UtcTimestamp::parse("2026-11-05T10:00:00.000000000Z").unwrap(),
+            message_type: PartnerMessageType::BillingJson,
+            artifact_sha256: String::new(),
+            payload_sha256: None,
+            partner: "Synthetic billing company".to_owned(),
+            source: MessageSource::BillingHandoff,
+            source_id: Some(handoff_id.to_owned()),
+            source_number: Some(12),
+            source_label: Some("A26000004_plus1".to_owned()),
+        };
+        assert_eq!(
+            due.file_name("20261105", "100000"),
+            format!("bh-{handoff_id}_A26000004_plus1.json")
+        );
+        let saved = DueDelivery {
+            file_name_pattern: "billing-{handoff}_{date}.json".to_owned(),
+            ..due
+        };
+        assert_eq!(
+            saved.file_name("20261105", "100000"),
+            "billing-12_20261105.json"
         );
     }
 }

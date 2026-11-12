@@ -83,6 +83,29 @@ describe("Connections (ticket #4555; REQ-RPT-012)", () => {
     expect(within(dialog).getByText(/Corrections and withdrawals go first/)).toBeTruthy();
   });
 
+  it("names a new Billing JSON connection's files by handoff ID and accession", async () => {
+    const { user } = renderPage({}, "/interfaces/connections");
+    await user.click(await screen.findByRole("button", { name: "Add connection" }));
+    const dialog = await screen.findByRole("dialog", { name: "Add connection" });
+    await user.click(within(dialog).getByRole("button", { name: /Message/ }));
+    await user.click(await screen.findByRole("option", { name: /Billing JSON/ }));
+    const fileName = within(dialog).getByRole("textbox", { name: "File name" });
+    await waitFor(() =>
+      expect((fileName as HTMLInputElement).value).toBe("bh-{handoff_id}_{accession}.json"),
+    );
+    expect(
+      within(dialog).getByText(/\{handoff_id\} \(the handoff ID\) or \{handoff\}/),
+    ).toBeTruthy();
+  });
+
+  it("keeps an existing connection's saved file name", async () => {
+    const { user } = renderPage({}, `/interfaces/connections/${CONNECTION_ID}`);
+    await user.click(await screen.findByRole("button", { name: "Edit" }));
+    const dialog = await screen.findByRole("dialog", { name: "Change Billing - RCM" });
+    const fileName = within(dialog).getByRole("textbox", { name: "File name" });
+    expect((fileName as HTMLInputElement).value).toBe("billing-{handoff}_{date}.json");
+  });
+
   it("sets up HL7 orders coming in: client, folders to read, and what to accept", async () => {
     const clients = [{ id: "c1", code: "CLINIC-A", name: "Clinic A", active: true }];
     const { user } = renderPage({ list_clients: () => clients }, "/interfaces/connections");

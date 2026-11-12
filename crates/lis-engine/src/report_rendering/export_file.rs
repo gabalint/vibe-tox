@@ -162,8 +162,8 @@ fn intent_event(
 }
 
 /// A security event about an export file, with the bytes' digest and the
-/// folder. Its record ID is the file name, built from a report number or a
-/// handoff ID (PHI-free).
+/// folder. Its record ID is the file name, built from a report number, or a
+/// handoff ID and its accessions (no demographics).
 fn file_event(
     action: &'static str,
     outcome: Outcome,

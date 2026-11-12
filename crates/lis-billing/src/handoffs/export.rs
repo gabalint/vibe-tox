@@ -7,15 +7,19 @@ use lis_store::CommandContext;
 use rusqlite::{Connection, OptionalExtension};
 
 use crate::error::BillingError;
+use crate::handoff_list::handoff_accession_label;
 use crate::mapping_support::acting_user;
 use crate::model::BillingHandoffId;
 
-/// The stored file a handoff export reads, and its PHI-free file name stem.
+/// The stored file a handoff export reads, and its file name stem, which holds
+/// no demographics.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HandoffExportSource {
     /// The digest of the stored bytes.
     pub artifact_sha256: String,
-    /// `billing-handoff-<handoff ID>`: labelled as a billing handoff.
+    /// `bh-<handoff ID>_<accession>` (#4742): `bh` labels a billing handoff;
+    /// the accession part is [`handoff_accession_label`], left out when the
+    /// handoff names no accession.
     pub file_stem: String,
 }
 
@@ -32,9 +36,13 @@ pub fn handoff_export_source(
         )
         .optional()?
         .ok_or(BillingError::NotFound("billing handoff"))?;
+    let file_stem = match handoff_accession_label(conn, handoff_id)? {
+        Some(accession) => format!("bh-{handoff_id}_{accession}"),
+        None => format!("bh-{handoff_id}"),
+    };
     Ok(HandoffExportSource {
         artifact_sha256,
-        file_stem: format!("billing-handoff-{handoff_id}"),
+        file_stem,
     })
 }
 

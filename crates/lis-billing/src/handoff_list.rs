@@ -131,15 +131,7 @@ fn add_specimen_groups(
     conn: &Connection,
     handoff: &mut BillingHandoffSummary,
 ) -> Result<(), BillingError> {
-    let items: Vec<(BillingDerivationId, Option<String>)> = conn
-        .prepare_cached(
-            "SELECT d.id, d.date_of_service FROM bil_handoff_items item \
-             JOIN bil_derivations d ON d.id = item.derivation_id \
-             WHERE item.handoff_id = ?1",
-        )?
-        .query_map([handoff.handoff_id], |row| Ok((row.get(0)?, row.get(1)?)))?
-        .collect::<Result<_, _>>()?;
-    for (derivation_id, date_of_service) in items {
+    for (derivation_id, date_of_service) in handoff_items(conn, handoff.handoff_id)? {
         handoff
             .accession_numbers
             .extend(derivation_accessions(conn, derivation_id)?);
@@ -150,6 +142,48 @@ fn add_specimen_groups(
     handoff.dates_of_service.sort();
     handoff.dates_of_service.dedup();
     Ok(())
+}
+
+/// The derivation and date of service of each of the handoff's items.
+fn handoff_items(
+    conn: &Connection,
+    id: BillingHandoffId,
+) -> Result<Vec<(BillingDerivationId, Option<String>)>, BillingError> {
+    let mut statement = conn.prepare_cached(
+        "SELECT d.id, d.date_of_service FROM bil_handoff_items item \
+         JOIN bil_derivations d ON d.id = item.derivation_id \
+         WHERE item.handoff_id = ?1",
+    )?;
+    let items = statement
+        .query_map([id], |row| Ok((row.get(0)?, row.get(1)?)))?
+        .collect::<Result<_, _>>()?;
+    Ok(items)
+}
+
+/// The accession part of a handoff's file names (#4742): the lowest of the
+/// accession numbers its items cover, then `_plus<n>` for the `n` others, such
+/// as `A26000004_plus2`; `None` when they name none.
+pub fn handoff_accession_label(
+    conn: &Connection,
+    id: BillingHandoffId,
+) -> Result<Option<String>, BillingError> {
+    let mut numbers = Vec::new();
+    for (derivation_id, _) in handoff_items(conn, id)? {
+        numbers.extend(derivation_accessions(conn, derivation_id)?);
+    }
+    numbers.sort();
+    numbers.dedup();
+    Ok(accession_label(&numbers))
+}
+
+/// See [`handoff_accession_label`]; `numbers` sorted, without repeats.
+fn accession_label(numbers: &[String]) -> Option<String> {
+    let (first, others) = numbers.split_first()?;
+    Some(if others.is_empty() {
+        first.clone()
+    } else {
+        format!("{first}_plus{}", others.len())
+    })
 }
 
 /// The accession numbers of a derivation's specimens. An adjustment that
@@ -171,4 +205,24 @@ pub(crate) fn derivation_accessions(
         next = repo::load(conn, id)?.adjustment_of_id;
     }
     Ok(numbers)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::accession_label;
+
+    fn label(numbers: &[&str]) -> Option<String> {
+        let numbers: Vec<String> = numbers.iter().map(|n| (*n).to_owned()).collect();
+        accession_label(&numbers)
+    }
+
+    #[test]
+    fn the_label_names_the_lowest_accession_and_counts_the_others() {
+        assert_eq!(label(&[]), None);
+        assert_eq!(label(&["A26000005"]).as_deref(), Some("A26000005"));
+        assert_eq!(
+            label(&["A26000004", "A26000005", "A26000009"]).as_deref(),
+            Some("A26000004_plus2")
+        );
+    }
 }
