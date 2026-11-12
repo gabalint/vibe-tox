@@ -834,9 +834,10 @@ async fn assert_candidate(
     );
 }
 
-/// The file in Downloads is labelled a billing handoff, carries the
-/// diagnosis exactly as supplied and the classes derived; the export is a
-/// security event, and a second export never overwrites the first.
+/// The file in Downloads is labelled a billing handoff and ends with its
+/// accession (#4742), carries the diagnosis exactly as supplied and the
+/// classes derived; the export is a security event, and a second export never
+/// overwrites the first.
 async fn assert_export(desk: &Desk, handoff: &HandoffView, accession: &str) {
     let downloads = tempfile::tempdir().unwrap();
     let e = desk.as_staff(Staff::Author).await;
@@ -852,7 +853,7 @@ async fn assert_export(desk: &Desk, handoff: &HandoffView, accession: &str) {
         assert_eq!(exported.folder, "downloads");
         names.push(exported.file_name);
     }
-    let stem = format!("billing-handoff-{}", handoff.handoff_id);
+    let stem = format!("bh-{}_{accession}", handoff.handoff_id);
     assert_eq!(names, [format!("{stem}.json"), format!("{stem}-1.json")]);
     // Each export commits its intent before the file is published, then records it.
     let events = |record_type: &str| {

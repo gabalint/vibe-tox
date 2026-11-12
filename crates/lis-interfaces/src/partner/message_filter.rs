@@ -42,8 +42,8 @@ fn in_view(row: &PartnerMessageRow, view: MessageView) -> bool {
     }
 }
 
-/// Digits find a handoff number; other text is found in the report number or
-/// the written file's path.
+/// Digits find a handoff number; other text is found in the report number, a
+/// handoff's accession label or the written file's path.
 fn found(row: &PartnerMessageRow, search: &str) -> bool {
     // A whole control ID (MSH-10, the delivery ID) finds its message (#4678).
     if row
@@ -52,7 +52,8 @@ fn found(row: &PartnerMessageRow, search: &str) -> bool {
     {
         return true;
     }
-    if search.bytes().all(|byte| byte.is_ascii_digit()) && row.source_label.is_none() {
+    let numbered = row.source == MessageSource::BillingHandoff || row.source_label.is_none();
+    if search.bytes().all(|byte| byte.is_ascii_digit()) && numbered {
         return row
             .source_number
             .is_some_and(|number| number.to_string() == search);
@@ -129,6 +130,10 @@ mod tests {
         assert!(kept(&report, &input(Some(" a26000009 "), false)));
         assert!(kept(&handoff, &input(Some("12"), false)));
         assert!(!kept(&handoff, &input(Some("1"), false)));
+        let labelled = row(MessageSource::BillingHandoff, Some("A26000004_plus1"), 12);
+        assert!(kept(&labelled, &input(Some("12"), false)));
+        assert!(!kept(&labelled, &input(Some("26"), false)));
+        assert!(kept(&labelled, &input(Some("a26000004"), false)));
     }
 
     #[test]

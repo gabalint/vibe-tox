@@ -123,8 +123,8 @@ export const FILE_NAMES: Record<PartnerMessageType, { pattern: string; hint: str
     hint: "{report} (the report number) and {revision} are required; {accession} (the accession number), {date} and {time} are optional; ends in .pdf.",
   },
   billing_json: {
-    pattern: "billing-{handoff}_{date}.json",
-    hint: "{handoff} is required; {date} and {time} are optional; ends in .json.",
+    pattern: "bh-{handoff_id}_{accession}.json",
+    hint: "{handoff_id} (the handoff ID) or {handoff} (the handoff number) is required; {accession} (the lowest accession, then _plus and how many others), {date} and {time} are optional; ends in .json.",
   },
 };
 

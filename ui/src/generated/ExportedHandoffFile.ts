@@ -2,6 +2,7 @@
 
 /**
  * Where a billing handoff file was written: always the user's Downloads
- * folder, under a PHI-free name that labels it a billing handoff.
+ * folder, under a name that labels it a billing handoff and ends with its
+ * accessions, without demographics.
  */
 export type ExportedHandoffFile = { fileName: string, folder: "downloads", };

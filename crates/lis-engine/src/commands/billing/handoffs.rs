@@ -6,7 +6,7 @@
 //!   every derivation again, records the handoff and routes it to the
 //!   Billing JSON connections (Interfaces).
 //! - **Export**: the stored bytes are read back with digest verification
-//!   and published as a new `billing-handoff-<id>.json` in the folder the
+//!   and published as a new `bh-<id>_<accession>.json` in the folder the
 //!   desktop shell resolves (the OS Downloads folder) after an audited
 //!   intent, then the export is recorded on the security stream, through
 //!   the one export path of `report_rendering`. A billing handoff export is
@@ -46,7 +46,8 @@ pub struct BillingHandoffInput {
 }
 
 /// Where a billing handoff file was written: always the user's Downloads
-/// folder, under a PHI-free name that labels it a billing handoff.
+/// folder, under a name that labels it a billing handoff and ends with its
+/// accessions, without demographics.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]

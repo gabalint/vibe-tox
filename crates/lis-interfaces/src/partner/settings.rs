@@ -25,6 +25,8 @@ const FOLDER_MAX: usize = 4096;
 /// so each file has its own name, ones it may use, and its extension.
 struct PatternRules {
     required: &'static [&'static str],
+    /// Placeholders of which it must use at least one, so each file has its own name.
+    one_of: &'static [&'static str],
     optional: &'static [&'static str],
     extension: &'static str,
 }
@@ -33,17 +35,20 @@ struct PatternRules {
 const fn pattern_rules(message_type: PartnerMessageType) -> Option<PatternRules> {
     match message_type {
         PartnerMessageType::BillingJson => Some(PatternRules {
-            required: &["{handoff}"],
-            optional: &["{date}", "{time}"],
+            required: &[],
+            one_of: &["{handoff}", "{handoff_id}"],
+            optional: &["{accession}", "{date}", "{time}"],
             extension: ".json",
         }),
         PartnerMessageType::ReportPdf => Some(PatternRules {
             required: &["{report}", "{revision}"],
+            one_of: &[],
             optional: &["{accession}", "{date}", "{time}"],
             extension: ".pdf",
         }),
         PartnerMessageType::Hl7Oru => Some(PatternRules {
             required: &["{report}", "{revision}"],
+            one_of: &[],
             optional: &["{accession}", "{date}", "{time}"],
             extension: ".hl7",
         }),
@@ -197,6 +202,17 @@ fn valid_pattern(pattern: &str, rules: &PatternRules) -> Result<(), PartnerError
             rules.required.join(" and ")
         )));
     }
+    if !rules.one_of.is_empty()
+        && !rules
+            .one_of
+            .iter()
+            .any(|placeholder| pattern.contains(placeholder))
+    {
+        return Err(refused(&format!(
+            "Include {}, so each file has its own name.",
+            rules.one_of.join(" or ")
+        )));
+    }
     if !pattern.ends_with(rules.extension) || pattern.starts_with('.') {
         return Err(refused(&format!(
             "End the name with {}; do not start it with a dot.",
@@ -206,6 +222,7 @@ fn valid_pattern(pattern: &str, rules: &PatternRules) -> Result<(), PartnerError
     let plain = rules
         .required
         .iter()
+        .chain(rules.one_of)
         .chain(rules.optional)
         .fold(pattern.to_owned(), |text, placeholder| {
             text.replace(placeholder, "")
@@ -214,6 +231,7 @@ fn valid_pattern(pattern: &str, rules: &PatternRules) -> Result<(), PartnerError
         let placeholders: Vec<&str> = rules
             .required
             .iter()
+            .chain(rules.one_of)
             .chain(rules.optional)
             .copied()
             .collect();
@@ -233,7 +251,9 @@ fn plain_byte(byte: u8) -> bool {
 pub(crate) struct FileNameParts<'a> {
     /// `{handoff}` or `{report}`: the handoff number, or the report number.
     pub(crate) record: &'a str,
-    /// `{accession}`: the report's accession number.
+    /// `{handoff_id}`: the handoff's ID.
+    pub(crate) handoff_id: &'a str,
+    /// `{accession}`: the report's accession number, or the handoff's accession label.
     pub(crate) accession: &'a str,
     /// `{revision}`: the report's revision number.
     pub(crate) revision: &'a str,
@@ -262,6 +282,7 @@ pub(crate) fn file_name(pattern: &str, parts: &FileNameParts<'_>) -> String {
     let record = plain(parts.record);
     pattern
         .replace("{handoff}", &record)
+        .replace("{handoff_id}", &plain(parts.handoff_id))
         .replace("{report}", &record)
         .replace("{accession}", &plain(parts.accession))
         .replace("{revision}", &plain(parts.revision))
@@ -288,7 +309,7 @@ mod tests {
             schedule: Schedule::DailyAt {
                 time: "18:30".to_owned(),
             },
-            file_name_pattern: "billing-{handoff}_{date}.json".to_owned(),
+            file_name_pattern: "bh-{handoff_id}_{accession}.json".to_owned(),
             sftp: None,
             intake: None,
             mllp: None,
@@ -338,6 +359,7 @@ mod tests {
             ".billing-{handoff}.json",
             "billing {handoff}.json",
             "billing-{patient}-{handoff}.json",
+            "billing-{accession}_{date}.json",
         ] {
             let error = valid_settings(PartnerConnectionSettings {
                 file_name_pattern: pattern.to_owned(),
@@ -345,6 +367,21 @@ mod tests {
             })
             .unwrap_err();
             assert_eq!(field_of(error), "settings.fileNamePattern", "{pattern}");
+        }
+    }
+
+    #[test]
+    fn a_billing_pattern_names_the_handoff_by_number_or_id() {
+        for pattern in [
+            "bh-{handoff_id}_{accession}.json",
+            "billing-{handoff}_{date}.json",
+            "{handoff}-{handoff_id}{time}.json",
+        ] {
+            let valid = valid_settings(PartnerConnectionSettings {
+                file_name_pattern: pattern.to_owned(),
+                ..settings()
+            });
+            assert!(valid.is_ok(), "{pattern}");
         }
     }
 
@@ -390,6 +427,7 @@ mod tests {
         for pattern in [
             "{report}_{date}.pdf",
             "{accession}_r{revision}.pdf",
+            "{report}_r{revision}_{handoff_id}.pdf",
             "{report}_r{revision}.json",
             "{handoff}_r{revision}.pdf",
         ] {
@@ -405,7 +443,8 @@ mod tests {
     fn file_names_fill_every_placeholder() {
         let parts = FileNameParts {
             record: "12",
-            accession: "",
+            handoff_id: "01a16857-9620-7063-9047-c92771393165",
+            accession: "A26000005",
             revision: "",
             date: "20261103",
             time: "101500",
@@ -413,6 +452,10 @@ mod tests {
         assert_eq!(
             file_name("billing-{handoff}_{date}{time}.json", &parts),
             "billing-12_20261103101500.json"
+        );
+        assert_eq!(
+            file_name("bh-{handoff_id}_{accession}.json", &parts),
+            "bh-01a16857-9620-7063-9047-c92771393165_A26000005.json"
         );
         let parts = FileNameParts {
             record: "A26000005-U/1",

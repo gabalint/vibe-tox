@@ -75,6 +75,7 @@ pub(crate) fn route_billing_handoff(
         return Ok(());
     }
     let parties = lis_billing::handoff_parties(ctx.tx(), handoff.handoff_id)?;
+    let accession = lis_billing::handoff_accession_label(ctx.tx(), handoff.handoff_id)?;
     lis_interfaces::partner::route_partner_message(
         ctx,
         NewPartnerMessage {
@@ -83,6 +84,7 @@ pub(crate) fn route_billing_handoff(
             source_id: handoff.handoff_id.to_string(),
             source_number: handoff.handoff_no,
             report: None,
+            accession,
             artifact_sha256: handoff.artifact_sha256.clone(),
             facts: facts(parties),
         },
@@ -121,6 +123,7 @@ pub(crate) fn route_report_revision(
                     report_id: revision.report_id.to_string(),
                     report_number: revision.report_number.clone(),
                 }),
+                accession: None,
                 artifact_sha256: revision.artifact_sha256.clone(),
                 facts: facts(revision.parties.clone()),
             },
@@ -153,6 +156,7 @@ pub(crate) fn route_report_withdrawal(
                     report_id: report.report_id.to_string(),
                     report_number: report.report_number.clone(),
                 }),
+                accession: None,
                 artifact_sha256: withdrawal.notice_artifact_sha256.clone(),
                 facts: RoutingFacts::default(),
             },

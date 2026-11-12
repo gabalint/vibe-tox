@@ -18,7 +18,7 @@ export type PartnerConnectionSettings = { name: string,
  */
 partner: string, messageType: PartnerMessageType, protocol: PartnerProtocol, rules: Array<RoutingRule>, schedule: Schedule, 
 /**
- * For example `billing-{handoff}_{date}.json`.
+ * For example `bh-{handoff_id}_{accession}.json`.
  */
 fileNamePattern: string, 
 /**

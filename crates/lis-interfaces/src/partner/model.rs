@@ -245,7 +245,7 @@ pub struct PartnerConnectionSettings {
     pub protocol: PartnerProtocol,
     pub rules: Vec<RoutingRule>,
     pub schedule: Schedule,
-    /// For example `billing-{handoff}_{date}.json`.
+    /// For example `bh-{handoff_id}_{accession}.json`.
     pub file_name_pattern: String,
     /// The server, for the SFTP protocol; `None` for a folder.
     #[serde(default)]
@@ -357,6 +357,9 @@ pub struct NewPartnerMessage {
     pub source_number: i64,
     /// For a report's revision or withdrawal, the report it belongs to.
     pub report: Option<ReportRef>,
+    /// For a billing handoff, its accession label, such as `A26000004_plus1`
+    /// (`{accession}` in a file name pattern).
+    pub accession: Option<String>,
     pub artifact_sha256: String,
     pub facts: RoutingFacts,
 }

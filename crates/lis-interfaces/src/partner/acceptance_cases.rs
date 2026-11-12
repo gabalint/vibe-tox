@@ -99,6 +99,7 @@ fn file_name_case(settings: &PartnerConnectionSettings) -> AcceptanceCase {
         &settings.file_name_pattern,
         &FileNameParts {
             record: "TEST00001-U",
+            handoff_id: "00000000-0000-7000-8000-000000000001",
             accession: "TEST00001",
             revision: "1",
             date: "20260101",

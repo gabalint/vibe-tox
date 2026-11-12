@@ -59,7 +59,9 @@ pub use derivations::{
     ApproveServiceDerivation, DeriveServices, approve_service_derivation, derive_services,
 };
 pub use error::BillingError;
-pub use handoff_list::{BillingHandoffSummary, ListBillingHandoffs, list_billing_handoffs};
+pub use handoff_list::{
+    BillingHandoffSummary, ListBillingHandoffs, handoff_accession_label, list_billing_handoffs,
+};
 pub use handoff_parties::handoff_parties;
 pub use handoff_view::{
     HandoffItemView, HandoffOutcomeView, HandoffView, audit_record_label, audit_record_search,

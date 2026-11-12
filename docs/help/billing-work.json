@@ -553,7 +553,7 @@
           "name": "Export file",
           "does": "Writes a copy of the stored handoff into the computer\u2019s Downloads folder.",
           "availableWhen": "Billing authority and export is offered.",
-          "result": "Success displays the actual file name. This local export does not send the file to the billing partner."
+          "result": "Success displays the actual file name: bh-, the handoff ID, _ and the lowest accession number the handoff covers, then _plus and how many other accessions it covers, such as bh-01a16857-9620-7063-9047-c92771393165_A26000005.json or bh-01a16857-9620-7063-9047-c92771393165_A26000004_plus2.json. When a file of that name is already in Downloads, -1, -2 and so on is added before .json; an existing file is never replaced. This local export does not send the file to the billing partner."
         },
         {
           "name": "Open item / Previous / Next / Close",
