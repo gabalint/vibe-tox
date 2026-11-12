@@ -23,7 +23,7 @@ use crate::m2_lab::Role;
 use crate::m3_changes::Change;
 use crate::m3_fixture::{Bench, Staff, Variant};
 use crate::m3_release_races::verified_artifact;
-use crate::partner_contract::{approve_and_test, draft_contract};
+use crate::partner_contract::{approve_and_test, assert_passed, draft_contract, run_tests};
 
 const PATTERN: &str = "{report}_r{revision}.pdf";
 pub(super) const AMENDMENT: &str = "Synthetic correction: integration error";
@@ -225,6 +225,15 @@ async fn a_report_pdf_is_written_and_its_correction_and_withdrawal_follow() {
 
 /// Changes the connection's rule so the report's client no longer matches.
 async fn only_another_client(pdfs: &Pdfs) {
+    let rule = RoutingRule {
+        field: RuleField::Client,
+        condition: RuleCondition::Equals,
+        value: "SYN-OTHER".to_owned(),
+    };
+    update(pdfs, settings(vec![rule]), "Synthetic: only another client").await;
+}
+
+async fn update(pdfs: &Pdfs, settings: PartnerConnectionSettings, reason: &str) {
     pdfs.bench.sign_in(Staff::Desk(Role::Admin)).await;
     let engine = pdfs.bench.lab().engine();
     let connection_id = pdfs.connection.connection.id;
@@ -236,16 +245,12 @@ async fn only_another_client(pdfs: &Pdfs) {
         .update_partner_connection(UpdatePartnerConnectionInput {
             connection_id,
             expected_revision: current.connection.revision,
-            settings: settings(vec![RoutingRule {
-                field: RuleField::Client,
-                condition: RuleCondition::Equals,
-                value: "SYN-OTHER".to_owned(),
-            }]),
+            settings,
             folder_choice: None,
             processed_folder_choice: None,
             failed_folder_choice: None,
             password: None,
-            reason: "Synthetic: only another client".to_owned(),
+            reason: reason.to_owned(),
         })
         .await
         .unwrap();
@@ -295,4 +300,26 @@ async fn an_unwritten_revision_waits_on_its_impact_and_is_superseded_by_its_corr
         ),
         1
     );
+}
+
+/// #4726: a new file name makes the acceptance tests out of date; the row says so, and
+/// once they run again the message is written with the new name.
+#[tokio::test]
+async fn a_message_held_by_out_of_date_tests_says_so_and_goes_once_they_pass() {
+    let pdfs = Pdfs::start().await;
+    let mut renamed = settings(Vec::new());
+    renamed.file_name_pattern = "{report}_r{revision}_{date}.pdf".to_owned();
+    update(&pdfs, renamed, "Synthetic: dated file names").await;
+    pdfs.release(None).await;
+    pdfs.deliver().await;
+    assert!(pdfs.files().is_empty());
+    assert_eq!(
+        pdfs.rows().await[0].waiting,
+        Some(WaitReason::TestsOutOfDate)
+    );
+
+    let engine = pdfs.bench.lab().engine();
+    assert_passed(&run_tests(engine, pdfs.connection.connection.id).await);
+    pdfs.deliver().await;
+    assert_eq!(pdfs.files().len(), 1);
 }

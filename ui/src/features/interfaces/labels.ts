@@ -254,7 +254,11 @@ export function sftpTestText({ problem, presentedFingerprint }: FolderTestResult
 const WAITING: Record<WaitReason, string> = {
   stopped: "Connection stopped",
   unverified: "Destination check not recorded",
-  not_accepted: "Interface contract not approved, or its acceptance tests not passed",
+  contract_not_approved: "Held: interface contract not approved",
+  tests_not_run: "Held: acceptance tests not run yet; run them",
+  tests_failed: "Held: acceptance tests failed; fix what they found and run them again",
+  tests_out_of_date:
+    "Held: acceptance tests out of date after a change to the connection; run them again",
   scheduled: "Waiting for the connection's schedule",
   queued: "Written at the next pass",
   impact_review: "Paused while the report's impact review is open",

@@ -171,7 +171,7 @@ async fn an_hl7_result_waits_for_approved_codes_and_its_correction_follows() {
     // REQ-INT-004, REQ-INT-001: no approved code, so the acceptance tests failed and
     // nothing is written.
     assert!(hl7.files().is_empty());
-    assert_eq!(hl7.rows().await[0].waiting, Some(WaitReason::NotAccepted));
+    assert_eq!(hl7.rows().await[0].waiting, Some(WaitReason::TestsFailed));
     let contract = &hl7.connection.contract;
     let problems: Vec<_> = contract
         .last_run
