@@ -162,7 +162,6 @@ function rowControls(
       const label = instrument.enabled ? "Disable" : "Enable";
       return (
         <Button
-          variant="quiet"
           isDisabled={isPending}
           aria-label={`${label} ${instrument.name}`}
           onPress={() => request([instrument], !instrument.enabled, label)}

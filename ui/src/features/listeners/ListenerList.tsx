@@ -73,10 +73,48 @@ export function ListenerList({
   if (listeners.data.length === 0) return <span>No instruments configured</span>;
   return (
     <ul className={stacked ? styles.stacked : styles.list}>
-      {listeners.data.map((listener) => (
-        <ListenerItem key={listener.instrumentId} listener={listener} controls={controls} />
-      ))}
+      {listeners.data.map((listener) =>
+        stacked ? (
+          <ListenerRow key={listener.instrumentId} listener={listener} controls={controls} />
+        ) : (
+          <ListenerItem key={listener.instrumentId} listener={listener} controls={controls} />
+        ),
+      )}
     </ul>
+  );
+}
+
+/**
+ * One analyzer in the window: its name and state on the first line, why and when below in the
+ * muted small text, and its Enable or Disable button at the right of both (ticket #4746).
+ */
+function ListenerRow({
+  listener,
+  controls,
+}: {
+  listener: ListenerStatusView;
+  controls?: RowControls;
+}) {
+  const state = LISTENER_STATES[listener.state];
+  const detail = listenerDetailText(listener);
+  return (
+    <li className={styles.row}>
+      <span className={styles.title}>
+        <span className={styles.name}>
+          {controls ? controls.nameOf(listener) : listener.instrumentName}
+        </span>
+        <StatusBadge tone={state.tone}>{state.label}</StatusBadge>
+      </span>
+      <span className={styles.meta}>
+        {detail && <span>{detail}</span>}
+        {listener.lastActivityAt && (
+          <span>
+            Last activity <Timestamp value={listener.lastActivityAt} />
+          </span>
+        )}
+      </span>
+      {controls && <span className={styles.action}>{controls.actionOf(listener)}</span>}
+    </li>
   );
 }
 
