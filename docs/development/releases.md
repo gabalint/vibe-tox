@@ -107,13 +107,23 @@ updates**. The [updates guide](../operations/updates.md) describes the operator 
 | Release | `releases/latest/download/latest.json`. GitHub's latest release, which is never a prerelease | Every configured build with a lower version |
 | Nightly | `releases/download/nightly/nightly.json`: the newest build's manifest plus the retained builds, newest first. Each entry points to the `latest.json` of its own `nightly-*` release | Only builds that are themselves nightly builds |
 
-A build reads these files, and accepts the packages they name, only under the
-repository name compiled into it (ADR 0020). GitHub redirects the addresses of a
-renamed repository, but newer manifests name the new repository, so a build made
-under the earlier name is offered no further updates. Install a current build by hand
-once. The bundle identifier and persistent names are unchanged; installer upgrade
-continuity is still subject to the
-[real-host checks](packaging.md#product-name-and-compatibility).
+A build reads these files under the repository name compiled into it (ADR 0020).
+Renaming the repository does not strand installations:
+
+- Both files name the repository that publishes them (`"repository"`). GitHub redirects a
+  renamed repository's addresses, so a build reads them under its compiled name and also
+  accepts the packages and manifests under the name they give (amended 2026-11-13).
+- Builds made before that amendment accept only their compiled name. For each former name
+  (`"formerRepositories"` in `nightly.json`, learned from the addresses of the builds it
+  lists and carried forward), the index lists the newest nightly once more under that
+  name, and its `nightly-*` release carries `latest-<owner>-<name>.json`, a copy of
+  `latest.json` whose package addresses use that name. GitHub redirects them, and the
+  Minisign signatures do not depend on addresses.
+- `0.1.2-nightly.20261113.31` was listed only under the new name, so builds made under a
+  former name do not see it; they see the next nightly published with these copies.
+
+The bundle identifier and persistent names are unchanged; installer upgrade continuity is
+still subject to the [real-host checks](packaging.md#product-name-and-compatibility).
 
 Each `latest.json` is a Tauri updater manifest. It holds the version, the change summary
 (the commit subjects since the previous build of that channel, merge commits excluded), the

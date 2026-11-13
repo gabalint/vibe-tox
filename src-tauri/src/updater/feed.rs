@@ -1,6 +1,7 @@
 //! What the release repository publishes: the newest official release and the nightly
 //! index, read through the updater's client without comparing versions. The index and the
-//! change lines are untrusted input; entries outside the repository are dropped.
+//! change lines are untrusted input; entries outside the repository, or outside the
+//! repository the index names after a rename, are dropped.
 
 use lis_core::CommandError;
 use lis_engine::version_precedence;
@@ -8,6 +9,7 @@ use serde::Deserialize;
 use tauri::{AppHandle, Runtime, Url};
 use tauri_plugin_updater::UpdaterExt;
 
+use super::address::declared_repository;
 use super::errors::{internal, refused, updater_error};
 use super::{
     AvailableBuild, CHECK_TIMEOUT, UpdateChannel, UpdateFeedView, Updates, is_newer, is_nightly,
@@ -67,6 +69,7 @@ pub(crate) async fn nightly_feed<R: Runtime>(
     };
     let builds = nightly_index(app, updates, releases)
         .await?
+        .entries
         .into_iter()
         .map(|entry| AvailableBuild {
             channel: UpdateChannel::Nightly,
@@ -121,16 +124,29 @@ async fn fetch_manifest<R: Runtime>(
     }
 }
 
-/// The nightly index's entries that are valid and published by this repository.
+/// The nightly index as this build accepts it: its valid entries published by this
+/// repository or by the repository the index names, and that name.
+pub(super) struct NightlyIndex {
+    pub(super) entries: Vec<IndexEntry>,
+    /// The repository the index names as its publisher; see [`declared_repository`].
+    pub(super) repository: Option<String>,
+}
+
+/// The nightly index's entries that are valid and published by this repository, or by the
+/// repository the index (read from this repository's address) names after a rename.
 pub(super) async fn nightly_index<R: Runtime>(
     app: &AppHandle<R>,
     updates: &Updates,
     releases: &Url,
-) -> Result<Vec<IndexEntry>, CommandError> {
+) -> Result<NightlyIndex, CommandError> {
     let url = release_url(releases, "download/nightly/nightly.json")?;
     let Some(manifest) = fetch_manifest(app, url).await? else {
-        return Ok(Vec::new());
+        return Ok(NightlyIndex {
+            entries: Vec::new(),
+            repository: None,
+        });
     };
+    let repository = declared_repository(&manifest.raw).map(str::to_owned);
     let entries: Vec<IndexEntry> = manifest
         .raw
         .get("builds")
@@ -143,7 +159,7 @@ pub(super) async fn nightly_index<R: Runtime>(
     let valid: Vec<IndexEntry> = entries
         .into_iter()
         .filter(|entry| version_precedence(&entry.version, &entry.version).is_some())
-        .filter(|entry| updates.owns(&entry.manifest_url))
+        .filter(|entry| updates.owns_or_declared(&entry.manifest_url, repository.as_deref()))
         .take(MAX_BUILDS)
         .collect();
     if valid.len() < total.min(MAX_BUILDS) {
@@ -152,7 +168,10 @@ pub(super) async fn nightly_index<R: Runtime>(
             "nightly index entries refused"
         );
     }
-    Ok(valid)
+    Ok(NightlyIndex {
+        entries: valid,
+        repository,
+    })
 }
 
 /// A release address under `releases`, such as `latest/download/latest.json`.

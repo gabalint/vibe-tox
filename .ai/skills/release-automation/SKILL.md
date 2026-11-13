@@ -76,7 +76,10 @@ The operator's prompt supplies these values:
      ([in-app updates](../../../docs/development/releases.md#in-app-updates)), there are also
      `latest.json` and `steady-state-lims_<version>_macos-arm64.app.tar.gz`, and `nightly` also
      carries `nightly.json`. Its first build entry names the new version, and the
-     `nightly-<date>.<run>` release it points to exists.
+     `nightly-<date>.<run>` release it points to exists. `nightly.json` names the current
+     repository (`"repository"`); for each name in `"formerRepositories"` the index lists the
+     new version once more, and the `nightly-<date>.<run>` release carries the matching
+     `latest-<owner>-<name>.json` copy, so the asset count there is higher by that many.
    - After a fresh fetch, the tag's commit equals the dispatched SHA.
 8. **Release summary (versioned releases only).** Summarize the changes since the
    previous `v*` tag from

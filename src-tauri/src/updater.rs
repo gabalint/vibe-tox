@@ -7,7 +7,8 @@
 //!   builds come from the `nightly.json` index and are offered only while a nightly build
 //!   runs, so a release installation never sees them.
 //! - Every URL the shell fetches, including those the index and manifests name, must be a
-//!   release download of that repository.
+//!   release download of that repository, or of the repository a feed read from it names
+//!   after a rename ([`Updates::owns_or_declared`]).
 //! - Debug builds only: `VIBE_TOX_UPDATE_FEED_URL`, a loopback HTTP address, stands in for the
 //!   repository so the screen can be tried locally without publishing ([`local_feed`]).
 //!   Packages are still signature-checked, and installation is refused.
@@ -32,7 +33,9 @@ mod errors;
 mod feed;
 mod staging;
 
-use address::{local_feed, valid_file_name, valid_repository};
+use address::{
+    declared_repository, github_releases, local_feed, release_download, valid_file_name,
+};
 
 use errors::{not_staged, refused, unavailable, updater_error};
 pub(crate) use feed::{nightly_feed, release_feed};
@@ -147,12 +150,7 @@ impl Updates {
             tracing::warn!(%feed, "updates read from a local feed; installation is disabled");
             return Self::from_releases(Some(feed), true);
         }
-        let releases = REPOSITORY
-            .filter(|repository| valid_repository(repository))
-            .and_then(|repository| {
-                Url::parse(&format!("https://github.com/{repository}/releases/")).ok()
-            });
-        Self::from_releases(releases, false)
+        Self::from_releases(REPOSITORY.and_then(github_releases), false)
     }
 
     fn from_releases(releases: Option<Url>, local: bool) -> Self {
@@ -170,17 +168,22 @@ impl Updates {
 
     /// Whether `url` is a release download of this build's releases.
     fn owns(&self, url: &Url) -> bool {
-        let Some(releases) = &self.releases else {
-            return false;
-        };
-        url.query().is_none()
-            && !url.path().contains("/../")
-            && url
-                .as_str()
-                .strip_prefix(releases.as_str())
-                .is_some_and(|rest| {
-                    rest.starts_with("download/") || rest.starts_with("latest/download/")
-                })
+        self.releases
+            .as_ref()
+            .is_some_and(|releases| release_download(releases, url))
+    }
+
+    /// Whether `url` is a release download of this build's releases, or of `declared`: the
+    /// repository named by a feed document this build read from its own releases, which is
+    /// where the builds are after the repository was renamed. A local feed accepts only
+    /// itself. Packages are still installed only with the project's Minisign signature.
+    fn owns_or_declared(&self, url: &Url, declared: Option<&str>) -> bool {
+        self.owns(url)
+            || (!self.local
+                && self.releases.is_some()
+                && declared
+                    .and_then(github_releases)
+                    .is_some_and(|releases| release_download(&releases, url)))
     }
 
     fn staged(&self) -> std::sync::MutexGuard<'_, Option<Staged>> {
@@ -199,7 +202,7 @@ pub(crate) async fn download<R: Runtime>(
     if let Some(view) = still_staged(updates, &input.version).await {
         return Ok(view);
     }
-    let manifest_url = manifest_url(app, updates, &input).await?;
+    let (manifest_url, declared) = manifest_url(app, updates, &input).await?;
     // The updater's own comparison: only a newer version is an update.
     let update = app
         .updater_builder()
@@ -218,7 +221,14 @@ pub(crate) async fn download<R: Runtime>(
             "The published version changed. Refresh and try again.",
         ));
     }
-    if !updates.owns(&update.download_url) {
+    // A release's own manifest, read from this build's address, names its repository; a
+    // nightly package is accepted under the repository the index named.
+    let declared = declared.or_else(|| {
+        (input.channel == UpdateChannel::Release)
+            .then(|| declared_repository(&update.raw_json).map(str::to_owned))
+            .flatten()
+    });
+    if !updates.owns_or_declared(&update.download_url, declared.as_deref()) {
         tracing::warn!("update package address outside the release repository refused");
         return Err(refused(
             "The update package is not published by this project.",
@@ -252,23 +262,25 @@ pub(crate) async fn download<R: Runtime>(
 }
 
 /// The manifest of `input.version` in its channel: the newest release, or the nightly index
-/// entry of that version, offered only while a nightly build runs.
+/// entry of that version, offered only while a nightly build runs; with the repository the
+/// nightly index named, if any.
 async fn manifest_url<R: Runtime>(
     app: &AppHandle<R>,
     updates: &Updates,
     input: &DownloadUpdateInput,
-) -> Result<Url, CommandError> {
+) -> Result<(Url, Option<String>), CommandError> {
     let Some(releases) = &updates.releases else {
         return Err(unavailable());
     };
     match input.channel {
-        UpdateChannel::Release => release_url(releases, "latest/download/latest.json"),
+        UpdateChannel::Release => Ok((release_url(releases, "latest/download/latest.json")?, None)),
         UpdateChannel::Nightly if is_nightly(&running_version(app)) => {
-            nightly_index(app, updates, releases)
-                .await?
+            let index = nightly_index(app, updates, releases).await?;
+            index
+                .entries
                 .into_iter()
                 .find(|entry| entry.version == input.version)
-                .map(|entry| entry.manifest_url)
+                .map(|entry| (entry.manifest_url, index.repository))
                 .ok_or_else(|| refused("This nightly build is no longer published."))
         }
         UpdateChannel::Nightly => Err(refused(

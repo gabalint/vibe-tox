@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from update_feed import FeedError, index, main, manifest
+from update_feed import FeedError, former_repositories, index, legacy_manifest, main, manifest
 
 
 BASE = "https://github.com/example/tox/releases/download/nightly-20261028.20"
@@ -138,6 +138,90 @@ class FeedTests(unittest.TestCase):
         with redirect_stderr(io.StringIO()):
             self.assertEqual(main(["index", "--manifest", str(latest), "--tag", "nightly-20261028.20",
                                    "--commit", "abc", "--manifest-url", BASE, "--output", str(output)]), 1)
+
+    def renamed_build(self, run, repository):
+        build = self.build(run)
+        tag = build["tag"]
+        return {**build, "manifestUrl": f"https://github.com/{repository}/releases/download/{tag}/latest.json"}
+
+    def test_index_names_the_repository_and_lists_the_newest_build_under_former_names(self):
+        previous = {"builds": [
+            self.renamed_build(19, "openbga/tox"),
+            self.renamed_build(18, "gabalint/vibe-tox"),
+        ]}
+        current = "openbga/steady-state-lims"
+        newest = {"version": "0.1.2-nightly.20261028.20", "platforms": {}, "repository": current}
+        build = self.renamed_build(20, current)
+        document, dropped = index(previous, build, newest, keep=10, repository=current)
+        self.assertEqual(document["repository"], current)
+        self.assertEqual(document["formerRepositories"], ["gabalint/vibe-tox", "openbga/tox"])
+        urls = [entry["manifestUrl"] for entry in document["builds"] if entry["tag"] == build["tag"]]
+        self.assertEqual(urls, [
+            build["manifestUrl"],
+            "https://github.com/gabalint/vibe-tox/releases/download/nightly-20261028.20/latest-gabalint-vibe-tox.json",
+            "https://github.com/openbga/tox/releases/download/nightly-20261028.20/latest-openbga-tox.json",
+        ])
+        self.assertEqual(dropped, [])
+        # The former names are carried even after every build under them has left the index.
+        later = {**self.renamed_build(21, current)}
+        newer = {**newest, "version": later["version"]}
+        document, dropped = index(document, later, newer, keep=1, repository=current)
+        self.assertEqual(document["formerRepositories"], ["gabalint/vibe-tox", "openbga/tox"])
+        self.assertEqual({entry["tag"] for entry in document["builds"]}, {later["tag"]})
+        self.assertEqual(len(document["builds"]), 3)
+        self.assertEqual(dropped, ["nightly-20261028.20", "nightly-20261028.19", "nightly-20261028.18"])
+
+    def test_a_former_names_manifest_copy_moves_only_the_package_addresses(self):
+        current, former = "openbga/steady-state-lims", "openbga/tox"
+        base = f"https://github.com/{current}/releases/download/nightly-20261028.20"
+        newest = {"version": "1.0.0", "repository": current,
+                  "platforms": {"windows-x86_64-nsis": {"signature": "c2ln", "url": f"{base}/a.exe"}}}
+        copy = legacy_manifest(newest, current, former)
+        self.assertEqual(copy["platforms"]["windows-x86_64-nsis"], {
+            "signature": "c2ln",
+            "url": "https://github.com/openbga/tox/releases/download/nightly-20261028.20/a.exe",
+        })
+        self.assertEqual(copy["version"], "1.0.0")
+        foreign = {**newest, "platforms": {"windows-x86_64-nsis": {"signature": "c2ln", "url": BASE + "/a.exe"}}}
+        with self.assertRaises(FeedError):
+            legacy_manifest(foreign, current, former)
+
+    def test_former_names_ignore_the_current_name_and_other_addresses(self):
+        previous = {"formerRepositories": ["a/b"], "builds": [
+            {"manifestUrl": "https://github.com/x/y/releases/download/t/latest.json"},
+            {"manifestUrl": "https://github.com/cur/rent/releases/download/t/latest.json"},
+            {"manifestUrl": "https://example.com/z/w/releases/download/t/latest.json"},
+        ]}
+        self.assertEqual(former_repositories(previous, "cur/rent"), ["a/b", "x/y"])
+        self.assertEqual(former_repositories(None, "cur/rent"), [])
+        with self.assertRaises(FeedError):
+            index(None, self.build(20), {"version": self.build(20)["version"]}, keep=1, repository="a/b/c")
+
+    def test_command_line_writes_the_former_names_manifest_copies(self):
+        current = "openbga/steady-state-lims"
+        base = f"https://github.com/{current}/releases/download/nightly-20261028.20"
+        notes = self.root / "notes.txt"
+        notes.write_text("One change\n")
+        latest = self.root / "latest.json"
+        self.assertEqual(main([
+            "manifest", "--version", "0.1.2-nightly.20261028.20", "--published-at", "2026-10-28T03:00:00Z",
+            "--notes-file", str(notes), "--base-url", base, "--repository", current, "--output", str(latest),
+            "--artifact", f"windows-x86_64-nsis={self.package('a.exe')}",
+        ]), 0)
+        self.assertEqual(json.loads(latest.read_text())["repository"], current)
+        previous = self.root / "previous.json"
+        previous.write_text(json.dumps({"builds": [self.renamed_build(19, "openbga/tox")]}))
+        legacy = self.root / "legacy"
+        with redirect_stdout(io.StringIO()):
+            code = main([
+                "index", "--previous", str(previous), "--manifest", str(latest), "--tag", "nightly-20261028.20",
+                "--commit", SHA, "--manifest-url", f"{base}/latest.json", "--repository", current,
+                "--legacy-dir", str(legacy), "--output", str(self.root / "nightly.json"),
+            ])
+        self.assertEqual(code, 0)
+        copy = json.loads((legacy / "latest-openbga-tox.json").read_text())
+        self.assertTrue(copy["platforms"]["windows-x86_64-nsis"]["url"].startswith(
+            "https://github.com/openbga/tox/releases/download/nightly-20261028.20/"))
 
 
 if __name__ == "__main__":

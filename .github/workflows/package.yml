@@ -350,6 +350,7 @@ jobs:
           python3 scripts/update_feed.py manifest --version "$VERSION" \
             --published-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --notes-file changes.txt \
             --base-url "$GITHUB_SERVER_URL/$GH_REPO/releases/download/$build_tag" \
+            --repository "$GH_REPO" \
             --signature-dir updater \
             --artifact "windows-x86_64-nsis=release/steady-state-lims_${VERSION}_windows-x64-setup.exe" \
             --artifact "linux-x86_64-appimage=release/steady-state-lims_${VERSION}_linux-amd64.AppImage" \
@@ -374,13 +375,22 @@ jobs:
               fi
               gh release create "$BUILD_TAG" release/* --target "$GITHUB_SHA" --prerelease --latest=false \
                 --title "Steady State LIMS $VERSION" --notes-file notes.md
+              # Builds made before the repository was renamed accept only their compiled name:
+              # the index lists this build under each former name too, with a manifest copy
+              # whose package addresses GitHub redirects here (ADR 0020, amended 2026-11-13).
               python3 scripts/update_feed.py index --previous previous-index.json \
                 --manifest release/latest.json --tag "$BUILD_TAG" --commit "$GITHUB_SHA" \
                 --manifest-url "$GITHUB_SERVER_URL/$GH_REPO/releases/download/$BUILD_TAG/latest.json" \
+                --repository "$GH_REPO" --legacy-dir legacy \
                 --output nightly.json > dropped-tags.txt
+              build_expected="$expected"
+              if compgen -G "legacy/*.json" > /dev/null; then
+                gh release upload "$BUILD_TAG" legacy/*.json
+                build_expected=$((expected + $(find legacy -name '*.json' | wc -l)))
+              fi
               build_assets="$(gh release view "$BUILD_TAG" --json assets --jq '.assets | length')"
-              if [[ "$build_assets" != "$expected" ]]; then
-                echo "::error::$BUILD_TAG has $build_assets assets; expected $expected"
+              if [[ "$build_assets" != "$build_expected" ]]; then
+                echo "::error::$BUILD_TAG has $build_assets assets; expected $build_expected"
                 exit 1
               fi
             fi
