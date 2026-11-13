@@ -35,6 +35,14 @@ These rules govern any updater and stay in force:
    operating system's certificate store and adds no second HTTP client. Every address it
    fetches, including those in manifests and the nightly index, must be a release download
    of the repository compiled into the build. *(Library-policy change; accepted.)*
+   **Amended 2026-11-13 (user instruction, after the repository was renamed twice):** a
+   build also accepts the repository that a feed document read from its compiled address
+   names (`"repository"` in `nightly.json` and in a release's `latest.json`). GitHub
+   redirects a renamed repository's release addresses only to that repository, so a build
+   made under a former name keeps receiving updates; packages still install only with the
+   project's Minisign signature. The nightly index also lists the newest build under each
+   former name of the repository, with a manifest copy whose package addresses use that
+   name, so builds made before this amendment update too. No second HTTP client is added.
 2. **Minisign update signatures.** The package workflow signs the Windows NSIS installer,
    the Linux AppImage and `.deb` and the macOS application archive with a project Minisign
    key. It runs only when the `TAURI_SIGNING_PRIVATE_KEY` secret and the

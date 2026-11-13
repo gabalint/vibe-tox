@@ -1,6 +1,6 @@
 use tauri::Url;
 
-use super::address::{valid_file_name, valid_repository};
+use super::address::{declared_repository, valid_file_name, valid_repository};
 use super::feed::{MAX_CHANGE_CHARS, MAX_CHANGES, change_lines};
 use super::{Updates, is_newer, is_nightly};
 
@@ -97,5 +97,73 @@ fn a_local_feed_owns_only_its_own_release_downloads() {
         "https://github.com/openbga/steady-state-lims/releases/download/nightly/nightly.json",
     ] {
         assert!(!feed.owns(&Url::parse(url).unwrap()), "{url}");
+    }
+}
+
+#[test]
+fn a_renamed_repository_named_by_the_feed_is_accepted_too() {
+    // Built as openbga/tox; the repository is now openbga/steady-state-lims (2026-11-13).
+    let updates = updates("openbga/tox");
+    let renamed = Url::parse(
+        "https://github.com/openbga/steady-state-lims/releases/download/nightly-20261113.31/latest.json",
+    )
+    .unwrap();
+    assert!(!updates.owns(&renamed));
+    assert!(!updates.owns_or_declared(&renamed, None));
+    assert!(updates.owns_or_declared(&renamed, Some("openbga/steady-state-lims")));
+    let own = Url::parse("https://github.com/openbga/tox/releases/download/v1/a.exe").unwrap();
+    assert!(updates.owns_or_declared(&own, Some("openbga/steady-state-lims")));
+    // Only release downloads of the named repository, and only a valid name.
+    for (url, declared) in [
+        (
+            "https://github.com/openbga/steady-state-lims/archive/main.zip",
+            "openbga/steady-state-lims",
+        ),
+        (
+            "https://github.com/openbga/steady-state-lims/releases/download/v1/a.exe?x=1",
+            "openbga/steady-state-lims",
+        ),
+        (
+            "https://github.com/other/repo/releases/download/v1/a.exe",
+            "openbga/steady-state-lims",
+        ),
+        (
+            "https://github.com/a/b/c/releases/download/v1/a.exe",
+            "a/b/c",
+        ),
+        ("https://github.com/../x/releases/download/v1/a.exe", "../x"),
+    ] {
+        let url = Url::parse(url).unwrap();
+        assert!(
+            !updates.owns_or_declared(&url, Some(declared)),
+            "{url} as {declared}"
+        );
+    }
+}
+
+#[test]
+fn a_local_feed_or_an_unconfigured_build_accepts_no_named_repository() {
+    let url = Url::parse("https://github.com/openbga/steady-state-lims/releases/download/v1/a.exe")
+        .unwrap();
+    let feed = Updates::from_releases(Some(Url::parse("http://127.0.0.1:8765/").unwrap()), true);
+    assert!(!feed.owns_or_declared(&url, Some("openbga/steady-state-lims")));
+    let unconfigured = Updates::from_releases(None, false);
+    assert!(!unconfigured.owns_or_declared(&url, Some("openbga/steady-state-lims")));
+}
+
+#[test]
+fn the_repository_a_feed_names_is_read_only_when_valid() {
+    let named = serde_json::json!({ "repository": "openbga/steady-state-lims", "version": "1" });
+    assert_eq!(
+        declared_repository(&named),
+        Some("openbga/steady-state-lims")
+    );
+    for document in [
+        serde_json::json!({ "version": "1" }),
+        serde_json::json!({ "repository": "openbga" }),
+        serde_json::json!({ "repository": "a/b/c" }),
+        serde_json::json!({ "repository": 7 }),
+    ] {
+        assert_eq!(declared_repository(&document), None, "{document}");
     }
 }
