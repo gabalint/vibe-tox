@@ -2,7 +2,7 @@
   "id": "orders",
   "title": "Orders and decisions",
   "summary": "Review the supplied request, its tests, evidence, holds and specimen progress.",
-  "reviewedOn": "2026-11-06",
+  "reviewedOn": "2026-11-12",
   "routes": ["/orders", "/orders/:orderId"],
   "sections": [
     {
@@ -29,6 +29,7 @@
   "reviewSources": [
     "ui/src/features/accessioning/orders/OrdersPage.tsx",
     "ui/src/features/accessioning/orders/orderColumns.tsx",
+    "ui/src/features/accessioning/orders/OrderedTests.tsx",
     "ui/src/features/accessioning/orders/OrderDetailPage.tsx",
     "ui/src/features/accessioning/orders/OrderFacts.tsx",
     "ui/src/features/accessioning/orders/OrderItems.tsx",
@@ -106,10 +107,16 @@
           "rules": "Use Show orders for all patients to remove it; New order retains the filtered patient."
         },
         {
-          "name": "Patient / Order number / Client / Tests / Received / Status / Open holds",
+          "name": "Patient / Order number / Client / Order received / Status / Open holds",
           "meaning": "Columns used to identify a request and its progress.",
-          "values": "Patient name; clinic number or Not supplied; client; test count; request receipt time; Received, not yet accepted (warning badge), Accepted (green badge) or Rejected (neutral badge); number of open holds.",
-          "rules": "Read-only. Test count is not performed work and request receipt time is not collection time."
+          "values": "Patient name; clinic number or Not supplied; client; the date and time the laboratory received the order (request), shown in local time with its offset; Received, not yet accepted (warning badge), Accepted (green badge) or Rejected (neutral badge); number of open holds.",
+          "rules": "Read-only. Order received is when the laboratory recorded the request, not when a specimen was collected or received: Sample barcode and Accession show whether specimens have arrived. Select Order received to sort by it."
+        },
+        {
+          "name": "Tests",
+          "meaning": "How many tests the order has, and which ones, without opening it.",
+          "values": "The number of tests on the order in any state: requested, accepted, declined or cancelled, add-on and reflex tests included. The number is underlined with dots: point to it, or move to its cell with the arrow keys, to show a tooltip titled, for example, 4 tests ordered (1 test ordered for one) that lists each test on its own line as name and code, in the order they were requested.",
+          "rules": "Read-only. The count is what was ordered, not performed work. Press Escape or move away to close the tooltip; screen readers announce the same list with the cell. Select the column header to sort by the number, ascending then descending."
         },
         {
           "name": "Sample barcode",

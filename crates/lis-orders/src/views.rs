@@ -259,6 +259,8 @@ pub struct OrderSummary {
     /// Items on the order in any state: requested, add-on and reflex items included.
     #[ts(type = "number")]
     pub item_count: i64,
+    /// The test of each counted item, in request order.
+    pub ordered_tests: Vec<OrderedTestRef>,
     pub status: OrderStatus,
     pub received_at: UtcTimestamp,
     #[ts(type = "number")]
@@ -276,6 +278,15 @@ pub struct OrderSummary {
 pub struct OrderAccessionRef {
     pub accession_id: lis_core::AccessionId,
     pub accession_number: String,
+}
+
+/// The catalog test of an order item, as named by its ordered version.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct OrderedTestRef {
+    pub code: String,
+    pub name: String,
 }
 
 /// Patient-specific standing-order record.
